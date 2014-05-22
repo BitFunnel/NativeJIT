@@ -90,7 +90,7 @@ namespace NativeJIT
         else
         {
             RegisterType r;
-            tree.AllocateRegister(r);
+            tree.AllocateRegister<RegisterType>();
             tree.GetCodeGenerator().Op("mov", r, m_value);
             return r;
         }

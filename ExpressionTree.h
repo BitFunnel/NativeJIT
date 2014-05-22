@@ -45,16 +45,19 @@ namespace NativeJIT
         unsigned AddNode(NodeBase& node);
         unsigned AddParameter(ParameterBase& parameter);
 
-        void AllocateRegister(Register<1, false>& r);
-        void AllocateRegister(Register<2, false>& r);
-        void AllocateRegister(Register<4, false>& r);
-        void AllocateRegister(Register<8, false>& r);
+        template <typename REGISTERTYPE>
+        REGISTERTYPE AllocateRegister();
 
-        void AllocateRegister(Register<4, true>& r);
-        void AllocateRegister(Register<8, true>& r);
+        template <typename REGISTERTYPE>
+        unsigned GetAvailableRegisterCount() const;
 
         template <unsigned SIZE, bool ISFLOAT>
         Register<SIZE, ISFLOAT> CopyRegister(Register<SIZE, ISFLOAT> r);
+
+        template <unsigned SIZE>
+        void ReleaseRegister(Register<SIZE, false> r);
+        template <unsigned SIZE>
+        void ReleaseRegister(Register<SIZE, true> r);
 
         RegisterFile& GetParameterRegisters();
 
@@ -77,6 +80,16 @@ namespace NativeJIT
 
         void Epilogue();
 
+        template <unsigned SIZE>
+        Register<SIZE, false> AllocateRegisterInternal(Register<SIZE, false> ignore);
+        template <unsigned SIZE>
+        Register<SIZE, true> AllocateRegisterInternal(Register<SIZE, true> ignore);
+
+        template <unsigned SIZE>
+        unsigned GetAvailableRegisterCountInternal(Register<SIZE, false> ignore) const;
+        template <unsigned SIZE>
+        unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
+
 
         X64CodeGenerator& m_code;
 
@@ -86,6 +99,7 @@ namespace NativeJIT
         RegisterFile m_parameterRegisters;
 
         std::vector<unsigned> m_rxxRegisters;
+        std::vector<unsigned> m_xmmRegisters;
     };
 
 
@@ -113,12 +127,83 @@ namespace NativeJIT
     // Template definitions for ExpressionTree.
     //
     //*************************************************************************
+    template <typename REGISTERTYPE>
+    REGISTERTYPE ExpressionTree::AllocateRegister()
+    {
+        return AllocateRegisterInternal(REGISTERTYPE());
+    }
+
+
+    template <unsigned SIZE>
+    Register<SIZE, false> ExpressionTree::AllocateRegisterInternal(Register<SIZE, false> ignore)
+    {
+        Assert(m_rxxRegisters.size() > 0, "No RXX registers available.");
+
+        unsigned id = m_rxxRegisters.back();
+        m_rxxRegisters.pop_back();
+        return Register<SIZE, false>(id);
+    }
+
+
+    template <unsigned SIZE>
+    Register<SIZE, true> ExpressionTree::AllocateRegisterInternal(Register<SIZE, true> ignore)
+    {
+        Assert(m_xmmRegisters.size() > 0, "No XMM registers available.");
+
+        unsigned id = m_xmmRegisters.back();
+        m_xmmRegisters.pop_back();
+        return Register<SIZE, true>(id);
+    }
+
+
+    template <typename REGISTERTYPE>
+    unsigned ExpressionTree::GetAvailableRegisterCount() const
+    {
+        return GetAvailableRegisterCountInternal(REGISTERTYPE());
+    }
+
+
+    template <unsigned SIZE>
+    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, false> ignore) const
+    {
+        return static_cast<unsigned>(m_rxxRegisters.size());
+    }
+
+
+    template <unsigned SIZE>
+    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const
+    {
+        return static_cast<unsigned>(m_xmmRegisters.size());
+    }
+
+
     template <unsigned SIZE, bool ISFLOAT>
     Register<SIZE, ISFLOAT> ExpressionTree::CopyRegister(Register<SIZE, ISFLOAT> src)
     {
-        Register<SIZE, ISFLOAT> dest;
-        AllocateRegister(dest);
+        auto dest = AllocateRegister<Register<SIZE, ISFLOAT>>();
         m_code.Op("mov", dest, src);
         return dest;
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::ReleaseRegister(Register<SIZE, false> r)
+    {
+        std::cout << "// release " << r.GetName() << std::endl;
+
+        // TODO: Verify that this register isn't already free.
+
+        m_rxxRegisters.push_back(r.GetId());
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::ReleaseRegister(Register<SIZE, true> r)
+    {
+        std::cout << "// release " << r.GetName() << std::endl;
+
+        // TODO: Verify that this register isn't already free.
+
+        m_xmmRegisters.push_back(r.GetId());
     }
 }

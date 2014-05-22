@@ -62,6 +62,8 @@ namespace NativeJIT
         void ReleaseCache();
         RegisterType GetCacheRegister() const;
 
+        unsigned GetRegisterCount() const;
+
         virtual RegisterType CodeGenValue(ExpressionTree& tree) = 0;
 
 
@@ -74,7 +76,6 @@ namespace NativeJIT
         virtual unsigned LabelSubtree(bool isLeftChild) override;
 
     protected:
-        unsigned GetRegisterCount() const;
         void SetRegisterCount(unsigned count);
         void PrintRegisterAndCacheInfo() const;
 

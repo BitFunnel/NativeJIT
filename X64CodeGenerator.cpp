@@ -26,6 +26,19 @@ namespace NativeJIT
     }
 
 
+    // op
+    void X64CodeGenerator::Op(char const* op)
+    {
+        m_out << op << std::endl;
+    }
+
+
+    //*************************************************************************
+    //
+    // 8-byte RXX operations.
+    //
+    //*************************************************************************
+
     // dest <== dest op src
     void X64CodeGenerator::Op(char const* op, Register<8, false> dest, Register<8, false> src)
     {
@@ -43,7 +56,14 @@ namespace NativeJIT
     // dest <== dest op [base + offset]
     void X64CodeGenerator::Op(char const* op, Register<8, false> dest, Register<8, false> base, unsigned __int64 offset)
     {
-        m_out << op << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
+        if (offset == 0)
+        {
+            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << "]" << std::endl;
+        }
+        else
+        {
+            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
+        }
     }
 
 
@@ -54,9 +74,47 @@ namespace NativeJIT
     }
 
 
-    // op
-    void X64CodeGenerator::Op(char const* op)
+
+
+    //*************************************************************************
+    //
+    // 8-byte XMM operations.
+    //
+    //*************************************************************************
+
+    // dest <== dest op src
+    void X64CodeGenerator::Op(char const* op, Register<8, true> dest, Register<8, true> src)
     {
-        m_out << op << std::endl;
+        m_out << op << " " << dest.GetName() << ", " << src.GetName() << std::endl;
     }
+
+
+    // dest <== dest op value
+    void X64CodeGenerator::Op(char const* op, Register<8, true> dest, double value)
+    {
+        m_out << op << " " << dest.GetName() << ", " << value << std::endl;
+    }
+
+
+    // dest <== dest op [base + offset]
+    void X64CodeGenerator::Op(char const* op, Register<8, true> dest, Register<8, false> base, unsigned __int64 offset)
+    {
+        if (offset == 0)
+        {
+            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << "]" << std::endl;
+        }
+        else
+        {
+            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
+        }
+    }
+
+
+    // dest <== op dest
+    void X64CodeGenerator::Op(char const* op, Register<8, true> dest)
+    {
+        m_out << op << " " << dest.GetName() << std::endl;
+    }
+
+
 }

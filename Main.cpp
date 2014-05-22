@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "Binary.h"
 #include "ExpressionTree.h"
 #include "FieldPointer.h"
 #include "Immediate.h"
@@ -108,13 +109,30 @@ namespace NativeJIT
     }
 
 
+    void TestBinary()
+    {
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(code);
+
+        Parameter<unsigned __int64> a(tree);
+//        Immediate<unsigned __int64> b(tree, 1234ULL);
+        Parameter<unsigned __int64*> bptr(tree);
+        Indirect<unsigned __int64> b(tree, bptr, 0);
+        Binary<unsigned __int64, unsigned __int64> c(tree, "add", a, b);
+        Return<unsigned __int64> d(tree, c);
+
+        tree.Compile();
+    }
+
+
     void RunTests()
     {
 //        TestRegisters();
 //        TestOperations();
 //        TestNodes();
 //        TestFieldPointerPrimitive();
-        TestFieldPointerEmbedded();
+//        TestFieldPointerEmbedded();
+        TestBinary();
     }
 }
 

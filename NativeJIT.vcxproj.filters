@@ -51,6 +51,12 @@
     <ClInclude Include="Return.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ToDo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Binary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

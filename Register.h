@@ -155,6 +155,4 @@ namespace NativeJIT
     private:
         unsigned m_id;
     };
-
-
 }

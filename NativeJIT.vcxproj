@@ -77,6 +77,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
+    <ClInclude Include="Binary.h" />
     <ClInclude Include="ExpressionTree.h" />
     <ClInclude Include="FieldPointer.h" />
     <ClInclude Include="Immediate.h" />
@@ -87,6 +88,7 @@
     <ClInclude Include="Return.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ToDo.h" />
     <ClInclude Include="X64CodeGenerator.h" />
   </ItemGroup>
   <ItemGroup>

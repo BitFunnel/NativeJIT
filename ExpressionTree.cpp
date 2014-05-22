@@ -74,17 +74,6 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::AllocateRegister(Register<8, false>& r)
-    {
-        Assert(m_rxxRegisters.size() > 0, "No registers available.");
-
-        r = Register<8, false>(m_rxxRegisters.back());
-        m_rxxRegisters.pop_back();
-
-        std::cout << "// allocate" << r.GetName() << std::endl;
-    }
-
-
     RegisterFile& ExpressionTree::GetParameterRegisters()
     {
         return m_parameterRegisters;

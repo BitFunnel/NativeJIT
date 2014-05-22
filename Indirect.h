@@ -81,13 +81,16 @@ namespace NativeJIT
 
             if (IsBaseRegisterCached())
             {
-                RegisterType dest;
-                tree.AllocateRegister(dest);
+                //RegisterType dest;
+                //tree.AllocateRegister(dest);
+                RegisterType dest = tree.AllocateRegister<RegisterType>();
                 tree.GetCodeGenerator().Op("mov", dest, base, m_offset + offset);
                 return dest;
             }
             else
             {
+                // TODO: This code doesn't work where T is float or double because
+                // the base register has the wrong type to be reused to hold the value.
                 tree.GetCodeGenerator().Op("mov", base, base, m_offset + offset);
                 return base;
             }

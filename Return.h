@@ -69,6 +69,8 @@ namespace NativeJIT
         }
 
         tree.GetCodeGenerator().Op("ret");
+
+        tree.ReleaseRegister(r);
     }
 
 
