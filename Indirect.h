@@ -96,10 +96,12 @@ namespace NativeJIT
             }
             else
             {
-                // TODO: This code doesn't work where T is float or double because
-                // the base register has the wrong type to be reused to hold the value.
+                // TODO: Reusing the base register for the result won't work where T is
+                // float or double because the base register has an incompatible type.
+                // Also, RegisterType(base) can fail if, for example, the code attempts
+                // to convert RSI to 1-byte.
                 tree.GetCodeGenerator().Op("mov", base, base, m_offset + offset);
-                return base;
+                return RegisterType(base);
             }
         }
     }

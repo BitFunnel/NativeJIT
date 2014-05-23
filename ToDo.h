@@ -1,30 +1,44 @@
 /*
-JITExample1 is showing redundant adds when collapsing field pointers.
-        === Pass3 ===
-        add r9, 1234
-        add r9, [r8]
-        // release r8
-        mul rdx, 40
-        add rcx, rdx
-        // release rdx
-    ==> add rcx, 16
-        mov rcx, [rcx + 8]
-    ==> add rcx, 16
-        add r9, [rcx + 8]
-        // release rcx
-        mov rax, r9
-        ret
-        // release r9
+xJITExample1 is showing redundant adds when collapsing field pointers.
+x        === Pass3 ===
+x        add r9, 1234
+x        add r9, [r8]
+x        // release r8
+x        mul rdx, 40
+x        add rcx, rdx
+x        // release rdx
+x    ==> add rcx, 16
+x        mov rcx, [rcx + 8]
+x    ==> add rcx, 16
+x        add r9, [rcx + 8]
+x        // release rcx
+x        mov rax, r9
+x        ret
+x        // release r9
 
 
-. Implement BinaryNode operation.
+x Implement BinaryNode operation.
+
+RXX sizes 1, 2, 4
+  Need to deal with the fact that only a subset of all registers are valid.
+  Need to deal with register size casting problem in Indirect<T>::CodeGenValue where base register is reused for result.
+  May want to try to collapse the Register templates if possible. Two issues:
+    Printing register names. This can be handled with an array of array of char*.
+    Excluding certain registers (e.g. RSI cannot by 1-byte). Need to verify this limitation.
+  Cast operators.
+  May want to reserve RAX for assisting in code generation (e.g loading a byte into RSI).
+XMM registers
+  Need to deal with register size casting problem in Indirect<T>::CodeGenValue where base register is reused for result.
+
+Is return node required to sign-extend values with byte sizes 1, 2, and 4?
+Does indirect load of 1-byte impact other bytes in register?
 
 RegisterFile should exclude certain machine-specific registerrs (e.g. RSP).
 x ExpressionTree::GetAvailableRegisterCount needs to handle all types of registers.
 x Implement and use ExpressionTree::ReleaseRegister()
 x Use templates to simplify implementation of ExpressionTree::AllocateRegister().
-Implement ExpressionNodeFactory with arena allocator.
-Implement factory method for add integer to pointer.
+x Implement ExpressionNodeFactory with arena allocator.
+x Implement factory method for add integer to pointer.
 Implement call node with various parameters.
 Implement support for doubles.
 Implement Prologue and Epilogue with patching for locals.

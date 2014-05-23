@@ -23,6 +23,18 @@ namespace NativeJIT
         //
 
         // dest <== dest op src
+        void Op(char const* op, Register<1, false> dest, Register<1, false> src);
+
+        // dest <== dest op value
+        void Op(char const* op, Register<1, false> dest, unsigned __int64 value);
+
+        // dest <== dest op [base + offset]
+        void Op(char const* op, Register<1, false> dest, Register<8, false> base, unsigned __int64 offset);
+
+        void Op(char const* op, Register<1, false> dest);
+
+
+        // dest <== dest op src
         void Op(char const* op, Register<8, false> dest, Register<8, false> src);
 
         // dest <== dest op value

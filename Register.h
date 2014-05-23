@@ -25,6 +25,13 @@ namespace NativeJIT
         }
 
 
+        template <unsigned SIZE>
+        Register(Register<SIZE, false> r)
+            : m_id(r.GetId())
+        {
+        }
+
+
         unsigned GetId() const
         {
             return m_id;
@@ -63,6 +70,13 @@ namespace NativeJIT
         }
 
 
+        template <unsigned SIZE>
+        Register(Register<SIZE, false> r)
+            : m_id(r.GetId())
+        {
+        }
+
+
         unsigned GetId() const
         {
             return m_id;
@@ -88,13 +102,31 @@ namespace NativeJIT
     class Register<1, false>
     {
     public:
+        Register()
+            : m_id(0)
+        {
+        }
+
+
         Register(unsigned id)
             : m_id(id)
         {
-            Assert(id != 4, "Register bp not supported.");
-            Assert(id != 5, "Register si not supported.");
-            Assert(id != 6, "Register di not supported.");
-            Assert(id != 7, "Register sp not supported.");
+            Assert(m_id != 4, "Register bp not supported.");
+            Assert(m_id != 5, "Register si not supported.");
+            Assert(m_id != 6, "Register di not supported.");
+            Assert(m_id != 7, "Register sp not supported.");
+        }
+
+
+        template <unsigned SIZE>
+        Register(Register<SIZE, false> r)
+            : m_id(r.GetId())
+        {
+            // TODO: Need to prevent this constructor from failing in Indirect<T>::CodeGenValue.
+            Assert(m_id != 4, "Register bp not supported.");
+            Assert(m_id != 5, "Register si not supported.");
+            Assert(m_id != 6, "Register di not supported.");
+            Assert(m_id != 7, "Register sp not supported.");
         }
 
 

@@ -81,7 +81,8 @@ namespace NativeJIT
 
             // op r, [src + offset]
             Indirect<R>& right = static_cast<Indirect<R>&>(m_right);
-            RegisterType base = right.CodeGenBase(tree);
+
+            auto base = right.CodeGenBase(tree);
             unsigned __int64 offset = right.GetOffset();
 
             tree.GetCodeGenerator().Op(m_operation, r, base, offset);

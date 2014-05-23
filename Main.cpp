@@ -175,6 +175,30 @@ namespace NativeJIT
         tree.Compile();
     }
 
+
+    void TestByte()
+    {
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(code);
+
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Parameter<char>();
+        auto & b = factory.Immediate<char>(123);
+        auto & c = factory.Add(a, b);
+
+        auto & d = factory.Parameter<char*>();
+        auto & e = factory.Deref(d);
+
+        auto & f = factory.Add(c, e);
+
+        factory.Return(f);
+
+        tree.Compile();
+    }
+
+
     void RunTests()
     {
 //        TestRegisters();
@@ -185,7 +209,8 @@ namespace NativeJIT
 //        TestBinary();
 //        TestFactory();
 //        TestArray();
-        JITExample1();
+        TestByte();
+//        JITExample1();
     }
 }
 
