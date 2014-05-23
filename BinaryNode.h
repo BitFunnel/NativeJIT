@@ -80,7 +80,7 @@ namespace NativeJIT
             }
 
             // op r, [src + offset]
-            Indirect<R>& right = static_cast<Indirect<R>&>(m_right);
+            IndirectNode<R>& right = static_cast<IndirectNode<R>&>(m_right);
 
             auto base = right.CodeGenBase(tree);
             unsigned __int64 offset = right.GetOffset();

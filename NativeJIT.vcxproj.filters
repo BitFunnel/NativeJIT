@@ -36,25 +36,7 @@
     <ClInclude Include="ExpressionTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Immediate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Parameter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Indirect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FieldPointer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Return.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ToDo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Binary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IAllocator.h">
@@ -67,6 +49,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Examples.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImmediateNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FieldPointerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ReturnNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IndirectNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -86,9 +86,6 @@
     <ClCompile Include="ExpressionTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Parameter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Allocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -96,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Examples.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

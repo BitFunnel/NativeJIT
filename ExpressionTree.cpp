@@ -3,7 +3,7 @@
 #include <iostream>     // TODO: Delete this file after removing all references to std::cout.
 
 #include "ExpressionTree.h"
-#include "Parameter.h"              // TODO: Rename to ParameterNode.h
+#include "ParameterNode.h"
 #include "Node.h"
 #include "X64CodeGenerator.h"
 
@@ -151,26 +151,14 @@ namespace NativeJIT
     {
         std::cout << "=== Pass1 ===" << std::endl;
 
-        //// Assign RXX registers to RXX parameters.
-        //// TODO: Magic number 0xffff
-        //unsigned registers = 0xffff;
-        //for (unsigned i = 0 ; i < m_RXXParameters.size(); ++i)
-        //{
-        //    m_RXXParameters[i]->SetCacheRegister(Register(i));
-        //    registers &= ~(1 << i);
-        //}
-
-        // Initialize list of unassigned RXX registers.
-        // TODO: Magic number 16
-
+        // Reserve registers use to pass in parameters.
         for (unsigned i = 0 ; i < m_parameters.size(); ++i)
         {
             m_parameters[i]->ReserveRegister(m_parameterRegisters);
-            //m_RXXParameters[i]->SetCacheRegister(Register(i));
-            //registers &= ~(1 << i);
         }
 
 
+        // Populate m_rxxRegisters with those registers not used by parameters.
         unsigned registers = m_parameterRegisters.GetReservedRXX();
         for (unsigned i = 0; i < m_parameterRegisters.GetRXXRegisterCount(); ++i)
         {
@@ -191,7 +179,7 @@ namespace NativeJIT
         {
             NodeBase& node = *m_topologicalSort[i];
 
-            // Assert(parentCount should only be zero for last node);
+            // Assert(parentCount of zero legal only for last node);
 
             if (node.GetParentCount() > 1 && !node.IsCached())
             {

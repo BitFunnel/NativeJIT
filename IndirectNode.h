@@ -6,12 +6,12 @@
 namespace NativeJIT
 {
     template <typename T>
-    class Indirect : public Node<T>
+    class IndirectNode : public Node<T>
     {
     public:
         typedef typename Node<T*>::RegisterType BaseRegisterType;
 
-        Indirect(ExpressionTree& tree, Node<T*>& base, unsigned __int64 offset);
+        IndirectNode(ExpressionTree& tree, Node<T*>& base, unsigned __int64 offset);
 
         BaseRegisterType CodeGenBase(ExpressionTree& tree);
         bool IsBaseRegisterCached() const;
@@ -39,7 +39,7 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <typename T>
-    Indirect<T>::Indirect(ExpressionTree& tree,
+    IndirectNode<T>::IndirectNode(ExpressionTree& tree,
                           Node<T*>& base,
                           unsigned __int64 offset)
         : Node(tree),
@@ -51,7 +51,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Indirect<T>::BaseRegisterType Indirect<T>::CodeGenBase(ExpressionTree& tree)
+    typename IndirectNode<T>::BaseRegisterType IndirectNode<T>::CodeGenBase(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
@@ -68,14 +68,14 @@ namespace NativeJIT
 
 
     template <typename T>
-    bool Indirect<T>::IsBaseRegisterCached() const
+    bool IndirectNode<T>::IsBaseRegisterCached() const
     {
         return m_base.IsCached();
     }
 
 
     template <typename T>
-    typename Node<T>::RegisterType Indirect<T>::CodeGenValue(ExpressionTree& tree)
+    typename Node<T>::RegisterType IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         if (IsCached())
         {
@@ -108,28 +108,28 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned __int64 Indirect<T>::GetOffset() const
+    unsigned __int64 IndirectNode<T>::GetOffset() const
     {
         return m_offset;
     }
 
 
     template <typename T>
-    bool Indirect<T>::IsImmediate() const
+    bool IndirectNode<T>::IsImmediate() const
     {
         return false;
     }
 
 
     template <typename T>
-    bool Indirect<T>::IsIndirect() const
+    bool IndirectNode<T>::IsIndirect() const
     {
         return true;
     }
 
 
     template <typename T>
-    unsigned Indirect<T>::LabelSubtree(bool isLeftChild)
+    unsigned IndirectNode<T>::LabelSubtree(bool isLeftChild)
     {
         // TODO: Should isLeftChild be passed down?
         SetRegisterCount(m_base.LabelSubtree(true));
@@ -138,9 +138,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Indirect<T>::Print() const
+    void IndirectNode<T>::Print() const
     {
-        std::cout << "Indirect id=" << GetId();
+        std::cout << "IndirectNode id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", offset = " << m_offset;
         std::cout << ", ";

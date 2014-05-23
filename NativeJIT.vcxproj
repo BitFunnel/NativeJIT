@@ -78,18 +78,18 @@
   <ItemGroup>
     <ClInclude Include="Allocator.h" />
     <ClInclude Include="Assert.h" />
-    <ClInclude Include="Binary.h" />
+    <ClInclude Include="BinaryNode.h" />
     <ClInclude Include="Examples.h" />
     <ClInclude Include="ExpressionNodeFactory.h" />
     <ClInclude Include="ExpressionTree.h" />
-    <ClInclude Include="FieldPointer.h" />
+    <ClInclude Include="FieldPointerNode.h" />
     <ClInclude Include="IAllocator.h" />
-    <ClInclude Include="Immediate.h" />
-    <ClInclude Include="Indirect.h" />
+    <ClInclude Include="ImmediateNode.h" />
+    <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="Parameter.h" />
+    <ClInclude Include="ParameterNode.h" />
     <ClInclude Include="Register.h" />
-    <ClInclude Include="Return.h" />
+    <ClInclude Include="ReturnNode.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ToDo.h" />
@@ -102,7 +102,7 @@
     <ClCompile Include="ExpressionTree.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
-    <ClCompile Include="Parameter.cpp" />
+    <ClCompile Include="ParameterNode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

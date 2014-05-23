@@ -3,15 +3,9 @@
 #include <iostream>
 
 #include "Allocator.h"
-#include "Binary.h"                 // TODO: Rename to BinaryNode.h
 #include "Examples.h"
 #include "ExpressionTree.h"
 #include "ExpressionNodeFactory.h"
-#include "FieldPointer.h"           // TODO: Rename to FieldPointerNode.h
-#include "Immediate.h"              // TODO: Rename to ImmediateNode.h
-#include "Indirect.h"
-#include "Parameter.h"              // TODO: Rename to ParameterNode.h
-#include "Return.h"                 // TODO: Rename to ReturnNode.h
 #include "X64CodeGenerator.h"
 
 
@@ -36,6 +30,7 @@ namespace NativeJIT
         }
     }
 
+
     void TestOperations()
     {
         X64CodeGenerator code(std::cout);
@@ -55,12 +50,14 @@ namespace NativeJIT
         X64CodeGenerator code(std::cout);
         ExpressionTree tree(code);
 
-        ImmediateNode<long long> x(tree, 5);
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
 
-        ParameterNode<long long*> y(tree);
-        ParameterNode<double> z(tree);
+        auto & a = factory.Immediate(5ull);
+        auto & b = factory.Parameter<unsigned __int64*>();
+        auto & c = factory.Deref(b);
 
-        Indirect<long long> a(tree, y, 5);
+        auto & d = factory.Parameter<double>();
 
         tree.Print();
     }
@@ -89,10 +86,14 @@ namespace NativeJIT
         X64CodeGenerator code(std::cout);
         ExpressionTree tree(code);
 
-        ParameterNode<InnerClass*> a(tree);
-        FieldPointerNode<InnerClass, unsigned __int64> b(tree, a, &InnerClass::m_b);
-        Indirect<unsigned __int64> c(tree, b, 0);
-        ReturnNode<unsigned __int64> d(tree, c);
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Parameter<InnerClass*>();
+        auto & b = factory.FieldPointer(a, &InnerClass::m_b);
+        auto & c = factory.Deref(b);
+
+        factory.Return(c);
 
         tree.Compile();
     }
@@ -103,11 +104,15 @@ namespace NativeJIT
         X64CodeGenerator code(std::cout);
         ExpressionTree tree(code);
 
-        ParameterNode<OuterClass*> a(tree);
-        FieldPointerNode<OuterClass, InnerClass> b(tree, a, &OuterClass::m_innerEmbedded);
-        FieldPointerNode<InnerClass, unsigned __int64> c(tree, b, &InnerClass::m_b);
-        Indirect<unsigned __int64> d(tree, c, 0);
-        ReturnNode<unsigned __int64> e(tree, d);
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Parameter<OuterClass*>();
+        auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
+        auto & c = factory.FieldPointer(b, &InnerClass::m_b);
+        auto & d = factory.Deref(c);
+
+        factory.Return(d);
 
         tree.Compile();
     }
@@ -118,12 +123,15 @@ namespace NativeJIT
         X64CodeGenerator code(std::cout);
         ExpressionTree tree(code);
 
-        ParameterNode<unsigned __int64> a(tree);
-//        ImmediateNode<unsigned __int64> b(tree, 1234ULL);
-        ParameterNode<unsigned __int64*> bptr(tree);
-        Indirect<unsigned __int64> b(tree, bptr, 0);
-        BinaryNode<unsigned __int64, unsigned __int64> c(tree, "add", a, b);
-        ReturnNode<unsigned __int64> d(tree, c);
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Parameter<unsigned __int64>();
+        auto & b = factory.Parameter<unsigned __int64*>();
+        auto & c = factory.Deref(b);
+        auto & d = factory.Add(a, c);
+
+        factory.Return(d);
 
         tree.Compile();
     }
@@ -136,10 +144,6 @@ namespace NativeJIT
 
         Allocator allocator(10000);
         ExpressionNodeFactory factory(allocator, tree);
-
-        //auto & a = factory.Immediate(1234ull);
-        //auto & b = factory.Parameter<unsigned __int64*>();
-        //factory.Return(b);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);

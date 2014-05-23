@@ -21,17 +21,19 @@ x Implement BinaryNode operation.
 
 RXX sizes 1, 2, 4
   Need to deal with the fact that only a subset of all registers are valid.
-  Need to deal with register size casting problem in Indirect<T>::CodeGenValue where base register is reused for result.
+  Need to deal with register size casting problem in IndirectNode<T>::CodeGenValue where base register is reused for result.
   May want to try to collapse the Register templates if possible. Two issues:
     Printing register names. This can be handled with an array of array of char*.
     Excluding certain registers (e.g. RSI cannot by 1-byte). Need to verify this limitation.
   Cast operators.
   May want to reserve RAX for assisting in code generation (e.g loading a byte into RSI).
 XMM registers
-  Need to deal with register size casting problem in Indirect<T>::CodeGenValue where base register is reused for result.
+  Need to deal with register size casting problem in IndirectNode<T>::CodeGenValue where base register is reused for result.
 
 Is return node required to sign-extend values with byte sizes 1, 2, and 4?
 Does indirect load of 1-byte impact other bytes in register?
+
+Support for more than 4 parameters. (or at least assert)
 
 RegisterFile should exclude certain machine-specific registerrs (e.g. RSP).
 x ExpressionTree::GetAvailableRegisterCount needs to handle all types of registers.
@@ -70,6 +72,6 @@ Rename FieldPointer.h ==> FieldPointerNode.h
 Rename Parameter.h ==> ParameterNode.h
 Rename Return.h ==> ReturnNode.h
 Rename other node classes
-Are Deref and Indirect always the same? (or does Factory::FieldPointer() sometimes need to create Indirect?
+Are Deref and IndirectNode always the same? (or does Factory::FieldPointer() sometimes need to create Indirect?
 
 */

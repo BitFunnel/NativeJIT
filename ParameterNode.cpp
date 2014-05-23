@@ -3,7 +3,7 @@
 #include <iostream>     // TODO: Delete this file after removing all references to std::cout.
 
 #include "ExpressionTree.h"
-#include "Parameter.h"              // TODO: Rename to ParameterNode.h
+#include "ParameterNode.h"
 
 
 namespace NativeJIT

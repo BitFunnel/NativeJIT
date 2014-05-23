@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Allocator.h"
-#include "Binary.h"                 // TODO: Rename to BinaryNode.h
-#include "FieldPointer.h"           // TODO: Rename to FieldPointerNode.h
-#include "Immediate.h"              // TODO: Rename to ImmediateNode.h
-#include "Indirect.h"
-#include "Parameter.h"              // TODO: Rename to ParameterNode.h
+#include "BinaryNode.h"
+#include "FieldPointerNode.h"
+#include "ImmediateNode.h"
+#include "IndirectNode.h"
+#include "ParameterNode.h"
 #include "Node.h"
-#include "Return.h"                 // TODO: Rename to ReturnNode.h
+#include "ReturnNode.h"
 
 
 namespace Allocators
@@ -87,7 +87,7 @@ namespace NativeJIT
     template <typename T>
     Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer)
     {
-        return * new (m_allocator.Allocate(sizeof(Indirect<T>))) Indirect<T>(m_tree, pointer, 0);
+        return * new (m_allocator.Allocate(sizeof(IndirectNode<T>))) IndirectNode<T>(m_tree, pointer, 0);
     }
 
 
