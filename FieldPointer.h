@@ -144,7 +144,7 @@ namespace NativeJIT
     template <typename OBJECT, typename FIELD>
     unsigned __int64 FieldPointerNode<OBJECT, FIELD>::GetOffset() const
     {
-        return m_offset;
+        return m_offset + m_base.GetOffset();
     }
 
 

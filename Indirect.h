@@ -53,8 +53,17 @@ namespace NativeJIT
     template <typename T>
     typename Indirect<T>::BaseRegisterType Indirect<T>::CodeGenBase(ExpressionTree& tree)
     {
-        BaseRegisterType r = m_base.CodeGenValue(tree);
-        return r;
+        if (m_base.IsFieldPointer())
+        {
+            auto & base = reinterpret_cast<FieldPointerBase<T>&>(m_base);
+            auto r = base.CodeGenBase(tree);
+            return r;
+        }
+        else
+        {
+            BaseRegisterType r = m_base.CodeGenValue(tree);
+            return r;
+        }
     }
 
 
@@ -99,7 +108,7 @@ namespace NativeJIT
     template <typename T>
     unsigned __int64 Indirect<T>::GetOffset() const
     {
-        return m_offset + m_base.GetOffset();
+        return m_offset;
     }
 
 

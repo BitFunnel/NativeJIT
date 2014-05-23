@@ -70,4 +70,25 @@ namespace NativeJIT
 
         tree.Compile();
     }
+
+
+    void JITExample2()
+    {
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(code);
+
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & arrayOfA = factory.Parameter<A*>();
+        auto & f = factory.FieldPointer(arrayOfA, &A::m_embeddedObject);
+        auto & g = factory.FieldPointer(f, &B::m_objectPointer);
+        auto & h = factory.Deref(g);
+        auto & i = factory.FieldPointer(h, &C::m_y);
+        auto & j = factory.Deref(i);
+
+        factory.Return(j);
+
+        tree.Compile();
+    }
 }
