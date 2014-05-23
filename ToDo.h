@@ -19,6 +19,29 @@ x        // release r9
 
 x Implement BinaryNode operation.
 
+FlagExpressionNode
+    (a relop b)?THEN:ELSE
+    (bool)?THEN:ELSE
+    (a && b && !c)?THEN:ELSE
+
+    Equals
+    NotEquals
+    GT
+    GTE
+    LT
+    LTE
+    &&  ==> (a)?b:FALSE
+    || ==> (!a)?b:TRUE
+    !
+
+    Option I
+      All nodes are flag expression nodes and implement CodeGenFlags()
+    Option II
+      One must use a cast node to convert value nodes to flags nodes
+      Flag nodes can still have a CodeGenValue method
+    Option III
+      Somehow find a way to specialize generic nodes so that the bool typed variants are also Flag nodes.
+
 RXX sizes 1, 2, 4
   Need to deal with the fact that only a subset of all registers are valid.
   Need to deal with register size casting problem in IndirectNode<T>::CodeGenValue where base register is reused for result.
@@ -67,11 +90,11 @@ Call node
 
 Sequence node - like C++ comma operator.
 
-Rename Immediate.h ==> ImmediateNode.h
-Rename FieldPointer.h ==> FieldPointerNode.h
-Rename Parameter.h ==> ParameterNode.h
-Rename Return.h ==> ReturnNode.h
-Rename other node classes
+x Rename Immediate.h ==> ImmediateNode.h
+x Rename FieldPointer.h ==> FieldPointerNode.h
+x Rename Parameter.h ==> ParameterNode.h
+x Rename Return.h ==> ReturnNode.h
+x Rename other node classes
 Are Deref and IndirectNode always the same? (or does Factory::FieldPointer() sometimes need to create Indirect?
 
 */

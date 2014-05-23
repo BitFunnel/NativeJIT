@@ -213,8 +213,8 @@ namespace NativeJIT
 //        TestBinary();
 //        TestFactory();
 //        TestArray();
-        TestByte();
-//        JITExample1();
+//        TestByte();
+        JITExample1();
     }
 }
 

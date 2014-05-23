@@ -133,23 +133,23 @@ namespace NativeJIT
         Prologue();
         Pass1();
         Pass2();
-        Print();
+//        Print();
         Pass3();
         Epilogue();
-        Print();
+//        Print();
     }
 
 
     void ExpressionTree::Prologue()
     {
         std::cout << "Prologue ..." << std::endl;
-        std::cout << "NOT IMPLEMENTED" << std::endl;
+        std::cout << "  NOT IMPLEMENTED" << std::endl;
     }
 
 
     void ExpressionTree::Pass1()
     {
-        std::cout << "=== Pass1 ===" << std::endl;
+//        std::cout << "=== Pass1 ===" << std::endl;
 
         // Reserve registers use to pass in parameters.
         for (unsigned i = 0 ; i < m_parameters.size(); ++i)
@@ -173,7 +173,7 @@ namespace NativeJIT
 
     void ExpressionTree::Pass2()
     {
-        std::cout << "=== Pass2 ===" << std::endl;
+//        std::cout << "=== Pass2 ===" << std::endl;
 
         for (unsigned i = 0 ; i < m_topologicalSort.size(); ++i)
         {
@@ -191,7 +191,7 @@ namespace NativeJIT
 
     void ExpressionTree::Pass3()
     {
-        std::cout << "=== Pass3 ===" << std::endl;
+//        std::cout << "=== Pass3 ===" << std::endl;
 
         NodeBase& root = *m_topologicalSort.back();
 
@@ -205,6 +205,6 @@ namespace NativeJIT
     void ExpressionTree::Epilogue()
     {
         std::cout << "Epilogue ..." << std::endl;
-        std::cout << "NOT IMPLEMENTED" << std::endl;
+        std::cout << "  NOT IMPLEMENTED" << std::endl;
     }
 }
