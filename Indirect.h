@@ -81,8 +81,6 @@ namespace NativeJIT
 
             if (IsBaseRegisterCached())
             {
-                //RegisterType dest;
-                //tree.AllocateRegister(dest);
                 RegisterType dest = tree.AllocateRegister<RegisterType>();
                 tree.GetCodeGenerator().Op("mov", dest, base, m_offset + offset);
                 return dest;

@@ -57,6 +57,18 @@
     <ClInclude Include="Binary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IAllocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Allocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionNodeFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Examples.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -75,6 +87,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Parameter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionNodeFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Examples.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

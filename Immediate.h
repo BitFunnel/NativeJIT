@@ -6,10 +6,10 @@
 namespace NativeJIT
 {
     template <typename T>
-    class Immediate : public Node<T>
+    class ImmediateNode : public Node<T>
     {
     public:
-        Immediate(ExpressionTree& tree, T value);
+        ImmediateNode(ExpressionTree& tree, T value);
 
         T GetValue() const;
 
@@ -37,7 +37,7 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <typename T>
-    Immediate<T>::Immediate(ExpressionTree& tree,
+    ImmediateNode<T>::ImmediateNode(ExpressionTree& tree,
                          T value)
         : Node(tree),
           m_value(value)
@@ -46,16 +46,16 @@ namespace NativeJIT
 
 
     template <typename T>
-    T Immediate<T>::GetValue() const
+    T ImmediateNode<T>::GetValue() const
     {
         return m_value;
     }
 
 
     template <typename T>
-    void Immediate<T>::Print() const
+    void ImmediateNode<T>::Print() const
     {
-        std::cout << "Immediate id=" << GetId();
+        std::cout << "ImmediateNode id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", value = " << m_value;
         std::cout << ", ";
@@ -64,21 +64,21 @@ namespace NativeJIT
 
 
     template <typename T>
-    bool Immediate<T>::IsIndirect() const
+    bool ImmediateNode<T>::IsIndirect() const
     {
         return false;
     }
 
 
     template <typename T>
-    bool Immediate<T>::IsImmediate() const
+    bool ImmediateNode<T>::IsImmediate() const
     {
         return true;
     }
 
 
     template <typename T>
-    typename Node<T>::RegisterType Immediate<T>::CodeGenValue(ExpressionTree& tree)
+    typename Node<T>::RegisterType ImmediateNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         // TODO: Should we ever cache immediate values?
         if (IsCached())

@@ -23,10 +23,10 @@ namespace NativeJIT
 
 
     template <typename T>
-    class Parameter : public DirectValue<T>, ParameterBase
+    class ParameterNode : public DirectValue<T>, ParameterBase
     {
     public:
-        Parameter(ExpressionTree& tree);
+        ParameterNode(ExpressionTree& tree);
 
         //
         // Overrides of Node methods.
@@ -44,7 +44,7 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template definitions for Parameter
+    // Template definitions for ParameterNode
     //
     //*************************************************************************
     template <unsigned SIZE, bool ISFLOAT>
@@ -78,7 +78,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Parameter<T>::Parameter(ExpressionTree& tree)
+    ParameterNode<T>::ParameterNode(ExpressionTree& tree)
         : DirectValue(tree),
           ParameterBase(tree)
     {
@@ -86,7 +86,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Node<T>::RegisterType Parameter<T>::CodeGenValue(ExpressionTree& /*tree*/)
+    typename Node<T>::RegisterType ParameterNode<T>::CodeGenValue(ExpressionTree& /*tree*/)
     {
         Assert(IsCached(), "Must assign register before attempting code generation.");
 
@@ -98,9 +98,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Parameter<T>::Print() const
+    void ParameterNode<T>::Print() const
     {
-        std::cout << "Parameter id=" << GetId();
+        std::cout << "ParameterNode id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", position = " << GetPosition();
         std::cout << ", ";
@@ -109,7 +109,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Parameter<T>::ReserveRegister(RegisterFile& registers)
+    void ParameterNode<T>::ReserveRegister(RegisterFile& registers)
     {
         RegisterType r;
         GetParameterRegister(GetPosition(), r);

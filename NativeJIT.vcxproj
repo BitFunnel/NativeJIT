@@ -76,10 +76,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Allocator.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="Binary.h" />
+    <ClInclude Include="Examples.h" />
+    <ClInclude Include="ExpressionNodeFactory.h" />
     <ClInclude Include="ExpressionTree.h" />
     <ClInclude Include="FieldPointer.h" />
+    <ClInclude Include="IAllocator.h" />
     <ClInclude Include="Immediate.h" />
     <ClInclude Include="Indirect.h" />
     <ClInclude Include="Node.h" />
@@ -92,6 +96,9 @@
     <ClInclude Include="X64CodeGenerator.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Allocator.cpp" />
+    <ClCompile Include="Examples.cpp" />
+    <ClCompile Include="ExpressionNodeFactory.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />

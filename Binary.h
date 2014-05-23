@@ -6,10 +6,10 @@
 namespace NativeJIT
 {
     template <typename L, typename R>
-    class Binary : public Node<L>
+    class BinaryNode : public Node<L>
     {
     public:
-        Binary(ExpressionTree& tree, char const* operation, Node<L>& left, Node<L>& right);
+        BinaryNode(ExpressionTree& tree, char const* operation, Node<L>& left, Node<R>& right);
 
         virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
         virtual bool IsIndirect() const override;
@@ -28,14 +28,14 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template definitions for Binary
+    // Template definitions for BinaryNode
     //
     //*************************************************************************
     template <typename L, typename R>
-    Binary<L, R>::Binary(ExpressionTree& tree,
-                         char const* operation,
-                         Node<L>& left,
-                         Node<L>& right)
+    BinaryNode<L, R>::BinaryNode(ExpressionTree& tree,
+                                 char const* operation,
+                                 Node<L>& left,
+                                 Node<R>& right)
         : Node(tree),
           m_operation(operation),
           m_left(left),
@@ -47,7 +47,7 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    typename Binary<L, R>::RegisterType Binary<L, R>::CodeGenValue(ExpressionTree& tree)
+    typename BinaryNode<L, R>::RegisterType BinaryNode<L, R>::CodeGenValue(ExpressionTree& tree)
     {
         if (IsCached())
         {
@@ -65,7 +65,7 @@ namespace NativeJIT
             }
 
             // op r, x
-            Immediate<R> const & right = static_cast<Immediate<R> const &>(m_right);
+            ImmediateNode<R> const & right = static_cast<ImmediateNode<R> const &>(m_right);
             tree.GetCodeGenerator().Op(m_operation, r, right.GetValue());
 
             return r;
@@ -170,21 +170,21 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    bool Binary<L, R>::IsIndirect() const
+    bool BinaryNode<L, R>::IsIndirect() const
     {
         return false;
     }
 
 
     template <typename L, typename R>
-    bool Binary<L, R>::IsImmediate() const
+    bool BinaryNode<L, R>::IsImmediate() const
     {
-        return true;
+        return false;
     }
 
 
     template <typename L, typename R>
-    unsigned Binary<L, R>::LabelSubtree(bool isLeftChild)
+    unsigned BinaryNode<L, R>::LabelSubtree(bool isLeftChild)
     {
         unsigned left = m_left.LabelSubtree(true);
         unsigned right = m_right.LabelSubtree(false);
@@ -197,7 +197,7 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    void Binary<L, R>::Print() const
+    void BinaryNode<L, R>::Print() const
     {
         std::cout << "Operation (" << m_operation << ") id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
@@ -209,7 +209,7 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    unsigned Binary<L, R>::ComputeRegisterCount(unsigned left, unsigned right)
+    unsigned BinaryNode<L, R>::ComputeRegisterCount(unsigned left, unsigned right)
     {
 
         if (left > right)

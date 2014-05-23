@@ -20,10 +20,10 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    class FieldPointer : public FieldPointerBase<FIELD>
+    class FieldPointerNode : public FieldPointerBase<FIELD>
     {
     public:
-        FieldPointer(ExpressionTree& treem, Node<OBJECT*>& base, FIELD OBJECT::*field);
+        FieldPointerNode(ExpressionTree& treem, Node<OBJECT*>& base, FIELD OBJECT::*field);
 
         bool IsBaseRegisterCached() const;
 
@@ -77,11 +77,11 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template definitions for FieldPointer
+    // Template definitions for FieldPointerNode
     //
     //*************************************************************************
     template <typename OBJECT, typename FIELD>
-    FieldPointer<OBJECT, FIELD>::FieldPointer(ExpressionTree& tree,
+    FieldPointerNode<OBJECT, FIELD>::FieldPointerNode(ExpressionTree& tree,
                                               Node<OBJECT*>& base,
                                               FIELD OBJECT::*field)
         : FieldPointerBase(tree),
@@ -93,14 +93,14 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    bool FieldPointer<OBJECT, FIELD>::IsBaseRegisterCached() const
+    bool FieldPointerNode<OBJECT, FIELD>::IsBaseRegisterCached() const
     {
         return m_base.IsCached();
     }
 
 
     template <typename OBJECT, typename FIELD>
-    typename FieldPointer<OBJECT, FIELD>::BaseRegisterType FieldPointer<OBJECT, FIELD>::CodeGenBase(ExpressionTree& tree)
+    typename FieldPointerNode<OBJECT, FIELD>::BaseRegisterType FieldPointerNode<OBJECT, FIELD>::CodeGenBase(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
@@ -116,7 +116,7 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    typename FieldPointer<OBJECT, FIELD>::RegisterType FieldPointer<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
+    typename FieldPointerNode<OBJECT, FIELD>::RegisterType FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
         if (IsCached())
         {
@@ -142,28 +142,28 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    unsigned __int64 FieldPointer<OBJECT, FIELD>::GetOffset() const
+    unsigned __int64 FieldPointerNode<OBJECT, FIELD>::GetOffset() const
     {
         return m_offset;
     }
 
 
     template <typename OBJECT, typename FIELD>
-    bool FieldPointer<OBJECT, FIELD>::IsImmediate() const
+    bool FieldPointerNode<OBJECT, FIELD>::IsImmediate() const
     {
         return false;
     }
 
 
     template <typename OBJECT, typename FIELD>
-    bool FieldPointer<OBJECT, FIELD>::IsIndirect() const
+    bool FieldPointerNode<OBJECT, FIELD>::IsIndirect() const
     {
         return false;
     }
 
 
     template <typename OBJECT, typename FIELD>
-    unsigned FieldPointer<OBJECT, FIELD>::LabelSubtree(bool isLeftChild)
+    unsigned FieldPointerNode<OBJECT, FIELD>::LabelSubtree(bool isLeftChild)
     {
         // TODO: Should isLeftChild be passed down?
         SetRegisterCount(m_base.LabelSubtree(true));
@@ -172,9 +172,9 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    void FieldPointer<OBJECT, FIELD>::Print() const
+    void FieldPointerNode<OBJECT, FIELD>::Print() const
     {
-        std::cout << "FieldPointer id=" << GetId();
+        std::cout << "FieldPointerNode id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", offset = " << m_offset;
         std::cout << ", ";

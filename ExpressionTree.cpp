@@ -3,7 +3,7 @@
 #include <iostream>     // TODO: Delete this file after removing all references to std::cout.
 
 #include "ExpressionTree.h"
-#include "Parameter.h"
+#include "Parameter.h"              // TODO: Rename to ParameterNode.h
 #include "Node.h"
 #include "X64CodeGenerator.h"
 
@@ -133,6 +133,7 @@ namespace NativeJIT
         Prologue();
         Pass1();
         Pass2();
+        Print();
         Pass3();
         Epilogue();
         Print();

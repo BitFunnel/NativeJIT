@@ -3,7 +3,7 @@
 #include <iostream>     // TODO: Delete this file after removing all references to std::cout.
 
 #include "ExpressionTree.h"
-#include "Parameter.h"
+#include "Parameter.h"              // TODO: Rename to ParameterNode.h
 
 
 namespace NativeJIT
@@ -22,6 +22,6 @@ namespace NativeJIT
 
     void ParameterBase::PrintParameter() const
     {
-        std::cout << "Parameter " << m_position << std::endl;
+        std::cout << "ParameterNode " << m_position << std::endl;
     }
 }

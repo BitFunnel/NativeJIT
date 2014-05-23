@@ -6,10 +6,10 @@
 namespace NativeJIT
 {
     template <typename T>
-    class Return : public DirectValue<T>
+    class ReturnNode : public DirectValue<T>
     {
     public:
-        Return(ExpressionTree& tree, Node<T>& child);
+        ReturnNode(ExpressionTree& tree, Node<T>& child);
 
         //
         // Overrides of Node methods.
@@ -26,11 +26,11 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template definitions for Return
+    // Template definitions for ReturnNode
     //
     //*************************************************************************
     template <typename T>
-    Return<T>::Return(ExpressionTree& tree,
+    ReturnNode<T>::ReturnNode(ExpressionTree& tree,
                      Node& child)
         : DirectValue(tree),
           m_child(child)
@@ -40,9 +40,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Node<T>::RegisterType Return<T>::CodeGenValue(ExpressionTree& tree)
+    typename Node<T>::RegisterType ReturnNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        // TODO: Prevent Return node from ever having a parent and being cached.
+        // TODO: Prevent ReturnNode node from ever having a parent and being cached.
         if (IsCached())
         {
             RegisterType r = GetCacheRegister();
@@ -57,7 +57,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Return<T>::CompileAsRoot(ExpressionTree& tree)
+    void ReturnNode<T>::CompileAsRoot(ExpressionTree& tree)
     {
         RegisterType r = CodeGenValue(tree);
 
@@ -75,7 +75,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned Return<T>::LabelSubtree(bool isLeftChild)
+    unsigned ReturnNode<T>::LabelSubtree(bool isLeftChild)
     {
         unsigned child = m_child.LabelSubtree(true);
 
@@ -87,9 +87,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Return<T>::Print() const
+    void ReturnNode<T>::Print() const
     {
-        std::cout << "Return id=" << GetId();
+        std::cout << "ReturnNode id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", ";
         PrintRegisterAndCacheInfo();
