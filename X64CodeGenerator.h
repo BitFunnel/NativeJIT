@@ -7,6 +7,18 @@
 
 namespace NativeJIT
 {
+    class Label
+    {
+    public:
+        Label(unsigned id);
+
+        unsigned GetId() const;
+
+    private:
+        unsigned m_id;
+    };
+
+
     class X64CodeGenerator
     {
     public:
@@ -14,6 +26,15 @@ namespace NativeJIT
 
         unsigned GetRXXCount() const;
         unsigned GetXMMCount() const;
+
+        Label AllocateLabel();
+        void PlaceLabel(Label l);
+
+
+        void Jmp(Label l);
+        void Jz(Label l);
+
+        void Nop();
 
 
         void Op(char const* op);
@@ -64,8 +85,12 @@ namespace NativeJIT
 
 
     private:
+        void Indent();
+
         static const unsigned c_rxxRegisterCount = 16;
         static const unsigned c_xmmRegisterCount = 16;
+
+        unsigned m_labelCount;
 
         std::ostream& m_out;
     };

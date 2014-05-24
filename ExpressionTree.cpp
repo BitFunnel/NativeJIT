@@ -133,7 +133,7 @@ namespace NativeJIT
         Prologue();
         Pass1();
         Pass2();
-//        Print();
+        Print();
         Pass3();
         Epilogue();
 //        Print();

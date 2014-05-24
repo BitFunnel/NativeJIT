@@ -79,6 +79,7 @@
     <ClInclude Include="Allocator.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="BinaryNode.h" />
+    <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
     <ClInclude Include="ExpressionNodeFactory.h" />
     <ClInclude Include="ExpressionTree.h" />
@@ -97,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocator.cpp" />
+    <ClCompile Include="ConditionalNode.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />

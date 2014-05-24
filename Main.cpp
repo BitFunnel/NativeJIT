@@ -9,6 +9,8 @@
 #include "X64CodeGenerator.h"
 
 
+#include "ConditionalNode.h"
+
 namespace NativeJIT
 {
     void TestRegisters()
@@ -203,6 +205,37 @@ namespace NativeJIT
     }
 
 
+    void TestLabel()
+    {
+        X64CodeGenerator code(std::cout);
+
+        Label l1 = code.AllocateLabel();
+        code.PlaceLabel(l1);
+    }
+
+
+    void TestConditional()
+    {
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(code);
+
+        Allocator allocator(10000);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Immediate(5ull);
+        auto & b = factory.Immediate(6ull);
+
+        auto & c = factory.Immediate(12345ull);
+        IsTrue<unsigned __int64> d(tree, c);
+
+        ConditionalNode<unsigned __int64> x(tree, d, a, b);
+
+        factory.Return(x);
+
+        tree.Compile();
+    }
+
+
     void RunTests()
     {
 //        TestRegisters();
@@ -214,7 +247,9 @@ namespace NativeJIT
 //        TestFactory();
 //        TestArray();
 //        TestByte();
-        JITExample1();
+//        TestLabel();
+        TestConditional();
+//        JITExample1();
     }
 }
 

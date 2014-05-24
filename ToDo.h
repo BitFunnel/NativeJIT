@@ -19,6 +19,9 @@ x        // release r9
 
 x Implement BinaryNode operation.
 
+Carefully check register allocation and labelling in ConditionalNode.h.
+operator==() for Register.
+
 FlagExpressionNode
     (a relop b)?THEN:ELSE
     (bool)?THEN:ELSE
