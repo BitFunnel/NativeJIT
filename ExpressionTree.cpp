@@ -171,6 +171,14 @@ namespace NativeJIT
     }
 
 
+    //
+    // TODO: NOTE: With the addition of conditional nodes, the common
+    // subexpression (CSE) code is now inefficient because some CSEs
+    // may not need to be evaluated. Consider, for example
+    //   (v == 1)? a : ((v == 2) ? a + b : b + c)
+    // Depending on the value of v, either a or c may not need to be
+    // evaluated. Should probably lazily evaluate CSEs as they are needed.
+    //
     void ExpressionTree::Pass2()
     {
 //        std::cout << "=== Pass2 ===" << std::endl;

@@ -5,8 +5,4 @@
 
 namespace NativeJIT
 {
-    FlagExpressionNode::FlagExpressionNode(ExpressionTree& tree)
-        : Node(tree)
-    {
-    }
 }

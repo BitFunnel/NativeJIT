@@ -6,6 +6,22 @@
 
 namespace NativeJIT
 {
+    char const * JccName(JccType jcc)
+    {
+        static char const * names[] = {
+            "ja", "jna",
+            "jb", "jnb",
+            "jg", "jng",
+            "jl", "jnl",
+            "jz", "jnz"
+        };
+
+        Assert(static_cast<unsigned>(jcc)  < sizeof(names)/sizeof(char const*), "Invalid JCC");
+
+        return names[static_cast<unsigned>(jcc)];
+    }
+
+
     //*************************************************************************
     //
     // Label
@@ -66,10 +82,10 @@ namespace NativeJIT
     }
 
 
-    void X64CodeGenerator::Jz(Label l)
+    void X64CodeGenerator::Jcc(JccType jcc, Label l)
     {
         Indent();
-        m_out << "jz L" << l.GetId() << std::endl;
+        m_out << JccName(jcc) << " L" << l.GetId() << std::endl;
     }
 
 

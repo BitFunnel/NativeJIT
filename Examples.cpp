@@ -72,7 +72,7 @@ namespace NativeJIT
     }
 
 
-    void JITExample2()
+    void ConditionalExample()
     {
         X64CodeGenerator code(std::cout);
         ExpressionTree tree(code);
@@ -80,14 +80,12 @@ namespace NativeJIT
         Allocator allocator(10000);
         ExpressionNodeFactory factory(allocator, tree);
 
-        auto & arrayOfA = factory.Parameter<A*>();
-        auto & f = factory.FieldPointer(arrayOfA, &A::m_embeddedObject);
-        auto & g = factory.FieldPointer(f, &B::m_objectPointer);
-        auto & h = factory.Deref(g);
-        auto & i = factory.FieldPointer(h, &C::m_y);
-        auto & j = factory.Deref(i);
+        auto & a = factory.Immediate(5ull);
+        auto & b = factory.Immediate(6ull);
+        auto & c = factory.GreaterThan(a, b);
+        auto & d = factory.Conditional(c, a, b);
 
-        factory.Return(j);
+        factory.Return(d);
 
         tree.Compile();
     }

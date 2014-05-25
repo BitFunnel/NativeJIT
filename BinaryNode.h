@@ -51,13 +51,13 @@ namespace NativeJIT
     {
         if (IsCached())
         {
-            RegisterType r = GetCacheRegister();
+            auto r = GetCacheRegister();
             ReleaseCache();
             return r;
         }
         else if (m_right.IsImmediate() && !m_right.IsCached())
         {
-            RegisterType r = m_left.CodeGenValue(tree);
+            auto r = m_left.CodeGenValue(tree);
 
             if (m_left.IsCached())
             {
@@ -72,7 +72,7 @@ namespace NativeJIT
         }
         else if (m_right.IsIndirect() && !m_right.IsCached())
         {
-            RegisterType r = m_left.CodeGenValue(tree);
+            auto r = m_left.CodeGenValue(tree);
 
             if (m_left.IsCached())
             {
@@ -212,7 +212,6 @@ namespace NativeJIT
     template <typename L, typename R>
     unsigned BinaryNode<L, R>::ComputeRegisterCount(unsigned left, unsigned right)
     {
-
         if (left > right)
         {
             return left;

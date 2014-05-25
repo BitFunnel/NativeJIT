@@ -2,6 +2,7 @@
 
 #include "Allocator.h"
 #include "BinaryNode.h"
+#include "ConditionalNode.h"
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
@@ -41,13 +42,26 @@ namespace NativeJIT
 
 
         //
-        // BinaryNode operators
+        // Binary arithmetic operators
         //
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
 
         template <typename T> Node<T*>& Add(Node<T*>& array, Node<unsigned __int64>& index);
+
+
+        //
+        // Relational operators
+        //
+        template <typename T> FlagExpressionNode<JccType::JG>& GreaterThan(Node<T>& left, Node<T>& right);
+
+
+        //
+        // Conditional operator
+        //
+        template <typename T, JccType JCC>
+        Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
 
     private:
         template <typename L, typename R> Node<L>& Binary(char const* operation, Node<L>& left, Node<R>& right);
@@ -106,7 +120,7 @@ namespace NativeJIT
 
 
     //
-    // BinaryNode operators
+    // Binary arithmetic operators
     //
     template <typename L, typename R>
     Node<L>& ExpressionNodeFactory::Add(Node<L>& left, Node<R>& right)
@@ -129,6 +143,31 @@ namespace NativeJIT
         auto & offset = Mul(index, size);
         return Binary("add", array, offset);
     }
+
+
+    //
+    // Relational operators
+    //
+    template <typename T>
+    FlagExpressionNode<JccType::JG>& ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
+    {
+        typedef RelationalOperatorNode<T, JccType::JG> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType))) NodeType(m_tree, left, right);
+    }
+
+
+    //
+    // Conditional operator
+    //
+    template <typename T, JccType JCC>
+    Node<T>& ExpressionNodeFactory::Conditional(FlagExpressionNode<JCC>& condition,
+                                                Node<T>& left,
+                                                Node<T>& right)
+    {
+        typedef ConditionalNode<T, JCC> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType))) NodeType(m_tree, condition, left, right);
+    }
+
 
 
     //

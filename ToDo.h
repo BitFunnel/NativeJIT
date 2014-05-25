@@ -19,8 +19,30 @@ x        // release r9
 
 x Implement BinaryNode operation.
 
+When CastNode is added, IsTrue should be made into a CastNode.
+
+Conditional introduce a new requirement on the evaluation of common subexpressions.
+  It is possible that a common subexpression need never be evaluated. Consider
+    if (version == 0)
+      a;
+    else if (version == 1)
+      a + b;
+    else
+      b + c;
+  In one case, a will not need to be evaluated and in another case, c will not need
+  to be evaluated.
+  Recommend lazily evaluating CSEs, instead of evaluating them all first.
+
+Is there some opportunity for code reuse between IsTrue<T> and RelationalOperator<T, JCC>
+  Simply approach would be to define IsTrue<T> as RelationalOperatorNode<T, JNZ> with Immediate(0).
+  Perhaps factoring out base classes would allow the more efficient or-operation in IsTrue<> while
+  retaining the cmp-operation in RelationalOperatorNode.
+
+Is there some opportunity for code reuse between BinaryNode::CodeGenValue and RelationalOperatorNode::CodeGenFlags()?
+High duplication between RelationalOperatorNode<T, JCC>::CodeGenValue() and IsTrue<T>::CodeGenValue().
+
+
 Carefully check register allocation and labelling in ConditionalNode.h.
-operator==() for Register.
 
 FlagExpressionNode
     (a relop b)?THEN:ELSE
@@ -45,6 +67,11 @@ FlagExpressionNode
     Option III
       Somehow find a way to specialize generic nodes so that the bool typed variants are also Flag nodes.
 
+Is there some way to reduce code duplication between BinaryNode::CodeGenValue() and RelationalOperatorNode::CodeGenFlags()?
+Reduce code duplication around IsCached() case in all the implementations of CodeGenValue().
+
+operator==() for Register.
+Register needs to be templated by signed/unsigned (ISSIGNED)
 RXX sizes 1, 2, 4
   Need to deal with the fact that only a subset of all registers are valid.
   Need to deal with register size casting problem in IndirectNode<T>::CodeGenValue where base register is reused for result.
@@ -53,15 +80,16 @@ RXX sizes 1, 2, 4
     Excluding certain registers (e.g. RSI cannot by 1-byte). Need to verify this limitation.
   Cast operators.
   May want to reserve RAX for assisting in code generation (e.g loading a byte into RSI).
+  Registers need to be sign aware.
 XMM registers
   Need to deal with register size casting problem in IndirectNode<T>::CodeGenValue where base register is reused for result.
+RegisterFile should exclude certain machine-specific registerrs (e.g. RSP).
 
 Is return node required to sign-extend values with byte sizes 1, 2, and 4?
 Does indirect load of 1-byte impact other bytes in register?
 
 Support for more than 4 parameters. (or at least assert)
 
-RegisterFile should exclude certain machine-specific registerrs (e.g. RSP).
 x ExpressionTree::GetAvailableRegisterCount needs to handle all types of registers.
 x Implement and use ExpressionTree::ReleaseRegister()
 x Use templates to simplify implementation of ExpressionTree::AllocateRegister().

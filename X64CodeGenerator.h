@@ -2,6 +2,7 @@
 
 #include <ostream>
 
+#include "Assert.h"
 #include "Register.h"
 
 
@@ -19,6 +20,23 @@ namespace NativeJIT
     };
 
 
+    // WARNING: When modifying JccType, be sure to also modify the function JccName().
+    enum class JccType : unsigned
+    {
+        JA,
+        JNA,
+        JB,
+        JNB,
+        JG,
+        JNG,
+        JL,
+        JNL,
+        JZ,
+        JNZ
+    };
+
+    char const * JccName(JccType jcc);
+
     class X64CodeGenerator
     {
     public:
@@ -32,7 +50,8 @@ namespace NativeJIT
 
 
         void Jmp(Label l);
-        void Jz(Label l);
+        void Jcc(JccType type, Label l);
+//        void Jz(Label l);
 
         void Nop();
 

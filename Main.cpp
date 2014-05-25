@@ -228,9 +228,10 @@ namespace NativeJIT
         auto & c = factory.Immediate(12345ull);
         IsTrue<unsigned __int64> d(tree, c);
 
-        ConditionalNode<unsigned __int64> x(tree, d, a, b);
+        auto & e = factory.GreaterThan(a, b);
+        auto & f = factory.Conditional(e, a, b);
 
-        factory.Return(x);
+        factory.Return(f);
 
         tree.Compile();
     }
@@ -248,10 +249,12 @@ namespace NativeJIT
 //        TestArray();
 //        TestByte();
 //        TestLabel();
-        TestConditional();
+//        TestConditional();
 //        JITExample1();
+        ConditionalExample();
     }
 }
+
 
 int _tmain(int argc, char* argv[])
 {
