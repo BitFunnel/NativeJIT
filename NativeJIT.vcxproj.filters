@@ -72,6 +72,9 @@
     <ClInclude Include="ConditionalNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Storage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

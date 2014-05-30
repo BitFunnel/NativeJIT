@@ -19,8 +19,22 @@ x        // release r9
 
 x Implement BinaryNode operation.
 
+RegisterFile: naming for reserved/available is reversed from bit values.
+Ensure that base pointer is reserved correctly.
+  Assert if a parameter maps to base.
+  Prevent base from being added to free list.
+  Initialize base correctly in prologue.
+Ensure the RSP is reserved correctly.
+  Above items.
+  Also, IsBasePointer() should include StackPointer as well. Rename to IsReserved?
+
+Add XMM registers to available list.
+
 When CastNode is added, IsTrue should be made into a CastNode.
 
+Cannot spill registers that are used to hold cached CSE values.
+
+Cached conditionals need some way to recreate the correct flags or to use a different flag.
 Conditional introduce a new requirement on the evaluation of common subexpressions.
   It is possible that a common subexpression need never be evaluated. Consider
     if (version == 0)

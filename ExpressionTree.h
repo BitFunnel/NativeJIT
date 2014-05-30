@@ -5,6 +5,12 @@
 #include "Register.h"
 
 
+namespace Allocators
+{
+    class IAllocator;
+}
+
+
 namespace NativeJIT
 {
     class NodeBase;
@@ -40,7 +46,9 @@ namespace NativeJIT
     class ExpressionTree
     {
     public:
-        ExpressionTree(X64CodeGenerator& code);
+        ExpressionTree(Allocators::IAllocator& allocator, X64CodeGenerator& code);
+
+        Allocators::IAllocator& GetAllocator() const;
 
         unsigned AddNode(NodeBase& node);
         unsigned AddParameter(ParameterBase& parameter);
@@ -63,14 +71,22 @@ namespace NativeJIT
 
         X64CodeGenerator& GetCodeGenerator() const;
 
+        template <unsigned SIZE, bool ISFLOAT>
+        bool IsBasePointer(Register<SIZE, ISFLOAT> r) const;
+
         void Print() const;
         void Compile();
 
-    private:
-        void Prologue();
-
+        // TEMPORARY FOR DEBUGGING
         // Assigns registers to parameters.
         void Pass1();
+    private:
+        void SetBasePointer(Register<sizeof(void*), false> r);
+
+        void Prologue();
+
+        //// Assigns registers to parameters.
+        //void Pass1();
 
         // Generates code that evaluates common subexpressions into registers.
         void Pass2();
@@ -91,6 +107,7 @@ namespace NativeJIT
         unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
 
 
+        Allocators::IAllocator& m_allocator;
         X64CodeGenerator& m_code;
 
         std::vector<NodeBase*> m_topologicalSort;
@@ -100,6 +117,9 @@ namespace NativeJIT
 
         std::vector<unsigned> m_rxxRegisters;
         std::vector<unsigned> m_xmmRegisters;
+
+        Register<8, false> m_stackPointer;
+        Register<8, false> m_basePointer;
     };
 
 
@@ -205,5 +225,12 @@ namespace NativeJIT
         // TODO: Verify that this register isn't already free.
 
         m_xmmRegisters.push_back(r.GetId());
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    bool ExpressionTree::IsBasePointer(Register<SIZE, ISFLOAT> r) const
+    {
+        return !ISFLOAT && SIZE == sizeof(void*) && r.GetId() == m_basePointer.GetId();
     }
 }

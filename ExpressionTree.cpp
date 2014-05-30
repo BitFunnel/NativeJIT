@@ -53,10 +53,19 @@ namespace NativeJIT
     // ExpressionTree
     //
     //*************************************************************************
-    ExpressionTree::ExpressionTree(X64CodeGenerator& code)
-        : m_code(code),
-          m_parameterRegisters(code.GetRXXCount(), code.GetXMMCount())
+    ExpressionTree::ExpressionTree(Allocators::IAllocator& allocator, X64CodeGenerator& code)
+        : m_allocator(allocator),
+          m_code(code),
+          m_parameterRegisters(code.GetRXXCount(), code.GetXMMCount()),
+          m_basePointer(Register<sizeof(void*), false>(4)),     // TODO: Magic number RBP
+          m_stackPointer(Register<sizeof(void*), false>(7))     // TODO: Magic number RSP
     {
+    }
+
+
+    Allocators::IAllocator& ExpressionTree::GetAllocator() const
+    {
+        return m_allocator;
     }
 
 
@@ -83,6 +92,12 @@ namespace NativeJIT
     X64CodeGenerator& ExpressionTree::GetCodeGenerator() const
     {
         return m_code;
+    }
+
+
+    void ExpressionTree::SetBasePointer(Register<sizeof(void*), false> r)
+    {
+        m_basePointer = r;
     }
 
 
@@ -144,6 +159,8 @@ namespace NativeJIT
     {
         std::cout << "Prologue ..." << std::endl;
         std::cout << "  NOT IMPLEMENTED" << std::endl;
+
+        m_code.Op("mov", m_basePointer, m_stackPointer);
     }
 
 
@@ -162,11 +179,18 @@ namespace NativeJIT
         unsigned registers = m_parameterRegisters.GetReservedRXX();
         for (unsigned i = 0; i < m_parameterRegisters.GetRXXRegisterCount(); ++i)
         {
-            if ((registers & 1) == 1)
+            if ((registers & 1) == 1 && i != m_basePointer.GetId() && i != m_stackPointer.GetId())
             {
                 m_rxxRegisters.push_back(i);
             }
             registers >>= 1;
+        }
+
+
+        // TODO: TEMPORARY CODE FOR DEBUGGING.
+        for (unsigned i = 0; i < 16; ++i)
+        {
+            m_xmmRegisters.push_back(i);
         }
     }
 
