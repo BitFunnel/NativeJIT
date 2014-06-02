@@ -11,7 +11,7 @@ namespace NativeJIT
     public:
         BinaryNode(ExpressionTree& tree, char const* operation, Node<L>& left, Node<R>& right);
 
-        virtual Storage<L> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -46,57 +46,48 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    typename Storage<L> BinaryNode<L, R>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<L> BinaryNode<L, R>::CodeGenValue(ExpressionTree& tree)
     {
-        if (IsCached2())
+        unsigned l = m_left.GetRegisterCount();
+        unsigned r = m_right.GetRegisterCount();
+        unsigned a = tree.GetAvailableRegisterCount<RegisterType>();
+
+        if (r <= l && r < a)
         {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
+            // Evaluate left first. Once evaluation completes, left will use one register,
+            // leaving at least a-1 registers for right.
+            auto sLeft = m_left.CodeGen(tree);
+            sLeft.ConvertToValue(tree, true);
+            auto sRight = m_right.CodeGen(tree);
+
+            tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
+            return sLeft;
+        }
+        else if (l < r && l < a)
+        {
+            // Evaluate right first. Once evaluation completes, right will use one register,
+            // leaving at least a-1 registers for left.
+            auto sRight = m_right.CodeGen(tree);
+            auto sLeft = m_left.CodeGen(tree);
+            sLeft.ConvertToValue(tree, true);
+
+            tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
+            return sLeft;
         }
         else
         {
-            unsigned l = m_left.GetRegisterCount();
-            unsigned r = m_right.GetRegisterCount();
-            unsigned a = tree.GetAvailableRegisterCount<RegisterType>();
+            // The smaller of l and r is greater than a, therefore
+            // both l and r are greater than a. Since there are not
+            // enough registers available, need to spill to memory.
+            auto sRight = m_right.CodeGen(tree);
+            sRight.Spill(tree);
 
-            if (r <= l && r < a)
-            {
-                // Evaluate left first. Once evaluation completes, left will use one register,
-                // leaving at least a-1 registers for right.
-                auto sLeft = m_left.CodeGenValue2(tree);
-                sLeft.ConvertToValue(tree, true);
-                auto sRight = m_right.CodeGenValue2(tree);
+            auto sLeft = m_left.CodeGen(tree);
+            sLeft.ConvertToValue(tree, true);
 
-                tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
-                return sLeft;
-            }
-            else if (l < r && l < a)
-            {
-                // Evaluate right first. Once evaluation completes, right will use one register,
-                // leaving at least a-1 registers for left.
-                auto sRight = m_right.CodeGenValue2(tree);
-                auto sLeft = m_left.CodeGenValue2(tree);
-                sLeft.ConvertToValue(tree, true);
+            tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
 
-                tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
-                return sLeft;
-            }
-            else
-            {
-                // The smaller of l and r is greater than a, therefore
-                // both l and r are greater than a. Since there are not
-                // enough registers available, need to spill to memory.
-                auto sRight = m_right.CodeGenValue2(tree);
-                sRight.Spill(tree);
-
-                auto sLeft = m_left.CodeGenValue2(tree);
-                sLeft.ConvertToValue(tree, true);
-
-                tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
-
-                return sLeft;
-            }
+            return sLeft;
         }
     }
 

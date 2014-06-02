@@ -29,7 +29,7 @@ Implement getters for Data. Move functionality from Storage getters.
 
 IsTrue should become the cast node.
 
-IndirectNode<T>::CodeGenValue2() needs to convert base into value without releasing the base register.
+IndirectNode<T>::CodeGenValue() needs to convert base into value without releasing the base register.
   In other words the base.GetDirectRegister() needs to transferred to value's base register.
 Implement ExpressionTree::ReleaseTemporary()
 Storage<T>::.ConvertToValue should return DirectRegister.

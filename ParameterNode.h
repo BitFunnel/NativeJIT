@@ -31,7 +31,7 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
         virtual void Print() const override;
 
@@ -87,12 +87,12 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> ParameterNode<T>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        Assert(IsCached2(), "Must assign register before attempting code generation.");
+        Assert(IsCached(), "Must assign register before attempting code generation.");
 
-        auto result = GetCache2();
-        ReleaseCache2();
+        auto result = GetCache();
+        ReleaseCache();
         return result;
     }
 
@@ -114,6 +114,6 @@ namespace NativeJIT
         RegisterType r;
         GetParameterRegister(GetPosition(), r);
         registers.ReserveRegister(r);
-        SetCache2(Storage<T>(tree, r));
+        SetCache(Storage<T>(tree, r));
     }
 }

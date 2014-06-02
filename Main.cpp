@@ -317,7 +317,7 @@ namespace NativeJIT
     {
 //        TestConditional();
         JITExample1();
-        ConditionalExample();
+//        ConditionalExample();
 
 //        TestRegisters();
 //        TestOperations();

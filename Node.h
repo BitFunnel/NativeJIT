@@ -31,7 +31,7 @@ namespace NativeJIT
         //
 
         virtual void CodeGenCache(ExpressionTree& tree) = 0;
-        virtual bool IsCached2() const = 0;
+        virtual bool IsCached() const = 0;
         virtual unsigned LabelSubtree(bool isLeftChild) = 0;
         virtual void Print() const = 0;
 
@@ -52,20 +52,21 @@ namespace NativeJIT
 
         Node(ExpressionTree& tree);
 
-        void SetCache2(Storage<T> s);
-        Storage<T> GetCache2();
-        void ReleaseCache2();
+        void SetCache(Storage<T> s);
+        Storage<T> GetCache();
+        void ReleaseCache();
 
         unsigned GetRegisterCount() const;
 
-        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) = 0;
+        Storage<T> CodeGen(ExpressionTree& tree);
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
 
         //
         // Overrides of NodeBase methods.
         //
 
         virtual void CodeGenCache(ExpressionTree& tree) override;
-        virtual bool IsCached2() const override;
+        virtual bool IsCached() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
 
     protected:
@@ -98,9 +99,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Node<T>::SetCache2(Storage<T> s)
+    void Node<T>::SetCache(Storage<T> s)
     {
-        Assert(!IsCached2(), "Cache register is already set.");
+        Assert(!IsCached(), "Cache register is already set.");
 
         m_cacheReferenceCount = m_parentCount;
         m_cache = s;
@@ -108,16 +109,16 @@ namespace NativeJIT
 
 
     template <typename T>
-    Storage<T> Node<T>::GetCache2()
+    Storage<T> Node<T>::GetCache()
     {
         return m_cache;
     }
 
 
     template <typename T>
-    void Node<T>::ReleaseCache2()
+    void Node<T>::ReleaseCache()
     {
-        Assert(IsCached2(), "Cache register has not been set.");
+        Assert(IsCached(), "Cache register has not been set.");
 
         --m_cacheReferenceCount;
         if (m_cacheReferenceCount == 0)
@@ -128,7 +129,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    bool Node<T>::IsCached2() const
+    bool Node<T>::IsCached() const
     {
         return !m_cache.IsNull();
     }
@@ -141,7 +142,7 @@ namespace NativeJIT
         std::cout << "register count = " << m_registerCount;
         std::cout << ", ";
 
-        if (IsCached2())
+        if (IsCached())
         {
             std::cout << "cached in " << m_cache.GetDirectRegister().GetName();
         }
@@ -156,8 +157,7 @@ namespace NativeJIT
     void Node<T>::CodeGenCache(ExpressionTree& tree)
     {
         LabelSubtree(true);
-        //SetCacheRegister(CodeGenValue(tree));
-        SetCache2(CodeGenValue2(tree));
+        SetCache(CodeGenValue(tree));
     }
 
 
@@ -188,13 +188,29 @@ namespace NativeJIT
     template <typename T>
     void Node<T>::SetRegisterCount(unsigned count)
     {
-        if (IsCached2())
+        if (IsCached())
         {
             m_registerCount = 0;
         }
         else
         {
             m_registerCount = count;
+        }
+    }
+
+
+    template <typename T>
+    typename Storage<T> Node<T>::CodeGen(ExpressionTree& tree)
+    {
+        if (IsCached())
+        {
+            auto result = GetCache();
+            ReleaseCache();
+            return result;
+        }
+        else
+        {
+            return CodeGenValue(tree);
         }
     }
 }

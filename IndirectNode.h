@@ -13,14 +13,13 @@ namespace NativeJIT
 
         IndirectNode(ExpressionTree& tree, Node<T*>& base, unsigned __int64 offset);
 
-        Storage<T*> CodeGenBase2(ExpressionTree& tree);
-        bool IsBaseRegisterCached() const;
+        Storage<T*> CodeGenBase(ExpressionTree& tree);
 
         //
         // Overrides of Node methods.
         //
 
-        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned __int64 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -49,46 +48,29 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T*> IndirectNode<T>::CodeGenBase2(ExpressionTree& tree)
+    typename Storage<T*> IndirectNode<T>::CodeGenBase(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
             auto & base = reinterpret_cast<FieldPointerBase<T>&>(m_base);
-            return base.CodeGenBase2(tree);
+            return base.CodeGenBase(tree);
         }
         else
         {
-            return m_base.CodeGenValue2(tree);
+            return m_base.CodeGenValue(tree);
         }
     }
 
 
     template <typename T>
-    bool IndirectNode<T>::IsBaseRegisterCached() const
+    typename Storage<T> IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        return m_base.IsCached();
-    }
+        auto& base = CodeGenBase(tree);
+        unsigned __int64 offset = m_base.GetOffset();
 
+        Storage<T> value(tree, base, m_offset + offset);
 
-    template <typename T>
-    typename Storage<T> IndirectNode<T>::CodeGenValue2(ExpressionTree& tree)
-    {
-        if (IsCached2())
-        {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
-        }
-        else
-        {
-            auto& base = CodeGenBase2(tree);
-            unsigned __int64 offset = m_base.GetOffset();
-
-            Storage<T> value(tree, base, m_offset + offset);
-            //value.ConvertToValue(tree, true);
-
-            return value;
-        }
+        return value;
     }
 
 

@@ -22,7 +22,7 @@ namespace NativeJIT
         //
         // Overrrides of ValueNode methods
         //
-        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
     private:
         T m_value;
@@ -62,7 +62,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> ImmediateNode<T>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<T> ImmediateNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         return Storage<T>(tree, m_value);
     }

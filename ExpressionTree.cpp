@@ -233,7 +233,7 @@ namespace NativeJIT
 
             // Assert(parentCount of zero legal only for last node);
 
-            if (node.GetParentCount() > 1 && !node.IsCached2())
+            if (node.GetParentCount() > 1 && !node.IsCached())
             {
                 node.CodeGenCache(*this);
             }

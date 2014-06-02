@@ -15,7 +15,7 @@ namespace NativeJIT
 
         virtual bool IsFieldPointer() const override;
 
-        virtual Storage<FIELD*> CodeGenBase2(ExpressionTree& tree) = 0;
+        virtual Storage<FIELD*> CodeGenBase(ExpressionTree& tree) = 0;
     };
 
 
@@ -25,19 +25,17 @@ namespace NativeJIT
     public:
         FieldPointerNode(ExpressionTree& treem, Node<OBJECT*>& base, FIELD OBJECT::*field);
 
-        bool IsBaseRegisterCached() const;
-
         //
         // Overrides of FieldPointerBase methods
         //
 
-        virtual Storage<FIELD*> CodeGenBase2(ExpressionTree& tree) override;
+        virtual Storage<FIELD*> CodeGenBase(ExpressionTree& tree) override;
 
         //
         // Overrides of Node methods
         //
 
-        virtual Storage<FIELD*> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<FIELD*> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned __int64 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -91,47 +89,31 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    bool FieldPointerNode<OBJECT, FIELD>::IsBaseRegisterCached() const
-    {
-        return m_base.IsCached();
-    }
-
-
-    template <typename OBJECT, typename FIELD>
-    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenBase2(ExpressionTree& tree)
+    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenBase(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
             auto & base = reinterpret_cast<FieldPointerBase<FIELD>&>(m_base);
-            return base.CodeGenBase2(tree);
+            return base.CodeGenBase(tree);
         }
         else
         {
-            auto & base = m_base.CodeGenValue2(tree);
+            auto & base = m_base.CodeGen(tree);
             return Storage<FIELD*>(tree, base);
         }
     }
 
 
     template <typename OBJECT, typename FIELD>
-    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
-        if (IsCached2())
-        {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
-        }
-        else
-        {
-            auto& base = CodeGenBase2(tree);
-            unsigned __int64 offset = m_base.GetOffset();
+        auto& base = CodeGenBase(tree);
+        unsigned __int64 offset = m_base.GetOffset();
 
-            base.ConvertToValue(tree, true);
-            tree.GetCodeGenerator().Op("add", base.GetDirectRegister(), m_offset + offset);
+        base.ConvertToValue(tree, true);
+        tree.GetCodeGenerator().Op("add", base.GetDirectRegister(), m_offset + offset);
 
-            return base;
-        }
+        return base;
     }
 
 

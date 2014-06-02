@@ -200,8 +200,7 @@ namespace NativeJIT
 
         // Transfer ownership of datablock to this Storage.
         SetData(base.m_data->ConvertToIndirect(base.m_data->m_registerId, offset));
-
-        base.m_data = nullptr;
+        base.Reset();
     }
 
 

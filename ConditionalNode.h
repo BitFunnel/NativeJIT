@@ -39,7 +39,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
 
     private:
@@ -67,7 +67,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual Storage<bool> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<bool> CodeGenValue(ExpressionTree& tree) override;
 
 
         //
@@ -99,7 +99,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual Storage<bool> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<bool> CodeGenValue(ExpressionTree& tree) override;
 
 
         //
@@ -185,48 +185,39 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    typename Storage<T> ConditionalNode<T, JCC>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<T> ConditionalNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
     {
-        if (IsCached2())
+        m_condition.CodeGenFlags(tree);
+
+        X64CodeGenerator& code = tree.GetCodeGenerator();
+        Label l1 = code.AllocateLabel();
+        code.Jcc(JCC, l1);
+
+        auto trueValue = m_trueExpression.CodeGen(tree);
+        trueValue.ConvertToValue(tree, true);
+        auto rTrue = trueValue.GetDirectRegister();
+
+        Label l2 = code.AllocateLabel();
+        code.Jmp(l2);
+
+        code.PlaceLabel(l1);
+
+        auto falseValue = m_falseExpression.CodeGen(tree);
+        falseValue.ConvertToValue(tree, false);
+        auto rFalse = falseValue.GetDirectRegister();
+
+        // TODO: Use Register::operator==()
+        if (rTrue.GetId() != rFalse.GetId())
         {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
+            // TODO: Do we always need to move the value?
+            // In the case of caching, r2 may not be equal to r.
+            // TODO: unit test for this case
+            code.Op("mov", rTrue, rFalse);
         }
-        else
-        {
-            m_condition.CodeGenFlags(tree);
 
-            X64CodeGenerator& code = tree.GetCodeGenerator();
-            Label l1 = code.AllocateLabel();
-            code.Jcc(JCC, l1);
+        code.PlaceLabel(l2);
 
-            auto trueValue = m_trueExpression.CodeGenValue2(tree);
-            trueValue.ConvertToValue(tree, true);
-            auto rTrue = trueValue.GetDirectRegister();
-
-            Label l2 = code.AllocateLabel();
-            code.Jmp(l2);
-
-            code.PlaceLabel(l1);
-
-            auto falseValue = m_falseExpression.CodeGenValue2(tree);
-            falseValue.ConvertToValue(tree, false);
-            auto rFalse = falseValue.GetDirectRegister();
-
-            // TODO: Use Register::operator==()
-            if (rTrue.GetId() != rFalse.GetId())
-            {
-                // TODO: Do we always need to move the value?
-                // In the case of caching, r2 may not be equal to r.
-                // TODO: unit test for this case
-                code.Op("mov", rTrue, rFalse);
-            }
-
-            code.PlaceLabel(l2);
-
-            return trueValue;
-        }
+        return trueValue;
     }
 
 
@@ -264,35 +255,26 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<bool> IsTrue<T>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<bool> IsTrue<T>::CodeGenValue(ExpressionTree& tree)
     {
-        if (IsCached2())
-        {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
-        }
-        else
-        {
-            X64CodeGenerator& code = tree.GetCodeGenerator();
+        X64CodeGenerator& code = tree.GetCodeGenerator();
 
-            CodeGenFlags(tree);
+        CodeGenFlags(tree);
 
-            Label l1 = code.AllocateLabel();
-            code.Jcc(JccType::JZ, l1);
+        Label l1 = code.AllocateLabel();
+        code.Jcc(JccType::JZ, l1);
 
-            RegisterType r = tree.AllocateRegister<RegisterType>();
-            code.Op("mov", r, 1);
+        RegisterType r = tree.AllocateRegister<RegisterType>();
+        code.Op("mov", r, 1);
 
-            Label l2 = code.AllocateLabel();
-            code.Jmp(l2);
-            code.PlaceLabel(l1);
+        Label l2 = code.AllocateLabel();
+        code.Jmp(l2);
+        code.PlaceLabel(l1);
 
-            code.Op("mov", r, 1);
-            code.PlaceLabel(l2);
+        code.Op("mov", r, 1);
+        code.PlaceLabel(l2);
 
-            return Storage<bool>(tree, r);
-        }
+        return Storage<bool>(tree, r);
     }
 
 
@@ -301,16 +283,16 @@ namespace NativeJIT
     {
         X64CodeGenerator& code = tree.GetCodeGenerator();
 
-        if (IsCached2())
+        if (IsCached())
         {
-            auto value = GetCache2();
-            ReleaseCache2();
+            auto value = GetCache();
+            ReleaseCache();
             auto r = value.GetDirectRegister();
             code.Op("or", r, r);
         }
         else
         {
-            auto value = m_value.CodeGenValue2(tree);
+            auto value = m_value.CodeGenValue(tree);
             value.ConvertToValue(tree, false);
             auto r = value.GetDirectRegister();
 
@@ -361,45 +343,36 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    typename Storage<bool> RelationalOperatorNode<T, JCC>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<bool> RelationalOperatorNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
     {
-        if (IsCached2())
-        {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
-        }
-        else
-        {
-            X64CodeGenerator& code = tree.GetCodeGenerator();
+        X64CodeGenerator& code = tree.GetCodeGenerator();
 
-            CodeGenFlags(tree);
+        CodeGenFlags(tree);
 
-            Label l1 = code.AllocateLabel();
-            code.Jcc(JccType::JZ, l1);
+        Label l1 = code.AllocateLabel();
+        code.Jcc(JccType::JZ, l1);
 
-            RegisterType r = tree.AllocateRegister<RegisterType>();
-            code.Op("mov", r, 1);
+        RegisterType r = tree.AllocateRegister<RegisterType>();
+        code.Op("mov", r, 1);
 
-            Label l2 = code.AllocateLabel();
-            code.Jmp(l2);
-            code.PlaceLabel(l1);
+        Label l2 = code.AllocateLabel();
+        code.Jmp(l2);
+        code.PlaceLabel(l1);
 
-            code.Op("mov", r, 1);
-            code.PlaceLabel(l2);
+        code.Op("mov", r, 1);
+        code.PlaceLabel(l2);
 
-            return Storage<bool>(tree, r);
-        }
+        return Storage<bool>(tree, r);
     }
 
 
     template <typename T, JccType JCC>
     void RelationalOperatorNode<T, JCC>::CodeGenFlags(ExpressionTree& tree)
     {
-        if (IsCached2())
+        if (IsCached())
         {
-            auto result = GetCache2();
-            ReleaseCache2();
+            auto result = GetCache();
+            ReleaseCache();
 
             // TODO: This code is wrong - need to set the correct JCC - not just the zero flag.
             // TODO: For this opcode to work, result must be direct. Might consider putting flags check into storage.
@@ -417,9 +390,9 @@ namespace NativeJIT
             {
                 // Evaluate left first. Once evaluation completes, left will use one register,
                 // leaving at least a-1 registers for right.
-                auto sLeft = m_left.CodeGenValue2(tree);
+                auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
-                auto sRight = m_right.CodeGenValue2(tree);
+                auto sRight = m_right.CodeGen(tree);
 
                 tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
             }
@@ -427,8 +400,8 @@ namespace NativeJIT
             {
                 // Evaluate right first. Once evaluation completes, right will use one register,
                 // leaving at least a-1 registers for left.
-                auto sRight = m_right.CodeGenValue2(tree);
-                auto sLeft = m_left.CodeGenValue2(tree);
+                auto sRight = m_right.CodeGen(tree);
+                auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
 
                 tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
@@ -438,10 +411,10 @@ namespace NativeJIT
                 // The smaller of l and r is greater than a, therefore
                 // both l and r are greater than a. Since there are not
                 // enough registers available, need to spill to memory.
-                auto sRight = m_right.CodeGenValue2(tree);
+                auto sRight = m_right.CodeGen(tree);
                 sRight.Spill(tree);
 
-                auto sLeft = m_left.CodeGenValue2(tree);
+                auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
 
                 tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);

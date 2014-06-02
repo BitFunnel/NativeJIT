@@ -14,7 +14,7 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
         virtual void CompileAsRoot(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -40,26 +40,17 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> ReturnNode<T>::CodeGenValue2(ExpressionTree& tree)
+    typename Storage<T> ReturnNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         // TODO: Prevent ReturnNode node from ever having a parent and being cached.
-        if (IsCached2())
-        {
-            auto result = GetCache2();
-            ReleaseCache2();
-            return result;
-        }
-        else
-        {
-            return m_child.CodeGenValue2(tree);
-        }
+        return m_child.CodeGen(tree);
     }
 
 
     template <typename T>
     void ReturnNode<T>::CompileAsRoot(ExpressionTree& tree)
     {
-        Storage<T> s = CodeGenValue2(tree);
+        Storage<T> s = CodeGen(tree);
         s.ConvertToValue(tree, false);
         auto r = s.GetDirectRegister();
 
