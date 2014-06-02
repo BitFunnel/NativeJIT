@@ -81,16 +81,13 @@ namespace NativeJIT
         void Print() const;
         void Compile();
 
-        // TEMPORARY FOR DEBUGGING
-        // Assigns registers to parameters.
-        void Pass1();
     private:
         void SetBasePointer(Register<sizeof(void*), false> r);
 
         void Prologue();
 
-        //// Assigns registers to parameters.
-        //void Pass1();
+        // Assigns registers to parameters.
+        void Pass1();
 
         // Generates code that evaluates common subexpressions into registers.
         void Pass2();
@@ -126,6 +123,7 @@ namespace NativeJIT
         Register<8, false> m_basePointer;
 
         unsigned m_temporaryCount;
+        std::vector<size_t> m_temporaries;
     };
 
 

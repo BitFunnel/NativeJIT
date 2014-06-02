@@ -238,39 +238,39 @@ namespace NativeJIT
     }
 
 
-    void TestStorage()
-    {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
-
+//    void TestStorage()
+//    {
+//        Allocator allocator(10000);
+//        X64CodeGenerator code(std::cout);
+//        ExpressionTree tree(allocator, code);
+//        ExpressionNodeFactory factory(allocator, tree);
+//
+////        tree.Pass1();
+//////        auto r = tree.AllocateRegister<Register<8, false>>();
+////
+////        {
+////            //Storage<unsigned __int64> x(tree, r, 1234ull);
+////            auto x = GetStorage<unsigned __int64>(tree);
+////
+////            {
+////                auto y = x;
+////
+////                {
+////                    auto z(y);
+////                }
+////            }
+////        }
+//
 //        tree.Pass1();
-////        auto r = tree.AllocateRegister<Register<8, false>>();
+//        auto r = tree.AllocateRegister<Register<8, false>>();
+////        Storage<unsigned __int64> x(tree, r, 1234ull);
+//        Storage<double> x(tree, r, 1234ull);
 //
-//        {
-//            //Storage<unsigned __int64> x(tree, r, 1234ull);
-//            auto x = GetStorage<unsigned __int64>(tree);
+//        //auto y = x;
 //
-//            {
-//                auto y = x;
-//
-//                {
-//                    auto z(y);
-//                }
-//            }
-//        }
-
-        tree.Pass1();
-        auto r = tree.AllocateRegister<Register<8, false>>();
-//        Storage<unsigned __int64> x(tree, r, 1234ull);
-        Storage<double> x(tree, r, 1234ull);
-
-        //auto y = x;
-
-        x.ConvertToValue(tree, false);
-        x.ConvertToValue(tree, true);
-    }
+//        x.ConvertToValue(tree, false);
+//        x.ConvertToValue(tree, true);
+//    }
 
 
     void TestStorageIntegration()

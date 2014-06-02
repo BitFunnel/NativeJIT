@@ -104,14 +104,25 @@ namespace NativeJIT
 
     size_t ExpressionTree::AllocateTemporary()
     {
-        return m_temporaryCount++ * sizeof(void*);
+        size_t temp;
+
+        if (m_temporaries.size() > 0)
+        {
+            temp = m_temporaries.back();
+            m_temporaries.pop_back();
+        }
+        else
+        {
+            temp = m_temporaryCount++;
+        }
+
+        return temp * sizeof(void*);
     }
 
 
     void ExpressionTree::ReleaseTemporary(size_t offset)
     {
-        // TODO: Implement.
-//        return m_temporaryCount++ * sizeof(void*);
+        m_temporaries.push_back(offset / sizeof(void*));
     }
 
 
@@ -159,6 +170,10 @@ namespace NativeJIT
             registers >>= 1;
             std::cout << std::endl;
         }
+
+        std::cout << "Temporaries used: " << m_temporaryCount << std::endl;
+        std::cout << "Temporaries still in use: " << m_temporaryCount - m_temporaries.size() << std::endl;
+
         std::cout << std::endl;
     }
 
@@ -171,7 +186,7 @@ namespace NativeJIT
         Print();
         Pass3();
         Epilogue();
-//        Print();
+        Print();
     }
 
 
@@ -198,6 +213,8 @@ namespace NativeJIT
         // Populate m_rxxRegisters with those registers not used by parameters.
         unsigned registers = m_parameterRegisters.GetReservedRXX();
         for (unsigned i = 0; i < m_parameterRegisters.GetRXXRegisterCount(); ++i)
+// Use this version to test register spilling.
+//        for (unsigned i = 0; i < 1; ++i)
         {
             if ((registers & 1) == 1 && i != m_basePointer.GetId() && i != m_stackPointer.GetId())
             {
