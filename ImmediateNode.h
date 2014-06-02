@@ -17,14 +17,12 @@ namespace NativeJIT
         // Overrides of Node methods
         //
         virtual void Print() const override;
-        virtual bool IsIndirect() const override;
-        virtual bool IsImmediate() const override;
 
 
         //
         // Overrrides of ValueNode methods
         //
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
 
     private:
         T m_value;
@@ -64,35 +62,8 @@ namespace NativeJIT
 
 
     template <typename T>
-    bool ImmediateNode<T>::IsIndirect() const
+    typename Storage<T> ImmediateNode<T>::CodeGenValue2(ExpressionTree& tree)
     {
-        return false;
-    }
-
-
-    template <typename T>
-    bool ImmediateNode<T>::IsImmediate() const
-    {
-        return true;
-    }
-
-
-    template <typename T>
-    typename Node<T>::RegisterType ImmediateNode<T>::CodeGenValue(ExpressionTree& tree)
-    {
-        // TODO: Should we ever cache immediate values?
-        if (IsCached())
-        {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
-        }
-        else
-        {
-            RegisterType r;
-            tree.AllocateRegister<RegisterType>();
-            tree.GetCodeGenerator().Op("mov", r, m_value);
-            return r;
-        }
+        return Storage<T>(tree, m_value);
     }
 }

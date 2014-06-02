@@ -6,7 +6,7 @@
 namespace NativeJIT
 {
     template <typename T>
-    class ReturnNode : public DirectValue<T>
+    class ReturnNode : public Node<T>
     {
     public:
         ReturnNode(ExpressionTree& tree, Node<T>& child);
@@ -14,7 +14,7 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
         virtual void CompileAsRoot(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -31,8 +31,8 @@ namespace NativeJIT
     //*************************************************************************
     template <typename T>
     ReturnNode<T>::ReturnNode(ExpressionTree& tree,
-                     Node& child)
-        : DirectValue(tree),
+                              Node& child)
+        : Node(tree),
           m_child(child)
     {
         child.IncrementParentCount();
@@ -40,18 +40,18 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Node<T>::RegisterType ReturnNode<T>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<T> ReturnNode<T>::CodeGenValue2(ExpressionTree& tree)
     {
         // TODO: Prevent ReturnNode node from ever having a parent and being cached.
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
+            auto result = GetCache2();
+            ReleaseCache2();
+            return result;
         }
         else
         {
-            return m_child.CodeGenValue(tree);
+            return m_child.CodeGenValue2(tree);
         }
     }
 
@@ -59,18 +59,17 @@ namespace NativeJIT
     template <typename T>
     void ReturnNode<T>::CompileAsRoot(ExpressionTree& tree)
     {
-        RegisterType r = CodeGenValue(tree);
+        Storage<T> s = CodeGenValue2(tree);
+        s.ConvertToValue(tree, false);
+        auto r = s.GetDirectRegister();
 
-        RegisterType result = r;
         if (r.GetId() != 0)
         {
-            result = RegisterType(0);
-            tree.GetCodeGenerator().Op("mov", result, r);
+            auto dest = RegisterType(0);
+            tree.GetCodeGenerator().Op("mov", dest, r);
         }
 
         tree.GetCodeGenerator().Op("ret");
-
-        tree.ReleaseRegister(r);
     }
 
 

@@ -32,8 +32,6 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual bool IsImmediate() const override;
-        virtual bool IsIndirect() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -41,7 +39,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
 
 
     private:
@@ -62,8 +60,6 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual bool IsImmediate() const override;
-        virtual bool IsIndirect() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -71,7 +67,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<bool> CodeGenValue2(ExpressionTree& tree) override;
 
 
         //
@@ -96,8 +92,6 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual bool IsImmediate() const override;
-        virtual bool IsIndirect() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -105,7 +99,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<bool> CodeGenValue2(ExpressionTree& tree) override;
 
 
         //
@@ -163,20 +157,6 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    bool ConditionalNode<T, JCC>::IsImmediate() const
-    {
-        return false;
-    }
-
-
-    template <typename T, JccType JCC>
-    bool ConditionalNode<T, JCC>::IsIndirect() const
-    {
-        return false;
-    }
-
-
-    template <typename T, JccType JCC>
     unsigned ConditionalNode<T, JCC>::LabelSubtree(bool isLeftChild)
     {
         unsigned condition = m_condition.LabelSubtree(true);
@@ -205,13 +185,13 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    typename Node<T>::RegisterType ConditionalNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<T> ConditionalNode<T, JCC>::CodeGenValue2(ExpressionTree& tree)
     {
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
+            auto result = GetCache2();
+            ReleaseCache2();
+            return result;
         }
         else
         {
@@ -221,30 +201,31 @@ namespace NativeJIT
             Label l1 = code.AllocateLabel();
             code.Jcc(JCC, l1);
 
-            RegisterType r = m_trueExpression.CodeGenValue(tree);
-            if (m_trueExpression.IsCached())
-            {
-                r = tree.CopyRegister(r);
-            }
+            auto trueValue = m_trueExpression.CodeGenValue2(tree);
+            trueValue.ConvertToValue(tree, true);
+            auto rTrue = trueValue.GetDirectRegister();
 
             Label l2 = code.AllocateLabel();
             code.Jmp(l2);
 
             code.PlaceLabel(l1);
 
-            RegisterType r2 = m_falseExpression.CodeGenValue(tree);
+            auto falseValue = m_falseExpression.CodeGenValue2(tree);
+            falseValue.ConvertToValue(tree, false);
+            auto rFalse = falseValue.GetDirectRegister();
+
             // TODO: Use Register::operator==()
-            if (r2.GetId() != r.GetId())
+            if (rTrue.GetId() != rFalse.GetId())
             {
                 // TODO: Do we always need to move the value?
                 // In the case of caching, r2 may not be equal to r.
                 // TODO: unit test for this case
-                code.Op("mov", r, r2);
+                code.Op("mov", rTrue, rFalse);
             }
 
             code.PlaceLabel(l2);
 
-            return r;
+            return trueValue;
         }
     }
 
@@ -259,20 +240,6 @@ namespace NativeJIT
         : FlagExpressionNode(tree),
           m_value(value)
     {
-    }
-
-
-    template <typename T>
-    bool IsTrue<T>::IsImmediate() const
-    {
-        return false;
-    }
-
-
-    template <typename T>
-    bool IsTrue<T>::IsIndirect() const
-    {
-        return false;
     }
 
 
@@ -297,13 +264,13 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename FlagExpressionNode<JccType::JZ>::RegisterType IsTrue<T>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<bool> IsTrue<T>::CodeGenValue2(ExpressionTree& tree)
     {
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
+            auto result = GetCache2();
+            ReleaseCache2();
+            return result;
         }
         else
         {
@@ -324,7 +291,7 @@ namespace NativeJIT
             code.Op("mov", r, 1);
             code.PlaceLabel(l2);
 
-            return r;
+            return Storage<bool>(tree, r);
         }
     }
 
@@ -334,23 +301,20 @@ namespace NativeJIT
     {
         X64CodeGenerator& code = tree.GetCodeGenerator();
 
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
+            auto value = GetCache2();
+            ReleaseCache2();
+            auto r = value.GetDirectRegister();
             code.Op("or", r, r);
         }
         else
         {
-            // TODO: This Register copy constructor doesn't work with double.
-            Node<T>::RegisterType r = m_value.CodeGenValue(tree);
+            auto value = m_value.CodeGenValue2(tree);
+            value.ConvertToValue(tree, false);
+            auto r = value.GetDirectRegister();
 
             code.Op("or", r, r);
-
-            if (!m_value.IsCached())
-            {
-                tree.ReleaseRegister(r);
-            }
         }
     }
 
@@ -368,20 +332,6 @@ namespace NativeJIT
           m_left(left),
           m_right(right)
     {
-    }
-
-
-    template <typename T, JccType JCC>
-    bool RelationalOperatorNode<T, JCC>::IsImmediate() const
-    {
-        return false;
-    }
-
-
-    template <typename T, JccType JCC>
-    bool RelationalOperatorNode<T, JCC>::IsIndirect() const
-    {
-        return false;
     }
 
 
@@ -411,14 +361,13 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    typename RelationalOperatorNode<T, JCC>::RegisterType RelationalOperatorNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<bool> RelationalOperatorNode<T, JCC>::CodeGenValue2(ExpressionTree& tree)
     {
-        // TODO: High duplication with IsTrue<T>::CodeGenValue().
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
+            auto result = GetCache2();
+            ReleaseCache2();
+            return result;
         }
         else
         {
@@ -439,7 +388,7 @@ namespace NativeJIT
             code.Op("mov", r, 1);
             code.PlaceLabel(l2);
 
-            return r;
+            return Storage<bool>(tree, r);
         }
     }
 
@@ -447,61 +396,16 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void RelationalOperatorNode<T, JCC>::CodeGenFlags(ExpressionTree& tree)
     {
-        // TODO: High duplication with BinaryNode<L,R>::CodeGenValue().
-        if (IsCached())
+        if (IsCached2())
         {
-            auto r = GetCacheRegister();
-            ReleaseCache();
+            auto result = GetCache2();
+            ReleaseCache2();
 
             // TODO: This code is wrong - need to set the correct JCC - not just the zero flag.
-            tree.GetCodeGenerator().Op("or", r, r);
+            // TODO: For this opcode to work, result must be direct. Might consider putting flags check into storage.
+            auto direct = result.GetDirectRegister();
+            tree.GetCodeGenerator().Op("or", direct, direct);
             throw 0;
-
-            if (!IsCached())
-            {
-               tree.ReleaseRegister(r);
-            }
-
-            return;
-        }
-        else if (m_right.IsImmediate() && !m_right.IsCached())
-        {
-            auto r = m_left.CodeGenValue(tree);
-
-            // cmp r, x
-            ImmediateNode<T> const & right = static_cast<ImmediateNode<T> const &>(m_right);
-            tree.GetCodeGenerator().Op("cmp", r, right.GetValue());
-
-            if (!m_left.IsCached())
-            {
-                tree.ReleaseRegister(r);
-            }
-
-            return;
-        }
-        else if (m_right.IsIndirect() && !m_right.IsCached())
-        {
-            auto r = m_left.CodeGenValue(tree);
-
-            // cmp r, [src + offset]
-            IndirectNode<T>& right = static_cast<IndirectNode<T>&>(m_right);
-
-            auto base = right.CodeGenBase(tree);
-            unsigned __int64 offset = right.GetOffset();
-
-            tree.GetCodeGenerator().Op("cmp", r, base, offset);
-
-            if (!m_left.IsCached())
-            {
-                tree.ReleaseRegister(r);
-            }
-
-            if (!right.IsBaseRegisterCached())
-            {
-               tree.ReleaseRegister(base);
-            }
-
-            return;
         }
         else
         {
@@ -511,72 +415,38 @@ namespace NativeJIT
 
             if (r <= l && r < a)
             {
-                auto r1 = m_left.CodeGenValue(tree);
-                auto r2 = m_right.CodeGenValue(tree);
+                // Evaluate left first. Once evaluation completes, left will use one register,
+                // leaving at least a-1 registers for right.
+                auto sLeft = m_left.CodeGenValue2(tree);
+                sLeft.ConvertToValue(tree, true);
+                auto sRight = m_right.CodeGenValue2(tree);
 
-                // cmp r1, r2
-                tree.GetCodeGenerator().Op("cmp", r1, r2);
-
-                if (!m_left.IsCached())
-                {
-                    tree.ReleaseRegister(r1);
-                }
-
-                if (!m_right.IsCached())
-                {
-                    tree.ReleaseRegister(r2);
-                }
-
-                return;
+                tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
             }
-            else if (r > l && l < a)
+            else if (l < r && l < a)
             {
-                auto r2 = m_right.CodeGenValue(tree);
-                auto r1 = m_left.CodeGenValue(tree);
+                // Evaluate right first. Once evaluation completes, right will use one register,
+                // leaving at least a-1 registers for left.
+                auto sRight = m_right.CodeGenValue2(tree);
+                auto sLeft = m_left.CodeGenValue2(tree);
+                sLeft.ConvertToValue(tree, true);
 
-                // cmp r1, r2
-                tree.GetCodeGenerator().Op("cmp", r1, r2);
-
-                if (!m_left.IsCached())
-                {
-                    tree.ReleaseRegister(r1);
-                }
-
-                if (!m_right.IsCached())
-                {
-                    tree.ReleaseRegister(r2);
-                }
-
-                return;
+                tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
             }
             else
             {
-                Assert(false, "Register spilling not implemented.");
+                // The smaller of l and r is greater than a, therefore
+                // both l and r are greater than a. Since there are not
+                // enough registers available, need to spill to memory.
+                auto sRight = m_right.CodeGenValue2(tree);
+                sRight.Spill(tree);
 
-                //auto r2 = m_right.CodeGenValue(tree);
-                //// store r2
-                //// TODO: Implement store.
-                //throw 0;
-                //tree.ReleaseRegister(r2);
+                auto sLeft = m_left.CodeGenValue2(tree);
+                sLeft.ConvertToValue(tree, true);
 
-                //auto r1 = m_left.CodeGenValue(tree);
-                //if (m_left.IsCached())
-                //{
-                //    r1 = tree.CopyRegister(r1);
-                //}
-
-                //// op r1, tmp
-                //// TODO: Reinstate
-                ////                tree.GetCodeGenerator().Op(m_operation, r1, "[temp]");
-
-                //return r1;
-
-                return;
+                tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
             }
         }
-
-        // Should never get here.
-        throw 0;
     }
 
 
@@ -596,18 +466,4 @@ namespace NativeJIT
             return left + 1;
         }
     }
-
-
-    //*************************************************************************
-    //
-    //
-    //
-    //*************************************************************************
-
-
-    //*************************************************************************
-    //
-    //
-    //
-    //*************************************************************************
 }

@@ -4,10 +4,14 @@
 
 #include "Assert.h"
 #include "Register.h"
+#include "Storage.h"
 
 
 namespace NativeJIT
 {
+    // Need this forward reference because of circular include (mutual dependency) between Storage.h and X64CodeGenerator.h.
+    template <typename T> class Storage;
+
     class Label
     {
     public:
@@ -51,57 +55,29 @@ namespace NativeJIT
 
         void Jmp(Label l);
         void Jcc(JccType type, Label l);
-//        void Jz(Label l);
 
         void Nop();
 
-
         void Op(char const* op);
 
-        //
-        // 8-byte RXX operations.
-        //
+        template <unsigned SIZE, bool ISFLOAT, typename R>
+        void Op(char const * operation, Register<SIZE, ISFLOAT> dest, Storage<R> src);
 
-        // dest <== dest op src
-        void Op(char const* op, Register<1, false> dest, Register<1, false> src);
-
-        // dest <== dest op value
-        void Op(char const* op, Register<1, false> dest, unsigned __int64 value);
-
-        // dest <== dest op [base + offset]
-        void Op(char const* op, Register<1, false> dest, Register<8, false> base, unsigned __int64 offset);
-
-        void Op(char const* op, Register<1, false> dest);
+        template <unsigned SIZE, bool ISFLOAT>
+        void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
 
 
-        // dest <== dest op src
-        void Op(char const* op, Register<8, false> dest, Register<8, false> src);
+        template <unsigned SIZE, bool ISFLOAT>
+        void Op(char const * op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src);
 
-        // dest <== dest op value
-        void Op(char const* op, Register<8, false> dest, unsigned __int64 value);
+        template <unsigned SIZE, bool ISFLOAT, typename T>
+        void Op(char const * op, Register<SIZE, ISFLOAT> dest, T value);
 
-        // dest <== dest op [base + offset]
-        void Op(char const* op, Register<8, false> dest, Register<8, false> base, unsigned __int64 offset);
+        template <unsigned SIZE, bool ISFLOAT>
+        void Op(char const * op, Register<SIZE, ISFLOAT> dest, Register<sizeof(void*), false> base, size_t offset);
 
-        void Op(char const* op, Register<8, false> dest);
-
-
-
-        //
-        // 8-byte XMM floating point operations.
-        //
-
-        // dest <== dest op src
-        void Op(char const* op, Register<8, true> dest, Register<8, true> src);
-
-        // dest <== dest op value
-        void Op(char const* op, Register<8, true> dest, double value);
-
-        // dest <== dest op [base + offset]
-        void Op(char const* op, Register<8, true> dest, Register<8, false> base, unsigned __int64 offset);
-
-        void Op(char const* op, Register<8, true> dest);
-
+        template <unsigned SIZE, bool ISFLOAT>
+        void Op(char const * op, Register<SIZE, ISFLOAT> dest);
 
     private:
         void Indent();
@@ -113,4 +89,97 @@ namespace NativeJIT
 
         std::ostream& m_out;
     };
+
+
+    //*************************************************************************
+    //
+    // Template definitions for X64CodeGenerator
+    //
+    //*************************************************************************
+    template <unsigned SIZE, bool ISFLOAT, typename R>
+    void X64CodeGenerator::Op(char const * operation, Register<SIZE, ISFLOAT> left, Storage<R> right)
+    {
+        switch (right.GetClass())
+        {
+        case Data::Immediate:
+            Op(operation, left, right.GetImmediate());
+            break;
+        case Data::Direct:
+            Op(operation, left, right.GetDirectRegister());
+            break;
+        case Data::Indirect:
+            Op(operation, left, right.GetBaseRegister(), right.GetOffset());
+            break;
+        default:
+            Assert(false, "BinaryNode<L, R>::CodeGenOp: invalid storage class.");
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src)
+    {
+        Indent();
+
+        if (offset > 0)
+        {
+            m_out << "mov [" << base.GetName() << " + " << offset << "], " << src.GetName() << std::endl;
+        }
+        else
+        {
+            m_out << "mov [" << base.GetName() << "], " << src.GetName() << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
+    {
+        Indent();
+        m_out << op << " " << dest.GetName() << ", " << src.GetName() << std::endl;
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest, T value)
+    {
+        Indent();
+        if (ISFLOAT)
+        {
+            m_out << op << " " << dest.GetName() << ", " << value << std::endl;
+        }
+        else
+        {
+            // TODO: HACK: Cast to unsigned __int64 to force character types to display as integers.
+            // TODO: Need to add support for ISSIGNED.
+            m_out << op << " " << dest.GetName() << ", " << (unsigned __int64)value << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Op(char const * op,
+                              Register<SIZE, ISFLOAT> dest,
+                              Register<sizeof(void*), false> base,
+                              size_t offset)
+    {
+        Indent();
+        if (offset > 0)
+        {
+            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
+        }
+        else
+        {
+            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << "]" << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest)
+    {
+        Indent();
+        m_out << op << " " << dest.GetName() << std::endl;
+    }
+
 }

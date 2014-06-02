@@ -15,7 +15,7 @@ namespace NativeJIT
         unsigned GetPosition() const;
         void PrintParameter() const;
 
-        virtual void ReserveRegister(RegisterFile& registers) = 0;
+        virtual void ReserveRegister(ExpressionTree& tree, RegisterFile& registers) = 0;
 
     private:
         unsigned m_position;
@@ -23,7 +23,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    class ParameterNode : public DirectValue<T>, ParameterBase
+    class ParameterNode : public Node<T>, ParameterBase
     {
     public:
         ParameterNode(ExpressionTree& tree);
@@ -31,14 +31,15 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
+
         virtual void Print() const override;
 
 
         //
         // Overrides of ParameterBase methods.
         //
-        virtual void ReserveRegister(RegisterFile& registers) override;
+        virtual void ReserveRegister(ExpressionTree& tree, RegisterFile& registers) override;
     };
 
 
@@ -79,21 +80,20 @@ namespace NativeJIT
 
     template <typename T>
     ParameterNode<T>::ParameterNode(ExpressionTree& tree)
-        : DirectValue(tree),
+        : Node(tree),
           ParameterBase(tree)
     {
     }
 
 
     template <typename T>
-    typename Node<T>::RegisterType ParameterNode<T>::CodeGenValue(ExpressionTree& /*tree*/)
+    typename Storage<T> ParameterNode<T>::CodeGenValue2(ExpressionTree& tree)
     {
-        Assert(IsCached(), "Must assign register before attempting code generation.");
+        Assert(IsCached2(), "Must assign register before attempting code generation.");
 
-        RegisterType r = GetCacheRegister();
-        ReleaseCache();
-
-        return r;
+        auto result = GetCache2();
+        ReleaseCache2();
+        return result;
     }
 
 
@@ -109,11 +109,11 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ParameterNode<T>::ReserveRegister(RegisterFile& registers)
+    void ParameterNode<T>::ReserveRegister(ExpressionTree& tree, RegisterFile& registers)
     {
         RegisterType r;
         GetParameterRegister(GetPosition(), r);
         registers.ReserveRegister(r);
-        SetCacheRegister(r);
+        SetCache2(Storage<T>(tree, r));
     }
 }

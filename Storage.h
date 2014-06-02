@@ -1,11 +1,12 @@
 #pragma once
 
-#include <iostream>     // TODO: Delete this file after removing all references to std::cout.
+#include <iostream>             // TODO: Delete this file after removing all references to std::cout.
 
 #include "Allocator.h"
 #include "Assert.h"
 #include "ExpressionTree.h"
 #include "Register.h"
+#include "TypePredicates.h"
 #include "X64CodeGenerator.h"
 
 
@@ -17,14 +18,62 @@ namespace Allocators
 
 namespace NativeJIT
 {
-    //// Used to determine if the base register can be reused to hold the value.
-    //template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-    //bool CompatibleRegisters(Register<SIZE1, ISFLOAT1> r1, Register<SIZE2, ISFLOAT2> r2)
-    //{
-    //    return ISFLOAT1 == ISFLOAT2;
-    //}
-
     class ExpressionTree;
+
+    class Data
+    {
+    public:
+        typedef enum {Immediate, Indirect, Direct} Class;
+
+        template <typename T>
+        Data(ExpressionTree& tree, T immediate)
+            : m_refCount(0),
+              m_tree(tree),
+              m_storageClass(Immediate)
+        {
+            static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
+            *reinterpret_cast<T*>(&m_immediate2) = immediate;
+        }
+
+        template <unsigned SIZE, bool ISFLOAT>
+        Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r)
+            : m_refCount(0),
+              m_tree(tree),
+              m_storageClass(Direct),
+              m_registerId(r.GetId())
+        {
+        }
+
+        Data(ExpressionTree& tree, Register<sizeof(void*), false> base, size_t offset);
+
+        template <typename T>
+        T GetImmediate() const
+        {
+            static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
+            return *(reinterpret_cast<T*>(&m_immediate2));
+        }
+
+        Data* ConvertToIndirect(unsigned registerId, size_t offset)
+        {
+            m_storageClass = Indirect;
+            m_registerId = registerId;
+            m_offset = offset;
+            return this;
+        }
+
+        unsigned m_refCount;
+
+        ExpressionTree& m_tree;
+        Class m_storageClass;
+
+//            T m_immediate;
+        unsigned m_registerId;
+        size_t m_offset;
+
+    private:
+        mutable size_t m_immediate2;
+    };
+
 
     template <typename T>
     class Storage
@@ -33,10 +82,20 @@ namespace NativeJIT
         typedef Register<sizeof(T), IsFloatingPointType<T>::value/*, IsSigned<T>::value*/> DirectRegister;
         typedef Register<sizeof(T*), false/*, false*/> BaseRegister;
 
-
+        Storage();
         Storage(ExpressionTree& tree, T immediate);
         Storage(ExpressionTree& tree, DirectRegister r);
         Storage(ExpressionTree& tree, BaseRegister r, size_t offset);
+
+        Storage(ExpressionTree& tree, Storage<T*>& base, size_t offset);
+
+        template <typename U>
+        Storage(ExpressionTree& tree, Storage<U> other)
+            : m_data(nullptr)
+        {
+            SetData(other.m_data);
+        }
+
 
         Storage(Storage& other);
 
@@ -44,16 +103,10 @@ namespace NativeJIT
 
         Storage& operator=(Storage & other);
 
+        bool IsNull() const;
 
-        // Not sure there is any case where we would take ownership without converting to value.
-        //// If reference count greater than one
-        ////   Allocate new Storage::Data
-        ////   Generate code to copy values from old storage to new storage.
-        ////   Release old storage.
-        ////   Set m_data to point to new Storage::Data.
-        //// Otherwise
-        ////   Do nothing - ownership is implicit.
-        //void TakeOwnership(ExpressionTree& tree);
+        void Reset();
+
 
         // Case: Immediate
         //   Allocate new Storage::Data Direct.
@@ -74,43 +127,19 @@ namespace NativeJIT
         //     Set m_data.
         void ConvertToValue(ExpressionTree& tree, bool forModification);
 
+        void Spill(ExpressionTree& tree);
 
-        // Transfer the contents and reference count to the new storage location. Take ownership
-        // of the current storage. Scenario is spilling register or cache register.
-        void SwapWith(Storage other);
+        Data::Class GetClass() const;
 
-
-        typedef enum {Immediate, Indirect, Direct} Class;
-
-        Class GetClass() const;
-
-
-        T GetImmedidate() const;
-
+        T GetImmediate() const;
 
         BaseRegister GetBaseRegister() const;
         size_t GetOffset() const;
 
-
         DirectRegister GetDirectRegister() const;
 
     private:
-        class Data
-        {
-        public:
-            Data(ExpressionTree& tree, T immediate);
-            Data(ExpressionTree& tree, DirectRegister r);
-            Data(ExpressionTree& tree, BaseRegister base, size_t offset);
-
-            unsigned m_refCount;
-
-            ExpressionTree& m_tree;
-            Class m_storageClass;
-
-            T m_immediate;
-            unsigned m_registerId;
-            size_t m_offset;
-        };
+        template <typename OTHER> friend class Storage;
 
         void SetData(Data* data);
 
@@ -123,6 +152,13 @@ namespace NativeJIT
     // Template definitions for Storage.
     //
     //*************************************************************************
+    template <typename T>
+    Storage<T>::Storage()
+        : m_data(nullptr)
+    {
+    }
+
+
     template <typename T>
     Storage<T>::Storage(ExpressionTree& tree, T immediate)
         : m_data(nullptr)
@@ -157,6 +193,19 @@ namespace NativeJIT
 
 
     template <typename T>
+    Storage<T>::Storage(ExpressionTree& tree, Storage<T*>& base, size_t offset)
+        : m_data(nullptr)
+    {
+        base.ConvertToValue(tree, true);
+
+        // Transfer ownership of datablock to this Storage.
+        SetData(base.m_data->ConvertToIndirect(base.m_data->m_registerId, offset));
+
+        base.m_data = nullptr;
+    }
+
+
+    template <typename T>
     Storage<T>::~Storage()
     {
         SetData(nullptr);
@@ -171,7 +220,18 @@ namespace NativeJIT
     }
 
 
-    //void Storage<T>::TakeOwnership(ExpressionTree& tree);
+    template <typename T>
+    bool Storage<T>::IsNull() const
+    {
+        return m_data == nullptr;
+    }
+
+
+    template <typename T>
+    void Storage<T>::Reset()
+    {
+        SetData(nullptr);
+    }
 
 
     template <typename T>
@@ -182,20 +242,20 @@ namespace NativeJIT
             // We are the sole owner of this storage and can repurpose it.
             switch (m_data->m_storageClass)
             {
-            case Immediate:
+            case Data::Immediate:
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = m_data->m_tree.AllocateRegister<DirectRegister>();
-                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, m_data->m_immediate);
+                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, m_data->GetImmediate<T>());
 
-                    m_data->m_storageClass = Direct;
+                    m_data->m_storageClass = Data::Direct;
                     m_data->m_registerId = dest.GetId();
                 }
                 break;
-            case Direct:
+            case Data::Direct:
                 // This storage is already a direct value. No work required.
                 break;
-            case Indirect:
+            case Data::Indirect:
                 {
                     BaseRegister base = BaseRegister(m_data->m_registerId);
                     if (IsFloatingPointType<T>::value || m_data->m_tree.IsBasePointer(base))
@@ -206,9 +266,16 @@ namespace NativeJIT
                         DirectRegister dest = m_data->m_tree.AllocateRegister<DirectRegister>();
                         m_data->m_tree.GetCodeGenerator().Op("mov", dest, base, m_data->m_offset);
 
-                        m_data->m_tree.ReleaseRegister(base);
+                        if (m_data->m_tree.IsBasePointer(base))
+                        {
+                            m_data->m_tree.ReleaseTemporary(m_data->m_offset);
+                        }
+                        else
+                        {
+                            m_data->m_tree.ReleaseRegister(base);
+                        }
                         m_data->m_registerId = dest.GetId();
-                        m_data->m_storageClass = Direct;
+                        m_data->m_storageClass = Data::Direct;
                     }
                     else
                     {
@@ -216,7 +283,7 @@ namespace NativeJIT
                         DirectRegister dest(m_data->m_registerId);
                         BaseRegister base = BaseRegister(m_data->m_registerId);
                         m_data->m_tree.GetCodeGenerator().Op("mov", dest, base, m_data->m_offset);
-                        m_data->m_storageClass = Direct;
+                        m_data->m_storageClass = Data::Direct;
                     }
                 }
                 break;
@@ -232,16 +299,16 @@ namespace NativeJIT
             // storage will artificially increase the ref count.
             switch (m_data->m_storageClass)
             {
-            case Immediate:
+            case Data::Immediate:
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = m_data->m_tree.AllocateRegister<DirectRegister>();
-                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, m_data->m_immediate);
+                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, m_data->GetImmediate<T>());
 
                     SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
                 break;
-            case Direct:
+            case Data::Direct:
                 if (forModification)
                 {
                     // We need to allocate a new register for the value.
@@ -252,7 +319,7 @@ namespace NativeJIT
                     SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
                 break;
-            case Indirect:
+            case Data::Indirect:
                 {
                     // We need to allocate a new register for the value.
                     DirectRegister dest = m_data->m_tree.AllocateRegister<DirectRegister>();
@@ -268,38 +335,43 @@ namespace NativeJIT
         }
     }
 
-
-    //void Storage<T>::SwapWith(Storage other);
-
+    template <typename T>
+    void Storage<T>::Spill(ExpressionTree& tree)
+    {
+        ConvertToValue(tree, false);
+        Storage dest(tree, tree.GetBasePointer(), tree.AllocateTemporary());
+        tree.GetCodeGenerator().Mov(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
+        *this = dest;
+    }
 
 
     template <typename T>
-    typename Storage<T>::Class Storage<T>::GetClass() const
+    typename Data::Class Storage<T>::GetClass() const
     {
         return m_data->m_storageClass;
     }
 
 
     template <typename T>
-    T Storage<T>::GetImmedidate() const
+    T Storage<T>::GetImmediate() const
     {
-        Assert(m_data->m_storageClass == Immediate, "GetImmediate(): storage class must be immediate.");
-        return m_data->m_immediate;
+        Assert(m_data->m_storageClass == Data::Immediate, "GetImmediate(): storage class must be immediate.");
+        return m_data->GetImmediate<T>();
     }
 
 
     template <typename T>
     typename Storage<T>::BaseRegister Storage<T>::GetBaseRegister() const
     {
-        Assert(m_data->m_storageClass == Indirect, "GetBaseRegister(): storage class must be indirect.");
-        return BaseRegister(m_data->m_registerId());
+        Assert(m_data->m_storageClass == Data::Indirect, "GetBaseRegister(): storage class must be indirect.");
+        return BaseRegister(m_data->m_registerId);
     }
 
 
     template <typename T>
     size_t Storage<T>::GetOffset() const
     {
-        Assert(m_data->m_storageClass == Indirect, "GetOffset(): storage class must be indirect.");
+        Assert(m_data->m_storageClass == Data::Indirect, "GetOffset(): storage class must be indirect.");
         return m_data->m_offset;
     }
 
@@ -307,8 +379,8 @@ namespace NativeJIT
     template <typename T>
     typename Storage<T>::DirectRegister Storage<T>::GetDirectRegister() const
     {
-        Assert(m_data->m_storageClass == Direct, "GetDirectRegister(): storage class must be direct.");
-        return DirectRegister(m_data->m_registerId());
+        Assert(m_data->m_storageClass == Data::Direct, "GetDirectRegister(): storage class must be direct.");
+        return DirectRegister(m_data->m_registerId);
     }
 
 
@@ -322,18 +394,28 @@ namespace NativeJIT
             if (m_data != nullptr)
             {
                 Assert(m_data->m_refCount > 0, "Attempting to decrement zero ref count.");
-                std::cout << "Decrement " << m_data << " to " << m_data->m_refCount - 1 << std::endl;
+//                std::cout << "Decrement " << m_data << " to " << m_data->m_refCount - 1 << std::endl;
                 if (--m_data->m_refCount == 0)
                 {
-                    if (m_data->m_storageClass == Class::Direct)
+                    if (m_data->m_storageClass == Data::Direct)
                     {
-                        std::cout << "Release Direct Register" << DirectRegister(m_data->m_registerId).GetName() << std::endl;
+//                        std::cout << "Release Direct Register " << DirectRegister(m_data->m_registerId).GetName() << std::endl;
                         m_data->m_tree.ReleaseRegister(DirectRegister(m_data->m_registerId));
                     }
-                    else if (m_data->m_storageClass == Class::Indirect)
+                    else if (m_data->m_storageClass == Data::Indirect)
                     {
-                        std::cout << "Release Base Register " << BaseRegister(m_data->m_registerId).GetName() << std::endl;
-                        m_data->m_tree.ReleaseRegister(BaseRegister(m_data->m_registerId));
+                        BaseRegister base(m_data->m_registerId);
+
+                        if (m_data->m_tree.IsBasePointer(base))
+                        {
+//                            std::cout << "Release temporary " << m_data->m_offset << std::endl;
+                            m_data->m_tree.ReleaseTemporary(m_data->m_offset);
+                        }
+                        else
+                        {
+//                            std::cout << "Release Base Register " << base.GetName() << std::endl;
+                            m_data->m_tree.ReleaseRegister(base);
+                        }
                     }
                 }
             }
@@ -343,43 +425,8 @@ namespace NativeJIT
             if (m_data != nullptr)
             {
                 ++m_data->m_refCount;
-                std::cout << "Increment " << m_data << " to " << m_data->m_refCount << std::endl;
+//                std::cout << "Increment " << m_data << " to " << m_data->m_refCount << std::endl;
             }
         }
-    }
-
-    //*************************************************************************
-    //
-    // Template definitions for Storage::Data
-    //
-    //*************************************************************************
-    template <typename T>
-    Storage<T>::Data::Data(ExpressionTree& tree, T immediate)
-        : m_refCount(0),
-          m_tree(tree),
-          m_storageClass(Immediate),
-          m_immediate(immediate)
-    {
-    }
-
-
-    template <typename T>
-    Storage<T>::Data::Data(ExpressionTree& tree, DirectRegister r)
-        : m_refCount(0),
-          m_tree(tree),
-          m_storageClass(Direct),
-          m_registerId(r.GetId())
-    {
-    }
-
-
-    template <typename T>
-    Storage<T>::Data::Data(ExpressionTree& tree, BaseRegister r, size_t offset)
-        : m_refCount(0),
-          m_tree(tree),
-          m_storageClass(Indirect),
-          m_registerId(r.GetId()),
-          m_offset(offset)
-    {
     }
 }

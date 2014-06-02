@@ -273,22 +273,65 @@ namespace NativeJIT
     }
 
 
+    void TestStorageIntegration()
+    {
+        Allocator allocator(10000);
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(allocator, code);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Immediate<unsigned __int64>(5);
+        auto & b = factory.Immediate<unsigned __int64>(6);
+        auto & c = factory.Add(a, b);
+        factory.Return(c);
+
+        tree.Compile();
+    }
+
+
+    // To test register spilling, it is necessary to modify ExpressionTree to only allow a single register.
+    void TestSpill()
+    {
+        Allocator allocator(10000);
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(allocator, code);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Immediate<unsigned __int64>(5);
+        auto & b = factory.Immediate<unsigned __int64>(6);
+        auto & c = factory.Add(a, b);
+
+        auto & d = factory.Immediate<unsigned __int64>(7);
+        auto & e = factory.Immediate<unsigned __int64>(8);
+        auto & f = factory.Add(d, e);
+
+        auto & g = factory.Add(c, f);
+
+        factory.Return(g);
+
+        tree.Compile();
+    }
+
+
     void RunTests()
     {
+//        TestConditional();
+        JITExample1();
+        ConditionalExample();
+
 //        TestRegisters();
 //        TestOperations();
 //        TestNodes();
+//        TestFactory();
+//        TestByte();
+//        TestLabel();
+//        TestArray();
 //        TestFieldPointerPrimitive();
 //        TestFieldPointerEmbedded();
 //        TestBinary();
-//        TestFactory();
-//        TestArray();
-//        TestByte();
-//        TestLabel();
-//        TestConditional();
-        JITExample1();
-//        ConditionalExample();
 //        TestStorage();
+//        TestStorageIntegration();
+//        TestSpill();
     }
 }
 

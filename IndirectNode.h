@@ -13,17 +13,15 @@ namespace NativeJIT
 
         IndirectNode(ExpressionTree& tree, Node<T*>& base, unsigned __int64 offset);
 
-        BaseRegisterType CodeGenBase(ExpressionTree& tree);
+        Storage<T*> CodeGenBase2(ExpressionTree& tree);
         bool IsBaseRegisterCached() const;
 
         //
         // Overrides of Node methods.
         //
 
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) override;
         virtual unsigned __int64 GetOffset() const override;
-        virtual bool IsImmediate() const override;
-        virtual bool IsIndirect() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -40,8 +38,8 @@ namespace NativeJIT
     //*************************************************************************
     template <typename T>
     IndirectNode<T>::IndirectNode(ExpressionTree& tree,
-                          Node<T*>& base,
-                          unsigned __int64 offset)
+                                  Node<T*>& base,
+                                  unsigned __int64 offset)
         : Node(tree),
           m_base(base),
           m_offset(offset)
@@ -51,18 +49,16 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename IndirectNode<T>::BaseRegisterType IndirectNode<T>::CodeGenBase(ExpressionTree& tree)
+    typename Storage<T*> IndirectNode<T>::CodeGenBase2(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
             auto & base = reinterpret_cast<FieldPointerBase<T>&>(m_base);
-            auto r = base.CodeGenBase(tree);
-            return r;
+            return base.CodeGenBase2(tree);
         }
         else
         {
-            BaseRegisterType r = m_base.CodeGenValue(tree);
-            return r;
+            return m_base.CodeGenValue2(tree);
         }
     }
 
@@ -75,34 +71,23 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Node<T>::RegisterType IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<T> IndirectNode<T>::CodeGenValue2(ExpressionTree& tree)
     {
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
+            auto result = GetCache2();
+            ReleaseCache2();
+            return result;
         }
         else
         {
-            BaseRegisterType base = CodeGenBase(tree);
+            auto& base = CodeGenBase2(tree);
             unsigned __int64 offset = m_base.GetOffset();
 
-            if (IsBaseRegisterCached())
-            {
-                RegisterType dest = tree.AllocateRegister<RegisterType>();
-                tree.GetCodeGenerator().Op("mov", dest, base, m_offset + offset);
-                return dest;
-            }
-            else
-            {
-                // TODO: Reusing the base register for the result won't work where T is
-                // float or double because the base register has an incompatible type.
-                // Also, RegisterType(base) can fail if, for example, the code attempts
-                // to convert RSI to 1-byte.
-                tree.GetCodeGenerator().Op("mov", base, base, m_offset + offset);
-                return RegisterType(base);
-            }
+            Storage<T> value(tree, base, m_offset + offset);
+            //value.ConvertToValue(tree, true);
+
+            return value;
         }
     }
 
@@ -111,20 +96,6 @@ namespace NativeJIT
     unsigned __int64 IndirectNode<T>::GetOffset() const
     {
         return m_offset;
-    }
-
-
-    template <typename T>
-    bool IndirectNode<T>::IsImmediate() const
-    {
-        return false;
-    }
-
-
-    template <typename T>
-    bool IndirectNode<T>::IsIndirect() const
-    {
-        return true;
     }
 
 

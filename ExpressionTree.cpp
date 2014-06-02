@@ -58,7 +58,8 @@ namespace NativeJIT
           m_code(code),
           m_parameterRegisters(code.GetRXXCount(), code.GetXMMCount()),
           m_basePointer(Register<sizeof(void*), false>(4)),     // TODO: Magic number RBP
-          m_stackPointer(Register<sizeof(void*), false>(7))     // TODO: Magic number RSP
+          m_stackPointer(Register<sizeof(void*), false>(7)),    // TODO: Magic number RSP
+          m_temporaryCount(0)
     {
     }
 
@@ -92,6 +93,25 @@ namespace NativeJIT
     X64CodeGenerator& ExpressionTree::GetCodeGenerator() const
     {
         return m_code;
+    }
+
+
+    Register<sizeof(void*), false> ExpressionTree::GetBasePointer() const
+    {
+        return m_basePointer;
+    }
+
+
+    size_t ExpressionTree::AllocateTemporary()
+    {
+        return m_temporaryCount++ * sizeof(void*);
+    }
+
+
+    void ExpressionTree::ReleaseTemporary(size_t offset)
+    {
+        // TODO: Implement.
+//        return m_temporaryCount++ * sizeof(void*);
     }
 
 
@@ -171,7 +191,7 @@ namespace NativeJIT
         // Reserve registers use to pass in parameters.
         for (unsigned i = 0 ; i < m_parameters.size(); ++i)
         {
-            m_parameters[i]->ReserveRegister(m_parameterRegisters);
+            m_parameters[i]->ReserveRegister(*this, m_parameterRegisters);
         }
 
 
@@ -213,7 +233,7 @@ namespace NativeJIT
 
             // Assert(parentCount of zero legal only for last node);
 
-            if (node.GetParentCount() > 1 && !node.IsCached())
+            if (node.GetParentCount() > 1 && !node.IsCached2())
             {
                 node.CodeGenCache(*this);
             }

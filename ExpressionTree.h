@@ -74,6 +74,10 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         bool IsBasePointer(Register<SIZE, ISFLOAT> r) const;
 
+        Register<sizeof(void*), false> GetBasePointer() const;
+        size_t AllocateTemporary();
+        void ReleaseTemporary(size_t offset);
+
         void Print() const;
         void Compile();
 
@@ -120,6 +124,8 @@ namespace NativeJIT
 
         Register<8, false> m_stackPointer;
         Register<8, false> m_basePointer;
+
+        unsigned m_temporaryCount;
     };
 
 

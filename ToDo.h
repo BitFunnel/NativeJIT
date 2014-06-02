@@ -16,6 +16,36 @@ x        mov rax, r9
 x        ret
 x        // release r9
 
+Complete implementation of temporaries.
+
+Finish concept of base pointer in expression tree.
+
+
+ImmediateNode should not participate in caching. Right now it ignores its cache, but the setter still works.
+  Might cause a ref-count bug.
+
+IS_SIGNED
+Implement getters for Data. Move functionality from Storage getters.
+
+IsTrue should become the cast node.
+
+IndirectNode<T>::CodeGenValue2() needs to convert base into value without releasing the base register.
+  In other words the base.GetDirectRegister() needs to transferred to value's base register.
+Implement ExpressionTree::ReleaseTemporary()
+Storage<T>::.ConvertToValue should return DirectRegister.
+Storage<T>::Spill doesn't need to take ExpressionTree param.
+Storage<T>::ConvertToValue doesn't need to take ExpressionTree param.
+Circular include (mutual dependency) between Storage.h and X64CodeGenerator.h.
+Convert  to template <typename L, typename R> void X64CodeGenerator::Op<L, R>(RegisterType left, Storage<R> right)
+
+
+It would be nice if ReturnNode::CompileAsRoot could generate into RAX instead of moving.
+  Consider example of a tree that is just Return(Immediate(5)). Right now this generates
+  mov r15, 5 followed by mov rax, r15
+
+ExpressionTree should be parameterized by type of C++ function it implements.
+Parameters should be automatically defined.
+How does one reference the parameters?
 
 x Implement BinaryNode operation.
 
@@ -34,6 +64,8 @@ When CastNode is added, IsTrue should be made into a CastNode.
 
 Cannot spill registers that are used to hold cached CSE values.
 
+Conditionals not efficient because separate register is used for true and false expressions.
+  Also, register labelling might be incorrect. Current code needs register for each path.
 Cached conditionals need some way to recreate the correct flags or to use a different flag.
 Conditional introduce a new requirement on the evaluation of common subexpressions.
   It is possible that a common subexpression need never be evaluated. Consider

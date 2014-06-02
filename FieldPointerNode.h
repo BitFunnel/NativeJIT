@@ -15,7 +15,7 @@ namespace NativeJIT
 
         virtual bool IsFieldPointer() const override;
 
-        virtual BaseRegisterType CodeGenBase(ExpressionTree& tree) = 0;
+        virtual Storage<FIELD*> CodeGenBase2(ExpressionTree& tree) = 0;
     };
 
 
@@ -31,16 +31,14 @@ namespace NativeJIT
         // Overrides of FieldPointerBase methods
         //
 
-        virtual BaseRegisterType CodeGenBase(ExpressionTree& tree) override;
+        virtual Storage<FIELD*> CodeGenBase2(ExpressionTree& tree) override;
 
         //
         // Overrides of Node methods
         //
 
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<FIELD*> CodeGenValue2(ExpressionTree& tree) override;
         virtual unsigned __int64 GetOffset() const override;
-        virtual bool IsImmediate() const override;
-        virtual bool IsIndirect() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -100,41 +98,37 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    typename FieldPointerNode<OBJECT, FIELD>::BaseRegisterType FieldPointerNode<OBJECT, FIELD>::CodeGenBase(ExpressionTree& tree)
+    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenBase2(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
             auto & base = reinterpret_cast<FieldPointerBase<FIELD>&>(m_base);
-            auto r = base.CodeGenBase(tree);
-            return r;
+            return base.CodeGenBase2(tree);
         }
         else
         {
-            return m_base.CodeGenValue(tree);
+            auto & base = m_base.CodeGenValue2(tree);
+            return Storage<FIELD*>(tree, base);
         }
     }
 
 
     template <typename OBJECT, typename FIELD>
-    typename FieldPointerNode<OBJECT, FIELD>::RegisterType FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue2(ExpressionTree& tree)
     {
-        if (IsCached())
+        if (IsCached2())
         {
-            RegisterType r = GetCacheRegister();
-            ReleaseCache();
-            return r;
+            auto result = GetCache2();
+            ReleaseCache2();
+            return result;
         }
         else
         {
-            RegisterType base = CodeGenBase(tree);
+            auto& base = CodeGenBase2(tree);
             unsigned __int64 offset = m_base.GetOffset();
 
-            if (m_base.IsCached())
-            {
-                base = tree.CopyRegister(base);
-            }
-
-            tree.GetCodeGenerator().Op("add", base, m_offset + offset);
+            base.ConvertToValue(tree, true);
+            tree.GetCodeGenerator().Op("add", base.GetDirectRegister(), m_offset + offset);
 
             return base;
         }
@@ -145,20 +139,6 @@ namespace NativeJIT
     unsigned __int64 FieldPointerNode<OBJECT, FIELD>::GetOffset() const
     {
         return m_offset + m_base.GetOffset();
-    }
-
-
-    template <typename OBJECT, typename FIELD>
-    bool FieldPointerNode<OBJECT, FIELD>::IsImmediate() const
-    {
-        return false;
-    }
-
-
-    template <typename OBJECT, typename FIELD>
-    bool FieldPointerNode<OBJECT, FIELD>::IsIndirect() const
-    {
-        return false;
     }
 
 

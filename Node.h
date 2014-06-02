@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Assert.h"
-#include "Register.h"
+#include "Storage.h"
+#include "TypePredicates.h"
 
 
 namespace NativeJIT
@@ -30,9 +31,7 @@ namespace NativeJIT
         //
 
         virtual void CodeGenCache(ExpressionTree& tree) = 0;
-        virtual bool IsCached() const = 0;
-        virtual bool IsImmediate() const = 0;
-        virtual bool IsIndirect() const = 0;
+        virtual bool IsCached2() const = 0;
         virtual unsigned LabelSubtree(bool isLeftChild) = 0;
         virtual void Print() const = 0;
 
@@ -45,11 +44,6 @@ namespace NativeJIT
     };
 
 
-    template <typename T> struct IsFloatingPointType : std::false_type {};
-    template <> struct IsFloatingPointType<float> : std::true_type {};
-    template <> struct IsFloatingPointType<double> : std::true_type {};
-
-
     template <typename T>
     class Node : public NodeBase
     {
@@ -58,21 +52,20 @@ namespace NativeJIT
 
         Node(ExpressionTree& tree);
 
-        void SetCacheRegister(RegisterType r);
-        void ReleaseCache();
-        RegisterType GetCacheRegister() const;
+        void SetCache2(Storage<T> s);
+        Storage<T> GetCache2();
+        void ReleaseCache2();
 
         unsigned GetRegisterCount() const;
 
-        virtual RegisterType CodeGenValue(ExpressionTree& tree) = 0;
-
+        virtual Storage<T> CodeGenValue2(ExpressionTree& tree) = 0;
 
         //
         // Overrides of NodeBase methods.
         //
 
         virtual void CodeGenCache(ExpressionTree& tree) override;
-        virtual bool IsCached() const override;
+        virtual bool IsCached2() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
 
     protected:
@@ -82,23 +75,9 @@ namespace NativeJIT
     private:
         bool m_isCached;
         unsigned m_cacheReferenceCount;
-        RegisterType m_cacheRegister;
+        Storage<T> m_cache;
 
         unsigned m_registerCount;
-    };
-
-
-    template <typename T>
-    class DirectValue : public Node<T>
-    {
-    public:
-        DirectValue(ExpressionTree& tree);
-
-        //
-        // Overrides of Node methods
-        //
-        virtual bool IsImmediate() const override;
-        virtual bool IsIndirect() const override;
     };
 
 
@@ -113,50 +92,47 @@ namespace NativeJIT
         : NodeBase(tree),
           m_isCached(false),
           m_cacheReferenceCount(0),
-          m_cacheRegister(0),
           m_registerCount(0)
     {
     }
 
 
     template <typename T>
-    void Node<T>::SetCacheRegister(RegisterType r)
+    void Node<T>::SetCache2(Storage<T> s)
     {
-        Assert(!IsCached(), "Cache register is already set.");
+        Assert(!IsCached2(), "Cache register is already set.");
 
         m_cacheReferenceCount = m_parentCount;
-        m_cacheRegister = r;
-        m_isCached = true;
+        m_cache = s;
     }
 
 
     template <typename T>
-    void Node<T>::ReleaseCache()
+    Storage<T> Node<T>::GetCache2()
     {
-        Assert(IsCached(), "Cache register has not been set.");
+        return m_cache;
+    }
+
+
+    template <typename T>
+    void Node<T>::ReleaseCache2()
+    {
+        Assert(IsCached2(), "Cache register has not been set.");
 
         --m_cacheReferenceCount;
         if (m_cacheReferenceCount == 0)
         {
-            m_isCached = false;
+            m_cache.Reset();
         }
     }
 
 
     template <typename T>
-    bool Node<T>::IsCached() const
+    bool Node<T>::IsCached2() const
     {
-        return m_isCached;
+        return !m_cache.IsNull();
     }
 
-
-    template <typename T>
-    typename Node<T>::RegisterType Node<T>::GetCacheRegister() const
-    {
-        Assert(IsCached(), "Node is not cached.");
-
-        return m_cacheRegister;
-    }
 
 
     template <typename T>
@@ -165,9 +141,9 @@ namespace NativeJIT
         std::cout << "register count = " << m_registerCount;
         std::cout << ", ";
 
-        if (IsCached())
+        if (IsCached2())
         {
-            std::cout << "cached in " << m_cacheRegister.GetName();
+            std::cout << "cached in " << m_cache.GetDirectRegister().GetName();
         }
         else
         {
@@ -180,15 +156,9 @@ namespace NativeJIT
     void Node<T>::CodeGenCache(ExpressionTree& tree)
     {
         LabelSubtree(true);
-        SetCacheRegister(CodeGenValue(tree));
+        //SetCacheRegister(CodeGenValue(tree));
+        SetCache2(CodeGenValue2(tree));
     }
-
-
-    //template <typename T>
-    //void Node<T>::CompileAsRoot(ExpressionTree& tree)
-    //{
-    //    CodeGenValue(tree);
-    //}
 
 
     template <typename T>
@@ -218,7 +188,7 @@ namespace NativeJIT
     template <typename T>
     void Node<T>::SetRegisterCount(unsigned count)
     {
-        if (IsCached())
+        if (IsCached2())
         {
             m_registerCount = 0;
         }
@@ -227,37 +197,4 @@ namespace NativeJIT
             m_registerCount = count;
         }
     }
-
-
-    //*************************************************************************
-    //
-    // Template definitions for DirectValue
-    //
-    //*************************************************************************
-    template <typename T>
-    DirectValue<T>::DirectValue(ExpressionTree& tree)
-        : Node(tree)
-    {
-    }
-
-
-    template <typename T>
-    bool DirectValue<T>::IsImmediate() const
-    {
-        return false;
-    }
-
-
-    template <typename T>
-    bool DirectValue<T>::IsIndirect() const
-    {
-        return false;
-    }
-
-
-    //template <typename T>
-    //bool DirectValue<T>::IsFieldPointer() const
-    //{
-    //    return false;
-    //}
 }
