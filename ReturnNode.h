@@ -54,10 +54,11 @@ namespace NativeJIT
         s.ConvertToValue(tree, false);
         auto r = s.GetDirectRegister();
 
+        // Move result into register 0.
         if (r.GetId() != 0)
         {
             auto dest = RegisterType(0);
-            tree.GetCodeGenerator().Op("mov", dest, r);
+            tree.GetCodeGenerator().Op("mov", dest, s);
         }
 
         tree.GetCodeGenerator().Op("ret");

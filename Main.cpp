@@ -34,18 +34,18 @@ namespace NativeJIT
     }
 
 
-    void TestOperations()
-    {
-        X64CodeGenerator code(std::cout);
+    //void TestOperations()
+    //{
+    //    X64CodeGenerator code(std::cout);
 
-        Register<8, false> rax(0);
-        Register<8, false> rbx(1);
+    //    Register<8, false> rax(0);
+    //    Register<8, false> rbx(1);
 
-        code.Op("add", rax, rbx);
-        code.Op("mov", rax, 1234);
-        code.Op("sub", rax, rbx, 789);
-        code.Op("not", rax);
-    }
+    //    code.Op("add", rax, rbx);
+    //    code.Op("mov", rax, 1234);
+    //    code.Op("sub", rax, rbx, 789);
+    //    code.Op("not", rax);
+    //}
 
 
     void TestNodes()
@@ -199,6 +199,28 @@ namespace NativeJIT
     }
 
 
+    void TestDouble()
+    {
+        Allocator allocator(10000);
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(allocator, code);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Parameter<double>();
+        auto & b = factory.Immediate<double>(123);
+        auto & c = factory.Add(a, b);
+
+        auto & d = factory.Parameter<double*>();
+        auto & e = factory.Deref(d);
+
+        auto & f = factory.Add(c, e);
+
+        factory.Return(f);
+
+        tree.Compile();
+    }
+
+
     void TestLabel()
     {
         X64CodeGenerator code(std::cout);
@@ -323,7 +345,8 @@ namespace NativeJIT
 //        TestOperations();
 //        TestNodes();
 //        TestFactory();
-//        TestByte();
+        TestByte();
+        TestDouble();
 //        TestLabel();
 //        TestArray();
 //        TestFieldPointerPrimitive();

@@ -16,7 +16,7 @@ x        mov rax, r9
 x        ret
 x        // release r9
 
-Complete implementation of temporaries.
+x Complete implementation of temporaries.
 
 Finish concept of base pointer in expression tree.
 
