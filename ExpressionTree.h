@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "NonCopyable.h"
 #include "Register.h"
 
 
@@ -43,7 +44,7 @@ namespace NativeJIT
     };
 
 
-    class ExpressionTree
+    class ExpressionTree : public NonCopyable
     {
     public:
         ExpressionTree(Allocators::IAllocator& allocator, X64CodeGenerator& code);
@@ -159,7 +160,7 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    Register<SIZE, false> ExpressionTree::AllocateRegisterInternal(Register<SIZE, false> ignore)
+    Register<SIZE, false> ExpressionTree::AllocateRegisterInternal(Register<SIZE, false> /*ignore*/)
     {
         Assert(m_rxxRegisters.size() > 0, "No RXX registers available.");
 
@@ -170,7 +171,7 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    Register<SIZE, true> ExpressionTree::AllocateRegisterInternal(Register<SIZE, true> ignore)
+    Register<SIZE, true> ExpressionTree::AllocateRegisterInternal(Register<SIZE, true> /*ignore*/)
     {
         Assert(m_xmmRegisters.size() > 0, "No XMM registers available.");
 
@@ -188,14 +189,14 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, false> ignore) const
+    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, false> /*ignore*/) const
     {
         return static_cast<unsigned>(m_rxxRegisters.size());
     }
 
 
     template <unsigned SIZE>
-    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const
+    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, true> /*ignore*/) const
     {
         return static_cast<unsigned>(m_xmmRegisters.size());
     }

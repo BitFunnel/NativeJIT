@@ -65,7 +65,7 @@ namespace NativeJIT
     template <typename T>
     typename Storage<T> IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        auto& base = CodeGenBase(tree);
+        auto base = CodeGenBase(tree);
         unsigned __int64 offset = m_base.GetOffset();
 
         Storage<T> value(tree, base, m_offset + offset);
@@ -82,7 +82,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned IndirectNode<T>::LabelSubtree(bool isLeftChild)
+    unsigned IndirectNode<T>::LabelSubtree(bool /*isLeftChild*/)
     {
         // TODO: Should isLeftChild be passed down?
         SetRegisterCount(m_base.LabelSubtree(true));

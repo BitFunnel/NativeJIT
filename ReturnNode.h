@@ -66,7 +66,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned ReturnNode<T>::LabelSubtree(bool isLeftChild)
+    unsigned ReturnNode<T>::LabelSubtree(bool /*isLeftChild*/)
     {
         unsigned child = m_child.LabelSubtree(true);
 

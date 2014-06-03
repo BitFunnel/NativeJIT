@@ -98,7 +98,7 @@ namespace NativeJIT
         }
         else
         {
-            auto & base = m_base.CodeGen(tree);
+            auto base = m_base.CodeGen(tree);
             return Storage<FIELD*>(tree, base);
         }
     }
@@ -107,7 +107,7 @@ namespace NativeJIT
     template <typename OBJECT, typename FIELD>
     typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
-        auto& base = CodeGenBase(tree);
+        auto base = CodeGenBase(tree);
         unsigned __int64 offset = m_base.GetOffset();
 
         base.ConvertToValue(tree, true);
@@ -125,7 +125,7 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    unsigned FieldPointerNode<OBJECT, FIELD>::LabelSubtree(bool isLeftChild)
+    unsigned FieldPointerNode<OBJECT, FIELD>::LabelSubtree(bool /*isLeftChild*/)
     {
         // TODO: Should isLeftChild be passed down?
         SetRegisterCount(m_base.LabelSubtree(true));

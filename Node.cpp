@@ -37,7 +37,7 @@ namespace NativeJIT
     }
 
 
-    void NodeBase::CompileAsRoot(ExpressionTree& tree)
+    void NodeBase::CompileAsRoot(ExpressionTree& /*tree*/)
     {
         Assert(false, "Root of ExpressionTree must be a ReturnNode node.");
     }

@@ -1,11 +1,14 @@
 #include "stdafx.h"
 
+#pragma warning(disable:4505)
+
 #include <iostream>
 
 #include "Allocator.h"
 #include "Examples.h"
 #include "ExpressionTree.h"
 #include "ExpressionNodeFactory.h"
+#include "Function.h"
 #include "Storage.h"
 #include "X64CodeGenerator.h"
 
@@ -31,37 +34,6 @@ namespace NativeJIT
         {
             std::cout << Register<1, false>(i).GetName() << std::endl;
         }
-    }
-
-
-    //void TestOperations()
-    //{
-    //    X64CodeGenerator code(std::cout);
-
-    //    Register<8, false> rax(0);
-    //    Register<8, false> rbx(1);
-
-    //    code.Op("add", rax, rbx);
-    //    code.Op("mov", rax, 1234);
-    //    code.Op("sub", rax, rbx, 789);
-    //    code.Op("not", rax);
-    //}
-
-
-    void TestNodes()
-    {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
-
-        auto & a = factory.Immediate(5ull);
-        auto & b = factory.Parameter<unsigned __int64*>();
-        auto & c = factory.Deref(b);
-
-        auto & d = factory.Parameter<double>();
-
-        tree.Print();
     }
 
 
@@ -335,18 +307,43 @@ namespace NativeJIT
     }
 
 
+    void TestFunction()
+    {
+        Allocator allocator(10000);
+
+        Function<int, unsigned __int64, int*> function(allocator, std::cout);
+
+        auto & factory = function.GetFactory();
+        auto & a = factory.Add(function.GetP2(), function.GetP1());
+        auto & b = factory.Deref(a);
+        
+//        function.Return(factory.Deref(factory.Add(function.GetP2(), function.GetP1())));
+
+        function.Return(b);
+        function.Compile();
+
+        //// WON'T COMPILE
+        //Function<int, int, int*> function(allocator, std::cout);
+        //auto & factory = function.GetFactory();
+        //auto & a = factory.Add(function.GetP2(), function.GetP1());
+        //auto & b = factory.Deref(a);
+        //function.Return(b);
+        //function.Compile();
+    }
+
+
     void RunTests()
     {
 //        TestConditional();
-        JITExample1();
+//        JITExample1();
 //        ConditionalExample();
 
 //        TestRegisters();
 //        TestOperations();
 //        TestNodes();
 //        TestFactory();
-        TestByte();
-        TestDouble();
+//        TestByte();
+//        TestDouble();
 //        TestLabel();
 //        TestArray();
 //        TestFieldPointerPrimitive();
@@ -355,11 +352,13 @@ namespace NativeJIT
 //        TestStorage();
 //        TestStorageIntegration();
 //        TestSpill();
+
+        TestFunction();
     }
 }
 
 
-int _tmain(int argc, char* argv[])
+int _tmain(int /*argc*/, char* /*argv*/[])
 {
     NativeJIT::RunTests();
 

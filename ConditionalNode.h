@@ -157,7 +157,7 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    unsigned ConditionalNode<T, JCC>::LabelSubtree(bool isLeftChild)
+    unsigned ConditionalNode<T, JCC>::LabelSubtree(bool /*isLeftChild*/)
     {
         unsigned condition = m_condition.LabelSubtree(true);
         unsigned trueExpression = m_trueExpression.LabelSubtree(true);
@@ -235,7 +235,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned IsTrue<T>::LabelSubtree(bool isLeftChild)
+    unsigned IsTrue<T>::LabelSubtree(bool /*isLeftChild*/)
     {
         SetRegisterCount(m_value.LabelSubtree(true));
 
@@ -318,7 +318,7 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    unsigned RelationalOperatorNode<T, JCC>::LabelSubtree(bool isLeftChild)
+    unsigned RelationalOperatorNode<T, JCC>::LabelSubtree(bool /*isLeftChild*/)
     {
         unsigned left = m_left.LabelSubtree(true);
         unsigned right = m_right.LabelSubtree(false);

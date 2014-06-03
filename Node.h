@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Assert.h"
+#include "NonCopyable.h"
 #include "Storage.h"
 #include "TypePredicates.h"
 
@@ -9,7 +10,7 @@ namespace NativeJIT
 {
     class ExpressionTree;
 
-    class NodeBase
+    class NodeBase : public NonCopyable
     {
     public:
         NodeBase(ExpressionTree& tree);

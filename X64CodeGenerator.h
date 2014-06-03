@@ -3,6 +3,7 @@
 #include <ostream>
 
 #include "Assert.h"
+#include "NonCopyable.h"
 #include "Register.h"
 #include "Storage.h"
 
@@ -41,7 +42,7 @@ namespace NativeJIT
 
     char const * JccName(JccType jcc);
 
-    class X64CodeGenerator
+    class X64CodeGenerator : public NonCopyable
     {
     public:
         X64CodeGenerator(std::ostream& out);
@@ -144,7 +145,10 @@ namespace NativeJIT
     void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest, T value)
     {
         Indent();
+#pragma warning(push)
+#pragma warning(disable:4127)
         if (ISFLOAT)
+#pragma warning(pop)
         {
             m_out << op << " " << dest.GetName() << ", " << value << std::endl;
         }

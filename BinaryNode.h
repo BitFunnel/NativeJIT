@@ -93,7 +93,7 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    unsigned BinaryNode<L, R>::LabelSubtree(bool isLeftChild)
+    unsigned BinaryNode<L, R>::LabelSubtree(bool /*isLeftChild*/)
     {
         unsigned left = m_left.LabelSubtree(true);
         unsigned right = m_right.LabelSubtree(false);

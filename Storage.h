@@ -5,6 +5,7 @@
 #include "Allocator.h"
 #include "Assert.h"
 #include "ExpressionTree.h"
+#include "NonCopyable.h"
 #include "Register.h"
 #include "TypePredicates.h"
 #include "X64CodeGenerator.h"
@@ -20,7 +21,7 @@ namespace NativeJIT
 {
     class ExpressionTree;
 
-    class Data
+    class Data : public NonCopyable
     {
     public:
         typedef enum {Immediate, Indirect, Direct} Class;
@@ -90,18 +91,18 @@ namespace NativeJIT
         Storage(ExpressionTree& tree, Storage<T*>& base, size_t offset);
 
         template <typename U>
-        Storage(ExpressionTree& tree, Storage<U> other)
+        Storage(ExpressionTree& /*tree*/, Storage<U> other)
             : m_data(nullptr)
         {
             SetData(other.m_data);
         }
 
 
-        Storage(Storage& other);
+        Storage(Storage const & other);
 
         ~Storage();
 
-        Storage& operator=(Storage & other);
+        Storage& operator=(Storage const & other);
 
         bool IsNull() const;
 
@@ -185,7 +186,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Storage<T>::Storage(Storage& other)
+    Storage<T>::Storage(Storage const & other)
         : m_data(nullptr)
     {
         SetData(other.m_data);
@@ -212,7 +213,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Storage<T>& Storage<T>::operator=(Storage & other)
+    Storage<T>& Storage<T>::operator=(Storage const & other)
     {
         SetData(other.m_data);
         return *this;
@@ -257,7 +258,10 @@ namespace NativeJIT
             case Data::Indirect:
                 {
                     BaseRegister base = BaseRegister(m_data->m_registerId);
+#pragma warning(push)
+#pragma warning(disable:4127)
                     if (IsFloatingPointType<T>::value || m_data->m_tree.IsBasePointer(base))
+#pragma warning(pop)
                     {
                         // We need to allocate a new register for the value for one of two reasons:
                         //   The value is float and therefore cannot be stored in base.

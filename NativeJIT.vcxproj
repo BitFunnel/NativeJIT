@@ -48,7 +48,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
@@ -60,7 +60,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -79,6 +79,7 @@
     <ClInclude Include="Allocator.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="BinaryNode.h" />
+    <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
     <ClInclude Include="ExpressionNodeFactory.h" />
@@ -88,6 +89,7 @@
     <ClInclude Include="ImmediateNode.h" />
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="NonCopyable.h" />
     <ClInclude Include="ParameterNode.h" />
     <ClInclude Include="Register.h" />
     <ClInclude Include="ReturnNode.h" />
@@ -104,6 +106,7 @@
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />
+    <ClCompile Include="Function.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="ParameterNode.cpp" />

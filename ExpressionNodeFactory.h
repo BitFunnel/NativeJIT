@@ -6,8 +6,9 @@
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
-#include "ParameterNode.h"
 #include "Node.h"
+#include "NonCopyable.h"
+#include "ParameterNode.h"
 #include "ReturnNode.h"
 
 
@@ -21,7 +22,7 @@ namespace NativeJIT
 {
     class ExpressionTree;
 
-    class ExpressionNodeFactory
+    class ExpressionNodeFactory : public NonCopyable
     {
     public:
         ExpressionNodeFactory(Allocators::IAllocator& allocator, ExpressionTree& tree);
@@ -30,7 +31,7 @@ namespace NativeJIT
         // Leaf nodes
         //
         template <typename T> Node<T>& Immediate(T value);
-        template <typename T> Node<T>& Parameter();
+        template <typename T> ParameterNode<T>& Parameter();
 
 
         //
@@ -48,7 +49,7 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
 
-        template <typename T> Node<T*>& Add(Node<T*>& array, Node<unsigned __int64>& index);
+        template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 
 
         //
@@ -62,6 +63,7 @@ namespace NativeJIT
         //
         template <typename T, JccType JCC>
         Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
+
 
     private:
         template <typename L, typename R> Node<L>& Binary(char const* operation, Node<L>& left, Node<R>& right);
@@ -89,7 +91,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Node<T>& ExpressionNodeFactory::Parameter()
+    ParameterNode<T>& ExpressionNodeFactory::Parameter()
     {
         return * new (m_allocator.Allocate(sizeof(ParameterNode<T>))) ParameterNode<T>(m_tree);
     }
@@ -136,10 +138,10 @@ namespace NativeJIT
     }
 
 
-    template <typename T>
-    Node<T*>& ExpressionNodeFactory::Add(Node<T*>& array, Node<unsigned __int64>& index)
+    template <typename T, typename INDEX>
+    Node<T*>& ExpressionNodeFactory::Add(Node<T*>& array, Node<INDEX>& index)
     {
-        auto & size = Immediate<unsigned __int64>(sizeof(T));
+        auto & size = Immediate<INDEX>(sizeof(T));
         auto & offset = Mul(index, size);
         return Binary("add", array, offset);
     }
@@ -167,7 +169,6 @@ namespace NativeJIT
         typedef ConditionalNode<T, JCC> NodeType;
         return * new (m_allocator.Allocate(sizeof(NodeType))) NodeType(m_tree, condition, left, right);
     }
-
 
 
     //

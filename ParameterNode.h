@@ -87,7 +87,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& tree)
+    typename Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& /*tree*/)
     {
         Assert(IsCached(), "Must assign register before attempting code generation.");
 
