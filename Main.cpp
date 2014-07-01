@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "Allocator.h"
+#include "CallNode.h"
 #include "Examples.h"
 #include "ExpressionTree.h"
 #include "ExpressionNodeFactory.h"
@@ -322,13 +323,38 @@ namespace NativeJIT
         function.Return(b);
         function.Compile();
 
-        //// WON'T COMPILE
+        //// WON'T COMPILE because sizeof(int*) != sizeof(int)
         //Function<int, int, int*> function(allocator, std::cout);
         //auto & factory = function.GetFactory();
         //auto & a = factory.Add(function.GetP2(), function.GetP1());
         //auto & b = factory.Deref(a);
         //function.Return(b);
         //function.Compile();
+    }
+
+
+    int SampleFunction(int x, int y)
+    {
+        return x + y;
+    }
+
+    void TestCall()
+    {
+        Allocator allocator(10000);
+        X64CodeGenerator code(std::cout);
+        ExpressionTree tree(allocator, code);
+        ExpressionNodeFactory factory(allocator, tree);
+
+        auto & a = factory.Immediate<int>(5);
+        auto & b = factory.Immediate<int>(6);
+
+        typedef int (*F)(int, int);
+        auto &function = factory.Immediate<F>(SampleFunction);
+
+        auto & d = factory.Call(function, a, b);
+
+        factory.Return(d);
+        tree.Compile();
     }
 
 
@@ -353,7 +379,8 @@ namespace NativeJIT
 //        TestStorageIntegration();
 //        TestSpill();
 
-        TestFunction();
+//        TestFunction();
+        TestCall();
     }
 }
 

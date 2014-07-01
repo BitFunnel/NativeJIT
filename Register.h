@@ -50,4 +50,10 @@ namespace NativeJIT
     private:
         unsigned m_id;
     };
+
+
+    extern Register<8, false> rcx;
+    extern Register<8, false> rdx;
+    extern Register<8, false> r8;
+    extern Register<8, false> r9;
 }

@@ -59,7 +59,9 @@ namespace NativeJIT
           m_parameterRegisters(code.GetRXXCount(), code.GetXMMCount()),
           m_basePointer(Register<sizeof(void*), false>(4)),     // TODO: Magic number RBP
           m_stackPointer(Register<sizeof(void*), false>(7)),    // TODO: Magic number RSP
-          m_temporaryCount(0)
+          m_temporaryCount(0),
+          m_rxxRegistersAvailable(0),
+          m_xmmRegistersAvailable(0)
     {
     }
 
@@ -156,6 +158,15 @@ namespace NativeJIT
         {
             registers |= (1 << m_rxxRegisters[i]);
         }
+
+        if (registers != m_rxxRegistersAvailable)
+        {
+            std::cout << "***************************" << std::endl;
+            std::cout << "registers != ~m_rxxRegisters" << std::endl;
+            std::cout << "registers = 0x" << std::hex << registers << std::endl;
+            std::cout << "m_rxxRegistersAvailable = 0x" << std::hex << m_rxxRegistersAvailable << std::dec << std::endl;
+        }
+
         for (unsigned i = 0 ; i < 16;  ++i)
         {
             std::cout << Register<8, false>(i).GetName();
@@ -218,7 +229,9 @@ namespace NativeJIT
         {
             if ((registers & 1) == 1 && i != m_basePointer.GetId() && i != m_stackPointer.GetId())
             {
-                m_rxxRegisters.push_back(i);
+                ReleaseRegister(Register<8, false>(i));
+                //m_rxxRegisters.push_back(i);
+                //m_rxxRegistersAvailable |= (1 << i);
             }
             registers >>= 1;
         }
@@ -227,7 +240,9 @@ namespace NativeJIT
         // TODO: TEMPORARY CODE FOR DEBUGGING.
         for (unsigned i = 0; i < 16; ++i)
         {
-            m_xmmRegisters.push_back(i);
+            ReleaseRegister(Register<8, true>(i));
+            //m_xmmRegisters.push_back(i);
+            //m_xmmRegistersAvailable |= (1 << i);
         }
     }
 

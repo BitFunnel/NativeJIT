@@ -2,6 +2,7 @@
 
 #include "Allocator.h"
 #include "BinaryNode.h"
+#include "CallNode.h"
 #include "ConditionalNode.h"
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
@@ -64,6 +65,17 @@ namespace NativeJIT
         template <typename T, JccType JCC>
         Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
 
+
+        //
+        // Call node
+        //
+        template <typename R, typename P1, typename P2>
+        Node<R>& Call(Node<R (*)(P1,P2)>& function, Node<P1>& param1, Node<P2>& param2);
+        //{
+        //    typedef CallNode<R, P1, P2> NodeType;
+        //    return * new (m_allocator.Allocate(sizeof(NodeType)))
+        //                 NodeType(m_tree, function, param1, param2);
+        //}
 
     private:
         template <typename L, typename R> Node<L>& Binary(char const* operation, Node<L>& left, Node<R>& right);
@@ -168,6 +180,20 @@ namespace NativeJIT
     {
         typedef ConditionalNode<T, JCC> NodeType;
         return * new (m_allocator.Allocate(sizeof(NodeType))) NodeType(m_tree, condition, left, right);
+    }
+
+
+    //
+    // Call external function
+    //
+    template <typename R, typename P1, typename P2>
+    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1,P2)>& function,
+                                         Node<P1>& param1,
+                                         Node<P2>& param2)
+    {
+        typedef CallNode<R, P1, P2> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                        NodeType(m_tree, function, param1, param2);
     }
 
 

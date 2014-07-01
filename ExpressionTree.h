@@ -57,6 +57,12 @@ namespace NativeJIT
         template <typename REGISTERTYPE>
         REGISTERTYPE AllocateRegister();
 
+        template <unsigned SIZE>
+        void Prefer(Register<SIZE, false> r);
+
+        template <unsigned SIZE>
+        void Prefer(Register<SIZE, true> r);
+
         template <typename REGISTERTYPE>
         unsigned GetAvailableRegisterCount() const;
 
@@ -120,6 +126,10 @@ namespace NativeJIT
         std::vector<unsigned> m_rxxRegisters;
         std::vector<unsigned> m_xmmRegisters;
 
+        unsigned m_rxxRegistersAvailable;
+        unsigned m_xmmRegistersAvailable;
+
+
         Register<8, false> m_stackPointer;
         Register<8, false> m_basePointer;
 
@@ -166,6 +176,7 @@ namespace NativeJIT
 
         unsigned id = m_rxxRegisters.back();
         m_rxxRegisters.pop_back();
+        m_rxxRegistersAvailable &= ~(1 << id);
         return Register<SIZE, false>(id);
     }
 
@@ -177,7 +188,39 @@ namespace NativeJIT
 
         unsigned id = m_xmmRegisters.back();
         m_xmmRegisters.pop_back();
+        m_xmmRegistersAvailable &= ~(1 << id);
         return Register<SIZE, true>(id);
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::Prefer(Register<SIZE, false> r)
+    {
+        unsigned id = r.GetId();
+        if ((m_rxxRegistersAvailable & (1 << id)) != 0)
+        {
+            // The preferred register is available.
+            // Move it to the head of the free list.
+            unsigned last = m_rxxRegisters.size() - 1;
+            for (unsigned i = 0 ; i < last; ++i)
+            {
+                if (m_rxxRegisters[i] == id)
+                {
+                    // We've found the preferred register in a position before the last.
+                    // Swap it with the last register.
+                    m_rxxRegisters[i] = m_rxxRegisters[last];
+                    m_rxxRegisters[last] = id;
+                    break;
+                }
+            }
+        }
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::Prefer(Register<SIZE, true> r)
+    {
+        // TODO: Implement
     }
 
 
@@ -219,6 +262,7 @@ namespace NativeJIT
         // TODO: Verify that this register isn't already free.
 
         m_rxxRegisters.push_back(r.GetId());
+        m_rxxRegistersAvailable |= (1 << r.GetId());
     }
 
 
@@ -230,6 +274,7 @@ namespace NativeJIT
         // TODO: Verify that this register isn't already free.
 
         m_xmmRegisters.push_back(r.GetId());
+        m_xmmRegistersAvailable |= (1 << r.GetId());
     }
 
 

@@ -33,4 +33,10 @@ namespace NativeJIT
             { "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"}
         }
     };
+
+
+    Register<8, false> rcx(2);
+    Register<8, false> rdx(3);
+    Register<8, false> r8(8);
+    Register<8, false> r9(9);
 }

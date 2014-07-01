@@ -79,6 +79,7 @@
     <ClInclude Include="Allocator.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="BinaryNode.h" />
+    <ClInclude Include="CallNode.h" />
     <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />

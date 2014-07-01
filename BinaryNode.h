@@ -55,7 +55,7 @@ namespace NativeJIT
         if (r <= l && r < a)
         {
             // Evaluate left first. Once evaluation completes, left will use one register,
-            // leaving at least a-1 registers for right.
+            // leaving at least a-one register for right.
             auto sLeft = m_left.CodeGen(tree);
             sLeft.ConvertToValue(tree, true);
             auto sRight = m_right.CodeGen(tree);
@@ -66,7 +66,7 @@ namespace NativeJIT
         else if (l < r && l < a)
         {
             // Evaluate right first. Once evaluation completes, right will use one register,
-            // leaving at least a-1 registers for left.
+            // leaving at least one register for left.
             auto sRight = m_right.CodeGen(tree);
             auto sLeft = m_left.CodeGen(tree);
             sLeft.ConvertToValue(tree, true);
