@@ -18,6 +18,9 @@ x        // release r9
 
 x Complete implementation of temporaries.
 
+Add .props files and remove overrides in VS projects.
+Change NativeJIT to be a library, instead of an executable.
+
 Bring in SuiteCpp unit test framework.
 Figure out unit testing strategy
   Text comparision with template for CodeGenerator?
