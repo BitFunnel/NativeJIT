@@ -1,5 +1,7 @@
 #pragma once
 
+#pragma warning(disable:4505)
+
 #include "Assert.h"
 #include "NonCopyable.h"
 #include "Storage.h"

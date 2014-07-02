@@ -201,7 +201,7 @@ namespace NativeJIT
         {
             // The preferred register is available.
             // Move it to the head of the free list.
-            unsigned last = m_rxxRegisters.size() - 1;
+            unsigned last = static_cast<unsigned>(m_rxxRegisters.size() - 1);
             for (unsigned i = 0 ; i < last; ++i)
             {
                 if (m_rxxRegisters[i] == id)
