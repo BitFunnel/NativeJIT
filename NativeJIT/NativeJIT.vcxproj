@@ -97,7 +97,6 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Storage.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="ToDo.h" />
     <ClInclude Include="TypePredicates.h" />
     <ClInclude Include="X64CodeGenerator.h" />
   </ItemGroup>

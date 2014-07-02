@@ -36,9 +36,6 @@
     <ClInclude Include="ExpressionTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ToDo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="IAllocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
