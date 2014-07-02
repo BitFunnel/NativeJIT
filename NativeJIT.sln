@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9BCB4D7F-294F-4C65-BF26-A492FC595B33}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		Packages\SuiteCpp.Tools\.gitignore = Packages\SuiteCpp.Tools\.gitignore
 		ToDo.txt = ToDo.txt
 	EndProjectSection
 EndProject

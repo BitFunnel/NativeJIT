@@ -18,6 +18,11 @@ x        // release r9
 
 x Complete implementation of temporaries.
 
+RunUnitTest[Debug,Release].bat will need modification for use with CoreXT
+  Get SuiteCpp from build location.
+  Use Retail instead of Release.
+  Get test targets from build location.
+
 Add .props files and remove overrides in VS projects.
 Change NativeJIT to be a library, instead of an executable.
 

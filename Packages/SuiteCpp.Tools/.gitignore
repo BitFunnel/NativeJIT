@@ -1,0 +1,2 @@
+# In this case, don't ignore the debug directory because we want to check in the binaries as tools.
+!debug
