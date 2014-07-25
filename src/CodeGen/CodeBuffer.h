@@ -8,7 +8,7 @@ namespace NativeJIT
     class CodeBuffer
     {
     public:
-        CodeBuffer(unsigned capacity, unsigned maxLabels, unsigned maxCallSites);
+        CodeBuffer(size_t capacity, unsigned maxLabels, unsigned maxCallSites);
         ~CodeBuffer();
 
         // Allocating and resolving jump labels.
@@ -31,7 +31,7 @@ namespace NativeJIT
         void Emit64(unsigned __int64 x);
 
         // Return the size of the buffer, in bytes.
-        int BufferSize() const;
+        size_t BufferSize() const;
 
         // Returns the address of the start of the buffer.
         // WARNING: Do not use this function to get the address of your generated code.
@@ -42,6 +42,11 @@ namespace NativeJIT
         const unsigned char* BufferStart() const;
 
         // Return the offset of the current write position in the buffer.
-        int CurrentPosition() const;
+        size_t CurrentPosition() const;
+
+
+        // Advances the current write position by byteCount and returns a pointer to the write position
+        // before advancing.
+        unsigned char* Advance(int byteCount);
     };
 }
