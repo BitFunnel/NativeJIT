@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CodeGenHelpers.h"
 #include "Node.h"
 
 
@@ -58,7 +59,7 @@ namespace NativeJIT
         if (r.GetId() != 0)
         {
             auto dest = RegisterType(0);
-            tree.GetCodeGenerator().Op("mov", dest, s);
+            CodeGenHelpers::Emit(tree.GetCodeGenerator(), "mov", dest, s);
         }
 
         tree.GetCodeGenerator().Op("ret");

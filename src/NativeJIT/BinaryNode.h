@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CodeGenHelpers.h"
 #include "Node.h"
 
 
@@ -60,7 +61,7 @@ namespace NativeJIT
             sLeft.ConvertToValue(tree, true);
             auto sRight = m_right.CodeGen(tree);
 
-            tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit(tree.GetCodeGenerator(), m_operation, sLeft.GetDirectRegister(), sRight);
             return sLeft;
         }
         else if (l < r && l < a)
@@ -71,7 +72,7 @@ namespace NativeJIT
             auto sLeft = m_left.CodeGen(tree);
             sLeft.ConvertToValue(tree, true);
 
-            tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit(tree.GetCodeGenerator(), m_operation, sLeft.GetDirectRegister(), sRight);
             return sLeft;
         }
         else
@@ -85,7 +86,7 @@ namespace NativeJIT
             auto sLeft = m_left.CodeGen(tree);
             sLeft.ConvertToValue(tree, true);
 
-            tree.GetCodeGenerator().Op(m_operation, sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit(tree.GetCodeGenerator(), m_operation, sLeft.GetDirectRegister(), sRight);
 
             return sLeft;
         }

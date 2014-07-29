@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CodeGenHelpers.h"
 #include "ExpressionTree.h"
 #include "Node.h"
 #include "X64CodeGenerator.h"
@@ -394,7 +395,7 @@ namespace NativeJIT
                 sLeft.ConvertToValue(tree, true);
                 auto sRight = m_right.CodeGen(tree);
 
-                tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit(tree.GetCodeGenerator(), "cmp", sLeft.GetDirectRegister(), sRight);
             }
             else if (l < r && l < a)
             {
@@ -404,7 +405,7 @@ namespace NativeJIT
                 auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
 
-                tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit(tree.GetCodeGenerator(), "cmp", sLeft.GetDirectRegister(), sRight);
             }
             else
             {
@@ -417,7 +418,7 @@ namespace NativeJIT
                 auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
 
-                tree.GetCodeGenerator().Op("cmp", sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit(tree.GetCodeGenerator(), "cmp", sLeft.GetDirectRegister(), sRight);
             }
         }
     }
