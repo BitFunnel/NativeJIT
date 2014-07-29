@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "Assert.h"
-#include "X64CodeGenerator.h"
+#include "Temporary/Assert.h"
+#include "NativeJIT/X64CodeGenerator.h"
 
 
 namespace NativeJIT

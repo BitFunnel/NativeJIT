@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Allocator.h"
 #include "BinaryNode.h"
 #include "CallNode.h"
 #include "ConditionalNode.h"
@@ -8,9 +7,10 @@
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
 #include "Node.h"
-#include "NonCopyable.h"
 #include "ParameterNode.h"
 #include "ReturnNode.h"
+#include "Temporary/Allocator.h"
+#include "Temporary/NonCopyable.h"
 
 
 namespace Allocators

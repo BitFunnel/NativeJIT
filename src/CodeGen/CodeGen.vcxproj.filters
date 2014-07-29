@@ -59,5 +59,11 @@
     <ClCompile Include="UnwindCode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="X64CodeGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Register.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

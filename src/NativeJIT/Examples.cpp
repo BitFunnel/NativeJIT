@@ -2,11 +2,11 @@
 
 #include <iostream>
 
-#include "Allocator.h"
 #include "Examples.h"
 #include "ExpressionNodeFactory.h"
 #include "ExpressionTree.h"
-#include "X64CodeGenerator.h"
+#include "NativeJIT/X64CodeGenerator.h"
+#include "Temporary/Allocator.h"
 
 
 namespace NativeJIT

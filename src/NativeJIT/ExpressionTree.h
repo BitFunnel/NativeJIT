@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "NonCopyable.h"
-#include "Register.h"
+#include "NativeJIT/Register.h"
+#include "Temporary/NonCopyable.h"
 
 
 namespace Allocators

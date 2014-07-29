@@ -22,6 +22,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NativeJITUnitTest", "UnitTe
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CodeGenUnitTest", "UnitTest\CodeGenUnitTest\CodeGenUnitTest.vcxproj", "{5C5E9013-BECC-4329-ACA0-4C056C1BBE1E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{C355777F-6688-4F80-A3A5-730D4CA7DA5C}"
+	ProjectSection(SolutionItems) = preProject
+		inc\NativeJIT\X64CodeGenerator.h = inc\NativeJIT\X64CodeGenerator.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Temporary", "Temporary", "{EC495CF0-077A-4995-919B-8E1667EC8E53}"
+	ProjectSection(SolutionItems) = preProject
+		inc\Temporary\Allocator.h = inc\Temporary\Allocator.h
+		inc\Temporary\Assert.h = inc\Temporary\Assert.h
+		inc\Temporary\NonCopyable.h = inc\Temporary\NonCopyable.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -82,6 +94,8 @@ Global
 		{FEC8EF42-4E3E-4974-B368-806450FA517F} = {9BCB4D7F-294F-4C65-BF26-A492FC595B33}
 		{C90F7BFD-0236-4B1E-B6F6-CD3F4BBF6BBA} = {F44ECE56-395F-44EE-A5EF-578056D92FB1}
 		{9BFDFF92-EAFB-4E13-925B-60CF3C2DC70D} = {F44ECE56-395F-44EE-A5EF-578056D92FB1}
+		{C355777F-6688-4F80-A3A5-730D4CA7DA5C} = {7140DE4A-C728-48BF-B257-E3CFC753E12E}
+		{EC495CF0-077A-4995-919B-8E1667EC8E53} = {7140DE4A-C728-48BF-B257-E3CFC753E12E}
 		{2FD55ABD-9B82-46F6-B5BF-16D428658604} = {FEC8EF42-4E3E-4974-B368-806450FA517F}
 		{5C5E9013-BECC-4329-ACA0-4C056C1BBE1E} = {FEC8EF42-4E3E-4974-B368-806450FA517F}
 	EndGlobalSection

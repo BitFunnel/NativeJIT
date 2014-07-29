@@ -1,7 +1,8 @@
 #pragma once
 
-#include "..\NativeJIT\IAllocator.h"    // TODO: Move this file to public headers.
 #include "CodeBuffer.h"     // Embedded class.
+#include "Temporary/IAllocator.h"
+
 
 namespace Allocators
 {

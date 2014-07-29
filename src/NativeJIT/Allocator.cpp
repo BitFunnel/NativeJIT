@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include "Allocator.h"
-#include "Assert.h"
+#include "Temporary/Allocator.h"
+#include "Temporary/Assert.h"
 
 
 namespace NativeJIT

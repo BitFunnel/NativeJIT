@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Assert.h"
 #include "ExpressionTree.h"
 #include "Node.h"
+#include "Temporary/Assert.h"
 
 
 namespace NativeJIT

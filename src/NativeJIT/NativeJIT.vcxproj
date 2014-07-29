@@ -76,8 +76,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Allocator.h" />
-    <ClInclude Include="Assert.h" />
     <ClInclude Include="BinaryNode.h" />
     <ClInclude Include="CallNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
@@ -91,7 +89,6 @@
     <ClInclude Include="ImmediateNode.h" />
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="NonCopyable.h" />
     <ClInclude Include="ParameterNode.h" />
     <ClInclude Include="Register.h" />
     <ClInclude Include="ReturnNode.h" />
@@ -99,7 +96,6 @@
     <ClInclude Include="Storage.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TypePredicates.h" />
-    <ClInclude Include="X64CodeGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocator.cpp" />
@@ -111,13 +107,16 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="ParameterNode.cpp" />
-    <ClCompile Include="Register.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Storage.cpp" />
-    <ClCompile Include="X64CodeGenerator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CodeGen\CodeGen.vcxproj">
+      <Project>{c90f7bfd-0236-4b1e-b6f6-cd3f4bbf6bba}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

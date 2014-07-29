@@ -2,9 +2,9 @@
 
 #pragma warning(disable:4505)
 
-#include "Assert.h"
-#include "NonCopyable.h"
 #include "Storage.h"
+#include "Temporary/Assert.h"
+#include "Temporary/NonCopyable.h"
 #include "TypePredicates.h"
 
 

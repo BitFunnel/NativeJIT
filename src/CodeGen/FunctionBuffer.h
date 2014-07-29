@@ -4,9 +4,9 @@
 #include <Windows.h>    // RUNTIME_FUNCTION embedded.
 
 
-#include "..\NativeJIT\IAllocator.h"    // TODO: Move this file to public headers.
-#include "..\NativeJIT\NonCopyable.h"   // TODO: Move this file to public headers.
 #include "CodeBuffer.h"     // Embedded class.
+#include "Temporary/IAllocator.h"
+#include "Temporary/NonCopyable.h"
 
 
 namespace Allocators

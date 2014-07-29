@@ -24,12 +24,6 @@
     <ClInclude Include="Register.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="X64CodeGenerator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Assert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -37,9 +31,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IAllocator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ExpressionNodeFactory.h">
@@ -78,9 +69,6 @@
     <ClInclude Include="Function.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NonCopyable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CallNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -93,9 +81,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="X64CodeGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Node.cpp">
@@ -120,9 +105,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Storage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Register.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Function.cpp">

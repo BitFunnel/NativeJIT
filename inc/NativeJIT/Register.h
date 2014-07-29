@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Assert.h"
+#include "Temporary/Assert.h"
+
 
 namespace NativeJIT
 {

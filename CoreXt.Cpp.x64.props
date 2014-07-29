@@ -6,11 +6,8 @@
     <BuildType Condition="'$(Configuration)'=='Debug'">debug</BuildType>
     <BuildType Condition="'$(Configuration)'=='Release'">retail</BuildType>
     <BuildArchitecture>amd64</BuildArchitecture>
-     <PackagesRoot>$(SolutionDir)\packages</PackagesRoot>
-     <IncludePath>$(PackagesRoot)\SuiteCpp.Library\inc\inc;$(IncludePath)</IncludePath>
-    <!--<PackagesRoot>$(inetroot)\private\packages</PackagesRoot>
-    <IncludePath>$(SolutionDir)inc;$(SolutionDir)src\Common\Utilities;$(IncludePath)</IncludePath>
-    <OutDir>$(inetroot)\target\$(BuildType)\$(BuildArchitecture)\</OutDir>-->
+     <PackagesRoot>$(SolutionDir)\packages\</PackagesRoot>
+     <IncludePath>$(PackagesRoot)SuiteCpp.Library\inc\inc;$(SolutionDir)inc;$(SolutionDir)src\Common\Utilities;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
-
-#include "Register.h"
+#include "NativeJIT/Register.h"
 
 
 namespace NativeJIT

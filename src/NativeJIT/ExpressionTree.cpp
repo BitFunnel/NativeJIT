@@ -4,8 +4,8 @@
 
 #include "ExpressionTree.h"
 #include "ParameterNode.h"
+#include "NativeJIT/X64CodeGenerator.h"
 #include "Node.h"
-#include "X64CodeGenerator.h"
 
 
 namespace NativeJIT

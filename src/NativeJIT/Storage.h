@@ -2,13 +2,13 @@
 
 #include <iostream>             // TODO: Delete this file after removing all references to std::cout.
 
-#include "Allocator.h"
-#include "Assert.h"
-//#include "ExpressionTree.h"
-#include "NonCopyable.h"
-#include "Register.h"
+#include "ExpressionTree.h"
+#include "NativeJIT/Register.h"
+#include "NativeJIT/X64CodeGenerator.h"
+#include "Temporary/Allocator.h"
+#include "Temporary/Assert.h"
+#include "Temporary/NonCopyable.h"
 #include "TypePredicates.h"
-#include "X64CodeGenerator.h"
 
 
 namespace Allocators

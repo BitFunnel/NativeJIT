@@ -2,8 +2,8 @@
 
 #include "CodeGenHelpers.h"
 #include "ExpressionTree.h"
+#include "NativeJIT/X64CodeGenerator.h"
 #include "Node.h"
-#include "X64CodeGenerator.h"
 
 
 namespace NativeJIT
