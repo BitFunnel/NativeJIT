@@ -4,7 +4,6 @@
 #include <Windows.h>
 
 #include "ExecutionBuffer.h"
-#include "ExecutionBufferInternal.h"
 
 
 namespace NativeJIT
@@ -38,7 +37,7 @@ namespace NativeJIT
 
         if (m_buffer == NULL)
         {
-            throw new std::runtime_error("CodeBuffer: out of memory.");
+            throw std::runtime_error("CodeBuffer: out of memory.");
         }
 
 
@@ -47,7 +46,7 @@ namespace NativeJIT
         if (!VirtualProtect(m_buffer + m_bufferSize, systemInfo.dwPageSize, 
                             PAGE_NOACCESS, &oldProtection))
         {
-            throw new std::runtime_error("CodeBuffer: failed to set protection on guard page.");
+            throw std::runtime_error("CodeBuffer: failed to set protection on guard page.");
         }
 
 
@@ -62,7 +61,7 @@ namespace NativeJIT
         {
             if (VirtualFree(m_buffer, 0, MEM_RELEASE) == 0)
             {
-                throw new std::runtime_error("CodeBuffer: VirtualFree failed.");
+                throw std::runtime_error("CodeBuffer: VirtualFree failed.");
             }
         }
     }
@@ -115,130 +114,4 @@ namespace NativeJIT
     {
         memset(m_buffer, 0xcc, m_bufferSize);
     }
-
-
-    //*************************************************************************
-    //
-    // FunctionBufferBase
-    //
-    //*************************************************************************
-    FunctionBufferBase::FunctionBufferBase(Allocators::IAllocator& allocator,
-                                           size_t capacity,
-                                           unsigned slotCount,
-                                           unsigned registerSaveMask,
-                                           bool isLeaf)
-        : m_allocator(allocator),
-          m_code(capacity, 0, 0)
-    {
-        EmitPrologue(slotCount, registerSaveMask, isLeaf);
-    }
-
-
-    FunctionBufferBase::~FunctionBufferBase()
-    {
-    }
-
-
-    CodeBuffer& FunctionBufferBase::GetCodeBuffer()
-    {
-        return m_code;
-    }
-
-
-    //void FunctionBufferBase::EmitPrologue(unsigned slotCount,
-    //                                      unsigned registerSaveMask,
-    //                                      bool isLeaf)
-    //{
-    //}
-
-
-    // Creates an UnwindInfo structure in the code buffer.
-    void FunctionBufferBase::AllocateUnwindInfo(unsigned unwindCodeCount)
-    {
-        if (unwindCodeCount > UnwindInfo::c_maxUnwindCodes)
-        {
-            throw std::runtime_error("Too many unwind codes.");
-        }
-        m_unwindInfo = (UnwindInfo*)m_code.Advance(sizeof(UnwindInfo));
-        m_unwindCodePtr = m_unwindInfo->m_unwindCodes + unwindCodeCount;
-    }
-
-
-    void FunctionBufferBase::ProloguePushNonVolatile(unsigned __int8 r)
-    {
-        if (r <= 7)
-        {
-            m_code.Emit8(0x50u + r);
-        }
-        else
-        {
-            m_code.Emit8(0x49);
-            m_code.Emit8(0x50 + (r & 7));
-        }
-
-        // TODO: Review this static_cast. Is there a bette way to do this?
-        EmitUnwindCode(UnwindCode(static_cast<char>(m_code.CurrentPosition() - m_prologueStart),
-                                  UWOP_PUSH_NONVOL,
-                                  r));
-        ++m_slotsAllocated;
-    }
-
-
-    void TODO()
-    {
-        throw 0;
-    }
-
-
-    void FunctionBufferBase::PrologueStackAllocate(unsigned __int8 slots)
-    {
-        // Compare with 16 (vs 15) is correct since UWOP_ALLOC_SMALL encodes 1..16 as 0..15.
-        if (slots > 16)
-        {
-            throw std::runtime_error("PrologStackAllocate: slot overflow.");
-        }
-        else if (slots == 0)
-        {
-            throw std::runtime_error("PrologStackAllocate: slots cannot be 0.");
-        }
-
-        TODO();
-//        SUB(RSP, slots * 8);
-        // TODO: Review this static_cast. Is there a bette way to do this?
-        EmitUnwindCode(UnwindCode(static_cast<char>(m_code.CurrentPosition() - m_prologueStart),
-                                  UWOP_ALLOC_SMALL,
-                                  slots - 1));
-        m_slotsAllocated += slots;
-    }
-
-
-    //void FunctionBufferBase::PrologueSetFrameRegister(unsigned __int8 offset)
-    //{
-    //}
-
-
-    //void FunctionBufferBase::EmitUnwindCode(const UnwindCode& c)
-    //{
-    //}
-
-
-    //void FunctionBufferBase::EpilogueUndoStackAllocate(__int8 slots)
-    //{
-    //}
-
-
-    //void FunctionBufferBase::EpilogueUndoFrameRegister(int frameRegister, __int8 offset)
-    //{
-    //}
-
-
-    //void FunctionBufferBase::EpiloguePopNonVolatile(int r)
-    //{
-    //}
-
-
-    //bool FunctionBufferBase::UnwindInfoIsValid(std::ostream& out,
-    //                                           RUNTIME_FUNCTION& runtimeFunction)
-    //{
-    //}
 }

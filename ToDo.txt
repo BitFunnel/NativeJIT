@@ -18,6 +18,11 @@ x        // release r9
 
 x Complete implementation of temporaries.
 
+RBP is wrong in FunctionBuffer.cpp.
+Need LogAssertB
+Set up public headers.
+Readme.txt build fix.
+
 RunUnitTest[Debug,Release].bat will need modification for use with CoreXT
   Get SuiteCpp from build location.
   Use Retail instead of Release.

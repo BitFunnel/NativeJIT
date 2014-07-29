@@ -4,7 +4,7 @@
 
 #include "Allocator.h"
 #include "Assert.h"
-#include "ExpressionTree.h"
+//#include "ExpressionTree.h"
 #include "NonCopyable.h"
 #include "Register.h"
 #include "TypePredicates.h"
@@ -21,6 +21,8 @@ namespace NativeJIT
 {
     class ExpressionTree;
 
+    // DESIGN NOTE: Class Data is not embedded inside of Storage because Data
+    // objects are shared by Storage object parameterized by different types.
     class Data : public NonCopyable
     {
     public:
@@ -36,6 +38,7 @@ namespace NativeJIT
             *reinterpret_cast<T*>(&m_immediate2) = immediate;
         }
 
+
         template <unsigned SIZE, bool ISFLOAT>
         Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r)
             : m_refCount(0),
@@ -45,7 +48,9 @@ namespace NativeJIT
         {
         }
 
+
         Data(ExpressionTree& tree, Register<sizeof(void*), false> base, size_t offset);
+
 
         template <typename T>
         T GetImmediate() const
@@ -53,6 +58,7 @@ namespace NativeJIT
             static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
             return *(reinterpret_cast<T*>(&m_immediate2));
         }
+
 
         Data* ConvertToIndirect(unsigned registerId, size_t offset)
         {
@@ -62,16 +68,18 @@ namespace NativeJIT
             return this;
         }
 
+    private:
+        template <typename OTHER> friend class Storage;
+
         unsigned m_refCount;
 
         ExpressionTree& m_tree;
         Class m_storageClass;
 
-//            T m_immediate;
         unsigned m_registerId;
         size_t m_offset;
 
-    private:
+        // TODO: Comment why this parameter is mutable.
         mutable size_t m_immediate2;
     };
 

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "ExecutionBuffer.h"
+#include "FunctionBuffer.h"
 
 
 namespace NativeJIT
