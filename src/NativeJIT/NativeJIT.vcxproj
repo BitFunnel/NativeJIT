@@ -85,12 +85,10 @@
     <ClInclude Include="ExpressionNodeFactory.h" />
     <ClInclude Include="ExpressionTree.h" />
     <ClInclude Include="FieldPointerNode.h" />
-    <ClInclude Include="IAllocator.h" />
     <ClInclude Include="ImmediateNode.h" />
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="ParameterNode.h" />
-    <ClInclude Include="Register.h" />
     <ClInclude Include="ReturnNode.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Storage.h" />

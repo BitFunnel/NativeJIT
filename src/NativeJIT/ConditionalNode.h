@@ -213,7 +213,7 @@ namespace NativeJIT
             // TODO: Do we always need to move the value?
             // In the case of caching, r2 may not be equal to r.
             // TODO: unit test for this case
-            code.Op("mov", rTrue, rFalse);
+            code.Op(OpCode::Mov, rTrue, rFalse);
         }
 
         code.PlaceLabel(l2);
@@ -266,13 +266,13 @@ namespace NativeJIT
         code.Jcc(JccType::JZ, l1);
 
         RegisterType r = tree.AllocateRegister<RegisterType>();
-        code.Op("mov", r, 1);
+        code.Op(OpCode::Mov, r, 1);
 
         Label l2 = code.AllocateLabel();
         code.Jmp(l2);
         code.PlaceLabel(l1);
 
-        code.Op("mov", r, 1);
+        code.Op(OpCode::Mov, r, 1);
         code.PlaceLabel(l2);
 
         return Storage<bool>(tree, r);
@@ -289,7 +289,7 @@ namespace NativeJIT
             auto value = GetCache();
             ReleaseCache();
             auto r = value.GetDirectRegister();
-            code.Op("or", r, r);
+            code.Op(OpCode::Or, r, r);
         }
         else
         {
@@ -297,7 +297,7 @@ namespace NativeJIT
             value.ConvertToValue(tree, false);
             auto r = value.GetDirectRegister();
 
-            code.Op("or", r, r);
+            code.Op(OpCode::Or, r, r);
         }
     }
 
@@ -354,13 +354,13 @@ namespace NativeJIT
         code.Jcc(JccType::JZ, l1);
 
         RegisterType r = tree.AllocateRegister<RegisterType>();
-        code.Op("mov", r, 1);
+        code.Op(OpCode::Mov, r, 1);
 
         Label l2 = code.AllocateLabel();
         code.Jmp(l2);
         code.PlaceLabel(l1);
 
-        code.Op("mov", r, 1);
+        code.Op(OpCode::Mov, r, 1);
         code.PlaceLabel(l2);
 
         return Storage<bool>(tree, r);
@@ -378,7 +378,7 @@ namespace NativeJIT
             // TODO: This code is wrong - need to set the correct JCC - not just the zero flag.
             // TODO: For this opcode to work, result must be direct. Might consider putting flags check into storage.
             auto direct = result.GetDirectRegister();
-            tree.GetCodeGenerator().Op("or", direct, direct);
+            tree.GetCodeGenerator().Op(OpCode::Or, direct, direct);
             throw 0;
         }
         else
@@ -395,7 +395,7 @@ namespace NativeJIT
                 sLeft.ConvertToValue(tree, true);
                 auto sRight = m_right.CodeGen(tree);
 
-                CodeGenHelpers::Emit(tree.GetCodeGenerator(), "cmp", sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit(tree.GetCodeGenerator(), OpCode::Cmp, sLeft.GetDirectRegister(), sRight);
             }
             else if (l < r && l < a)
             {
@@ -405,7 +405,7 @@ namespace NativeJIT
                 auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
 
-                CodeGenHelpers::Emit(tree.GetCodeGenerator(), "cmp", sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit(tree.GetCodeGenerator(), OpCode::Cmp, sLeft.GetDirectRegister(), sRight);
             }
             else
             {
@@ -418,7 +418,7 @@ namespace NativeJIT
                 auto sLeft = m_left.CodeGen(tree);
                 sLeft.ConvertToValue(tree, true);
 
-                CodeGenHelpers::Emit(tree.GetCodeGenerator(), "cmp", sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit(tree.GetCodeGenerator(), OpCode::Cmp, sLeft.GetDirectRegister(), sRight);
             }
         }
     }

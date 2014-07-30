@@ -6,6 +6,28 @@
 
 namespace NativeJIT
 {
+    char const * OpCodeName(OpCode op)
+    {
+        static char const * names[] = {
+            "Add",
+            "Call",
+            "Cmp",
+            "Mov",
+            "Mul",
+            "Nop",
+            "Or",
+            "Pop",
+            "Push",
+            "Ret",
+            "Sub",
+        };
+
+        Assert(static_cast<unsigned>(op)  < sizeof(names)/sizeof(char const*), "Invalid OpCode");
+
+        return names[static_cast<unsigned>(op)];
+    }
+
+
     char const * JccName(JccType jcc)
     {
         static char const * names[] = {
@@ -97,10 +119,10 @@ namespace NativeJIT
 
 
     // Op
-    void X64CodeGenerator::Op(char const* op)
+    void X64CodeGenerator::Op(OpCode op)
     {
         Indent();
-        m_out << op << std::endl;
+        m_out << OpCodeName(op) << std::endl;
     }
 
 

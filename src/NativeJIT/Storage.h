@@ -254,7 +254,7 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = m_data->m_tree.AllocateRegister<DirectRegister>();
-                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, m_data->GetImmediate<T>());
+                    m_data->m_tree.GetCodeGenerator().Op(OpCode::Mov, dest, m_data->GetImmediate<T>());
 
                     m_data->m_storageClass = Data::Direct;
                     m_data->m_registerId = dest.GetId();
@@ -275,7 +275,7 @@ namespace NativeJIT
                         //   The value is float and therefore cannot be stored in base.
                         //   Base is the reserved base pointer register in the tree.
                         DirectRegister dest = m_data->m_tree.AllocateRegister<DirectRegister>();
-                        m_data->m_tree.GetCodeGenerator().Op("mov", dest, base, m_data->m_offset);
+                        m_data->m_tree.GetCodeGenerator().Op(OpCode::Mov, dest, base, m_data->m_offset);
 
                         if (m_data->m_tree.IsBasePointer(base))
                         {
@@ -293,7 +293,7 @@ namespace NativeJIT
                         // We can reuse the base register for the value.
                         DirectRegister dest(m_data->m_registerId);
                         BaseRegister base = BaseRegister(m_data->m_registerId);
-                        m_data->m_tree.GetCodeGenerator().Op("mov", dest, base, m_data->m_offset);
+                        m_data->m_tree.GetCodeGenerator().Op(OpCode::Mov, dest, base, m_data->m_offset);
                         m_data->m_storageClass = Data::Direct;
                     }
                 }
@@ -314,7 +314,7 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = m_data->m_tree.AllocateRegister<DirectRegister>();
-                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, m_data->GetImmediate<T>());
+                    m_data->m_tree.GetCodeGenerator().Op(OpCode::Mov, dest, m_data->GetImmediate<T>());
 
                     SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
@@ -325,7 +325,7 @@ namespace NativeJIT
                     // We need to allocate a new register for the value.
                     DirectRegister dest = m_data->m_tree.AllocateRegister<DirectRegister>();
                     DirectRegister src = DirectRegister(m_data->m_registerId);
-                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, src);
+                    m_data->m_tree.GetCodeGenerator().Op(OpCode::Mov, dest, src);
 
                     SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
@@ -335,7 +335,7 @@ namespace NativeJIT
                     // We need to allocate a new register for the value.
                     DirectRegister dest = m_data->m_tree.AllocateRegister<DirectRegister>();
                     BaseRegister base = BaseRegister(m_data->m_registerId);
-                    m_data->m_tree.GetCodeGenerator().Op("mov", dest, base, m_data->m_offset);
+                    m_data->m_tree.GetCodeGenerator().Op(OpCode::Mov, dest, base, m_data->m_offset);
 
                     SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }

@@ -10,7 +10,7 @@ namespace NativeJIT
     class BinaryNode : public Node<L>
     {
     public:
-        BinaryNode(ExpressionTree& tree, char const* operation, Node<L>& left, Node<R>& right);
+        BinaryNode(ExpressionTree& tree, OpCode operation, Node<L>& left, Node<R>& right);
 
         virtual Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
@@ -20,7 +20,7 @@ namespace NativeJIT
     private:
         static unsigned ComputeRegisterCount(unsigned leftCount, unsigned rightCount);
 
-        char const* m_operation;
+        OpCode m_operation;
         Node<L>& m_left;
         Node<R>& m_right;
     };
@@ -33,7 +33,7 @@ namespace NativeJIT
     //*************************************************************************
     template <typename L, typename R>
     BinaryNode<L, R>::BinaryNode(ExpressionTree& tree,
-                                 char const* operation,
+                                 OpCode operation,
                                  Node<L>& left,
                                  Node<R>& right)
         : Node(tree),
@@ -109,7 +109,7 @@ namespace NativeJIT
     template <typename L, typename R>
     void BinaryNode<L, R>::Print() const
     {
-        std::cout << "Operation (" << m_operation << ") id=" << GetId();
+        std::cout << "Operation (" << OpCodeName(m_operation) << ") id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", left = " << m_left.GetId();
         std::cout << ", right = " << m_right.GetId();

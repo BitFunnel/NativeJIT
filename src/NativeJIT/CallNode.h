@@ -2,6 +2,7 @@
 
 #include <iostream>     // TODO: Delete this file after removing all references to std::cout.
 
+#include "NativeJIT/X64CodeGenerator.h"
 #include "Node.h"
 
 
@@ -88,7 +89,7 @@ namespace NativeJIT
 
             std::cout << "// Set up parameter registers." << std::endl;
 
-            tree.GetCodeGenerator().Op("call", f.GetDirectRegister());
+            tree.GetCodeGenerator().Op(OpCode::Call, f.GetDirectRegister());
         }
 
         std::cout << "// Pop volatile registers." << std::endl;
@@ -96,7 +97,7 @@ namespace NativeJIT
         auto x = tree.AllocateRegister<Storage<R>::DirectRegister>();
         Storage<R> result(tree, x);
 //        Storage<R> result2(tree, Storage<R>::DirectRegister(0));
-        tree.GetCodeGenerator().Op("mov", result.GetDirectRegister(), Storage<R>::DirectRegister(0));
+        tree.GetCodeGenerator().Op(OpCode::Mov, result.GetDirectRegister(), Storage<R>::DirectRegister(0));
 
         // TODO: This is wrong. Need copy RAX or XMM0 to correct register.
         // Return storage has to be compatible with type R.

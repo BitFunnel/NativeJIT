@@ -206,7 +206,7 @@ namespace NativeJIT
         std::cout << "Prologue ..." << std::endl;
         std::cout << "  NOT IMPLEMENTED" << std::endl;
 
-        m_code.Op("mov", m_basePointer, m_stackPointer);
+        m_code.Op(OpCode::Mov, m_basePointer, m_stackPointer);
     }
 
 

@@ -10,18 +10,18 @@ namespace NativeJIT
     namespace CodeGenHelpers
     {
         template <unsigned SIZE, bool ISFLOAT, typename R>
-        void Emit(X64CodeGenerator& code, char const * operation, Register<SIZE, ISFLOAT> left, Storage<R> right)
+        void Emit(X64CodeGenerator& code, OpCode op, Register<SIZE, ISFLOAT> left, Storage<R> right)
         {
             switch (right.GetClass())
             {
             case Data::Immediate:
-                code.Op(operation, left, right.GetImmediate());
+                code.Op(op, left, right.GetImmediate());
                 break;
             case Data::Direct:
-                code.Op(operation, left, right.GetDirectRegister());
+                code.Op(op, left, right.GetDirectRegister());
                 break;
             case Data::Indirect:
-                code.Op(operation, left, right.GetBaseRegister(), right.GetOffset());
+                code.Op(op, left, right.GetBaseRegister(), right.GetOffset());
                 break;
             default:
                 Assert(false, "BinaryNode<L, R>::CodeGenOp: invalid storage class.");

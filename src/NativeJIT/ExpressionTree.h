@@ -249,7 +249,7 @@ namespace NativeJIT
     Register<SIZE, ISFLOAT> ExpressionTree::CopyRegister(Register<SIZE, ISFLOAT> src)
     {
         auto dest = AllocateRegister<Register<SIZE, ISFLOAT>>();
-        m_code.Op("mov", dest, src);
+        m_code.Op(OpCode::Mov, dest, src);
         return dest;
     }
 

@@ -36,6 +36,24 @@ namespace NativeJIT
         JNZ
     };
 
+
+    enum class OpCode : unsigned
+    {
+        Add = 0,
+        Call,
+        Cmp,
+        Mov,
+        Mul,
+        Nop,
+        Or,
+        Pop,
+        Push,
+        Ret,
+        Sub,
+    };
+
+    char const * OpCodeName(OpCode op);
+
     char const * JccName(JccType jcc);
 
     class X64CodeGenerator : public NonCopyable
@@ -53,25 +71,36 @@ namespace NativeJIT
         void Jmp(Label l);
         void Jcc(JccType type, Label l);
 
-        void Nop();
-
-        void Op(char const* op);
-
+        // TODO: Should this be generalized?
         template <unsigned SIZE, bool ISFLOAT>
         void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
 
+        //
+        // Zero parameters.
+        //
+
+        void Nop();
+        void Op(OpCode op);
+
+        //
+        // One parameter.
+        //
 
         template <unsigned SIZE, bool ISFLOAT>
-        void Op(char const * op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src);
+        void Op(OpCode op, Register<SIZE, ISFLOAT> dest);
+
+        //
+        // Two parameters.
+        //
+
+        template <unsigned SIZE, bool ISFLOAT>
+        void Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src);
 
         template <unsigned SIZE, bool ISFLOAT, typename T>
-        void Op(char const * op, Register<SIZE, ISFLOAT> dest, T value);
+        void Op(OpCode op, Register<SIZE, ISFLOAT> dest, T value);
 
         template <unsigned SIZE, bool ISFLOAT>
-        void Op(char const * op, Register<SIZE, ISFLOAT> dest, Register<sizeof(void*), false> base, size_t offset);
-
-        template <unsigned SIZE, bool ISFLOAT>
-        void Op(char const * op, Register<SIZE, ISFLOAT> dest);
+        void Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<sizeof(void*), false> base, size_t offset);
 
     private:
         void Indent();
@@ -107,15 +136,24 @@ namespace NativeJIT
 
 
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
+    void X64CodeGenerator::Op(OpCode op, Register<SIZE, ISFLOAT> dest)
     {
         Indent();
-        m_out << op << " " << dest.GetName() << ", " << src.GetName() << std::endl;
+        m_out << OpCodeName(op) << " " << dest.GetName() << std::endl;
+    }
+
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
+    {
+        Indent();
+        m_out << OpCodeName(op) << " " << dest.GetName() << ", " << src.GetName() << std::endl;
     }
 
 
     template <unsigned SIZE, bool ISFLOAT, typename T>
-    void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest, T value)
+    void X64CodeGenerator::Op(OpCode op, Register<SIZE, ISFLOAT> dest, T value)
     {
         Indent();
 #pragma warning(push)
@@ -123,19 +161,19 @@ namespace NativeJIT
         if (ISFLOAT)
 #pragma warning(pop)
         {
-            m_out << op << " " << dest.GetName() << ", " << value << std::endl;
+            m_out << OpCodeName(op) << " " << dest.GetName() << ", " << value << std::endl;
         }
         else
         {
             // TODO: HACK: Cast to unsigned __int64 to force character types to display as integers.
             // TODO: Need to add support for ISSIGNED.
-            m_out << op << " " << dest.GetName() << ", " << (unsigned __int64)value << std::endl;
+            m_out << OpCodeName(op) << " " << dest.GetName() << ", " << (unsigned __int64)value << std::endl;
         }
     }
 
 
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Op(char const * op,
+    void X64CodeGenerator::Op(OpCode op,
                               Register<SIZE, ISFLOAT> dest,
                               Register<sizeof(void*), false> base,
                               size_t offset)
@@ -143,20 +181,11 @@ namespace NativeJIT
         Indent();
         if (offset > 0)
         {
-            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
+            m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
         }
         else
         {
-            m_out << op << " " << dest.GetName() << ", [" << base.GetName() << "]" << std::endl;
+            m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << "]" << std::endl;
         }
     }
-
-
-    template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Op(char const * op, Register<SIZE, ISFLOAT> dest)
-    {
-        Indent();
-        m_out << op << " " << dest.GetName() << std::endl;
-    }
-
 }

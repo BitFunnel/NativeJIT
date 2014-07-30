@@ -78,7 +78,7 @@ namespace NativeJIT
         //}
 
     private:
-        template <typename L, typename R> Node<L>& Binary(char const* operation, Node<L>& left, Node<R>& right);
+        template <typename L, typename R> Node<L>& Binary(OpCode operation, Node<L>& left, Node<R>& right);
 
 
         Allocators::IAllocator& m_allocator;
@@ -139,14 +139,14 @@ namespace NativeJIT
     template <typename L, typename R>
     Node<L>& ExpressionNodeFactory::Add(Node<L>& left, Node<R>& right)
     {
-        return Binary("add", left, right);
+        return Binary(OpCode::Add, left, right);
     }
 
 
     template <typename L, typename R>
     Node<L>& ExpressionNodeFactory::Mul(Node<L>& left, Node<R>& right)
     {
-        return Binary("mul", left, right);
+        return Binary(OpCode::Mul, left, right);
     }
 
 
@@ -155,7 +155,7 @@ namespace NativeJIT
     {
         auto & size = Immediate<INDEX>(sizeof(T));
         auto & offset = Mul(index, size);
-        return Binary("add", array, offset);
+        return Binary(OpCode::Add, array, offset);
     }
 
 
@@ -201,7 +201,7 @@ namespace NativeJIT
     // Private methods.
     //
     template <typename L, typename R>
-    Node<L>& ExpressionNodeFactory::Binary(char const* operation, Node<L>& left, Node<R>& right)
+    Node<L>& ExpressionNodeFactory::Binary(OpCode operation, Node<L>& left, Node<R>& right)
     {
         return * new (m_allocator.Allocate(sizeof(BinaryNode<L, R>))) 
                      BinaryNode<L, R>(m_tree, operation, left, right);
