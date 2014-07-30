@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "JumpTable.h"
+#include "NativeJIT/JumpTable.h"
 
 
 namespace NativeJIT
@@ -20,7 +20,7 @@ namespace NativeJIT
     Label JumpTable::AllocateLabel()
     {
         // TODO: Code to ensure that this cast is always safe.
-        Label label = (int)m_labels.size();
+        Label label = Label(static_cast<unsigned>(m_labels.size()));
         m_labels.push_back(NULL);
 
         return label;
@@ -36,18 +36,21 @@ namespace NativeJIT
         }
 #endif
 
-        m_labels[label] = address;
+        m_labels[label.GetId()] = address;
     }
+
 
     void JumpTable::AddCallSite(Label label, unsigned char* site, int size)
     {
         m_callSites.push_back(CallSite(label, size, site));
     }
 
+
     bool JumpTable::LabelIsDefined(Label label) const
     {
-        return m_labels.at(label) != NULL;
+        return m_labels.at(label.GetId()) != NULL;
     }
+
 
     const unsigned char* JumpTable::AddressOfLabel(Label label) const
     {
@@ -59,8 +62,9 @@ namespace NativeJIT
         }
 #endif
 
-        return m_labels[label];
+        return m_labels[label.GetId()];
     }
+
 
     // WARNING: Non portable. Assumes little endian machine architecture.
     // WARNING: Non portable. Assumes that fixup value is labelAddress - siteAddress - size.Size().
@@ -103,14 +107,14 @@ namespace NativeJIT
     //
     //*************************************************************************
     CallSite::CallSite()
+        : m_label(0)
     {
-        m_label = 0;
         m_site = NULL;
     }
 
     CallSite::CallSite(Label label, int size, unsigned char* site)
+        : m_label(label)
     {
-        m_label = label;
         m_size = size;
         m_site = site;
     }

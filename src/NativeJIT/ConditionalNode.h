@@ -175,7 +175,7 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void ConditionalNode<T, JCC>::Print() const
     {
-        std::cout << "Conditional(" << JccName(JCC) << ") id=" << GetId();
+        std::cout << "Conditional(" << X64CodeGenerator::JccName(JCC) << ") id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", condition = " << m_condition.GetId();
         std::cout << ", trueExpression = " << m_trueExpression.GetId();
@@ -334,7 +334,7 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void RelationalOperatorNode<T, JCC>::Print() const
     {
-        std::cout << "RelationalOperatorNode(" << JccName(JCC) << ") id=" << GetId();
+        std::cout << "RelationalOperatorNode(" << X64CodeGenerator::JccName(JCC) << ") id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", left = " << m_left.GetId();
         std::cout << ", right = " << m_right.GetId();

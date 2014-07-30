@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <iostream>         // TODO: Remove - temporary for debugging.
+
 #include <stdexcept>
 #include <Windows.h>
 
@@ -28,20 +30,20 @@ namespace NativeJIT
                                            unsigned registerSaveMask,
                                            bool isLeaf)
         : m_allocator(allocator),
-          m_code(static_cast<unsigned __int8*>(allocator.Allocate(capacity)), capacity, 0, 0)
+          X64CodeGenerator(std::cout, static_cast<unsigned __int8*>(allocator.Allocate(capacity)), capacity, 0, 0)
     {
-        // TODO: Need to deallocate buffer passed to m_code constructor.
+        // TODO: Need to deallocate buffer passed to X64CodeGenerator constructor.
 
 #ifdef _DEBUG
-        FillWithBreakCode(0, m_code.BufferSize());
+        FillWithBreakCode(0, BufferSize());
 #endif
 //        m_isLeaf = isLeaf;
 
         EmitPrologue(static_cast<unsigned char>(slotCount), registerSaveMask, isLeaf);
-        m_bodyStart = m_code.CurrentPosition();
+        m_bodyStart = CurrentPosition();
 
         // TODO: Consider moving this into EmitPrologue?
-        if (!RtlAddFunctionTable(&m_runtimeFunction, 1, (DWORD64)m_code.BufferStart()))
+        if (!RtlAddFunctionTable(&m_runtimeFunction, 1, (DWORD64)BufferStart()))
         {
             throw std::runtime_error("RtlAddFunctionTable failed.");
         }
@@ -56,7 +58,7 @@ namespace NativeJIT
 
     CodeBuffer& FunctionBufferBase::GetCodeBuffer()
     {
-        return m_code;
+        return *this;
     }
 
 
@@ -76,7 +78,7 @@ namespace NativeJIT
         }
 
         m_slotsAllocated = 1;               // First slot is return address pushed by caller.
-        m_entryPoint = m_code.AllocateLabel();
+        m_entryPoint = AllocateLabel();
 
         // Ensure that the frame register is saved.
         registerSaveMask |= RBP;
@@ -119,18 +121,18 @@ namespace NativeJIT
         //
         // Initialize member variables used in prologue generation.
         //
-        m_runtimeFunction.UnwindData = m_code.CurrentPosition();
+        m_runtimeFunction.UnwindData = CurrentPosition();
 
         AllocateUnwindInfo(unwindCodeCount);
         m_unwindInfo->m_countOfCodes = static_cast<unsigned char>(unwindCodeCount);
         m_unwindInfo->m_version = 1;
         m_unwindInfo->m_flags = 0;
 
-        m_runtimeFunction.BeginAddress = m_code.CurrentPosition();
-        m_runtimeFunction.EndAddress = m_code.BufferSize();
+        m_runtimeFunction.BeginAddress = CurrentPosition();
+        m_runtimeFunction.EndAddress = BufferSize();
 
-        m_prologueStart = m_code.CurrentPosition();
-        m_code.PlaceLabel(m_entryPoint);
+        m_prologueStart = CurrentPosition();
+        PlaceLabel(m_entryPoint);
 
         // Push non-volatile registers
         // TODO: investigate whether pushing volatiles causes problems for stack unwinding.
@@ -162,7 +164,7 @@ namespace NativeJIT
 
         PrologueSetFrameRegister(slotCount);
 
-        m_unwindInfo->m_sizeOfProlog = static_cast<unsigned char>(m_code.CurrentPosition() - m_prologueStart);
+      m_unwindInfo->m_sizeOfProlog = static_cast<unsigned char>(CurrentPosition() - m_prologueStart);
 
         // Set up m_stackLocalsBase which is the offset of the first local relative to frame
         // register. 
@@ -183,7 +185,7 @@ namespace NativeJIT
         {
             throw std::runtime_error("Too many unwind codes.");
         }
-        m_unwindInfo = (UnwindInfo*)m_code.Advance(sizeof(UnwindInfo));
+        m_unwindInfo = (UnwindInfo*)Advance(sizeof(UnwindInfo));
         m_unwindCodePtr = m_unwindInfo->m_unwindCodes + unwindCodeCount;
     }
 
@@ -192,16 +194,16 @@ namespace NativeJIT
     {
         if (r <= 7)
         {
-            m_code.Emit8(0x50u + r);
+            Emit8(0x50u + r);
         }
         else
         {
-            m_code.Emit8(0x49);
-            m_code.Emit8(0x50 + (r & 7));
+            Emit8(0x49);
+            Emit8(0x50 + (r & 7));
         }
 
         // TODO: Review this static_cast. Is there a bette way to do this?
-        EmitUnwindCode(UnwindCode(static_cast<char>(m_code.CurrentPosition() - m_prologueStart),
+        EmitUnwindCode(UnwindCode(static_cast<char>(CurrentPosition() - m_prologueStart),
                                   UWOP_PUSH_NONVOL,
                                   r));
         ++m_slotsAllocated;
@@ -220,11 +222,10 @@ namespace NativeJIT
             throw std::runtime_error("PrologStackAllocate: slots cannot be 0.");
         }
 
-        // TODO: Implement
-        TODO();
-//        SUB(RSP, slots * 8);
+        Op(OpCode::Sub, rsp, slots * 8);
+
         // TODO: Review this static_cast. Is there a bette way to do this?
-        EmitUnwindCode(UnwindCode(static_cast<char>(m_code.CurrentPosition() - m_prologueStart),
+        EmitUnwindCode(UnwindCode(static_cast<char>(CurrentPosition() - m_prologueStart),
                                   UWOP_ALLOC_SMALL,
                                   slots - 1));
         m_slotsAllocated += slots;
@@ -277,6 +278,6 @@ namespace NativeJIT
 
     void FunctionBufferBase::FillWithBreakCode(unsigned start, unsigned length)
     {
-        m_code.Fill(start, length, 0xcc);
+        Fill(start, length, 0xcc);
     }
 }

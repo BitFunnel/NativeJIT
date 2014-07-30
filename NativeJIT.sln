@@ -24,6 +24,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CodeGenUnitTest", "UnitTest
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{C355777F-6688-4F80-A3A5-730D4CA7DA5C}"
 	ProjectSection(SolutionItems) = preProject
+		inc\NativeJIT\CodeBuffer.h = inc\NativeJIT\CodeBuffer.h
+		inc\NativeJIT\JumpTable.h = inc\NativeJIT\JumpTable.h
+		inc\NativeJIT\Register.h = inc\NativeJIT\Register.h
 		inc\NativeJIT\X64CodeGenerator.h = inc\NativeJIT\X64CodeGenerator.h
 	EndProjectSection
 EndProject

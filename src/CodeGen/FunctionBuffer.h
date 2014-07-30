@@ -4,7 +4,7 @@
 #include <Windows.h>    // RUNTIME_FUNCTION embedded.
 
 
-#include "CodeBuffer.h"     // Embedded class.
+#include "NativeJIT/X64CodeGenerator.h"       // Inherits from X64CodeGenerator.
 #include "Temporary/IAllocator.h"
 #include "Temporary/NonCopyable.h"
 
@@ -17,11 +17,10 @@ namespace Allocators
 
 namespace NativeJIT
 {
-    class CodeBuffer;
     struct UnwindInfo;
     struct UnwindCode;
 
-    class FunctionBufferBase : public NonCopyable
+    class FunctionBufferBase : public X64CodeGenerator
     {
     public:
         // Create CodeBuffer from memory in ExecutionBuffer.
@@ -97,7 +96,7 @@ namespace NativeJIT
 
 
         Allocators::IAllocator& m_allocator;
-        CodeBuffer m_code;
+//        CodeBuffer m_code;
     };
 
 

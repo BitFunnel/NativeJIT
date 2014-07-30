@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 
-#include "CodeBuffer.h"
-#include "JumpTable.h"
+#include "NativeJIT/CodeBuffer.h"
+#include "NativeJIT/JumpTable.h"
 
 
 namespace NativeJIT
@@ -20,9 +20,6 @@ namespace NativeJIT
     {
     }
 
-    //CodeBuffer::~CodeBuffer()
-    //{
-    //}
 
     // Allocating and resolving jump labels.
     //   Use AllocateLabel() at any time to allocated a label representing a jump target.

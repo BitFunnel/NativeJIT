@@ -2,25 +2,13 @@
 
 #include <ostream>
 
-#include "NativeJIT/Register.h"
-#include "Temporary/Assert.h"
-#include "Temporary/NonCopyable.h"
+#include "NativeJIT/CodeBuffer.h"       // Inherits from CodeBuffer.
+#include "NativeJIT/Register.h"         // Register parameter.
+#include "Temporary/NonCopyable.h"      // Inherits from NonCopyable.
 
 
 namespace NativeJIT
 {
-    class Label
-    {
-    public:
-        Label(unsigned id);
-
-        unsigned GetId() const;
-
-    private:
-        unsigned m_id;
-    };
-
-
     // WARNING: When modifying JccType, be sure to also modify the function JccName().
     enum class JccType : unsigned
     {
@@ -52,14 +40,17 @@ namespace NativeJIT
         Sub,
     };
 
-    char const * OpCodeName(OpCode op);
 
-    char const * JccName(JccType jcc);
-
-    class X64CodeGenerator : public NonCopyable
+    class X64CodeGenerator : public CodeBuffer, public NonCopyable
     {
     public:
         X64CodeGenerator(std::ostream& out);
+
+        X64CodeGenerator(std::ostream& out,
+                         unsigned __int8* buffer,
+                         unsigned capacity,
+                         unsigned maxLabels,
+                         unsigned maxCallSites);
 
         unsigned GetRXXCount() const;
         unsigned GetXMMCount() const;
@@ -101,6 +92,9 @@ namespace NativeJIT
 
         template <unsigned SIZE, bool ISFLOAT>
         void Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<sizeof(void*), false> base, size_t offset);
+
+        static char const * OpCodeName(OpCode op);
+        static char const * JccName(JccType jcc);
 
     private:
         void Indent();

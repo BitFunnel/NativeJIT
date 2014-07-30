@@ -109,7 +109,7 @@ namespace NativeJIT
     template <typename L, typename R>
     void BinaryNode<L, R>::Print() const
     {
-        std::cout << "Operation (" << OpCodeName(m_operation) << ") id=" << GetId();
+        std::cout << "Operation (" << X64CodeGenerator::OpCodeName(m_operation) << ") id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", left = " << m_left.GetId();
         std::cout << ", right = " << m_right.GetId();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CodeBuffer.h"     // Embedded class.
+#include "NativeJIT/CodeBuffer.h"       // Embedded class.
 #include "Temporary/IAllocator.h"
 
 

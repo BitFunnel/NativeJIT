@@ -8,9 +8,21 @@ namespace NativeJIT
     class CallSite;
 
 
-    // TODO: Signed or unsigned? X64CodeGenerator version uses signed to
-    // distinguish between local and global labels.
-    typedef unsigned Label;
+    //// TODO: Signed or unsigned? X64CodeGenerator version uses signed to
+    //// distinguish between local and global labels.
+    //typedef unsigned Label;
+    class Label
+    {
+    public:
+        Label();
+        Label(unsigned id);
+
+        unsigned GetId() const;
+
+    private:
+        unsigned m_id;
+    };
+
 
     // A JumpTable maintains collections of Labels and CallSites used in jump resolution.
     class JumpTable

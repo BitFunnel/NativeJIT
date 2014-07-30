@@ -2,7 +2,7 @@
 
 #include <memory>   // std::unique_ptr embedded.
 
-#include "JumpTable.h"  // Label parameter and return value.
+#include "JumpTable.h"  // Label parameter and return value. Also template parameter to std::unique_ptr.
 
 
 namespace NativeJIT
@@ -15,7 +15,6 @@ namespace NativeJIT
                    unsigned maxLabels,
                    unsigned maxCallSites);
 
-        //CodeBuffer(size_t capacity, unsigned maxLabels, unsigned maxCallSites);
         //~CodeBuffer();
 
         // Allocating and resolving jump labels.
@@ -69,31 +68,4 @@ namespace NativeJIT
 
         std::unique_ptr<JumpTable> m_localJumpTable;    // Jumps within a single CodeBuffer.
     };
-
-
-    //class CodeGenerator : public CodeBuffer
-    //{
-    //public:
-    //    CodeGenerator(unsigned __int8* buffer,
-    //                  unsigned capacity,
-    //                  unsigned maxLabels,
-    //                  unsigned maxCallSites);
-
-    //    enum class OpCode {
-    //        Add,
-    //        Mov,
-    //        Pop,
-    //        Push,
-    //        Sub,
-    //    };
-
-    //    template <OpCode op>
-    //    Emit();
-
-    //    template <OpCode op>
-    //    Emit(Register dest);
-
-    //    template <OpCode op>
-    //    Emit(Register dest, Register src);
-    //};
 }
