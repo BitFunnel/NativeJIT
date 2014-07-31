@@ -104,9 +104,9 @@ namespace NativeJIT
     }
 
 
-    size_t ExpressionTree::AllocateTemporary()
+    __int32 ExpressionTree::AllocateTemporary()
     {
-        size_t temp;
+        __int32 temp;
 
         if (m_temporaries.size() > 0)
         {
@@ -122,7 +122,7 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::ReleaseTemporary(size_t offset)
+    void ExpressionTree::ReleaseTemporary(__int32 offset)
     {
         m_temporaries.push_back(offset / sizeof(void*));
     }

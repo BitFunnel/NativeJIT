@@ -64,14 +64,10 @@ namespace NativeJIT
     }
 
 
-    Label X64CodeGenerator::AllocateLabel()
-    {
-        return Label(m_labelCount++);
-    }
-
-
+    // TODO: Remove this temporary overload of CodeBuffer::PlaceLabel.
     void X64CodeGenerator::PlaceLabel(Label l)
     {
+        CodeBuffer::PlaceLabel(l);
         m_out << "L" << l.GetId() << ":" << std::endl;
     }
 
@@ -97,7 +93,6 @@ namespace NativeJIT
     }
 
 
-    // Op
     void X64CodeGenerator::Op(OpCode op)
     {
         Indent();
@@ -111,6 +106,7 @@ namespace NativeJIT
             "add",
             "call",
             "cmp",
+            "lea",
             "mov",
             "mul",
             "nop",

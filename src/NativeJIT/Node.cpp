@@ -43,7 +43,7 @@ namespace NativeJIT
     }
 
 
-    unsigned __int64 NodeBase::GetOffset() const
+    __int32 NodeBase::GetOffset() const
     {
         return 0;
     }

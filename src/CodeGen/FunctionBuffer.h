@@ -1,12 +1,10 @@
 #pragma once
 
-#include <ostream>      // ostream& paramter.
-#include <Windows.h>    // RUNTIME_FUNCTION embedded.
+#include <ostream>                          // ostream& paramter.
+#include <Windows.h>                        // RUNTIME_FUNCTION embedded.
 
 
-#include "NativeJIT/X64CodeGenerator.h"       // Inherits from X64CodeGenerator.
-#include "Temporary/IAllocator.h"
-#include "Temporary/NonCopyable.h"
+#include "NativeJIT/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
 
 
 namespace Allocators
@@ -23,45 +21,34 @@ namespace NativeJIT
     class FunctionBufferBase : public X64CodeGenerator
     {
     public:
-        // Create CodeBuffer from memory in ExecutionBuffer.
-        // Generate prologue.
-        // Generate epilogue.
-        // Generate unwind information. (Any possibility of unwinding multiple functions?)
-        // Register unwind information.
         FunctionBufferBase(Allocators::IAllocator& allocator,
                            unsigned capacity,
                            unsigned slotCount,
                            unsigned registerSaveMask,
                            bool isLeaf);
 
-        // Unregister unwind informatio.
-        // Return CodeBuffer memory to ExecutionBuffer (optional scenario).
         ~FunctionBufferBase();
-
-        CodeBuffer& GetCodeBuffer();    // Idea: CodeBuffer has two constructors - one which takes a char* buffer and size.
 
         unsigned char * GetEntryPoint();
 
 
-    protected:
-        void EmitPrologue(unsigned char slotCount,
-                          unsigned registerSaveMask,
-                          bool isLeaf);
+    private:
+        void EmitUnwindInfo(unsigned char slotCount,
+                            unsigned registerSaveMask,
+                            bool isLeaf);
 
+        void EmitEpilogue();
+        void EmitPrologue();
+        void RegisterUnwindInfo();
 
         // Creates an UnwindInfo structure in the code buffer.
         void AllocateUnwindInfo(unsigned unwindCodeCount);
 
-        void ProloguePushNonVolatile(unsigned __int8 r);
+        void ProloguePushNonVolatile(Register<8, false> r);
         void PrologueStackAllocate(unsigned __int8 slots);
-
         void PrologueSetFrameRegister(unsigned __int8 offset);
 
         void EmitUnwindCode(const UnwindCode& code);
-
-        void EpilogueUndoStackAllocate(unsigned __int8 slots);
-        void EpilogueUndoFrameRegister(int frameRegister, unsigned __int8 offset);
-        void EpiloguePopNonVolatile(unsigned __int8 r);
 
         // Debugging function to help track down problems in unwind info.
         // This function exists, mainly to document all of the requirements that must
@@ -70,6 +57,7 @@ namespace NativeJIT
 
         void FillWithBreakCode(unsigned start, unsigned length);
 
+        Label m_epilogue;
         Label m_entryPoint;
 
         // Structures used to register stack unwind information with Windows.
@@ -96,7 +84,6 @@ namespace NativeJIT
 
 
         Allocators::IAllocator& m_allocator;
-//        CodeBuffer m_code;
     };
 
 
@@ -136,10 +123,6 @@ namespace NativeJIT
                              registerSaveMask,
                              isLeaf)
     {
-        // Generate prologue.
-        // Generate epilogue.
-        // Generate unwind information. (Any possibility of unwinding multiple functions?)
-        // Register unwind information.
     }
 
 

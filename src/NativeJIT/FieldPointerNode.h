@@ -36,18 +36,18 @@ namespace NativeJIT
         //
 
         virtual Storage<FIELD*> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned __int64 GetOffset() const override;
+        virtual __int32 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
     private:
-        static unsigned __int64 Offset(FIELD OBJECT::*field)
+        static __int32 Offset(FIELD OBJECT::*field)
         {
-            return reinterpret_cast<unsigned __int64>(&((static_cast<OBJECT*>(nullptr))->*field));
+            return reinterpret_cast<__int32>(&((static_cast<OBJECT*>(nullptr))->*field));
         }
 
         Node<OBJECT*>& m_base;
-        unsigned __int64 m_offset;
+        __int32 m_offset;
     };
 
 
@@ -108,7 +108,7 @@ namespace NativeJIT
     typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
         auto base = CodeGenBase(tree);
-        unsigned __int64 offset = m_base.GetOffset();
+        __int32 offset = m_base.GetOffset();
 
         base.ConvertToValue(tree, true);
         tree.GetCodeGenerator().Op(OpCode::Add, base.GetDirectRegister(), m_offset + offset);
@@ -118,7 +118,7 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    unsigned __int64 FieldPointerNode<OBJECT, FIELD>::GetOffset() const
+    __int32 FieldPointerNode<OBJECT, FIELD>::GetOffset() const
     {
         return m_offset + m_base.GetOffset();
     }

@@ -26,7 +26,7 @@ namespace NativeJIT
         // Non-pure virtual methods.
         //
         virtual void CompileAsRoot(ExpressionTree& tree);
-        virtual unsigned __int64 GetOffset() const;
+        virtual __int32 GetOffset() const;
         virtual bool IsFieldPointer() const;
 
         //

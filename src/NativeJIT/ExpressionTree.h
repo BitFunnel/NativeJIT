@@ -82,8 +82,8 @@ namespace NativeJIT
         bool IsBasePointer(Register<SIZE, ISFLOAT> r) const;
 
         Register<sizeof(void*), false> GetBasePointer() const;
-        size_t AllocateTemporary();
-        void ReleaseTemporary(size_t offset);
+        __int32 AllocateTemporary();
+        void ReleaseTemporary(__int32 offset);
 
         void Print() const;
         void Compile();
@@ -134,7 +134,7 @@ namespace NativeJIT
         Register<8, false> m_basePointer;
 
         unsigned m_temporaryCount;
-        std::vector<size_t> m_temporaries;
+        std::vector<__int32> m_temporaries;
     };
 
 

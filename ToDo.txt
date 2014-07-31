@@ -18,6 +18,7 @@ x        // release r9
 
 x Complete implementation of temporaries.
 
+Should CodeBuffer have a Reset() method or is it created on each use?
 Make NativeJIT into a library. Remove main.cpp.
 RBP is wrong in FunctionBuffer.cpp.
 Need LogAssertB

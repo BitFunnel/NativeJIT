@@ -25,11 +25,13 @@ namespace NativeJIT
     };
 
 
+    // WARNING: When modifying OpCode, be sure to also modify the function OpCodeName().
     enum class OpCode : unsigned
     {
         Add = 0,
         Call,
         Cmp,
+        Lea,
         Mov,
         Mul,
         Nop,
@@ -55,14 +57,16 @@ namespace NativeJIT
         unsigned GetRXXCount() const;
         unsigned GetXMMCount() const;
 
-        Label AllocateLabel();
+
+        // TODO: Remove this temporary override of CodeBuffer::PlaceLabel().
+        // This version is used to print debugging information.
         void PlaceLabel(Label l);
 
 
         void Jmp(Label l);
         void Jcc(JccType type, Label l);
 
-        // TODO: Should this be generalized?
+        // TODO: Should this be generalized? (e.g. just an Op() overload).
         template <unsigned SIZE, bool ISFLOAT>
         void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
 
@@ -73,12 +77,14 @@ namespace NativeJIT
         void Nop();
         void Op(OpCode op);
 
+
         //
         // One parameter.
         //
 
         template <unsigned SIZE, bool ISFLOAT>
         void Op(OpCode op, Register<SIZE, ISFLOAT> dest);
+
 
         //
         // Two parameters.
@@ -90,9 +96,14 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT, typename T>
         void Op(OpCode op, Register<SIZE, ISFLOAT> dest, T value);
 
+        // Intel manual section 2.2.1.3 says x64 displacements are either 8 or 32 bits.
         template <unsigned SIZE, bool ISFLOAT>
-        void Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<sizeof(void*), false> base, size_t offset);
+        void Op(OpCode op,
+                Register<SIZE, ISFLOAT> dest,
+                Register<sizeof(void*), false> base,
+                __int32 offset);
 
+        // These two methods are public in order to allow access for BinaryNode debugging text.
         static char const * OpCodeName(OpCode op);
         static char const * JccName(JccType jcc);
 
@@ -101,8 +112,6 @@ namespace NativeJIT
 
         static const unsigned c_rxxRegisterCount = 16;
         static const unsigned c_xmmRegisterCount = 16;
-
-        unsigned m_labelCount;
 
         std::ostream& m_out;
     };
@@ -160,6 +169,7 @@ namespace NativeJIT
         else
         {
             // TODO: HACK: Cast to unsigned __int64 to force character types to display as integers.
+            // TODO: This hack is probably wrong for signed values.
             // TODO: Need to add support for ISSIGNED.
             m_out << OpCodeName(op) << " " << dest.GetName() << ", " << (unsigned __int64)value << std::endl;
         }
@@ -170,12 +180,16 @@ namespace NativeJIT
     void X64CodeGenerator::Op(OpCode op,
                               Register<SIZE, ISFLOAT> dest,
                               Register<sizeof(void*), false> base,
-                              size_t offset)
+                              __int32 offset)
     {
         Indent();
         if (offset > 0)
         {
             m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
+        }
+        else if (offset < 0)
+        {
+            m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << " - " << -offset << "]" << std::endl;
         }
         else
         {

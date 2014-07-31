@@ -11,7 +11,7 @@ namespace NativeJIT
     public:
         typedef typename Node<T*>::RegisterType BaseRegisterType;
 
-        IndirectNode(ExpressionTree& tree, Node<T*>& base, unsigned __int64 offset);
+        IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 offset);
 
         Storage<T*> CodeGenBase(ExpressionTree& tree);
 
@@ -20,13 +20,13 @@ namespace NativeJIT
         //
 
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned __int64 GetOffset() const override;
+        virtual __int32 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
     private:
         Node<T*>& m_base;
-        unsigned __int64 m_offset;
+        __int32 m_offset;
     };
 
 
@@ -38,7 +38,7 @@ namespace NativeJIT
     template <typename T>
     IndirectNode<T>::IndirectNode(ExpressionTree& tree,
                                   Node<T*>& base,
-                                  unsigned __int64 offset)
+                                  __int32 offset)
         : Node(tree),
           m_base(base),
           m_offset(offset)
@@ -66,7 +66,7 @@ namespace NativeJIT
     typename Storage<T> IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         auto base = CodeGenBase(tree);
-        unsigned __int64 offset = m_base.GetOffset();
+        __int32 offset = m_base.GetOffset();
 
         Storage<T> value(tree, base, m_offset + offset);
 
@@ -75,7 +75,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned __int64 IndirectNode<T>::GetOffset() const
+    __int32 IndirectNode<T>::GetOffset() const
     {
         return m_offset;
     }

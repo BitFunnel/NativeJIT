@@ -6,13 +6,12 @@
 #include <Windows.h>
 
 #include "FunctionBuffer.h"
+#include "Temporary/IAllocator.h"
 #include "UnwindCode.h"
 
 
 namespace NativeJIT
 {
-    const unsigned RBP = 4;
-
     void TODO()
     {
         throw 0;
@@ -39,14 +38,13 @@ namespace NativeJIT
 #endif
 //        m_isLeaf = isLeaf;
 
-        EmitPrologue(static_cast<unsigned char>(slotCount), registerSaveMask, isLeaf);
-        m_bodyStart = CurrentPosition();
-
-        // TODO: Consider moving this into EmitPrologue?
-        if (!RtlAddFunctionTable(&m_runtimeFunction, 1, (DWORD64)BufferStart()))
-        {
-            throw std::runtime_error("RtlAddFunctionTable failed.");
-        }
+        //
+        // New initialization sequence.
+        //
+        EmitUnwindInfo(static_cast<unsigned char>(slotCount), registerSaveMask, isLeaf);
+        EmitEpilogue();
+        EmitPrologue();
+        RegisterUnwindInfo();
     }
 
 
@@ -56,15 +54,9 @@ namespace NativeJIT
     }
 
 
-    CodeBuffer& FunctionBufferBase::GetCodeBuffer()
-    {
-        return *this;
-    }
-
-
-    void FunctionBufferBase::EmitPrologue(unsigned char slotCount,
-                                          unsigned registerSaveMask,
-                                          bool isLeaf)
+    void FunctionBufferBase::EmitUnwindInfo(unsigned char slotCount,
+                                            unsigned registerSaveMask,
+                                            bool isLeaf)
     {
         // TODO: Is the leaf functionality worthwhile or would it be better to require the user
         // to allocate the space before calling out? The current functionality isn't useful for
@@ -78,10 +70,9 @@ namespace NativeJIT
         }
 
         m_slotsAllocated = 1;               // First slot is return address pushed by caller.
-        m_entryPoint = AllocateLabel();
 
         // Ensure that the frame register is saved.
-        registerSaveMask |= RBP;
+        registerSaveMask |= rbp.GetMask();
 
         //
         // Compute number of unwind codes needed.
@@ -117,7 +108,6 @@ namespace NativeJIT
         // One UWOP_SET_FPREG
         ++unwindCodeCount;
 
-        // TODO: Move this functionality to an unwind init method?
         //
         // Initialize member variables used in prologue generation.
         //
@@ -130,9 +120,6 @@ namespace NativeJIT
 
         m_runtimeFunction.BeginAddress = CurrentPosition();
         m_runtimeFunction.EndAddress = BufferSize();
-
-        m_prologueStart = CurrentPosition();
-        PlaceLabel(m_entryPoint);
 
         // Push non-volatile registers
         // TODO: investigate whether pushing volatiles causes problems for stack unwinding.
@@ -158,13 +145,10 @@ namespace NativeJIT
         else if ((m_slotsAllocated & 1) != 0)
         {
             // Do a dummy push to ensure that RSP is aligned to 16-byte boundary.
-//            ProloguePushNonVolatile(RBP.Register());
-            ProloguePushNonVolatile(RBP);
+            ProloguePushNonVolatile(rbp);
         }
 
         PrologueSetFrameRegister(slotCount);
-
-      m_unwindInfo->m_sizeOfProlog = static_cast<unsigned char>(CurrentPosition() - m_prologueStart);
 
         // Set up m_stackLocalsBase which is the offset of the first local relative to frame
         // register. 
@@ -174,6 +158,80 @@ namespace NativeJIT
             // If this function is not a leaf (meaning it calls other functions), the stack
             // local variables start after 4 slots required for home locations for register parameters.
             m_stackLocalsBase += 4 * sizeof(__int64);
+        }
+    }
+
+
+    void FunctionBufferBase::EmitPrologue()
+    {
+        m_entryPoint = AllocateLabel();
+        PlaceLabel(m_entryPoint);
+        unsigned start = CurrentPosition();
+
+        // Generate prologue code from unwind information.
+        for (int i = m_unwindInfo->m_countOfCodes - 1; i >= 0 ; --i)
+        {
+            UnwindCode code = m_unwindInfo->m_unwindCodes[i];
+            switch (code.m_unwindOp)
+            {
+            case UWOP_PUSH_NONVOL:
+                Op(OpCode::Push, Register<8, false>(code.m_opInfo));
+                break;
+            case UWOP_ALLOC_SMALL:
+                Op(OpCode::Sub, rsp, (code.m_opInfo + 1) * 8);
+                break;
+            case UWOP_SET_FPREG:
+                Op(OpCode::Lea, rbp, rsp, m_unwindInfo->m_frameOffset * 16);
+                break;
+            default:
+                throw std::runtime_error("Invalid unwind data.");
+            }
+        }
+
+        unsigned end = CurrentPosition();
+        unsigned size = end - start;
+
+        Assert(size < 256, "Prologue cannot exceed 255 bytes.");
+        m_unwindInfo->m_sizeOfProlog = static_cast<unsigned __int8>(size);
+
+        m_bodyStart = CurrentPosition();
+    }
+
+
+    void FunctionBufferBase::EmitEpilogue()
+    {
+        m_epilogue = AllocateLabel();
+        PlaceLabel(m_epilogue);
+
+        // Generate epilogue code from unwind information.
+        for (int i = 0; i < m_unwindInfo->m_countOfCodes; ++i)
+        {
+            UnwindCode code = m_unwindInfo->m_unwindCodes[i];
+            switch (code.m_unwindOp)
+            {
+            case UWOP_PUSH_NONVOL:
+                Op(OpCode::Pop, Register<8, false>(code.m_opInfo));
+                break;
+            case UWOP_ALLOC_SMALL:
+                Op(OpCode::Add, rsp, (code.m_opInfo + 1) * 8);
+                break;
+            case UWOP_SET_FPREG:
+                Op(OpCode::Lea, rsp, rbp, -m_unwindInfo->m_frameOffset * 16);
+                break;
+            default:
+                throw std::runtime_error("Invalid unwind data.");
+            }
+        }
+
+        Op(OpCode::Ret);
+    }
+
+
+    void FunctionBufferBase::RegisterUnwindInfo()
+    {
+        if (!RtlAddFunctionTable(&m_runtimeFunction, 1, (DWORD64)BufferStart()))
+        {
+            throw std::runtime_error("RtlAddFunctionTable failed.");
         }
     }
 
@@ -190,22 +248,12 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::ProloguePushNonVolatile(unsigned __int8 r)
+    void FunctionBufferBase::ProloguePushNonVolatile(Register<8, false> r)
     {
-        if (r <= 7)
-        {
-            Emit8(0x50u + r);
-        }
-        else
-        {
-            Emit8(0x49);
-            Emit8(0x50 + (r & 7));
-        }
-
-        // TODO: Review this static_cast. Is there a bette way to do this?
-        EmitUnwindCode(UnwindCode(static_cast<char>(CurrentPosition() - m_prologueStart),
+        // TODO: Review this static_cast. Is there a better way to do this?
+        EmitUnwindCode(UnwindCode(static_cast<unsigned char>(CurrentPosition() - m_prologueStart),
                                   UWOP_PUSH_NONVOL,
-                                  r));
+                                  static_cast<unsigned char>(r.GetId())));
         ++m_slotsAllocated;
     }
 
@@ -222,20 +270,26 @@ namespace NativeJIT
             throw std::runtime_error("PrologStackAllocate: slots cannot be 0.");
         }
 
-        Op(OpCode::Sub, rsp, slots * 8);
-
         // TODO: Review this static_cast. Is there a bette way to do this?
-        EmitUnwindCode(UnwindCode(static_cast<char>(CurrentPosition() - m_prologueStart),
+        EmitUnwindCode(UnwindCode(static_cast<unsigned char>(CurrentPosition() - m_prologueStart),
                                   UWOP_ALLOC_SMALL,
                                   slots - 1));
         m_slotsAllocated += slots;
     }
 
 
-    void FunctionBufferBase::PrologueSetFrameRegister(unsigned __int8 /*offset*/)
+    void FunctionBufferBase::PrologueSetFrameRegister(unsigned __int8 slots)
     {
-        // TODO: Implement
-        TODO();
+        unsigned desiredOffset = slots / 2;     // Want offset to put frame pointer in the middle of the slots.
+        if (desiredOffset %2 == 1)              // Need an offset that is divisible by 16.
+        {
+            --desiredOffset;
+        }
+
+        EmitUnwindCode(UnwindCode(static_cast<unsigned char>(CurrentPosition() - m_prologueStart), UWOP_SET_FPREG, 0));
+
+        m_unwindInfo->m_frameRegister = rbp.GetId();
+        m_unwindInfo->m_frameOffset = desiredOffset / 2;
     }
 
 
@@ -246,33 +300,71 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EpilogueUndoStackAllocate(unsigned __int8 /*slots*/)
+    bool FunctionBufferBase::UnwindInfoIsValid(std::ostream& out,
+                                               RUNTIME_FUNCTION& runtimeFunction)
     {
-        // TODO: Implement
-        TODO();
-    }
+        bool success = true;
 
+        if ((size_t)(&runtimeFunction) % 4 != 0)
+        {
+            out << "Error: runtimeFunction must be DWORD aligned.\n";
+            success = false;
+        }
 
-    void FunctionBufferBase::EpilogueUndoFrameRegister(int /*frameRegister*/, unsigned __int8 /*offset*/)
-    {
-        // TODO: Implement
-        TODO();
-    }
+        if (runtimeFunction.BeginAddress > runtimeFunction.EndAddress)
+        {
+            out << "Error: runtimeFunction begin address after end address.";
+        }
 
+        if (runtimeFunction.UnwindData + BufferStart() != (unsigned char*)m_unwindInfo)
+        {
+            out << "Error: runtimeFunction does not reference unwind data.\n";
+            success = false;
+        }
 
-    void FunctionBufferBase::EpiloguePopNonVolatile(unsigned __int8 /*r*/)
-    {
-        // TODO: Implement
-        TODO();
-    }
+        if ((size_t)(m_unwindInfo) % 4 != 0)
+        {
+            out << "Error: m_unwindInfo must be DWORD aligned.\n";
+            success = false;
+        }
 
+        if (m_unwindInfo->m_version != 1)
+        {
+            out << "Error: m_unwindInfo has bad version number.\n";
+            success = false;
+        }
 
-    bool FunctionBufferBase::UnwindInfoIsValid(std::ostream& /*out*/,
-                                               RUNTIME_FUNCTION& /*runtimeFunction*/)
-    {
-        // TODO: Implement
-        TODO();
-        return false;
+        if (m_unwindInfo->m_flags != 0)
+        {
+            out << "Error: m_unwindInfo flags are not 0.\n";
+            success = false;
+        }
+
+        if (m_unwindInfo->m_countOfCodes > 1)
+        {
+            for (int i = 1 ; i < m_unwindInfo->m_countOfCodes; ++i)
+            {
+                if (m_unwindInfo->m_unwindCodes[i].m_codeOffset >= m_unwindInfo->m_unwindCodes[i-1].m_codeOffset)
+                {
+                    out << "Error: unwind code offsets must be in decreasing order.\n";
+                    success = false;
+                }
+            }
+        }
+
+        for (int i = 0; i < m_unwindInfo->m_countOfCodes; ++i)
+        {
+            int code = m_unwindInfo->m_unwindCodes[i].m_unwindOp;
+            if (code != UWOP_PUSH_NONVOL && code != UWOP_ALLOC_SMALL && code != UWOP_SET_FPREG)
+            {
+                out << "Error: unsupported unwind code (" << code << ").\n";
+                success = false;
+            }
+        }
+
+        // TODO: Ensure that UWOP_SET_FPREG is coded to RBP.
+
+        return success;
     }
 
 

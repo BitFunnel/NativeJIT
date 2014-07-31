@@ -49,7 +49,7 @@ namespace NativeJIT
         }
 
 
-        Data(ExpressionTree& tree, Register<sizeof(void*), false> base, size_t offset);
+        Data(ExpressionTree& tree, Register<sizeof(void*), false> base, __int32 offset);
 
 
         template <typename T>
@@ -60,7 +60,7 @@ namespace NativeJIT
         }
 
 
-        Data* ConvertToIndirect(unsigned registerId, size_t offset)
+        Data* ConvertToIndirect(unsigned registerId, __int32 offset)
         {
             m_storageClass = Indirect;
             m_registerId = registerId;
@@ -77,7 +77,8 @@ namespace NativeJIT
         Class m_storageClass;
 
         unsigned m_registerId;
-        size_t m_offset;
+        __int32 m_offset;               // Intel manual section 2.2.1.3 says x64 displacements are either 8 or 32 bits.
+
 
         // TODO: Comment why this parameter is mutable.
         mutable size_t m_immediate2;
@@ -94,9 +95,9 @@ namespace NativeJIT
         Storage();
         Storage(ExpressionTree& tree, T immediate);
         Storage(ExpressionTree& tree, DirectRegister r);
-        Storage(ExpressionTree& tree, BaseRegister r, size_t offset);
+        Storage(ExpressionTree& tree, BaseRegister r, __int32 offset);
 
-        Storage(ExpressionTree& tree, Storage<T*>& base, size_t offset);
+        Storage(ExpressionTree& tree, Storage<T*>& base, __int32 offset);
 
         template <typename U>
         Storage(ExpressionTree& /*tree*/, Storage<U> other)
@@ -143,7 +144,7 @@ namespace NativeJIT
         T GetImmediate() const;
 
         BaseRegister GetBaseRegister() const;
-        size_t GetOffset() const;
+        __int32 GetOffset() const;
 
         DirectRegister GetDirectRegister() const;
 
@@ -185,7 +186,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Storage<T>::Storage(ExpressionTree& tree, BaseRegister r, size_t offset)
+    Storage<T>::Storage(ExpressionTree& tree, BaseRegister r, __int32 offset)
         : m_data(nullptr)
     {
         SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, r, offset));
@@ -202,7 +203,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Storage<T>::Storage(ExpressionTree& tree, Storage<T*>& base, size_t offset)
+    Storage<T>::Storage(ExpressionTree& tree, Storage<T*>& base, __int32 offset)
         : m_data(nullptr)
     {
         base.ConvertToValue(tree, true);
@@ -380,7 +381,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    size_t Storage<T>::GetOffset() const
+    __int32 Storage<T>::GetOffset() const
     {
         Assert(m_data->m_storageClass == Data::Indirect, "GetOffset(): storage class must be indirect.");
         return m_data->m_offset;
