@@ -148,4 +148,10 @@ namespace NativeJIT
     {
         m_out << "    ";
     }
+
+
+    void X64CodeGenerator::Helper<OpCode::Ret>::Emit(X64CodeGenerator& code)
+    {
+        code.Ret();
+    }
 }

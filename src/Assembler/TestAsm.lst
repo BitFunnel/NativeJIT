@@ -1,0 +1,65 @@
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/01/14 22:28:34
+TestAsm.asm						     Page 1 - 1
+
+
+				; Description:
+				; 
+				; Revision date:
+
+ 00000000			.data
+ 00000000 4D 41 53 4D 20	myMessage BYTE "MASM program example",0dh,0ah,0
+	   70 72 6F 67 72
+	   61 6D 20 65 78
+	   61 6D 70 6C 65
+	   0D 0A 00
+
+ 00000000			.code
+ 00000000			main PROC
+ 00000000  48/ 03 C3		  add rax, rbx
+ 00000003  02 C3		  add al, bl
+ 00000005  48/ 03 43 12		  add rax, [rbx + 12h]
+ 00000009  48/ 03 83		  add rax, [rbx + 12345678h]
+	   12345678
+ 00000010  04 12		  add al, 12h
+ 00000012  48/ 83 C0 12		  add rax, 12h
+ 00000016  48/ 05		  add rax, 12345678h
+	   12345678
+
+ 0000001C  48/ 2B C3		  sub rax, rbx
+
+ 0000001F  49/ 3B C1		  cmp rax, r9;
+
+ 00000022  48/ 8D 43 12		  lea rax, [rbx + 12h]
+
+ 00000026  58			  pop rax;
+ 00000027  41/ 58		  pop r8;
+ 00000029  50			  push rax;
+ 0000002A  41/ 50		  push r8;
+
+ 0000002C  C3			  ret
+
+ 0000002D			main ENDP
+
+				END
+
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/01/14 22:28:34
+TestAsm.asm						     Symbols 2 - 1
+
+
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+main . . . . . . . . . . . . . .	P 	 00000000 _TEXT	Length= 0000002D Public
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+myMessage  . . . . . . . . . . .	Byte	 00000000 _DATA	
+
+	   0 Warnings
+	   0 Errors

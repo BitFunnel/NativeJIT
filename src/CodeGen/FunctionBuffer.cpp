@@ -54,6 +54,12 @@ namespace NativeJIT
     }
 
 
+    unsigned char const * FunctionBufferBase::GetEntryPoint() const
+    {
+        return m_entryPoint;
+    }
+
+
     void FunctionBufferBase::EmitUnwindInfo(unsigned char slotCount,
                                             unsigned registerSaveMask,
                                             bool isLeaf)
@@ -164,8 +170,7 @@ namespace NativeJIT
 
     void FunctionBufferBase::EmitPrologue()
     {
-        m_entryPoint = AllocateLabel();
-        PlaceLabel(m_entryPoint);
+        m_entryPoint = BufferStart() + CurrentPosition();
         unsigned start = CurrentPosition();
 
         // Generate prologue code from unwind information.

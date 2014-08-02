@@ -31,7 +31,7 @@ namespace NativeJIT
 
 
         template <unsigned SIZE>
-        Register(Register<SIZE, false> r)
+        explicit Register(Register<SIZE, false> r)
             : m_id(r.GetId())
         {
         }
@@ -53,6 +53,7 @@ namespace NativeJIT
         {
             return c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
         }
+
 
     private:
         unsigned m_id;

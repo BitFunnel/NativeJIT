@@ -1,9 +1,10 @@
 Debug
 Release
 ipch
+*.obj
+*.opensdf
 *.sdf
 *.suo
-*.opensdf
 *.user
 
 

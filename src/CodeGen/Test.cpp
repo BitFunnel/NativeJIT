@@ -44,5 +44,8 @@ namespace NativeJIT
         FunctionBuffer<F> function(buffer, 500, 1, 1, false);
 
         (*function.GetFunction())(1,2);
+
+        //function.Emit(OpCode::Add, rax, rbx);
+        //function.Emit(OpCode::Add, xmm0, xmm1);
     }
 }

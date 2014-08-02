@@ -29,7 +29,7 @@ namespace NativeJIT
 
         ~FunctionBufferBase();
 
-        unsigned char * GetEntryPoint();
+        unsigned char const * GetEntryPoint() const;
 
 
     private:
@@ -58,7 +58,7 @@ namespace NativeJIT
         void FillWithBreakCode(unsigned start, unsigned length);
 
         Label m_epilogue;
-        Label m_entryPoint;
+        unsigned char const * m_entryPoint;
 
         // Structures used to register stack unwind information with Windows.
         UnwindInfo* m_unwindInfo;
@@ -131,6 +131,6 @@ namespace NativeJIT
     {
         // TODO: implement.
         // TODO: Should this return FUNCTION or FUNCTION*?
-        return reinterpret_cast<FUNCTION*>(GetEntryPoint());
+        return reinterpret_cast<FUNCTION*>(const_cast<unsigned char *>(GetEntryPoint()));
     }
 }
