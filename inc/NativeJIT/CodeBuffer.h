@@ -1,13 +1,15 @@
 #pragma once
 
-#include <memory>   // std::unique_ptr embedded.
+#include <memory>                   // std::unique_ptr embedded.
 
-#include "JumpTable.h"  // Label parameter and return value. Also template parameter to std::unique_ptr.
+#include "JumpTable.h"              // Label parameter and return value.
+                                    // Also template parameter to std::unique_ptr.
+#include "Temporary/NonCopyable.h"  // Base class.
 
 
 namespace NativeJIT
 {
-    class CodeBuffer
+    class CodeBuffer : public NonCopyable
     {
     public:
         CodeBuffer(unsigned __int8* buffer,
@@ -30,8 +32,8 @@ namespace NativeJIT
         // Writes a byte to the current position in the buffer.
         void Emit8(unsigned __int8 x);
 
-        //// WARNING: Non portable. Assumes little endian machine architecture.
-        //void Emit32(unsigned __int32 x);
+        // WARNING: Non portable. Assumes little endian machine architecture.
+        void Emit32(unsigned __int32 x);
 
         //// WARNING: Non portable. Assumes little endian machine architecture.
         //void Emit64(unsigned __int64 x);

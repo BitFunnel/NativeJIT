@@ -3,10 +3,12 @@
 // TODO: No way to do an operation on sign-extended data. Need to load data first, then sign-extend.
 
 
+#include <iostream>         // TODO: Remove - temporary for debugging.
 #include <ostream>
 
 #include "NativeJIT/CodeBuffer.h"       // Inherits from CodeBuffer.
 #include "NativeJIT/Register.h"         // Register parameter.
+#include "NativeJIT/ValuePredicates.h"  // Called by template code.
 #include "Temporary/NonCopyable.h"      // Inherits from NonCopyable.
 
 
@@ -35,14 +37,14 @@ namespace NativeJIT
     // WARNING: When modifying OpCode, be sure to also modify the function OpCodeName().
     enum class OpCode : unsigned
     {
-        Add,
+        Add,    // 0
         Call,
-        Cmp,
+        Cmp,    // 2
         Lea,
         Mov,
-        Mul,
+        Mul,    // 5        // Consider IMUL?
         Nop,
-        Or,
+        Or,     // 7
         Pop,
         Push,
         Ret,
@@ -50,72 +52,37 @@ namespace NativeJIT
     };
 
 
-
-    class X64CodeGenerator : public CodeBuffer, public NonCopyable
+    class X64CodeGenerator : public CodeBuffer
     {
     public:
         X64CodeGenerator(std::ostream& out);
 
-        X64CodeGenerator(std::ostream& out,
-                         unsigned __int8* buffer,
+        X64CodeGenerator(unsigned __int8* buffer,
                          unsigned capacity,
                          unsigned maxLabels,
                          unsigned maxCallSites);
 
+
+        void EnableDiagnostics(std::ostream& out);
+        void DisableDiagnostics();
+
         unsigned GetRXXCount() const;
         unsigned GetXMMCount() const;
-
 
         // TODO: Remove this temporary override of CodeBuffer::PlaceLabel().
         // This version is used to print debugging information.
         void PlaceLabel(Label l);
 
-
         void Jmp(Label l);
         void Jcc(JccType type, Label l);
-
-        // TODO: Should this be generalized? (e.g. just an Op() overload).
-        template <unsigned SIZE, bool ISFLOAT>
-        void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
-
-        //
-        // Zero parameters.
-        //
-
-        void Nop();
-        void Op(OpCode op);
-
-
-        //
-        // One parameter.
-        //
-
-        template <unsigned SIZE, bool ISFLOAT>
-        void Op(OpCode op, Register<SIZE, ISFLOAT> dest);
-
-
-        //
-        // Two parameters.
-        //
-
-        template <unsigned SIZE, bool ISFLOAT>
-        void Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src);
-
-        template <unsigned SIZE, bool ISFLOAT, typename T>
-        void Op(OpCode op, Register<SIZE, ISFLOAT> dest, T value);
-
-        // Intel manual section 2.2.1.3 says x64 displacements are either 8 or 32 bits.
-        template <unsigned SIZE, bool ISFLOAT>
-        void Op(OpCode op,
-                Register<SIZE, ISFLOAT> dest,
-                Register<sizeof(void*), false> base,
-                __int32 offset);
-
-
 
         // These two methods are public in order to allow access for BinaryNode debugging text.
         static char const * OpCodeName(OpCode op);
         static char const * JccName(JccType jcc);
+
+        // TODO: Should this be generalized? (e.g. just an Op() overload).
+        template <unsigned SIZE, bool ISFLOAT>
+        void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
 
 
         template <OpCode OP>
@@ -124,35 +91,93 @@ namespace NativeJIT
         template <OpCode OP>
         void Emit()
         {
-            Helper<OP>::Emit(*this);
+            if (m_out != nullptr)
+            {
+                unsigned start = CurrentPosition();
+                Helper<OP>::Emit(*this);
+                PrintBytes(start, CurrentPosition());
+                *m_out << OpCodeName(OP) << std::endl;
+            }
+            else
+            {
+                Helper<OP>::Emit(*this);
+            }
         }
 
 
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<SIZE, ISFLOAT> dest)
         {
-            Helper<OP>::Emit(*this, dest);
+            if (m_out != nullptr)
+            {
+                unsigned start = CurrentPosition();
+                Helper<OP>::Emit(*this, dest);
+                PrintBytes(start, CurrentPosition());
+                *m_out << OpCodeName(OP) << ' ' << dest.GetName() << std::endl;
+            }
+            else
+            {
+                Helper<OP>::Emit(*this, dest);
+            }
         }
 
 
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
         {
-            Helper<OP>::Emit(*this, dest, src);
+            if (m_out != nullptr)
+            {
+                unsigned start = CurrentPosition();
+                Helper<OP>::Emit(*this, dest, src);
+                PrintBytes(start, CurrentPosition());
+                *m_out << OpCodeName(OP) << ' ' << dest.GetName() << ", " << src.GetName() << std::endl;
+            }
+            else
+            {
+                Helper<OP>::Emit(*this, dest, src);
+            }
         }
 
 
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset)
         {
-            Helper<OP>::Emit(*this, dest, src, srcOffset);
+            if (m_out != nullptr)
+            {
+                unsigned start = CurrentPosition();
+                Helper<OP>::Emit(*this, dest, src, srcOffset);
+                PrintBytes(start, CurrentPosition());
+                *m_out << OpCodeName(OP) << ' ' << dest.GetName();
+                *m_out << ", [" << src.GetName();
+                if (srcOffset != 0)
+                {
+                    *m_out << " + " << std::hex << srcOffset << "h";
+                }
+                *m_out << "]"  << std::endl;
+            }
+            else
+            {
+                Helper<OP>::Emit(*this, dest, src, srcOffset);
+            }
         }
 
 
         template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
         void Emit(Register<SIZE, ISFLOAT> dest, T value)
         {
-            Helper<OP>::Emit(*this, dest, value);
+            if (m_out != nullptr)
+            {
+                unsigned start = CurrentPosition();
+                Helper<OP>::Emit(*this, dest, value);
+                PrintBytes(start, CurrentPosition());
+                *m_out << OpCodeName(OP) << ' ' << dest.GetName();
+                // TODO: Hex may not be appropriate for float.
+                *m_out << ", " << std::hex << value << 'h' << std::endl;
+            }
+            else
+            {
+                Helper<OP>::Emit(*this, dest, value);
+            }
         }
 
     private:
@@ -174,6 +199,12 @@ namespace NativeJIT
             template <unsigned SIZE, bool ISFLOAT, typename T>
             static void Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, T value);
         };
+
+
+        void Call(Register<8, false> /*r*/)
+        {
+            std::cout << "[IMPLEMENT CALL]";
+        }
 
 
         template <unsigned SIZE>
@@ -234,7 +265,7 @@ namespace NativeJIT
         template <unsigned SIZE>
         void Group1(unsigned __int8 baseOpCode,
                     Register<SIZE, false> dest,
-                    Register<SIZE, false> src,
+                    Register<8, false> src,
                     __int32 srcOffset)
         {
             EmitRex(dest, src);
@@ -250,54 +281,60 @@ namespace NativeJIT
         }
 
 
-
-
+        // TODO: Would like some sort of compiletime error when T is quadword or floating point
         template <unsigned SIZE, typename T>
         void Group1(unsigned __int8 baseOpCode,
                     unsigned __int8 extensionOpCode,
                     Register<SIZE, false> dest,
                     T value)
         {
-            bool isByteValue = (value >= -128 && value <= 127);
+            unsigned valueSize = Size(value);
 
-            if (SIZE == 1 && dest.GetId() == 0)
+            if (SIZE == 1 && valueSize == 1 && dest.GetId() == 0)
             {
                 // Special case for AL.
                 Emit8(baseOpCode + 0x04);
                 Emit8(static_cast<unsigned __int8>(value));
             }
-            else if (SIZE == 8 && dest.GetId() == 0 && !isByteValue)
+            else if (SIZE == 8 && dest.GetId() == 0 && (valueSize == 2 || valueSize == 4))
             {
                 // Special case for RAX.
                 Emit8(0x48);
                 Emit8(baseOpCode + 0x05);
-                Emit32(value);
+                Emit32(static_cast<unsigned __int32>(value));
             }
             else
             {
                 // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
                 EmitRex(dest);
 
-                if (isByteValue)
+                if (valueSize == 1)
                 {
                     Emit8(0x80 + 3);
                     EmitModRM(extensionOpCode, dest);
                     Emit8(static_cast<unsigned __int8>(value));
                 }
-                else
+                else if (valueSize == 2 || valueSize == 4)
                 {
                     Emit8(0x80 + 1);
                     EmitModRM(extensionOpCode, dest);
-                    Emit32(value);
+                    Emit32(static_cast<unsigned __int32>(value));
+                }
+                else
+                {
+                    // Can't do 8-byte immdediate values.
+                    // TODO: Template should be disabled for this size to avoid runtime error.
+                    throw 0;
                 }
             }
         }
 
 
     private:
-
-        template <unsigned SIZE>
-        void EmitRex(Register<SIZE, false> dest, Register<SIZE, false> src)
+        // TODO: Is W bit always determined by SIZE1? Is there any case where SIZE2 should specify the data size?
+        // Do we need a separate ptemplate arameter for the data size?
+        template <unsigned SIZE1, unsigned SIZE2>
+        void EmitRex(Register<SIZE1, false> dest, Register<SIZE2, false> src)
         {
             // WRXB
             // TODO: add cases for W and X bits.
@@ -305,9 +342,9 @@ namespace NativeJIT
             unsigned d = dest.GetId();
             unsigned s = src.GetId();
 
-            if (d > 7 || s > 7 || SIZE == 8)
+            if (d > 7 || s > 7 || SIZE1 == 8)
             {
-                Emit8(0x40 | ((SIZE == 8) ? 8 : 0) | ((d > 7) ? 4 : 0) | ((s > 7) ? 1 : 0));
+                Emit8(0x40 | ((SIZE1 == 8) ? 8 : 0) | ((d > 7) ? 4 : 0) | ((s > 7) ? 1 : 0));
             }
         }
 
@@ -340,7 +377,7 @@ namespace NativeJIT
 
 
         template <unsigned SIZE>
-        void EmitModRMOffset(Register<SIZE, false> dest, Register<SIZE, false> src, __int32 srcOffset)
+        void EmitModRMOffset(Register<SIZE, false> dest, Register<8, false> src, __int32 srcOffset)
         {
             unsigned __int8 mod = (srcOffset <= 127 && srcOffset >= -128)? 0x40 : 0x80;
 
@@ -360,32 +397,13 @@ namespace NativeJIT
         }
 
 
-        void Emit8(unsigned __int8 x)
-        {
-            m_out.width(2);
-            m_out.fill('0');
-            m_out << std::hex << static_cast<unsigned>(x) << std::dec << " ";
-        }
-
-        void Emit32(__int32 x)
-        {
-            m_out.width(2);
-            m_out.fill('0');
-            m_out << std::hex << static_cast<unsigned>(x & 0xff) << " ";
-            m_out << std::hex << static_cast<unsigned>((x >> 8) & 0xff) << " ";
-            m_out << std::hex << static_cast<unsigned>((x >> 16) & 0xff) << " ";
-            m_out << std::hex << static_cast<unsigned>((x >> 24) & 0xff) << " ";
-            m_out << std::dec;
-        }
-
         void Indent();
+        void PrintBytes(unsigned start, unsigned end);
+
+        std::ostream* m_out;
 
         static const unsigned c_rxxRegisterCount = 16;
         static const unsigned c_xmmRegisterCount = 16;
-
-        std::ostream& m_out;
-
-
     };
 
 
@@ -401,71 +419,11 @@ namespace NativeJIT
 
         if (offset > 0)
         {
-            m_out << "mov [" << base.GetName() << " + " << offset << "], " << src.GetName() << std::endl;
+            *m_out << "mov [" << base.GetName() << " + " << offset << "], " << src.GetName() << std::endl;
         }
         else
         {
-            m_out << "mov [" << base.GetName() << "], " << src.GetName() << std::endl;
-        }
-    }
-
-
-    template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Op(OpCode op, Register<SIZE, ISFLOAT> dest)
-    {
-        Indent();
-        m_out << OpCodeName(op) << " " << dest.GetName() << std::endl;
-    }
-
-
-
-    template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Op(OpCode op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
-    {
-        Indent();
-        m_out << OpCodeName(op) << " " << dest.GetName() << ", " << src.GetName() << std::endl;
-    }
-
-
-    template <unsigned SIZE, bool ISFLOAT, typename T>
-    void X64CodeGenerator::Op(OpCode op, Register<SIZE, ISFLOAT> dest, T value)
-    {
-        Indent();
-#pragma warning(push)
-#pragma warning(disable:4127)
-        if (ISFLOAT)
-#pragma warning(pop)
-        {
-            m_out << OpCodeName(op) << " " << dest.GetName() << ", " << value << std::endl;
-        }
-        else
-        {
-            // TODO: HACK: Cast to unsigned __int64 to force character types to display as integers.
-            // TODO: This hack is probably wrong for signed values.
-            // TODO: Need to add support for ISSIGNED.
-            m_out << OpCodeName(op) << " " << dest.GetName() << ", " << (unsigned __int64)value << std::endl;
-        }
-    }
-
-
-    template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Op(OpCode op,
-                              Register<SIZE, ISFLOAT> dest,
-                              Register<sizeof(void*), false> base,
-                              __int32 offset)
-    {
-        Indent();
-        if (offset > 0)
-        {
-            m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << " + " << offset << "]" << std::endl;
-        }
-        else if (offset < 0)
-        {
-            m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << " - " << -offset << "]" << std::endl;
-        }
-        else
-        {
-            m_out << OpCodeName(op) << " " << dest.GetName() << ", [" << base.GetName() << "]" << std::endl;
+            *m_out << "mov [" << base.GetName() << "], " << src.GetName() << std::endl;
         }
     }
 
@@ -486,6 +444,80 @@ namespace NativeJIT
         code.Lea(dest, src, srcOffset);
     }
 
+
+    //
+    // Mov
+    //
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& /*code*/,
+                                                     Register<SIZE, ISFLOAT> /*dest*/,
+                                                     Register<SIZE, ISFLOAT> /*src*/)
+    {
+        std::cout << "[Implement mov dest, src]";
+    }
+
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& /*code*/,
+                                                     Register<SIZE, ISFLOAT> /*dest*/,
+                                                     Register<8, false> /*src*/,
+                                                     __int32 /*srcOffset*/)
+    {
+        std::cout << "[Implement mov dest, [src + offset]]";
+    }
+
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& /*code*/,
+                                                     Register<SIZE, ISFLOAT> /*dest*/,
+                                                     T /*value*/)
+    {
+        std::cout << "[Implement mov dest, value]";
+    }
+
+
+    //
+    // Mul
+    //
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Helper<OpCode::Mul>::Emit(X64CodeGenerator& /*code*/,
+                                                     Register<SIZE, ISFLOAT> /*dest*/,
+                                                     Register<SIZE, ISFLOAT> /*src*/)
+    {
+        std::cout << "[Implement mul dest, src]";
+    }
+
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Helper<OpCode::Mul>::Emit(X64CodeGenerator& /*code*/,
+                                                     Register<SIZE, ISFLOAT> /*dest*/,
+                                                     Register<8, false> /*src*/,
+                                                     __int32 /*srcOffset*/)
+    {
+        std::cout << "[Implement mul dest, [src + offset]]";
+    }
+
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::Helper<OpCode::Mul>::Emit(X64CodeGenerator& /*code*/,
+                                                     Register<SIZE, ISFLOAT> /*dest*/,
+                                                     T /*value*/)
+    {
+        std::cout << "[Implement mul dest, value]";
+    }
+
+
+    //
+    // Pop/Push
+    //
 
     template <>
     template <unsigned SIZE, bool ISFLOAT>
@@ -535,6 +567,7 @@ namespace NativeJIT
     }                                                                                    
 
     DEFINE_GROUP1(Add, 0, 0);
+    DEFINE_GROUP1(Or, 8, 1);
     DEFINE_GROUP1(Sub, 0x28, 5);
     DEFINE_GROUP1(Cmp, 0x38, 7);
 

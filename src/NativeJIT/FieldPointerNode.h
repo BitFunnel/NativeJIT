@@ -111,7 +111,7 @@ namespace NativeJIT
         __int32 offset = m_base.GetOffset();
 
         base.ConvertToValue(tree, true);
-        tree.GetCodeGenerator().Op(OpCode::Add, base.GetDirectRegister(), m_offset + offset);
+        tree.GetCodeGenerator().Emit<OpCode::Add>(base.GetDirectRegister(), m_offset + offset);
 
         return base;
     }

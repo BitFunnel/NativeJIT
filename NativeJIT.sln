@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{
 		inc\NativeJIT\CodeBuffer.h = inc\NativeJIT\CodeBuffer.h
 		inc\NativeJIT\JumpTable.h = inc\NativeJIT\JumpTable.h
 		inc\NativeJIT\Register.h = inc\NativeJIT\Register.h
+		inc\NativeJIT\ValuePredicates.h = inc\NativeJIT\ValuePredicates.h
 		inc\NativeJIT\X64CodeGenerator.h = inc\NativeJIT\X64CodeGenerator.h
 	EndProjectSection
 EndProject

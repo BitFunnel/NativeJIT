@@ -29,7 +29,7 @@ namespace NativeJIT
                                            unsigned registerSaveMask,
                                            bool isLeaf)
         : m_allocator(allocator),
-          X64CodeGenerator(std::cout, static_cast<unsigned __int8*>(allocator.Allocate(capacity)), capacity, 0, 0)
+          X64CodeGenerator(static_cast<unsigned __int8*>(allocator.Allocate(capacity)), capacity, 0, 0)
     {
         // TODO: Need to deallocate buffer passed to X64CodeGenerator constructor.
 
@@ -180,13 +180,13 @@ namespace NativeJIT
             switch (code.m_unwindOp)
             {
             case UWOP_PUSH_NONVOL:
-                Op(OpCode::Push, Register<8, false>(code.m_opInfo));
+                Emit<OpCode::Push>(Register<8, false>(code.m_opInfo));
                 break;
             case UWOP_ALLOC_SMALL:
-                Op(OpCode::Sub, rsp, (code.m_opInfo + 1) * 8);
+                Emit<OpCode::Sub>(rsp, (code.m_opInfo + 1) * 8);
                 break;
             case UWOP_SET_FPREG:
-                Op(OpCode::Lea, rbp, rsp, m_unwindInfo->m_frameOffset * 16);
+                Emit<OpCode::Lea>(rbp, rsp, m_unwindInfo->m_frameOffset * 16);
                 break;
             default:
                 throw std::runtime_error("Invalid unwind data.");
@@ -215,20 +215,20 @@ namespace NativeJIT
             switch (code.m_unwindOp)
             {
             case UWOP_PUSH_NONVOL:
-                Op(OpCode::Pop, Register<8, false>(code.m_opInfo));
+                Emit<OpCode::Pop>(Register<8, false>(code.m_opInfo));
                 break;
             case UWOP_ALLOC_SMALL:
-                Op(OpCode::Add, rsp, (code.m_opInfo + 1) * 8);
+                Emit<OpCode::Add>(rsp, (code.m_opInfo + 1) * 8);
                 break;
             case UWOP_SET_FPREG:
-                Op(OpCode::Lea, rsp, rbp, -m_unwindInfo->m_frameOffset * 16);
+                Emit<OpCode::Lea>(rsp, rbp, -m_unwindInfo->m_frameOffset * 16);
                 break;
             default:
                 throw std::runtime_error("Invalid unwind data.");
             }
         }
 
-        Op(OpCode::Ret);
+        Emit<OpCode::Ret>();
     }
 
 

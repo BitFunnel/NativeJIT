@@ -27,61 +27,33 @@ namespace NativeJIT
             std::cout << "Add" << std::endl;
 
             buffer.Emit<OpCode::Add>(rax, rbx);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Add>(al, bl);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Add>(rax, rbx, 0x12);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Add>(rax, rbx, 0x12345678);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Add>(al, static_cast<__int8>(0x12));
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Add>(rax, 0x12);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Add>(rax, 0x12345678);
+
             std::cout << std::endl;
-
-
-
             std::cout << "Sub/Cmp" << std::endl;
 
             buffer.Emit<OpCode::Sub>(rax, rbx);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Cmp>(rax, r9);
+
             std::cout << std::endl;
-
-
-
             std::cout << "Lea" << std::endl;
-
             buffer.Emit<OpCode::Lea>(rax, rbx, 0x12);
+
             std::cout << std::endl;
-
-
-
             std::cout << "Pop/Push" << std::endl;
-
             buffer.Emit<OpCode::Pop>(rax);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Pop>(r8);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Push>(rax);
-            std::cout << std::endl;
-
             buffer.Emit<OpCode::Push>(r8);
-            std::cout << std::endl;
 
-            buffer.Emit<OpCode::Ret>();
             std::cout << std::endl;
+            std::cout << "Ret" << std::endl;
+            buffer.Emit<OpCode::Ret>();
         }
     }
 }

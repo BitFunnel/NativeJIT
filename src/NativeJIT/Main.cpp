@@ -174,23 +174,23 @@ namespace NativeJIT
 
     void TestDouble()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        //Allocator allocator(10000);
+        //X64CodeGenerator code(std::cout);
+        //ExpressionTree tree(allocator, code);
+        //ExpressionNodeFactory factory(allocator, tree);
 
-        auto & a = factory.Parameter<double>();
-        auto & b = factory.Immediate<double>(123);
-        auto & c = factory.Add(a, b);
+        //auto & a = factory.Parameter<double>();
+        //auto & b = factory.Immediate<double>(123);
+        //auto & c = factory.Add(a, b);
 
-        auto & d = factory.Parameter<double*>();
-        auto & e = factory.Deref(d);
+        //auto & d = factory.Parameter<double*>();
+        //auto & e = factory.Deref(d);
 
-        auto & f = factory.Add(c, e);
+        //auto & f = factory.Add(c, e);
 
-        factory.Return(f);
+        //factory.Return(f);
 
-        tree.Compile();
+        //tree.Compile();
     }
 
 
@@ -380,7 +380,9 @@ namespace NativeJIT
 //        TestSpill();
 
 //        TestFunction();
-        TestCall();
+//        TestCall();
+
+        JITExample1();
     }
 }
 

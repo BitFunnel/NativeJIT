@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <iostream>         // TODO: Remove - temporary for debugging.
+
 #include "Temporary/Assert.h"
 #include "NativeJIT/X64CodeGenerator.h"
 
@@ -35,20 +37,33 @@ namespace NativeJIT
     //
     //*************************************************************************
     X64CodeGenerator::X64CodeGenerator(std::ostream& out)
-        : CodeBuffer(nullptr, 0, 0, 0),
-          m_out(out)
+        // TODO: Handle buffer allocation
+        : CodeBuffer(new unsigned __int8[1000], 1000, 100, 100),
+          m_out(&out)
     {
     }
 
 
-    X64CodeGenerator::X64CodeGenerator(std::ostream& out,
-                                       unsigned __int8* buffer,
+    X64CodeGenerator::X64CodeGenerator(unsigned __int8* buffer,
                                        unsigned capacity,
                                        unsigned maxLabels,
                                        unsigned maxCallSites)
         : CodeBuffer(buffer, capacity, maxLabels, maxCallSites),
-          m_out(out)
+        // TODO: Handle stream correctly
+          m_out(&std::cout)
     {
+    }
+
+
+    void X64CodeGenerator::EnableDiagnostics(std::ostream& out)
+    {
+        m_out = &out;
+    }
+
+
+    void X64CodeGenerator::DisableDiagnostics()
+    {
+        m_out = nullptr;
     }
 
 
@@ -68,35 +83,21 @@ namespace NativeJIT
     void X64CodeGenerator::PlaceLabel(Label l)
     {
         CodeBuffer::PlaceLabel(l);
-        m_out << "L" << l.GetId() << ":" << std::endl;
+        *m_out << "L" << l.GetId() << ":" << std::endl;
     }
 
 
     void X64CodeGenerator::Jmp(Label l)
     {
         Indent();
-        m_out << "jmp L" << l.GetId() << std::endl;
+        *m_out << "jmp L" << l.GetId() << std::endl;
     }
 
 
     void X64CodeGenerator::Jcc(JccType jcc, Label l)
     {
         Indent();
-        m_out << JccName(jcc) << " L" << l.GetId() << std::endl;
-    }
-
-
-    void X64CodeGenerator::Nop()
-    {
-        Indent();
-        m_out << "nop" << std::endl;
-    }
-
-
-    void X64CodeGenerator::Op(OpCode op)
-    {
-        Indent();
-        m_out << OpCodeName(op) << std::endl;
+        *m_out << JccName(jcc) << " L" << l.GetId() << std::endl;
     }
 
 
@@ -139,14 +140,42 @@ namespace NativeJIT
     }
 
 
-    //*************************************************************************
-    //
-    // X64CodeGenerator private methods
-    //
-    //*************************************************************************
     void X64CodeGenerator::Indent()
     {
-        m_out << "    ";
+        *m_out << "    ";
+    }
+
+
+    void X64CodeGenerator::PrintBytes(unsigned start, unsigned end)
+    {
+        // TODO: Support for printing '/' after REX prefixes?
+        // Alternative is unit test function can strip out white space and '/'.
+        unsigned __int8* startPtr = BufferStart() + start;
+        unsigned __int8* endPtr = BufferStart() + end;
+
+        unsigned column = 0;
+        while (startPtr < endPtr)
+        {
+            m_out->width(2);
+            m_out->fill('0');
+            *m_out << std::hex << static_cast<unsigned>(*startPtr++);
+            *m_out << " ";
+            column += 3;
+        }
+
+        while (column < 30)
+        {
+            *m_out << ' ';
+            column++;
+        }
+    }
+
+
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::Call>::Emit(X64CodeGenerator& code, Register<8, false> dest)
+    {
+        code.Call(dest);
     }
 
 

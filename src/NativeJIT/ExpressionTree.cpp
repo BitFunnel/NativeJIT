@@ -201,12 +201,13 @@ namespace NativeJIT
     }
 
 
+    // TODO: Remove this method.
     void ExpressionTree::Prologue()
     {
         std::cout << "Prologue ..." << std::endl;
         std::cout << "  NOT IMPLEMENTED" << std::endl;
 
-        m_code.Op(OpCode::Mov, m_basePointer, m_stackPointer);
+//        m_code.Op(OpCode::Mov, m_basePointer, m_stackPointer);
     }
 
 
@@ -286,6 +287,7 @@ namespace NativeJIT
     }
 
 
+    // TODO: Remove this method.
     void ExpressionTree::Epilogue()
     {
         std::cout << "Epilogue ..." << std::endl;

@@ -30,7 +30,6 @@ namespace NativeJIT
         // Overrides of Node methods.
         //
         virtual Storage<R> CodeGenValue(ExpressionTree& tree) override;
-//        virtual void CompileAsRoot(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -89,26 +88,19 @@ namespace NativeJIT
 
             std::cout << "// Set up parameter registers." << std::endl;
 
-            tree.GetCodeGenerator().Op(OpCode::Call, f.GetDirectRegister());
+            tree.GetCodeGenerator().Emit<OpCode::Call>(f.GetDirectRegister());
         }
 
         std::cout << "// Pop volatile registers." << std::endl;
 
         auto x = tree.AllocateRegister<Storage<R>::DirectRegister>();
         Storage<R> result(tree, x);
-//        Storage<R> result2(tree, Storage<R>::DirectRegister(0));
-        tree.GetCodeGenerator().Op(OpCode::Mov, result.GetDirectRegister(), Storage<R>::DirectRegister(0));
+        tree.GetCodeGenerator().Emit<OpCode::Mov>(result.GetDirectRegister(), Storage<R>::DirectRegister(0));
 
         // TODO: This is wrong. Need copy RAX or XMM0 to correct register.
         // Return storage has to be compatible with type R.
         return result;
     }
-
-
-    //template <typename R, typename P1, typename P2>
-    //void CallNode<R, P1, P2>::CompileAsRoot(ExpressionTree& /*tree*/)
-    //{
-    //}
 
 
     template <typename R, typename P1, typename P2>

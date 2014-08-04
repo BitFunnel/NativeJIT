@@ -28,6 +28,23 @@ main PROC
 
   ret
 
+  cmp rax, 07fh
+  cmp rbx, 07fh
+
+  cmp rax, 07fffh
+  cmp rbx, 07fffh
+
+  cmp rax, 07fffffffh
+  cmp rbx, 07fffffffh
+
+  cmp rax, 07fffffffffffffffh
+  cmp rbx, 07fffffffffffffffh
+
+  imul rax, rbx;
+  imul r8, r9;
+  imul ax, bx;
+
+
 main ENDP
 
 END

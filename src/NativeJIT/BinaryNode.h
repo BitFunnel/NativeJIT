@@ -2,15 +2,16 @@
 
 #include "CodeGenHelpers.h"
 #include "Node.h"
+#include "NativeJIT/X64CodeGenerator.h"     // OpCode type.
 
 
 namespace NativeJIT
 {
-    template <typename L, typename R>
+    template <OpCode OP, typename L, typename R>
     class BinaryNode : public Node<L>
     {
     public:
-        BinaryNode(ExpressionTree& tree, OpCode operation, Node<L>& left, Node<R>& right);
+        BinaryNode(ExpressionTree& tree, Node<L>& left, Node<R>& right);
 
         virtual Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
@@ -20,7 +21,6 @@ namespace NativeJIT
     private:
         static unsigned ComputeRegisterCount(unsigned leftCount, unsigned rightCount);
 
-        OpCode m_operation;
         Node<L>& m_left;
         Node<R>& m_right;
     };
@@ -31,13 +31,11 @@ namespace NativeJIT
     // Template definitions for BinaryNode
     //
     //*************************************************************************
-    template <typename L, typename R>
-    BinaryNode<L, R>::BinaryNode(ExpressionTree& tree,
-                                 OpCode operation,
-                                 Node<L>& left,
-                                 Node<R>& right)
+    template <OpCode OP, typename L, typename R>
+    BinaryNode<OP, L, R>::BinaryNode(ExpressionTree& tree,
+                                     Node<L>& left,
+                                     Node<R>& right)
         : Node(tree),
-          m_operation(operation),
           m_left(left),
           m_right(right)
     {
@@ -46,8 +44,8 @@ namespace NativeJIT
     }
 
 
-    template <typename L, typename R>
-    typename Storage<L> BinaryNode<L, R>::CodeGenValue(ExpressionTree& tree)
+    template <OpCode OP, typename L, typename R>
+    typename Storage<L> BinaryNode<OP, L, R>::CodeGenValue(ExpressionTree& tree)
     {
         unsigned l = m_left.GetRegisterCount();
         unsigned r = m_right.GetRegisterCount();
@@ -61,7 +59,7 @@ namespace NativeJIT
             sLeft.ConvertToValue(tree, true);
             auto sRight = m_right.CodeGen(tree);
 
-            CodeGenHelpers::Emit(tree.GetCodeGenerator(), m_operation, sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
             return sLeft;
         }
         else if (l < r && l < a)
@@ -72,7 +70,7 @@ namespace NativeJIT
             auto sLeft = m_left.CodeGen(tree);
             sLeft.ConvertToValue(tree, true);
 
-            CodeGenHelpers::Emit(tree.GetCodeGenerator(), m_operation, sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
             return sLeft;
         }
         else
@@ -86,15 +84,15 @@ namespace NativeJIT
             auto sLeft = m_left.CodeGen(tree);
             sLeft.ConvertToValue(tree, true);
 
-            CodeGenHelpers::Emit(tree.GetCodeGenerator(), m_operation, sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
 
             return sLeft;
         }
     }
 
 
-    template <typename L, typename R>
-    unsigned BinaryNode<L, R>::LabelSubtree(bool /*isLeftChild*/)
+    template <OpCode OP, typename L, typename R>
+    unsigned BinaryNode<OP, L, R>::LabelSubtree(bool /*isLeftChild*/)
     {
         unsigned left = m_left.LabelSubtree(true);
         unsigned right = m_right.LabelSubtree(false);
@@ -106,10 +104,10 @@ namespace NativeJIT
     }
 
 
-    template <typename L, typename R>
-    void BinaryNode<L, R>::Print() const
+    template <OpCode OP, typename L, typename R>
+    void BinaryNode<OP, L, R>::Print() const
     {
-        std::cout << "Operation (" << X64CodeGenerator::OpCodeName(m_operation) << ") id=" << GetId();
+        std::cout << "Operation (" << X64CodeGenerator::OpCodeName(OP) << ") id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
         std::cout << ", left = " << m_left.GetId();
         std::cout << ", right = " << m_right.GetId();
@@ -118,8 +116,8 @@ namespace NativeJIT
     }
 
 
-    template <typename L, typename R>
-    unsigned BinaryNode<L, R>::ComputeRegisterCount(unsigned left, unsigned right)
+    template <OpCode OP, typename L, typename R>
+    unsigned BinaryNode<OP, L, R>::ComputeRegisterCount(unsigned left, unsigned right)
     {
         if (left > right)
         {

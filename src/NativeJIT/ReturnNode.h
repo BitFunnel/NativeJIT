@@ -59,10 +59,10 @@ namespace NativeJIT
         if (r.GetId() != 0)
         {
             auto dest = RegisterType(0);
-            CodeGenHelpers::Emit(tree.GetCodeGenerator(), OpCode::Mov, dest, s);
+            CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), dest, s);
         }
 
-        tree.GetCodeGenerator().Op(OpCode::Ret);
+        tree.GetCodeGenerator().Emit<OpCode::Ret>();
     }
 
 
