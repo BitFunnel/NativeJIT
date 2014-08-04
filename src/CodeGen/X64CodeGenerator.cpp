@@ -153,7 +153,12 @@ namespace NativeJIT
         unsigned __int8* startPtr = BufferStart() + start;
         unsigned __int8* endPtr = BufferStart() + end;
 
-        unsigned column = 0;
+        *m_out << " ";
+        m_out->width(8);
+        m_out->fill('0');
+        *m_out << std::hex << start << "  ";
+
+        unsigned column = 11;
         while (startPtr < endPtr)
         {
             m_out->width(2);
@@ -163,11 +168,43 @@ namespace NativeJIT
             column += 3;
         }
 
-        while (column < 30)
+        while (column < 34)
         {
             *m_out << ' ';
             column++;
         }
+    }
+
+
+    void X64CodeGenerator::Call(Register<8, false> /*r*/)
+    {
+        std::cout << "[IMPLEMENT CALL]";
+    }
+
+
+    void X64CodeGenerator::Pop(Register<8, false> r)
+    {
+        if (r.GetId() > 7)
+        {
+            Emit8(0x41);  // TODO: Should be able to use EmitREX() here except it sets W.
+        }
+        Emit8(0x58 + (r.GetId() & 7));
+    }
+
+
+    void X64CodeGenerator::Push(Register<8, false> r)
+    {
+        if (r.GetId() > 7)
+        {
+            Emit8(0x41);  // TODO: Should be able to use EmitREX() here except it sets W.
+        }
+        Emit8(0x50 + (r.GetId() & 7));
+    }
+
+
+    void X64CodeGenerator::Ret()
+    {
+        Emit8(0xc3);
     }
 
 

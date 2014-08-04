@@ -84,103 +84,82 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
 
+        //
+        // X64 opcode emit methods.
+        //
 
+        // No operand (e.g nop, ret)
         template <OpCode OP>
-        class Helper;
+        void Emit();
 
-        template <OpCode OP>
-        void Emit()
-        {
-            if (m_out != nullptr)
-            {
-                unsigned start = CurrentPosition();
-                Helper<OP>::Emit(*this);
-                PrintBytes(start, CurrentPosition());
-                *m_out << OpCodeName(OP) << std::endl;
-            }
-            else
-            {
-                Helper<OP>::Emit(*this);
-            }
-        }
-
-
+        // One register operand (e.g. call, neg, not, push, pop)
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-        void Emit(Register<SIZE, ISFLOAT> dest)
-        {
-            if (m_out != nullptr)
-            {
-                unsigned start = CurrentPosition();
-                Helper<OP>::Emit(*this, dest);
-                PrintBytes(start, CurrentPosition());
-                *m_out << OpCodeName(OP) << ' ' << dest.GetName() << std::endl;
-            }
-            else
-            {
-                Helper<OP>::Emit(*this, dest);
-            }
-        }
+        void Emit(Register<SIZE, ISFLOAT> dest);
 
-
+        // Two register operands (e.g. and, mov, or, sub)
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-        void Emit(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
-        {
-            if (m_out != nullptr)
-            {
-                unsigned start = CurrentPosition();
-                Helper<OP>::Emit(*this, dest, src);
-                PrintBytes(start, CurrentPosition());
-                *m_out << OpCodeName(OP) << ' ' << dest.GetName() << ", " << src.GetName() << std::endl;
-            }
-            else
-            {
-                Helper<OP>::Emit(*this, dest, src);
-            }
-        }
+        void Emit(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src);
 
-
+        // Two operands - register destination and indirect source.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-        void Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset)
-        {
-            if (m_out != nullptr)
-            {
-                unsigned start = CurrentPosition();
-                Helper<OP>::Emit(*this, dest, src, srcOffset);
-                PrintBytes(start, CurrentPosition());
-                *m_out << OpCodeName(OP) << ' ' << dest.GetName();
-                *m_out << ", [" << src.GetName();
-                if (srcOffset != 0)
-                {
-                    *m_out << " + " << std::hex << srcOffset << "h";
-                }
-                *m_out << "]"  << std::endl;
-            }
-            else
-            {
-                Helper<OP>::Emit(*this, dest, src, srcOffset);
-            }
-        }
+        void Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset);
 
-
+        // Top operands - register destination and immediate source.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
-        void Emit(Register<SIZE, ISFLOAT> dest, T value)
-        {
-            if (m_out != nullptr)
-            {
-                unsigned start = CurrentPosition();
-                Helper<OP>::Emit(*this, dest, value);
-                PrintBytes(start, CurrentPosition());
-                *m_out << OpCodeName(OP) << ' ' << dest.GetName();
-                // TODO: Hex may not be appropriate for float.
-                *m_out << ", " << std::hex << value << 'h' << std::endl;
-            }
-            else
-            {
-                Helper<OP>::Emit(*this, dest, value);
-            }
-        }
+        void Emit(Register<SIZE, ISFLOAT> dest, T value);
+
 
     private:
+        void Call(Register<8, false> /*r*/);
+
+        template <unsigned SIZE>
+        void Lea(Register<SIZE, false> dest,
+                 Register<8, false> src,
+                 __int32 srcOffset);
+
+        void Pop(Register<8, false> r);
+        void Push(Register<8, false> r);
+
+        void Ret();
+
+        template <unsigned SIZE>
+        void Group1(unsigned __int8 baseOpCode,
+                    Register<SIZE, false> dest,
+                    Register<SIZE, false> src);
+
+        template <unsigned SIZE>
+        void Group1(unsigned __int8 baseOpCode,
+                    Register<SIZE, false> dest,
+                    Register<8, false> src,
+                    __int32 srcOffset);
+
+        // TODO: Would like some sort of compiletime error when T is quadword or floating point
+        template <unsigned SIZE, typename T>
+        void Group1(unsigned __int8 baseOpCode,
+                    unsigned __int8 extensionOpCode,
+                    Register<SIZE, false> dest,
+                    T value);
+
+        template <unsigned SIZE1, unsigned SIZE2>
+        void EmitRex(Register<SIZE1, false> dest, Register<SIZE2, false> src);
+
+        template <unsigned SIZE>
+        void EmitRex(Register<SIZE, false> dest);
+
+        template <unsigned SIZE>
+        void EmitModRM(Register<SIZE, false> dest, Register<SIZE, false> src);
+
+        template <unsigned SIZE>
+        void EmitModRM(unsigned __int8 extensionOpCode, Register<SIZE, false> dest);
+
+        template <unsigned SIZE>
+        void EmitModRMOffset(Register<SIZE, false> dest, Register<8, false> src, __int32 srcOffset);
+
+        void Indent();
+        void PrintBytes(unsigned start, unsigned end);
+
+
+        // Helper class used to provide partial specializations by OpCode for the Emit() methods.
         template <OpCode OP>
         class Helper
         {
@@ -200,216 +179,16 @@ namespace NativeJIT
             static void Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, T value);
         };
 
-
-        void Call(Register<8, false> /*r*/)
-        {
-            std::cout << "[IMPLEMENT CALL]";
-        }
-
-
-        template <unsigned SIZE>
-        void Lea(Register<SIZE, false> dest,
-                 Register<8, false> src,
-                 __int32 srcOffset)
-        {
-            EmitRex(dest, src);
-            Emit8(0x8d);
-            EmitModRMOffset(dest, src, srcOffset);
-        }
-
-
-        void Pop(Register<8, false> r)
-        {
-            if (r.GetId() > 7)
-            {
-                Emit8(0x41);  // TODO: Should be able to use EmitREX() here except it sets W.
-            }
-            Emit8(0x58 + (r.GetId() & 7));
-        }
-
-
-        void Push(Register<8, false> r)
-        {
-            if (r.GetId() > 7)
-            {
-                Emit8(0x41);  // TODO: Should be able to use EmitREX() here except it sets W.
-            }
-            Emit8(0x50 + (r.GetId() & 7));
-        }
-
-
-        void Ret()
-        {
-            Emit8(0xc3);
-        }
-
-
-        template <unsigned SIZE>
-        void Group1(unsigned __int8 baseOpCode,
-                    Register<SIZE, false> dest,
-                    Register<SIZE, false> src)
-        {
-            EmitRex(dest, src);
-            if (SIZE == 1)
-            {
-                Emit8(baseOpCode + 0x2);
-            }
-            else
-            {
-                Emit8(baseOpCode + 0x3);
-            }
-            EmitModRM(dest, src);
-        }
-
-
-        template <unsigned SIZE>
-        void Group1(unsigned __int8 baseOpCode,
-                    Register<SIZE, false> dest,
-                    Register<8, false> src,
-                    __int32 srcOffset)
-        {
-            EmitRex(dest, src);
-            if (SIZE == 1)
-            {
-                Emit8(baseOpCode + 0x2);
-            }
-            else
-            {
-                Emit8(baseOpCode + 0x3);
-            }
-            EmitModRMOffset(dest, src, srcOffset);
-        }
-
-
-        // TODO: Would like some sort of compiletime error when T is quadword or floating point
-        template <unsigned SIZE, typename T>
-        void Group1(unsigned __int8 baseOpCode,
-                    unsigned __int8 extensionOpCode,
-                    Register<SIZE, false> dest,
-                    T value)
-        {
-            unsigned valueSize = Size(value);
-
-            if (SIZE == 1 && valueSize == 1 && dest.GetId() == 0)
-            {
-                // Special case for AL.
-                Emit8(baseOpCode + 0x04);
-                Emit8(static_cast<unsigned __int8>(value));
-            }
-            else if (SIZE == 8 && dest.GetId() == 0 && (valueSize == 2 || valueSize == 4))
-            {
-                // Special case for RAX.
-                Emit8(0x48);
-                Emit8(baseOpCode + 0x05);
-                Emit32(static_cast<unsigned __int32>(value));
-            }
-            else
-            {
-                // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
-                EmitRex(dest);
-
-                if (valueSize == 1)
-                {
-                    Emit8(0x80 + 3);
-                    EmitModRM(extensionOpCode, dest);
-                    Emit8(static_cast<unsigned __int8>(value));
-                }
-                else if (valueSize == 2 || valueSize == 4)
-                {
-                    Emit8(0x80 + 1);
-                    EmitModRM(extensionOpCode, dest);
-                    Emit32(static_cast<unsigned __int32>(value));
-                }
-                else
-                {
-                    // Can't do 8-byte immdediate values.
-                    // TODO: Template should be disabled for this size to avoid runtime error.
-                    throw 0;
-                }
-            }
-        }
-
-
-    private:
-        // TODO: Is W bit always determined by SIZE1? Is there any case where SIZE2 should specify the data size?
-        // Do we need a separate ptemplate arameter for the data size?
-        template <unsigned SIZE1, unsigned SIZE2>
-        void EmitRex(Register<SIZE1, false> dest, Register<SIZE2, false> src)
-        {
-            // WRXB
-            // TODO: add cases for W and X bits.
-
-            unsigned d = dest.GetId();
-            unsigned s = src.GetId();
-
-            if (d > 7 || s > 7 || SIZE1 == 8)
-            {
-                Emit8(0x40 | ((SIZE1 == 8) ? 8 : 0) | ((d > 7) ? 4 : 0) | ((s > 7) ? 1 : 0));
-            }
-        }
-
-
-        template <unsigned SIZE>
-        void EmitRex(Register<SIZE, false> dest)
-        {
-            EmitRex(Register<SIZE, false>(0), dest);
-        }
-
-
-        template <unsigned SIZE>
-        void EmitModRM(Register<SIZE, false> dest, Register<SIZE, false> src)
-        {
-            Emit8(0xc0 | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
-            // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
-            // this function is only used for Register-Register encoding. Problem will 
-            // crop up if caller passes the base register from an X64Indirect.
-        }
-
-
-        template <unsigned SIZE>
-        void EmitModRM(unsigned __int8 extensionOpCode, Register<SIZE, false> dest)
-        {
-            Emit8(0xc0 | (extensionOpCode << 3) | (dest.GetId() & 7));
-            // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
-            // this function is only used for Register-Register encoding. Problem will 
-            // crop up if caller passes the base register from an X64Indirect.
-        }
-
-
-        template <unsigned SIZE>
-        void EmitModRMOffset(Register<SIZE, false> dest, Register<8, false> src, __int32 srcOffset)
-        {
-            unsigned __int8 mod = (srcOffset <= 127 && srcOffset >= -128)? 0x40 : 0x80;
-
-            Emit8(mod | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
-            // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
-            // this function is only used for Register-Register encoding. Problem will 
-            // crop up if caller passes the base register from an X64Indirect.
-
-            if (mod == 0x40)
-            {
-                Emit8(static_cast<unsigned __int8>(srcOffset));
-            }
-            else
-            {
-                Emit32(srcOffset);
-            }
-        }
-
-
-        void Indent();
-        void PrintBytes(unsigned start, unsigned end);
-
-        std::ostream* m_out;
-
         static const unsigned c_rxxRegisterCount = 16;
         static const unsigned c_xmmRegisterCount = 16;
+
+        std::ostream* m_out;
     };
 
 
     //*************************************************************************
     //
-    // Template definitions for X64CodeGenerator
+    // Template definitions for X64CodeGenerator - public methods.
     //
     //*************************************************************************
     template <unsigned SIZE, bool ISFLOAT>
@@ -424,6 +203,280 @@ namespace NativeJIT
         else
         {
             *m_out << "mov [" << base.GetName() << "], " << src.GetName() << std::endl;
+        }
+    }
+
+
+    template <OpCode OP>
+    void X64CodeGenerator::Emit()
+    {
+        if (m_out != nullptr)
+        {
+            unsigned start = CurrentPosition();
+            Helper<OP>::Emit(*this);
+            PrintBytes(start, CurrentPosition());
+            *m_out << OpCodeName(OP) << std::endl;
+        }
+        else
+        {
+            Helper<OP>::Emit(*this);
+        }
+    }
+
+
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest)
+    {
+        if (m_out != nullptr)
+        {
+            unsigned start = CurrentPosition();
+            Helper<OP>::Emit(*this, dest);
+            PrintBytes(start, CurrentPosition());
+            *m_out << OpCodeName(OP) << ' ' << dest.GetName() << std::endl;
+        }
+        else
+        {
+            Helper<OP>::Emit(*this, dest);
+        }
+    }
+
+
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src)
+    {
+        if (m_out != nullptr)
+        {
+            unsigned start = CurrentPosition();
+            Helper<OP>::Emit(*this, dest, src);
+            PrintBytes(start, CurrentPosition());
+            *m_out << OpCodeName(OP) << ' ' << dest.GetName() << ", " << src.GetName() << std::endl;
+        }
+        else
+        {
+            Helper<OP>::Emit(*this, dest, src);
+        }
+    }
+
+
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset)
+    {
+        if (m_out != nullptr)
+        {
+            unsigned start = CurrentPosition();
+            Helper<OP>::Emit(*this, dest, src, srcOffset);
+            PrintBytes(start, CurrentPosition());
+            *m_out << OpCodeName(OP) << ' ' << dest.GetName();
+            *m_out << ", [" << src.GetName();
+            if (srcOffset != 0)
+            {
+                *m_out << " + " << std::hex << srcOffset << "h";
+            }
+            *m_out << "]"  << std::endl;
+        }
+        else
+        {
+            Helper<OP>::Emit(*this, dest, src, srcOffset);
+        }
+    }
+
+
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest, T value)
+    {
+        if (m_out != nullptr)
+        {
+            unsigned start = CurrentPosition();
+            Helper<OP>::Emit(*this, dest, value);
+            PrintBytes(start, CurrentPosition());
+            *m_out << OpCodeName(OP) << ' ' << dest.GetName();
+            // TODO: Hex may not be appropriate for float.
+            *m_out << ", " << std::hex << value << 'h' << std::endl;
+        }
+        else
+        {
+            Helper<OP>::Emit(*this, dest, value);
+        }
+    }
+
+
+    //*************************************************************************
+    //
+    // Template definitions for X64CodeGenerator - private methods.
+    //
+    //*************************************************************************
+
+    //
+    // X64 opcodes
+    //
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Lea(Register<SIZE, false> dest,
+                               Register<8, false> src,
+                               __int32 srcOffset)
+    {
+        EmitRex(dest, src);
+        Emit8(0x8d);
+        EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    //
+    // X64 group1 opcodes
+    //
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
+                                  Register<SIZE, false> dest,
+                                  Register<SIZE, false> src)
+    {
+        EmitRex(dest, src);
+        if (SIZE == 1)
+        {
+            Emit8(baseOpCode + 0x2);
+        }
+        else
+        {
+            Emit8(baseOpCode + 0x3);
+        }
+        EmitModRM(dest, src);
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
+                                  Register<SIZE, false> dest,
+                                  Register<8, false> src,
+                                  __int32 srcOffset)
+    {
+        EmitRex(dest, src);
+        if (SIZE == 1)
+        {
+            Emit8(baseOpCode + 0x2);
+        }
+        else
+        {
+            Emit8(baseOpCode + 0x3);
+        }
+        EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    // TODO: Would like some sort of compiletime error when T is quadword or floating point
+    template <unsigned SIZE, typename T>
+    void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
+                                  unsigned __int8 extensionOpCode,
+                                  Register<SIZE, false> dest,
+                                  T value)
+    {
+        unsigned valueSize = Size(value);
+
+        if (SIZE == 1 && valueSize == 1 && dest.GetId() == 0)
+        {
+            // Special case for AL.
+            Emit8(baseOpCode + 0x04);
+            Emit8(static_cast<unsigned __int8>(value));
+        }
+        else if (SIZE == 8 && dest.GetId() == 0 && (valueSize == 2 || valueSize == 4))
+        {
+            // Special case for RAX.
+            Emit8(0x48);
+            Emit8(baseOpCode + 0x05);
+            Emit32(static_cast<unsigned __int32>(value));
+        }
+        else
+        {
+            // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
+            EmitRex(dest);
+
+            if (valueSize == 1)
+            {
+                Emit8(0x80 + 3);
+                EmitModRM(extensionOpCode, dest);
+                Emit8(static_cast<unsigned __int8>(value));
+            }
+            else if (valueSize == 2 || valueSize == 4)
+            {
+                Emit8(0x80 + 1);
+                EmitModRM(extensionOpCode, dest);
+                Emit32(static_cast<unsigned __int32>(value));
+            }
+            else
+            {
+                // Can't do 8-byte immdediate values.
+                // TODO: Template should be disabled for this size to avoid runtime error.
+                throw 0;
+            }
+        }
+    }
+
+
+    //
+    // X64 opcode encoding - REX and Mod/RM
+    //
+
+    // TODO: Is W bit always determined by SIZE1? Is there any case where SIZE2 should specify the data size?
+    // Do we need a separate ptemplate arameter for the data size?
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::EmitRex(Register<SIZE1, false> dest, Register<SIZE2, false> src)
+    {
+        // WRXB
+        // TODO: add cases for W and X bits.
+
+        unsigned d = dest.GetId();
+        unsigned s = src.GetId();
+
+        if (d > 7 || s > 7 || SIZE1 == 8)
+        {
+            Emit8(0x40 | ((SIZE1 == 8) ? 8 : 0) | ((d > 7) ? 4 : 0) | ((s > 7) ? 1 : 0));
+        }
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::EmitRex(Register<SIZE, false> dest)
+    {
+        EmitRex(Register<SIZE, false>(0), dest);
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::EmitModRM(Register<SIZE, false> dest, Register<SIZE, false> src)
+    {
+        Emit8(0xc0 | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
+        // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
+        // this function is only used for Register-Register encoding. Problem will 
+        // crop up if caller passes the base register from an X64Indirect.
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::EmitModRM(unsigned __int8 extensionOpCode, Register<SIZE, false> dest)
+    {
+        Emit8(0xc0 | (extensionOpCode << 3) | (dest.GetId() & 7));
+        // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
+        // this function is only used for Register-Register encoding. Problem will 
+        // crop up if caller passes the base register from an X64Indirect.
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::EmitModRMOffset(Register<SIZE, false> dest, Register<8, false> src, __int32 srcOffset)
+    {
+        unsigned __int8 mod = (srcOffset <= 127 && srcOffset >= -128)? 0x40 : 0x80;
+
+        Emit8(mod | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
+        // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
+        // this function is only used for Register-Register encoding. Problem will 
+        // crop up if caller passes the base register from an X64Indirect.
+
+        if (mod == 0x40)
+        {
+            Emit8(static_cast<unsigned __int8>(srcOffset));
+        }
+        else
+        {
+            Emit32(srcOffset);
         }
     }
 
