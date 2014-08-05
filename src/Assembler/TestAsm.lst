@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/04/14 11:53:31
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/04/14 16:31:00
 TestAsm.asm						     Page 1 - 1
 
 
@@ -25,6 +25,7 @@ TestAsm.asm						     Page 1 - 1
  00000016  48/ 05		  add rax, 12345678h
 	   12345678
 
+ 0000001C			L1:
  0000001C  48/ 2B C3		  sub rax, rbx
 
  0000001F  49/ 3B C1		  cmp rax, r9;
@@ -51,38 +52,16 @@ TestAsm.asm						     Page 1 - 1
  00000048  48/ 81 FB		  cmp rbx, 07fffffffh
 	   7FFFFFFF
 
- 0000004F  48/ 3D		  cmp rax, 07fffffffffffffffh
-TestAsm.asm(40) : error A2084:constant value too large
- 00000051  48/ 81 FB		  cmp rbx, 07fffffffffffffffh
-TestAsm.asm(41) : error A2084:constant value too large
+				;  cmp rax, 07fffffffffffffffh
+				;  cmp rbx, 07fffffffffffffffh
 
- 00000054  48/ 0F AF C3		  imul rax, rbx;
- 00000058  4D/ 0F AF C1		  imul r8, r9;
- 0000005C  66| 0F AF C3		  imul ax, bx;
+ 0000004F  48/ 0F AF C3		  imul rax, rbx;
+ 00000053  4D/ 0F AF C1		  imul r8, r9;
+ 00000057  66| 0F AF C3		  imul ax, bx;
 
-
- 00000060			main ENDP
+ 0000005B  48/ B8		  mov rax, 07fffffffffffffffh
+	   7FFFFFFFFFFFFFFF
+ 00000065			main ENDP
 
 				END
 
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/04/14 11:53:31
-TestAsm.asm						     Symbols 2 - 1
-
-
-
-
-Procedures, parameters, and locals:
-
-                N a m e                 Type     Value    Attr
-
-main . . . . . . . . . . . . . .	P 	 00000000 _TEXT	Length= 00000060 Public
-
-
-Symbols:
-
-                N a m e                 Type     Value    Attr
-
-myMessage  . . . . . . . . . . .	Byte	 00000000 _DATA	
-
-	   0 Warnings
-	   2 Errors

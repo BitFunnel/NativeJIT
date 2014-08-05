@@ -15,6 +15,7 @@ main PROC
   add rax, 12h
   add rax, 12345678h
 
+L1:
   sub rax, rbx
 
   cmp rax, r9;
@@ -37,14 +38,14 @@ main PROC
   cmp rax, 07fffffffh
   cmp rbx, 07fffffffh
 
-  cmp rax, 07fffffffffffffffh
-  cmp rbx, 07fffffffffffffffh
+;  cmp rax, 07fffffffffffffffh
+;  cmp rbx, 07fffffffffffffffh
 
   imul rax, rbx;
   imul r8, r9;
   imul ax, bx;
 
-
+  mov rax, 07fffffffffffffffh
 main ENDP
 
 END

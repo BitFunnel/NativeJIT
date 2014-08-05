@@ -145,6 +145,7 @@ namespace NativeJIT
         *m_out << "    ";
     }
 
+    const unsigned c_asmDataWidth = 32;
 
     void X64CodeGenerator::PrintBytes(unsigned start, unsigned end)
     {
@@ -156,7 +157,7 @@ namespace NativeJIT
         *m_out << " ";
         m_out->width(8);
         m_out->fill('0');
-        *m_out << std::hex << start << "  ";
+        *m_out << std::uppercase << std::hex << start << "  ";
 
         unsigned column = 11;
         while (startPtr < endPtr)
@@ -168,7 +169,7 @@ namespace NativeJIT
             column += 3;
         }
 
-        while (column < 34)
+        while (column < c_asmDataWidth)
         {
             *m_out << ' ';
             column++;
