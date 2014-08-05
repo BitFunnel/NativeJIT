@@ -22,43 +22,114 @@ namespace NativeJIT
 
         TestCase(ExecutionBuffer)
         {
-            ExecutionBuffer allocator(1000);
-            FunctionBufferBase buffer(allocator, 200, 3, 0, false);
+            //ExecutionBuffer allocator(1000);
+            //FunctionBufferBase buffer(allocator, 200, 3, 0, false);
 
-            std::cout << "Add" << std::endl;
+            //std::cout << "Add" << std::endl;
 
-            buffer.Emit<OpCode::Add>(rax, rbx);
-            buffer.Emit<OpCode::Add>(al, bl);
-            buffer.Emit<OpCode::Add>(rax, rbx, 0x12);
-            buffer.Emit<OpCode::Add>(rax, rbx, 0x12345678);
-            buffer.Emit<OpCode::Add>(al, static_cast<__int8>(0x12));
-            buffer.Emit<OpCode::Add>(rax, 0x12);
-            buffer.Emit<OpCode::Add>(rax, 0x12345678);
+            //buffer.Emit<OpCode::Add>(rax, rbx);
+            //buffer.Emit<OpCode::Add>(al, bl);
+            //buffer.Emit<OpCode::Add>(rax, rbx, 0x12);
+            //buffer.Emit<OpCode::Add>(rax, rbx, 0x12345678);
+            //buffer.Emit<OpCode::Add>(al, static_cast<__int8>(0x12));
+            //buffer.Emit<OpCode::Add>(rax, 0x12);
+            //buffer.Emit<OpCode::Add>(rax, 0x12345678);
 
-            std::cout << std::endl;
-            std::cout << "Sub/Cmp" << std::endl;
+            //std::cout << std::endl;
+            //std::cout << "Sub/Cmp" << std::endl;
 
-            buffer.Emit<OpCode::Sub>(rax, rbx);
-            buffer.Emit<OpCode::Cmp>(rax, r9);
+            //buffer.Emit<OpCode::Sub>(rax, rbx);
+            //buffer.Emit<OpCode::Cmp>(rax, r9);
 
-            std::cout << std::endl;
-            std::cout << "Lea" << std::endl;
-            buffer.Emit<OpCode::Lea>(rax, rbx, 0x12);
+            //std::cout << std::endl;
+            //std::cout << "Lea" << std::endl;
+            //buffer.Emit<OpCode::Lea>(rax, rbx, 0x12);
 
-            std::cout << std::endl;
-            std::cout << "Pop/Push" << std::endl;
-            buffer.Emit<OpCode::Pop>(rax);
-            buffer.Emit<OpCode::Pop>(r8);
-            buffer.Emit<OpCode::Push>(rax);
-            buffer.Emit<OpCode::Push>(r8);
+            //std::cout << std::endl;
+            //std::cout << "Pop/Push" << std::endl;
+            //buffer.Emit<OpCode::Pop>(rax);
+            //buffer.Emit<OpCode::Pop>(r8);
+            //buffer.Emit<OpCode::Push>(rax);
+            //buffer.Emit<OpCode::Push>(r8);
 
-            std::cout << std::endl;
-            std::cout << "Ret" << std::endl;
-            buffer.Emit<OpCode::Ret>();
+            //std::cout << std::endl;
+            //std::cout << "Ret" << std::endl;
+            //buffer.Emit<OpCode::Ret>();
         }
 
 
+        TestCase(OpCodes)
+        {
+            ExecutionBuffer allocator(5000);
+            FunctionBufferBase buffer(allocator, 2000, 3, 0, false);
 
+
+            // Mod/RM special cases for r12.
+            std::cout << "Mod/RM special cases for r12." << std::endl;
+            buffer.Emit<OpCode::Sub>(rbx, r12, 0);
+            buffer.Emit<OpCode::Sub>(rdi, r12, 0x12);       // Found: 49 2B 5C 24 12 Expected: 49/ 2B 7C 24 12
+            buffer.Emit<OpCode::Sub>(rbp, r12, 0x1234);     // Found: 49 2B 9C 24 34 12 00 00 Expected 49/ 2B AC 24 ...
+            buffer.Emit<OpCode::Sub>(r10, r12, 0x12345678);
+
+
+            // direct-direct
+            std::cout << "direct-direct" << std::endl;
+            buffer.Emit<OpCode::Add>(al, cl);
+            buffer.Emit<OpCode::Add>(bx, dx);
+            buffer.Emit<OpCode::Add>(esi, eax);
+            buffer.Emit<OpCode::Add>(rax, rbx);
+            buffer.Emit<OpCode::Add>(r8, r9);
+            buffer.Emit<OpCode::Add>(rsp, r12);
+
+
+            // direct-indirect with zero, byte, word, and double word offsets
+            std::cout << "direct-indirect with zero, byte, word, and double word offsets" << std::endl;
+            buffer.Emit<OpCode::Add>(cl, rax, 0);
+            buffer.Emit<OpCode::Add>(bl, rcx, 0x12);
+            buffer.Emit<OpCode::Add>(r9b, rsi, 0x100);
+            buffer.Emit<OpCode::Add>(r15b, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Cmp>(dl, rdx, 0);
+            buffer.Emit<OpCode::Cmp>(cx, rcx, 0x12);
+            buffer.Emit<OpCode::Cmp>(r9w, rsi, 0x1234);
+            buffer.Emit<OpCode::Cmp>(r11w, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Or>(esp, r9, 0);
+            buffer.Emit<OpCode::Or>(edx, rcx, 0x12);
+            buffer.Emit<OpCode::Or>(esi, rsi, 0x1234);
+            buffer.Emit<OpCode::Or>(r11d, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Sub>(rbx, r12, 0);
+            buffer.Emit<OpCode::Sub>(rdi, rcx, 0x12);
+            buffer.Emit<OpCode::Sub>(rbp, rsi, 0x1234);
+            buffer.Emit<OpCode::Sub>(r10, rdi, 0x12345678);
+
+
+            // direct-immediate register 0 case
+            std::cout << "direct-immediate register 0 case" << std::endl;
+            buffer.Emit<OpCode::Or>(al, 0x34);
+            buffer.Emit<OpCode::Or>(ax, 0x56);
+            buffer.Emit<OpCode::Or>(ax, 0x5678);
+            buffer.Emit<OpCode::Or>(eax, 0x12);
+            buffer.Emit<OpCode::Or>(eax, 0x1234);
+            buffer.Emit<OpCode::Or>(eax, 0x12345678);
+            buffer.Emit<OpCode::Or>(rax, 0x12);
+            buffer.Emit<OpCode::Or>(rax, 0x1234);
+            buffer.Emit<OpCode::Or>(rax, 0x12345678);
+
+
+            // direct-immediate general purpose register case
+            std::cout << "direct-immediate general purpose register case" << std::endl;
+            buffer.Emit<OpCode::And>(bl, 0x34);
+            buffer.Emit<OpCode::And>(cx, 0x56);
+            buffer.Emit<OpCode::And>(dx, 0x5678);
+            buffer.Emit<OpCode::And>(ebp, 0x12);
+            buffer.Emit<OpCode::And>(ebp, 0x1234);
+            buffer.Emit<OpCode::And>(ebp, 0x12345678);
+            buffer.Emit<OpCode::And>(r12, 0x12);
+            buffer.Emit<OpCode::And>(r12, 0x1234);
+            buffer.Emit<OpCode::And>(r12, 0x12345678);
+        }
 
 
 

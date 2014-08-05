@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/04/14 16:31:00
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/04/14 23:01:44
 TestAsm.asm						     Page 1 - 1
 
 
@@ -15,53 +15,170 @@ TestAsm.asm						     Page 1 - 1
 
  00000000			.code
  00000000			main PROC
- 00000000  48/ 03 C3		  add rax, rbx
- 00000003  02 C3		  add al, bl
- 00000005  48/ 03 43 12		  add rax, [rbx + 12h]
- 00000009  48/ 03 83		  add rax, [rbx + 12345678h]
+
+				;
+				; Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8]
+				;
+ 00000000  49/ 2B 1C 24		sub rbx, [r12]
+ 00000004  49/ 2B 7C 24		sub rdi, [r12 + 12h]
+	   12
+ 00000009  49/ 2B AC 24		sub rbp, [r12 + 1234h]
+	   00001234
+ 00000011  4D/ 2B 94 24		sub r10, [r12 + 12345678h]
 	   12345678
- 00000010  04 12		  add al, 12h
- 00000012  48/ 83 C0 12		  add rax, 12h
- 00000016  48/ 05		  add rax, 12345678h
+
+				;
+				; Mod/RM case for R8..R15
+				;
+
+				;
+				; REX W bit. X bit.
+				;
+
+				;
+				; Group1 addressing mode permutations for a single opcode.
+				;
+
+				; direct-direct
+ 00000019  02 C1		add al, cl
+ 0000001B  66| 03 DA		add bx, dx
+ 0000001E  03 F0		add esi, eax
+ 00000020  48/ 03 C3		add rax, rbx
+ 00000023  4D/ 03 C1		add r8, r9
+ 00000026  49/ 03 E4		add rsp, r12
+
+				; direct-indirect with zero, byte, word, and double word offsets
+ 00000029  02 08		add cl, [rax]
+ 0000002B  02 59 12		add bl, [rcx + 12h]
+ 0000002E  44/ 02 8E		add r9b, [rsi + 100h]
+	   00000100
+ 00000035  44/ 02 BF		add r15b, [rdi + 12345678h]
 	   12345678
 
- 0000001C			L1:
- 0000001C  48/ 2B C3		  sub rax, rbx
+ 0000003C  3A 12		cmp dl, [rdx]
+ 0000003E  66| 3B 49 12		cmp cx, [rcx + 12h]
+ 00000042  66| 44/ 3B 8E	cmp r9w, [rsi + 1234h]
+	   00001234
+ 0000004A  66| 44/ 3B 9F	cmp r11w, [rdi + 12345678h]
+	   12345678
 
- 0000001F  49/ 3B C1		  cmp rax, r9;
+ 00000052  41/ 0B 21		or esp, [r9]
+ 00000055  0B 51 12		or edx, [rcx + 12h]
+ 00000058  0B B6 00001234	or esi, [rsi + 1234h]
+ 0000005E  44/ 0B 9F		or r11d, [rdi + 12345678h]
+	   12345678
 
- 00000022  48/ 8D 43 12		  lea rax, [rbx + 12h]
+ 00000065  49/ 2B 1C 24		sub rbx, [r12]
+ 00000069  48/ 2B 79 12		sub rdi, [rcx + 12h]
+ 0000006D  48/ 2B AE		sub rbp, [rsi + 1234h]
+	   00001234
+ 00000074  4C/ 2B 97		sub r10, [rdi + 12345678h]
+	   12345678
 
- 00000026  58			  pop rax;
- 00000027  41/ 58		  pop r8;
- 00000029  50			  push rax;
- 0000002A  41/ 50		  push r8;
+				; direct-immediate register 0 case
+ 0000007B  0C 34		or al, 34h
+ 0000007D  66| 83 C8 56		or ax, 56h
+ 00000081  66| 0D 5678		or ax, 5678h
+ 00000085  83 C8 12		or eax, 12h
+ 00000088  0D 00001234		or eax, 1234h
+ 0000008D  0D 12345678		or eax, 12345678h
+ 00000092  48/ 83 C8 12		or rax, 12h
+ 00000096  48/ 0D		or rax, 1234h
+	   00001234
+ 0000009C  48/ 0D		or rax, 12345678h
+	   12345678
 
- 0000002C  C3			  ret
+				; direct-immediate general purpose register case
+ 000000A2  80 E3 34		and bl, 34h
+ 000000A5  66| 83 E1 56		and cx, 56h
+ 000000A9  66| 81 E2 5678	and dx, 5678h
+ 000000AE  83 E5 12		and ebp, 12h
+ 000000B1  81 E5 00001234	and ebp, 1234h
+ 000000B7  81 E5 12345678	and ebp, 12345678h
+ 000000BD  49/ 83 E4 12		and r12, 12h
+ 000000C1  49/ 81 E4		and r12, 1234h
+	   00001234
+ 000000C8  49/ 81 E4		and r12, 12345678h
+	   12345678
 
- 0000002D  48/ 83 F8 7F		  cmp rax, 07fh
- 00000031  48/ 83 FB 7F		  cmp rbx, 07fh
 
- 00000035  48/ 3D		  cmp rax, 07fffh
+				;
+				; One example of each Group1 opcode.
+				;
+ 000000CF  48/ 03 56 56		add rdx, [rsi + 56h]
+ 000000D3  48/ 3B 56 56		cmp rdx, [rsi + 56h]
+ 000000D7  48/ 0B 56 56		or rdx, [rsi + 56h]
+ 000000DB  48/ 3B 56 56		cmp rdx, [rsi + 56h]
+				; adc, sbb, and, xor not supported.
+
+				;
+				; Imul
+				;
+
+				;
+				; Mov
+				;
+
+				;
+				; Push/Pop
+				;
+
+				;
+				; Ret
+				;
+
+				;
+				; Shift
+				;
+
+
+ 000000DF  48/ 03 C3		  add rax, rbx
+ 000000E2  02 C3		  add al, bl
+ 000000E4  48/ 03 43 12		  add rax, [rbx + 12h]
+ 000000E8  48/ 03 83		  add rax, [rbx + 12345678h]
+	   12345678
+ 000000EF  04 12		  add al, 12h
+ 000000F1  48/ 83 C0 12		  add rax, 12h
+ 000000F5  48/ 05		  add rax, 12345678h
+	   12345678
+
+ 000000FB			L1:
+ 000000FB  48/ 2B C3		  sub rax, rbx
+
+ 000000FE  49/ 3B C1		  cmp rax, r9;
+
+ 00000101  48/ 8D 43 12		  lea rax, [rbx + 12h]
+
+ 00000105  58			  pop rax;
+ 00000106  41/ 58		  pop r8;
+ 00000108  50			  push rax;
+ 00000109  41/ 50		  push r8;
+
+ 0000010B  C3			  ret
+
+ 0000010C  48/ 83 F8 7F		  cmp rax, 07fh
+ 00000110  48/ 83 FB 7F		  cmp rbx, 07fh
+
+ 00000114  48/ 3D		  cmp rax, 07fffh
 	   00007FFF
- 0000003B  48/ 81 FB		  cmp rbx, 07fffh
+ 0000011A  48/ 81 FB		  cmp rbx, 07fffh
 	   00007FFF
 
- 00000042  48/ 3D		  cmp rax, 07fffffffh
+ 00000121  48/ 3D		  cmp rax, 07fffffffh
 	   7FFFFFFF
- 00000048  48/ 81 FB		  cmp rbx, 07fffffffh
+ 00000127  48/ 81 FB		  cmp rbx, 07fffffffh
 	   7FFFFFFF
 
 				;  cmp rax, 07fffffffffffffffh
 				;  cmp rbx, 07fffffffffffffffh
 
- 0000004F  48/ 0F AF C3		  imul rax, rbx;
- 00000053  4D/ 0F AF C1		  imul r8, r9;
- 00000057  66| 0F AF C3		  imul ax, bx;
+ 0000012E  48/ 0F AF C3		  imul rax, rbx;
+ 00000132  4D/ 0F AF C1		  imul r8, r9;
+ 00000136  66| 0F AF C3		  imul ax, bx;
 
- 0000005B  48/ B8		  mov rax, 07fffffffffffffffh
+ 0000013A  48/ B8		  mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 00000065			main ENDP
+ 00000144			main ENDP
 
 				END
 

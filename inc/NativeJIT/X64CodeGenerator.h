@@ -3,6 +3,8 @@
 // TODO: No way to do an operation on sign-extended data. Need to load data first, then sign-extend.
 
 
+// http://wiki.osdev.org/X86-64_Instruction_Encoding
+
 #include <iostream>         // TODO: Remove - temporary for debugging.
 #include <ostream>
 
@@ -37,14 +39,15 @@ namespace NativeJIT
     // WARNING: When modifying OpCode, be sure to also modify the function OpCodeName().
     enum class OpCode : unsigned
     {
-        Add,    // 0
+        Add,
+        And,
         Call,
-        Cmp,    // 2
+        Cmp,
         Lea,
         Mov,
-        Mul,    // 5        // Consider IMUL?
+        Mul,    // Consider IMUL?
         Nop,
-        Or,     // 7
+        Or,
         Pop,
         Push,
         Ret,
@@ -330,6 +333,10 @@ namespace NativeJIT
                                   Register<SIZE, false> dest,
                                   Register<SIZE, false> src)
     {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
         EmitRex(dest, src);
         if (SIZE == 1)
         {
@@ -349,6 +356,10 @@ namespace NativeJIT
                                   Register<8, false> src,
                                   __int32 srcOffset)
     {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
         EmitRex(dest, src);
         if (SIZE == 1)
         {
@@ -371,21 +382,38 @@ namespace NativeJIT
     {
         unsigned valueSize = Size(value);
 
-        if (SIZE == 1 && valueSize == 1 && dest.GetId() == 0)
+        if (dest.GetId() == 0 && SIZE == 1)
         {
             // Special case for AL.
+            Assert(valueSize == 1, "AL requires one-byte value.");
             Emit8(baseOpCode + 0x04);
             Emit8(static_cast<unsigned __int8>(value));
         }
-        else if (SIZE == 8 && dest.GetId() == 0 && (valueSize == 2 || valueSize == 4))
+        else if (dest.GetId() == 0 && valueSize != 1)
         {
-            // Special case for RAX.
-            Emit8(0x48);
+            if (SIZE == 2)
+            {
+                Emit8(0x66);        // Size override prefix.
+            }
+            EmitRex(dest);
             Emit8(baseOpCode + 0x05);
-            Emit32(static_cast<unsigned __int32>(value));
+            if (SIZE == 2)
+            {
+                Assert(valueSize <= 2, "AX requires two-byte value.");
+                Emit16(static_cast<unsigned __int16>(value));
+            }
+            else
+            {
+                Assert(valueSize <= 4, "EAX requires four-byte value.");
+                Emit32(static_cast<unsigned __int32>(value));
+            }
         }
         else
         {
+            if (SIZE == 2)
+            {
+                Emit8(0x66);        // Size override prefix.
+            }
             // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
             EmitRex(dest);
 
@@ -399,7 +427,14 @@ namespace NativeJIT
             {
                 Emit8(0x80 + 1);
                 EmitModRM(extensionOpCode, dest);
-                Emit32(static_cast<unsigned __int32>(value));
+                if (valueSize == 2)
+                {
+                    Emit16(static_cast<unsigned __int16>(value));
+                }
+                else
+                {
+                    Emit32(static_cast<unsigned __int32>(value));
+                }
             }
             else
             {
@@ -408,6 +443,48 @@ namespace NativeJIT
                 throw 0;
             }
         }
+        //else if (dest.GetId() == 0 && (SIZE == 4 || SIZE == 8)
+        //{
+        //    Assert(valueSize == 4);
+        //}
+
+        //if (SIZE == 1 && valueSize == 1 && dest.GetId() == 0)
+        //{
+        //    // Special case for AL.
+        //    Emit8(baseOpCode + 0x04);
+        //    Emit8(static_cast<unsigned __int8>(value));
+        //}
+        //else if (SIZE == 8 && dest.GetId() == 0 && (valueSize == 2 || valueSize == 4))
+        //{
+        //    // Special case for RAX.
+        //    Emit8(0x48);
+        //    Emit8(baseOpCode + 0x05);
+        //    Emit32(static_cast<unsigned __int32>(value));
+        //}
+        //else
+        //{
+        //    // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
+        //    EmitRex(dest);
+
+        //    if (valueSize == 1)
+        //    {
+        //        Emit8(0x80 + 3);
+        //        EmitModRM(extensionOpCode, dest);
+        //        Emit8(static_cast<unsigned __int8>(value));
+        //    }
+        //    else if (valueSize == 2 || valueSize == 4)
+        //    {
+        //        Emit8(0x80 + 1);
+        //        EmitModRM(extensionOpCode, dest);
+        //        Emit32(static_cast<unsigned __int32>(value));
+        //    }
+        //    else
+        //    {
+        //        // Can't do 8-byte immdediate values.
+        //        // TODO: Template should be disabled for this size to avoid runtime error.
+        //        throw 0;
+        //    }
+        //}
     }
 
 
@@ -463,18 +540,24 @@ namespace NativeJIT
     template <unsigned SIZE>
     void X64CodeGenerator::EmitModRMOffset(Register<SIZE, false> dest, Register<8, false> src, __int32 srcOffset)
     {
-        unsigned __int8 mod = (srcOffset <= 127 && srcOffset >= -128)? 0x40 : 0x80;
+        unsigned __int8 mod = (srcOffset == 0) ? 0 : ((srcOffset <= 127 && srcOffset >= -128)? 0x40 : 0x80);
 
         Emit8(mod | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
         // this function is only used for Register-Register encoding. Problem will 
         // crop up if caller passes the base register from an X64Indirect.
 
+        // Special case for R12.
+        if (src.GetId() == 12)
+        {
+            Emit8(0x24);
+        }
+
         if (mod == 0x40)
         {
             Emit8(static_cast<unsigned __int8>(srcOffset));
         }
-        else
+        else if (mod == 0x80)
         {
             Emit32(srcOffset);
         }
@@ -620,6 +703,7 @@ namespace NativeJIT
     }                                                                                    
 
     DEFINE_GROUP1(Add, 0, 0);
+    DEFINE_GROUP1(And, 0x20, 4);
     DEFINE_GROUP1(Or, 8, 1);
     DEFINE_GROUP1(Sub, 0x28, 5);
     DEFINE_GROUP1(Cmp, 0x38, 7);

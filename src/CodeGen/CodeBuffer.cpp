@@ -64,6 +64,34 @@ namespace NativeJIT
         }
     }
 
+
+    // WARNING: Non portable. Assumes little endian machine architecture.
+    void CodeBuffer::Emit16(unsigned __int16 x)
+    {
+        // WARNING: Non portable. Assumes little endian machine architecture.
+
+        // DESIGN NOTE: Intentionally omitting check for buffer overrun.
+        // This code relies on a protected guard page immedidately after the buffer
+        // to detect overruns.
+        //
+        // Temporarily add an if check to make sure if buffer overrun happens, a C++
+        // exception is thrown so that the upper layer component can catch the exception.
+        // TFS 10628 is opened to evaluate the performance and the necessity of this change
+        // in the near future. The DESIGN NOTE comment is intentionally left untouched
+        // because a final decision of what should be done to handle buffer overrun will be
+        // evaluated when TFS 10628 is resolved.
+        if (m_current + 1 < m_bufferEnd)
+        {
+            *((unsigned __int16*)m_current) = x;
+            m_current = (unsigned char*)((unsigned __int16*)m_current + 1);
+        }
+        else
+        {
+            throw std::runtime_error("X64 code generator code buffer overrun.");
+        }
+    }
+
+
     // WARNING: Non portable. Assumes little endian machine architecture.
     void CodeBuffer::Emit32(unsigned __int32 x)
     {

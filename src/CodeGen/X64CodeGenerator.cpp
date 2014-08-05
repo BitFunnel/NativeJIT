@@ -105,6 +105,7 @@ namespace NativeJIT
     {
         static char const * names[] = {
             "add",
+            "and",
             "call",
             "cmp",
             "lea",
@@ -145,7 +146,7 @@ namespace NativeJIT
         *m_out << "    ";
     }
 
-    const unsigned c_asmDataWidth = 32;
+    const unsigned c_asmDataWidth = 36;
 
     void X64CodeGenerator::PrintBytes(unsigned start, unsigned end)
     {

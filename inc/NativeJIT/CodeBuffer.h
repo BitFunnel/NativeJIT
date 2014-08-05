@@ -33,6 +33,9 @@ namespace NativeJIT
         void Emit8(unsigned __int8 x);
 
         // WARNING: Non portable. Assumes little endian machine architecture.
+        void Emit16(unsigned __int16 x);
+
+        // WARNING: Non portable. Assumes little endian machine architecture.
         void Emit32(unsigned __int32 x);
 
         //// WARNING: Non portable. Assumes little endian machine architecture.
