@@ -419,7 +419,14 @@ namespace NativeJIT
 
             if (valueSize == 1)
             {
-                Emit8(0x80 + 3);
+                if (SIZE == 1)
+                {
+                    Emit8(0x80 /*+ 3*/);
+                }
+                else
+                {
+                    Emit8(0x83);
+                }
                 EmitModRM(extensionOpCode, dest);
                 Emit8(static_cast<unsigned __int8>(value));
             }
@@ -427,7 +434,12 @@ namespace NativeJIT
             {
                 Emit8(0x80 + 1);
                 EmitModRM(extensionOpCode, dest);
-                if (valueSize == 2)
+                //if (valueSize == 2)
+                //{
+                //    Emit16(static_cast<unsigned __int16>(value));
+                //}
+                //else
+                if (SIZE == 2)
                 {
                     Emit16(static_cast<unsigned __int16>(value));
                 }

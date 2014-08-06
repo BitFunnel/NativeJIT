@@ -46,6 +46,11 @@ namespace NativeJIT
                         std::cout << std::hex << static_cast<unsigned>(x) << " ";
                         value = value >> 8;
 
+                        if (x != m_testOutput[m_bytesVerified])
+                        {
+                            ReportError(x, m_testOutput[m_bytesVerified]);
+                        }
+
                         TestAssert(x == m_testOutput[m_bytesVerified]);
                         ++m_bytesVerified;
                     }
@@ -60,6 +65,34 @@ namespace NativeJIT
         }
 
         AdvanceToNextLine();
+    }
+
+
+    void ML64Verifier::ReportError(unsigned expected, unsigned found)
+    {
+        std::cout << std::endl;
+        std::cout << "ERROR: generated opcode does not match ml64 output." << std::endl;
+        std::cout << "Line " << m_currentLine << std::endl;
+
+        std::cout << '"';
+        char const *line = m_currentLineStart;
+        while (*line != '\0' && *line != '\n' && *line != '\r')
+        {
+            std::cout << *line++;
+        }
+        std::cout << '"' << std::endl;
+
+        std::cout << "Expected ";
+        std::cout.width(2);
+        std::cout.fill('0');
+        std::cout << std::hex << expected;
+
+        std::cout << " - Found ";
+        std::cout.width(2);
+        std::cout.fill('0');
+        std::cout << std::hex << found;
+
+        std::cout << std::endl;
     }
 
 
@@ -82,7 +115,7 @@ namespace NativeJIT
             GetChar();
             for (unsigned i = 0 ; i < 8 ; ++i)
             {
-                if (!isxdigit(PeekChar() && PeekChar() != ' '))
+                if (!isxdigit(PeekChar()) && PeekChar() != ' ')
                 {
                     return false;
                 }
@@ -121,9 +154,11 @@ namespace NativeJIT
 
     void ML64Verifier::SkipDelimiters()
     {
-        while (PeekChar() == ' '||
-                PeekChar() == 't' ||
-                PeekChar() == '/')
+        if (PeekChar() == '/' || PeekChar() == '|')
+        {
+            GetChar();
+        }
+        if (PeekChar() == ' ')
         {
             GetChar();
         }
@@ -153,6 +188,8 @@ namespace NativeJIT
                 GetChar();
             }
         }
+        m_currentLineStart = m_current;
+        m_currentLine++;
     }
 
 
@@ -160,7 +197,6 @@ namespace NativeJIT
     {
         bool foundHexNumber = false;
 
-        SkipDelimiters();
         if (isxdigit(PeekChar()))
         {
             foundHexNumber = true;

@@ -11,6 +11,7 @@ namespace NativeJIT
 
     private:
         void ProcessLine();
+        void ReportError(unsigned expected, unsigned found);
         bool AdvanceToDataField();
         void SkipOffset();
         void SkipDelimiters();
