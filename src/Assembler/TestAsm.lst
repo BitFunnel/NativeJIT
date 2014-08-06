@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/05/14 18:24:43
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/06/14 11:09:28
 TestAsm.asm						     Page 1 - 1
 
 
@@ -170,73 +170,107 @@ TestAsm.asm						     Page 1 - 1
  0000016C  4C/ 8B 97		mov r10, [rdi + 12345678h]
 	   12345678
 
+				; mov r, imm - register 0 case
+ 00000173  B0 34		mov al, 34h
+ 00000175  66| B8 0056		mov ax, 56h
+ 00000179  66| B8 5678		mov ax, 5678h
+ 0000017D  B8 00000012		mov eax, 12h
+ 00000182  B8 00001234		mov eax, 1234h
+ 00000187  B8 12345678		mov eax, 12345678h
+ 0000018C  48/ C7 C0		mov rax, 12h
+	   00000012
+ 00000193  48/ C7 C0		mov rax, 1234h
+	   00001234
+ 0000019A  48/ C7 C0		mov rax, 12345678h
+	   12345678
+
+				; mov r, imm - general purpose register case
+ 000001A1  B3 34		mov bl, 34h
+ 000001A3  66| B9 0056		mov cx, 56h
+ 000001A7  66| BA 5678		mov dx, 5678h
+ 000001AB  BD 00000012		mov ebp, 12h
+ 000001B0  BD 00001234		mov ebp, 1234h
+ 000001B5  BD 12345678		mov ebp, 12345678h
+ 000001BA  49/ C7 C4		mov r12, 12h
+	   00000012
+ 000001C1  49/ C7 C4		mov r12, 1234h
+	   00001234
+ 000001C8  49/ C7 C4		mov r12, 12345678h
+	   12345678
+ 000001CF  48/ BB		mov rbx, 1234567812345678h
+	   1234567812345678
+ 000001D9  48/ BC		mov rsp, 1234567812345678h
+	   1234567812345678
+ 000001E3  49/ BC		mov r12, 1234567812345678h
+	   1234567812345678
+
 				;
 				; Push/Pop
 				;
- 00000173  58			pop rax
- 00000174  5D			pop rbp
- 00000175  41/ 5C		pop r12
- 00000177  53			push rbx
- 00000178  55			push rbp
- 00000179  41/ 54		push r12
+ 000001ED  58			pop rax
+ 000001EE  5D			pop rbp
+ 000001EF  41/ 5C		pop r12
+ 000001F1  53			push rbx
+ 000001F2  55			push rbp
+ 000001F3  41/ 54		push r12
 
 				;
 				; Ret
 				;
- 0000017B  C3			ret
+ 000001F5  C3			ret
 
 				;
 				; Shift
 				;
 
 
- 0000017C  48/ 03 C3		  add rax, rbx
- 0000017F  02 C3		  add al, bl
- 00000181  48/ 03 43 12		  add rax, [rbx + 12h]
- 00000185  48/ 03 83		  add rax, [rbx + 12345678h]
+ 000001F6  48/ 03 C3		  add rax, rbx
+ 000001F9  02 C3		  add al, bl
+ 000001FB  48/ 03 43 12		  add rax, [rbx + 12h]
+ 000001FF  48/ 03 83		  add rax, [rbx + 12345678h]
 	   12345678
- 0000018C  04 12		  add al, 12h
- 0000018E  48/ 83 C0 12		  add rax, 12h
- 00000192  48/ 05		  add rax, 12345678h
+ 00000206  04 12		  add al, 12h
+ 00000208  48/ 83 C0 12		  add rax, 12h
+ 0000020C  48/ 05		  add rax, 12345678h
 	   12345678
 
- 00000198			L1:
- 00000198  48/ 2B C3		  sub rax, rbx
+ 00000212			L1:
+ 00000212  48/ 2B C3		  sub rax, rbx
 
- 0000019B  49/ 3B C1		  cmp rax, r9;
+ 00000215  49/ 3B C1		  cmp rax, r9;
 
- 0000019E  48/ 8D 43 12		  lea rax, [rbx + 12h]
+ 00000218  48/ 8D 43 12		  lea rax, [rbx + 12h]
 
- 000001A2  58			  pop rax;
- 000001A3  41/ 58		  pop r8;
- 000001A5  50			  push rax;
- 000001A6  41/ 50		  push r8;
+ 0000021C  58			  pop rax;
+ 0000021D  41/ 58		  pop r8;
+ 0000021F  50			  push rax;
+ 00000220  41/ 50		  push r8;
 
- 000001A8  C3			  ret
+ 00000222  C3			  ret
 
- 000001A9  48/ 83 F8 7F		  cmp rax, 07fh
- 000001AD  48/ 83 FB 7F		  cmp rbx, 07fh
+ 00000223  48/ 83 F8 7F		  cmp rax, 07fh
+ 00000227  48/ 83 FB 7F		  cmp rbx, 07fh
 
- 000001B1  48/ 3D		  cmp rax, 07fffh
+ 0000022B  48/ 3D		  cmp rax, 07fffh
 	   00007FFF
- 000001B7  48/ 81 FB		  cmp rbx, 07fffh
+ 00000231  48/ 81 FB		  cmp rbx, 07fffh
 	   00007FFF
 
- 000001BE  48/ 3D		  cmp rax, 07fffffffh
+ 00000238  48/ 3D		  cmp rax, 07fffffffh
 	   7FFFFFFF
- 000001C4  48/ 81 FB		  cmp rbx, 07fffffffh
+ 0000023E  48/ 81 FB		  cmp rbx, 07fffffffh
 	   7FFFFFFF
 
 				;  cmp rax, 07fffffffffffffffh
 				;  cmp rbx, 07fffffffffffffffh
 
- 000001CB  48/ 0F AF C3		  imul rax, rbx;
- 000001CF  4D/ 0F AF C1		  imul r8, r9;
- 000001D3  66| 0F AF C3		  imul ax, bx;
+ 00000245  48/ 0F AF C3		  imul rax, rbx;
+ 00000249  4D/ 0F AF C1		  imul r8, r9;
+ 0000024D  66| 0F AF C3		  imul ax, bx;
 
- 000001D7  48/ B8		  mov rax, 07fffffffffffffffh
+ 00000251  48/ B8		  mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 000001E1			main ENDP
+ 0000025B			main ENDP
 
 				END
 

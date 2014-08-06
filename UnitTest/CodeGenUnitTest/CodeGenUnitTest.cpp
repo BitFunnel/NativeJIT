@@ -147,19 +147,18 @@ namespace NativeJIT
             buffer.Emit<OpCode::Lea>(rsp, rbp, 0xFFFFFFE0);     // From function epilogue.
             buffer.Emit<OpCode::Lea>(rbp, rsp, 0x20);           // From function prologue.
 
-            // mov
-            std::cout << "mov" << std::endl;
+            // mov r, r
+            std::cout << "mov r, r" << std::endl;
             buffer.Emit<OpCode::Mov>(al, cl);
             buffer.Emit<OpCode::Mov>(bx, dx);
             buffer.Emit<OpCode::Mov>(esi, eax);
             buffer.Emit<OpCode::Mov>(rax, rbx);
             buffer.Emit<OpCode::Mov>(r8, r9);
             buffer.Emit<OpCode::Mov>(rsp, r12);
-            // TODO: mov immdiate
-            // TODO: mov r/m reg
 
-            // direct-indirect with zero, byte, word, and double word offsets
-            std::cout << "direct-indirect with zero, byte, word, and double word offsets" << std::endl;
+
+            // mov r, [r + offset]
+            std::cout << "mov direct-indirect with zero, byte, word, and double word offsets" << std::endl;
             buffer.Emit<OpCode::Mov>(cl, rax, 0);
             buffer.Emit<OpCode::Mov>(bl, rcx, 0x12);
             buffer.Emit<OpCode::Mov>(r9b, rsi, 0x100);
@@ -179,6 +178,36 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(rdi, rcx, 0x12);
             buffer.Emit<OpCode::Mov>(rbp, rsi, 0x1234);
             buffer.Emit<OpCode::Mov>(r10, rdi, 0x12345678);
+
+
+            // mov r, imm
+            std::cout << "mov r, imm" << std::endl;
+            buffer.Emit<OpCode::Mov>(al, 0x34);
+            buffer.Emit<OpCode::Mov>(ax, 0x56);
+            buffer.Emit<OpCode::Mov>(ax, 0x5678);
+            buffer.Emit<OpCode::Mov>(eax, 0x12);
+            buffer.Emit<OpCode::Mov>(eax, 0x1234);
+            buffer.Emit<OpCode::Mov>(eax, 0x12345678);
+            buffer.Emit<OpCode::Mov>(rax, 0x12);
+            buffer.Emit<OpCode::Mov>(rax, 0x1234);
+            buffer.Emit<OpCode::Mov>(rax, 0x12345678);
+
+
+            std::cout << "direct-immediate general purpose register case" << std::endl;
+            buffer.Emit<OpCode::Mov>(bl, 0x34);
+            buffer.Emit<OpCode::Mov>(cx, 0x56);
+            buffer.Emit<OpCode::Mov>(dx, 0x5678);
+            buffer.Emit<OpCode::Mov>(ebp, 0x12);
+            buffer.Emit<OpCode::Mov>(ebp, 0x1234);
+            buffer.Emit<OpCode::Mov>(ebp, 0x12345678);
+            buffer.Emit<OpCode::Mov>(r12, 0x12);
+            buffer.Emit<OpCode::Mov>(r12, 0x1234);
+            buffer.Emit<OpCode::Mov>(r12, 0x12345678);
+            buffer.Emit<OpCode::Mov>(rbx, 0x1234567812345678);
+            buffer.Emit<OpCode::Mov>(rsp, 0x1234567812345678);
+            buffer.Emit<OpCode::Mov>(r12, 0x1234567812345678);
+
+            // TODO: mov r/m reg
 
             // pop/push
             std::cout << "pop/push" << std::endl;
@@ -309,6 +338,7 @@ namespace NativeJIT
                 "                                                                                                   \n"
                 "                                ; Mov                                                              \n"
                 " 00000111  8A C1                mov al, cl                                                         \n"
+                // TODO: need to look at r8b, r9w, r10d
                 " 00000113  66| 8B DA            mov bx, dx                                                         \n"
                 " 00000116  8B F0                mov esi, eax                                                       \n"
                 " 00000118  48/ 8B C3            mov rax, rbx                                                       \n"
@@ -341,6 +371,41 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 0000016C  4C/ 8B 97            mov r10, [rdi + 12345678h]                                         \n"
                 "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                               ; Mov r, imm - register 0 case                                      \n"
+                " 00000173  B0 34                mov al, 34h                                                        \n"
+                " 00000175  66| B8 0056          mov ax, 56h                                                        \n"
+                " 00000179  66| B8 5678          mov ax, 5678h                                                      \n"
+                " 0000017D  B8 00000012          mov eax, 12h                                                       \n"
+                " 00000182  B8 00001234          mov eax, 1234h                                                     \n"
+                " 00000187  B8 12345678          mov eax, 12345678h                                                 \n"
+                " 0000018C  48/ C7 C0            mov rax, 12h                                                       \n"
+                "           00000012                                                                                \n"
+                " 00000193  48/ C7 C0            mov rax, 1234h                                                     \n"
+                "           00001234                                                                                \n"
+                " 0000019A  48/ C7 C0            mov rax, 12345678h                                                 \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                                ; Mov r, imm - general purpose register case                       \n"
+                " 000001A1  B3 34                mov bl, 34h                                                        \n"
+                " 000001A3  66| B9 0056          mov cx, 56h                                                        \n"
+                " 000001A7  66| BA 5678          mov dx, 5678h                                                      \n"
+                " 000001AB  BD 00000012          mov ebp, 12h                                                       \n"
+                " 000001B0  BD 00001234          mov ebp, 1234h                                                     \n"
+                " 000001B5  BD 12345678          mov ebp, 12345678h                                                 \n"
+                " 000001BA  49/ C7 C4            mov r12, 12h                                                       \n"
+                "           00000012                                                                                \n"
+                " 000001C1  49/ C7 C4            mov r12, 1234h                                                     \n"
+                "           00001234                                                                                \n"
+                " 000001C8  49/ C7 C4            mov r12, 12345678h                                                 \n"
+                "           12345678                                                                                \n"
+                " 000001CF  48/ BB               mov rbx, 1234567812345678h                                         \n"
+                "           1234567812345678                                                                        \n"
+                " 000001D9  48/ BC               mov rsp, 1234567812345678h                                         \n"
+                "           1234567812345678                                                                        \n"
+                " 000001CF  49/ BC               mov r12, 1234567812345678h                                         \n"
+                "           1234567812345678                                                                        \n"
+                "                                                                                                   \n"
                 "                                                                                                   \n"
                 "                                ; pop/push                                                         \n"
                 " 00000108  58                   pop rax                                                            \n"

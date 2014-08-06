@@ -38,8 +38,8 @@ namespace NativeJIT
         // WARNING: Non portable. Assumes little endian machine architecture.
         void Emit32(unsigned __int32 x);
 
-        //// WARNING: Non portable. Assumes little endian machine architecture.
-        //void Emit64(unsigned __int64 x);
+        // WARNING: Non portable. Assumes little endian machine architecture.
+        void Emit64(unsigned __int64 x);
 
         // Return the size of the buffer, in bytes.
         // TODO: Rename GetCapacity()?

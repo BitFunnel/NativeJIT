@@ -120,6 +120,14 @@ namespace NativeJIT
                  Register<8, false> src,
                  __int32 srcOffset);
 
+        template <unsigned SIZE, bool ISFLOAT, typename T>
+        void Mov(Register<SIZE, ISFLOAT> dest,
+                 T value);
+
+        template <typename T>
+        void Mov(Register<8, false> dest,
+                 T* value);
+
         void Pop(Register<8, false> r);
         void Push(Register<8, false> r);
 
@@ -321,6 +329,60 @@ namespace NativeJIT
         EmitRex(dest, src);
         Emit8(0x8d);
         EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::Mov(Register<SIZE, ISFLOAT> dest,
+                               T value)
+    {
+        unsigned valueSize = Size(value);
+
+        if (SIZE == 1)
+        {
+            Emit8(0xb0 | static_cast<unsigned __int8>(dest.GetId()));
+            Assert(valueSize == 1, "Expected one-byte value.");
+            Emit8(static_cast<unsigned __int8>(value));
+        }
+        else if (SIZE == 8 && valueSize <= 4)
+        {
+            EmitRex(dest);
+            Emit8(0xc7);
+            EmitModRM(0xc0, dest);
+            Emit32(static_cast<unsigned __int32>(value));
+        }
+        else
+        {
+            if (SIZE == 2)
+            {
+                Emit8(0x66);                // Size override prefix.
+            }
+            EmitRex(dest);
+            Emit8(0xb8 + (static_cast<unsigned __int8>(dest.GetId()) & 0x7));       // TODO: Method to get lower three id bits.
+            if (SIZE == 2)
+            {
+                Assert(valueSize <= 2, "Expected two-byte value.");
+                Emit16(static_cast<unsigned __int16>(value));
+            }
+            else if (SIZE == 4)
+            {
+                Assert(valueSize <= 4, "Expected four-byte value.");
+                Emit32(static_cast<unsigned __int32>(value));
+            }
+            else
+            {
+                Emit64(static_cast<unsigned __int64>(value));
+            }
+        }
+    }
+
+
+    // TODO: Need a unit test for this case.
+    template <typename T>
+    void X64CodeGenerator::Mov(Register<8, false> dest,
+                               T* value)
+    {
+        Mov(dest, reinterpret_cast<unsigned __int64>(value));
     }
 
 
@@ -574,11 +636,11 @@ namespace NativeJIT
 
     template <>
     template <unsigned SIZE, bool ISFLOAT, typename T>
-    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& /*code*/,
-                                                     Register<SIZE, ISFLOAT> /*dest*/,
-                                                     T /*value*/)
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
+                                                     Register<SIZE, ISFLOAT> dest,
+                                                     T value)
     {
-        std::cout << "[Implement mov dest, value]";
+        code.Mov(dest, value);
     }
 
 

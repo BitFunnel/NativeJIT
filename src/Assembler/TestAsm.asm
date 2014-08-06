@@ -136,6 +136,31 @@ mov rdi, [rcx + 12h]
 mov rbp, [rsi + 1234h]
 mov r10, [rdi + 12345678h]
 
+; mov r, imm - register 0 case
+mov al, 34h
+mov ax, 56h
+mov ax, 5678h
+mov eax, 12h
+mov eax, 1234h
+mov eax, 12345678h
+mov rax, 12h
+mov rax, 1234h
+mov rax, 12345678h
+
+; mov r, imm - general purpose register case
+mov bl, 34h
+mov cx, 56h
+mov dx, 5678h
+mov ebp, 12h
+mov ebp, 1234h
+mov ebp, 12345678h
+mov r12, 12h
+mov r12, 1234h
+mov r12, 12345678h
+mov rbx, 1234567812345678h
+mov rsp, 1234567812345678h
+mov r12, 1234567812345678h
+
 ;
 ; Push/Pop
 ;
