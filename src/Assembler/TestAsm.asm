@@ -109,6 +109,32 @@ lea rbp, [rsp + 20h]
 ;
 ; Mov
 ;
+mov al, cl
+mov bx, dx
+mov esi, eax
+mov rax, rbx
+mov r8, r9
+mov rsp, r12
+
+mov cl, [rax]
+mov bl, [rcx + 12h]
+mov r9b, [rsi + 100h]
+mov r15b, [rdi + 12345678h]
+
+mov dl, [rdx]
+mov cx, [rcx + 12h]
+mov r9w, [rsi + 1234h]
+mov r11w, [rdi + 12345678h]
+
+mov esp, [r9]
+mov edx, [rcx + 12h]
+mov esi, [rsi + 1234h]
+mov r11d, [rdi + 12345678h]
+
+mov rbx, [r12]
+mov rdi, [rcx + 12h]
+mov rbp, [rsi + 1234h]
+mov r10, [rdi + 12345678h]
 
 ;
 ; Push/Pop

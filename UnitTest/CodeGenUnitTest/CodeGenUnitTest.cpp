@@ -68,10 +68,12 @@ namespace NativeJIT
             // Mod/RM special cases for r12.
             std::cout << "Mod/RM special cases for r12." << std::endl;
             buffer.Emit<OpCode::Sub>(rbx, r12, 0);
-            buffer.Emit<OpCode::Sub>(rdi, r12, 0x12);       // Found: 49 2B 5C 24 12 Expected: 49/ 2B 7C 24 12
-            buffer.Emit<OpCode::Sub>(rbp, r12, 0x1234);     // Found: 49 2B 9C 24 34 12 00 00 Expected 49/ 2B AC 24 ...
+            buffer.Emit<OpCode::Sub>(rdi, r12, 0x12);
+            buffer.Emit<OpCode::Sub>(rbp, r12, 0x1234);
             buffer.Emit<OpCode::Sub>(r10, r12, 0x12345678);
 
+            // Mod/RM special cases for rsp.
+            // TODO
 
             // direct-direct
             std::cout << "direct-direct" << std::endl;
@@ -142,8 +144,41 @@ namespace NativeJIT
             buffer.Emit<OpCode::Lea>(rbp, r12, 0);
             buffer.Emit<OpCode::Lea>(rbp, r12, 0x87);
             buffer.Emit<OpCode::Lea>(rbp, r12, 0x87654321);
-            buffer.Emit<OpCode::Lea>(rsp, rbp, 0xFFFFFFE0);
-            buffer.Emit<OpCode::Lea>(rbp, rsp, 0x20);
+            buffer.Emit<OpCode::Lea>(rsp, rbp, 0xFFFFFFE0);     // From function epilogue.
+            buffer.Emit<OpCode::Lea>(rbp, rsp, 0x20);           // From function prologue.
+
+            // mov
+            std::cout << "mov" << std::endl;
+            buffer.Emit<OpCode::Mov>(al, cl);
+            buffer.Emit<OpCode::Mov>(bx, dx);
+            buffer.Emit<OpCode::Mov>(esi, eax);
+            buffer.Emit<OpCode::Mov>(rax, rbx);
+            buffer.Emit<OpCode::Mov>(r8, r9);
+            buffer.Emit<OpCode::Mov>(rsp, r12);
+            // TODO: mov immdiate
+            // TODO: mov r/m reg
+
+            // direct-indirect with zero, byte, word, and double word offsets
+            std::cout << "direct-indirect with zero, byte, word, and double word offsets" << std::endl;
+            buffer.Emit<OpCode::Mov>(cl, rax, 0);
+            buffer.Emit<OpCode::Mov>(bl, rcx, 0x12);
+            buffer.Emit<OpCode::Mov>(r9b, rsi, 0x100);
+            buffer.Emit<OpCode::Mov>(r15b, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Mov>(dl, rdx, 0);
+            buffer.Emit<OpCode::Mov>(cx, rcx, 0x12);
+            buffer.Emit<OpCode::Mov>(r9w, rsi, 0x1234);
+            buffer.Emit<OpCode::Mov>(r11w, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Mov>(esp, r9, 0);
+            buffer.Emit<OpCode::Mov>(edx, rcx, 0x12);
+            buffer.Emit<OpCode::Mov>(esi, rsi, 0x1234);
+            buffer.Emit<OpCode::Mov>(r11d, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Mov>(rbx, r12, 0);
+            buffer.Emit<OpCode::Mov>(rdi, rcx, 0x12);
+            buffer.Emit<OpCode::Mov>(rbp, rsi, 0x1234);
+            buffer.Emit<OpCode::Mov>(r10, rdi, 0x12345678);
 
             // pop/push
             std::cout << "pop/push" << std::endl;
@@ -270,6 +305,42 @@ namespace NativeJIT
                 " 00000108  48/ 8D 65 E0         lea rsp, [rbp + 0FFFFFFE0h]                                        \n"
                 " 0000010C  48/ 8D 6C 24         lea rbp, [rsp + 20h]                                               \n"
                 "           20                                                                                      \n"
+                "                                                                                                   \n"
+                "                                                                                                   \n"
+                "                                ; Mov                                                              \n"
+                " 00000111  8A C1                mov al, cl                                                         \n"
+                " 00000113  66| 8B DA            mov bx, dx                                                         \n"
+                " 00000116  8B F0                mov esi, eax                                                       \n"
+                " 00000118  48/ 8B C3            mov rax, rbx                                                       \n"
+                " 0000011B  4D/ 8B C1            mov r8, r9                                                         \n"
+                " 0000011E  49/ 8B E4            mov rsp, r12                                                       \n"
+                "                                                                                                   \n"
+                " 00000121  8A 08                mov cl, [rax]                                                      \n"
+                " 00000123  8A 59 12             mov bl, [rcx + 12h]                                                \n"
+                " 00000126  44/ 8A 8E            mov r9b, [rsi + 100h]                                              \n"
+                "           00000100                                                                                \n"
+                " 0000012D  44/ 8A BF            mov r15b, [rdi + 12345678h]                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000134  8A 12                mov dl, [rdx]                                                      \n"
+                " 00000136  66| 8B 49 12         mov cx, [rcx + 12h]                                                \n"
+                " 0000013A  66| 44/ 8B 8E        mov r9w, [rsi + 1234h]                                             \n"
+                "           00001234                                                                                \n"
+                " 00000142  66| 44/ 8B 9F        mov r11w, [rdi + 12345678h]                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 0000014A  41/ 8B 21            mov esp, [r9]                                                      \n"
+                " 0000014D  8B 51 12             mov edx, [rcx + 12h]                                               \n"
+                " 00000150  8B B6 00001234       mov esi, [rsi + 1234h]                                             \n"
+                " 00000156  44/ 8B 9F            mov r11d, [rdi + 12345678h]                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 0000015D  49/ 8B 1C 24         mov rbx, [r12]                                                     \n"
+                " 00000161  48/ 8B 79 12         mov rdi, [rcx + 12h]                                               \n"
+                " 00000165  48/ 8B AE            mov rbp, [rsi + 1234h]                                             \n"
+                "           00001234                                                                                \n"
+                " 0000016C  4C/ 8B 97            mov r10, [rdi + 12345678h]                                         \n"
+                "           12345678                                                                                \n"
                 "                                                                                                   \n"
                 "                                ; pop/push                                                         \n"
                 " 00000108  58                   pop rax                                                            \n"

@@ -434,11 +434,7 @@ namespace NativeJIT
             {
                 Emit8(0x80 + 1);
                 EmitModRM(extensionOpCode, dest);
-                //if (valueSize == 2)
-                //{
-                //    Emit16(static_cast<unsigned __int16>(value));
-                //}
-                //else
+
                 if (SIZE == 2)
                 {
                     Emit16(static_cast<unsigned __int16>(value));
@@ -557,22 +553,22 @@ namespace NativeJIT
 
     template <>
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& /*code*/,
-                                                     Register<SIZE, ISFLOAT> /*dest*/,
-                                                     Register<SIZE, ISFLOAT> /*src*/)
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
+                                                     Register<SIZE, ISFLOAT> dest,
+                                                     Register<SIZE, ISFLOAT> src)
     {
-        std::cout << "[Implement mov dest, src]";
+        code.Group1(0x88, dest, src);
     }
 
 
     template <>
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& /*code*/,
-                                                     Register<SIZE, ISFLOAT> /*dest*/,
-                                                     Register<8, false> /*src*/,
-                                                     __int32 /*srcOffset*/)
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
+                                                     Register<SIZE, ISFLOAT> dest,
+                                                     Register<8, false> src,
+                                                     __int32 srcOffset)
     {
-        std::cout << "[Implement mov dest, [src + offset]]";
+        code.Group1(0x88, dest, src, srcOffset);
     }
 
 
