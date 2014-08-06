@@ -352,8 +352,7 @@ namespace NativeJIT
     {
         ConvertToValue(tree, false);
         Storage dest(tree, tree.GetBasePointer(), tree.AllocateTemporary());
-        tree.GetCodeGenerator().Mov(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
-//        tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
+        tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
         *this = dest;
     }
 

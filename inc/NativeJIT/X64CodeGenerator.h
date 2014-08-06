@@ -83,10 +83,6 @@ namespace NativeJIT
         static char const * OpCodeName(OpCode op);
         static char const * JccName(JccType jcc);
 
-        // TODO: Should this be generalized? (e.g. just an Op() overload).
-        template <unsigned SIZE, bool ISFLOAT>
-        void Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src);
-
         //
         // X64 opcode emit methods.
         //
@@ -215,22 +211,6 @@ namespace NativeJIT
     // Template definitions for X64CodeGenerator - public methods.
     //
     //*************************************************************************
-    template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Mov(Register<sizeof(void*), false>  base, size_t offset, Register<SIZE, ISFLOAT> src)
-    {
-        Indent();
-
-        if (offset > 0)
-        {
-            *m_out << "mov [" << base.GetName() << " + " << offset << "], " << src.GetName() << std::endl;
-        }
-        else
-        {
-            *m_out << "mov [" << base.GetName() << "], " << src.GetName() << std::endl;
-        }
-    }
-
-
     template <OpCode OP>
     void X64CodeGenerator::Emit()
     {
