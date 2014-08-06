@@ -132,15 +132,39 @@ namespace NativeJIT
             buffer.Emit<OpCode::And>(r12, 0x12345678);
 
             // call
+
             // lea
+            std::cout << "lea" << std::endl;
+            buffer.Emit<OpCode::Lea>(rax, rsi, 0);
+            buffer.Emit<OpCode::Lea>(rax, rsi, 0x12);
+            buffer.Emit<OpCode::Lea>(rax, rsi, 0x1234);
+            buffer.Emit<OpCode::Lea>(rax, rsi, 0x12345678);
+            buffer.Emit<OpCode::Lea>(rbp, r12, 0);
+            buffer.Emit<OpCode::Lea>(rbp, r12, 0x87);
+            buffer.Emit<OpCode::Lea>(rbp, r12, 0x87654321);
+            buffer.Emit<OpCode::Lea>(rsp, rbp, 0xFFFFFFE0);
+            buffer.Emit<OpCode::Lea>(rbp, rsp, 0x20);
+
             // pop/push
+            std::cout << "pop/push" << std::endl;
+            buffer.Emit<OpCode::Pop>(rax);
+            buffer.Emit<OpCode::Pop>(rbp);
+            buffer.Emit<OpCode::Pop>(r12);
+            buffer.Emit<OpCode::Push>(rbx);
+            buffer.Emit<OpCode::Push>(rbp);
+            buffer.Emit<OpCode::Push>(r12);
+
             // ret
+            buffer.Emit<OpCode::Ret>();
+
             // nop
             // jcc
             //   each opcode
             //   correct offsets
             // mov
             // imul
+
+            // shift
 
             // floating point
 
@@ -229,7 +253,34 @@ namespace NativeJIT
                 " 000000C1  49/ 81 E4            and r12, 1234h                                                     \n"
                 "           00001234                                                                                \n"
                 " 000000C8  49/ 81 E4            and r12, 12345678h                                                 \n"
-                "           12345678                                                                                \n";
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                                ; lea                                                              \n"
+                " 000000DF  48/ 8D 06            lea rax, [rsi]                                                     \n"
+                " 000000E2  48/ 8D 46 12         lea rax, [rsi + 12h]                                               \n"
+                " 000000E6  48/ 8D 86            lea rax, [rsi + 1234h]                                             \n"
+                "           00001234                                                                                \n"
+                " 000000ED  48/ 8D 86            lea rax, [rsi + 12345678h]                                         \n"
+                "           12345678                                                                                \n"
+                " 000000F4  49/ 8D 2C 24         lea rbp, [r12]                                                     \n"
+                " 000000F8  49/ 8D AC 24         lea rbp, [r12 + 87h]                                               \n"
+                "           00000087                                                                                \n"
+                " 00000100  49/ 8D AC 24         lea rbp, [r12 + 87654321h]                                         \n"
+                "           87654321                                                                                \n"
+                " 00000108  48/ 8D 65 E0         lea rsp, [rbp + 0FFFFFFE0h]                                        \n"
+                " 0000010C  48/ 8D 6C 24         lea rbp, [rsp + 20h]                                               \n"
+                "           20                                                                                      \n"
+                "                                                                                                   \n"
+                "                                ; pop/push                                                         \n"
+                " 00000108  58                   pop rax                                                            \n"
+                " 00000109  5D                   pop rbp                                                            \n"
+                " 0000010A  41/ 5C               pop r12                                                            \n"
+                " 0000010C  53                   push rbx                                                           \n"
+                " 0000010D  55                   push rbp                                                           \n"
+                " 0000010E  41/ 54               push r12                                                           \n"
+                "                                                                                                   \n"
+                "                                ; ret                                                              \n"
+                " 00000110  C3                   ret                                                                \n";
 
             ML64Verifier v(ml64Output, start);
         }

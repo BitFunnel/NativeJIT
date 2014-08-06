@@ -94,16 +94,36 @@ cmp rdx, [rsi + 56h]
 ;
 
 ;
+; Lea
+;
+lea rax, [rsi]
+lea rax, [rsi + 12h]
+lea rax, [rsi + 1234h]
+lea rax, [rsi + 12345678h]
+lea rbp, [r12]
+lea rbp, [r12 + 87h]
+lea rbp, [r12 + 87654321h]
+lea rsp, [rbp + 0FFFFFFE0h]
+lea rbp, [rsp + 20h]
+
+;
 ; Mov
 ;
 
 ;
 ; Push/Pop
 ;
+pop rax
+pop rbp
+pop r12
+push rbx
+push rbp
+push r12
 
 ;
 ; Ret
 ;
+ret
 
 ;
 ; Shift

@@ -455,48 +455,6 @@ namespace NativeJIT
                 throw 0;
             }
         }
-        //else if (dest.GetId() == 0 && (SIZE == 4 || SIZE == 8)
-        //{
-        //    Assert(valueSize == 4);
-        //}
-
-        //if (SIZE == 1 && valueSize == 1 && dest.GetId() == 0)
-        //{
-        //    // Special case for AL.
-        //    Emit8(baseOpCode + 0x04);
-        //    Emit8(static_cast<unsigned __int8>(value));
-        //}
-        //else if (SIZE == 8 && dest.GetId() == 0 && (valueSize == 2 || valueSize == 4))
-        //{
-        //    // Special case for RAX.
-        //    Emit8(0x48);
-        //    Emit8(baseOpCode + 0x05);
-        //    Emit32(static_cast<unsigned __int32>(value));
-        //}
-        //else
-        //{
-        //    // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
-        //    EmitRex(dest);
-
-        //    if (valueSize == 1)
-        //    {
-        //        Emit8(0x80 + 3);
-        //        EmitModRM(extensionOpCode, dest);
-        //        Emit8(static_cast<unsigned __int8>(value));
-        //    }
-        //    else if (valueSize == 2 || valueSize == 4)
-        //    {
-        //        Emit8(0x80 + 1);
-        //        EmitModRM(extensionOpCode, dest);
-        //        Emit32(static_cast<unsigned __int32>(value));
-        //    }
-        //    else
-        //    {
-        //        // Can't do 8-byte immdediate values.
-        //        // TODO: Template should be disabled for this size to avoid runtime error.
-        //        throw 0;
-        //    }
-        //}
     }
 
 
@@ -559,8 +517,8 @@ namespace NativeJIT
         // this function is only used for Register-Register encoding. Problem will 
         // crop up if caller passes the base register from an X64Indirect.
 
-        // Special case for R12.
-        if (src.GetId() == 12)
+        // Special case for RSP, R12.
+        if ((src.GetId() & 0x7) == 4)
         {
             Emit8(0x24);
         }
