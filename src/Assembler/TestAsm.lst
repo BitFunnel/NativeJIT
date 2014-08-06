@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/06/14 11:09:28
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/06/14 13:37:02
 TestAsm.asm						     Page 1 - 1
 
 
@@ -204,73 +204,103 @@ TestAsm.asm						     Page 1 - 1
  000001E3  49/ BC		mov r12, 1234567812345678h
 	   1234567812345678
 
+
+				; mov [r + offset], r with zero, byte, word, and double word offsets
+ 000001ED  88 08		mov [rax], cl
+ 000001EF  88 59 12		mov [rcx + 12h], bl
+ 000001F2  44/ 88 8E		mov [rsi + 100h], r9b
+	   00000100
+ 000001F9  44/ 88 BF		mov [rdi + 12345678h], r15b
+	   12345678
+
+ 00000200  88 12		mov [rdx], dl
+ 00000202  66| 89 49 12		mov [rcx + 12h], cx
+ 00000206  66| 44/ 89 8E	mov [rsi + 1234h], r9w
+	   00001234
+ 0000020E  66| 44/ 89 9F	mov [rdi + 12345678h], r11w
+	   12345678
+
+ 00000216  41/ 89 21		mov [r9], esp
+ 00000219  89 51 12		mov [rcx + 12h], edx
+ 0000021C  89 B6 00001234	mov [rsi + 1234h], esi
+ 00000222  44/ 89 9F		mov [rdi + 12345678h], r11d
+	   12345678
+
+ 00000229  49/ 89 1C 24		mov [r12], rbx
+ 0000022D  48/ 89 79 12		mov [rcx + 12h], rdi
+ 00000231  48/ 89 AE		mov [rsi + 1234h], rbp
+	   00001234
+ 00000238  4C/ 89 97		mov [rdi + 12345678h], r10
+	   12345678
+
+
 				;
 				; Push/Pop
 				;
- 000001ED  58			pop rax
- 000001EE  5D			pop rbp
- 000001EF  41/ 5C		pop r12
- 000001F1  53			push rbx
- 000001F2  55			push rbp
- 000001F3  41/ 54		push r12
+ 0000023F  58			pop rax
+ 00000240  5D			pop rbp
+ 00000241  41/ 5C		pop r12
+ 00000243  53			push rbx
+ 00000244  55			push rbp
+ 00000245  41/ 54		push r12
 
 				;
 				; Ret
 				;
- 000001F5  C3			ret
+ 00000247  C3			ret
 
 				;
 				; Shift
 				;
 
 
- 000001F6  48/ 03 C3		  add rax, rbx
- 000001F9  02 C3		  add al, bl
- 000001FB  48/ 03 43 12		  add rax, [rbx + 12h]
- 000001FF  48/ 03 83		  add rax, [rbx + 12345678h]
+ 00000248  48/ 03 C3		  add rax, rbx
+ 0000024B  02 C3		  add al, bl
+ 0000024D  48/ 03 43 12		  add rax, [rbx + 12h]
+ 00000251  48/ 03 83		  add rax, [rbx + 12345678h]
 	   12345678
- 00000206  04 12		  add al, 12h
- 00000208  48/ 83 C0 12		  add rax, 12h
- 0000020C  48/ 05		  add rax, 12345678h
+ 00000258  04 12		  add al, 12h
+ 0000025A  48/ 83 C0 12		  add rax, 12h
+ 0000025E  48/ 05		  add rax, 12345678h
 	   12345678
 
- 00000212			L1:
- 00000212  48/ 2B C3		  sub rax, rbx
+ 00000264			L1:
+ 00000264  48/ 2B C3		  sub rax, rbx
 
- 00000215  49/ 3B C1		  cmp rax, r9;
+ 00000267  49/ 3B C1		  cmp rax, r9;
 
- 00000218  48/ 8D 43 12		  lea rax, [rbx + 12h]
+ 0000026A  48/ 8D 43 12		  lea rax, [rbx + 12h]
 
- 0000021C  58			  pop rax;
- 0000021D  41/ 58		  pop r8;
- 0000021F  50			  push rax;
- 00000220  41/ 50		  push r8;
+ 0000026E  58			  pop rax;
+ 0000026F  41/ 58		  pop r8;
+ 00000271  50			  push rax;
+ 00000272  41/ 50		  push r8;
 
- 00000222  C3			  ret
+ 00000274  C3			  ret
 
- 00000223  48/ 83 F8 7F		  cmp rax, 07fh
- 00000227  48/ 83 FB 7F		  cmp rbx, 07fh
+ 00000275  48/ 83 F8 7F		  cmp rax, 07fh
+ 00000279  48/ 83 FB 7F		  cmp rbx, 07fh
 
- 0000022B  48/ 3D		  cmp rax, 07fffh
+ 0000027D  48/ 3D		  cmp rax, 07fffh
 	   00007FFF
- 00000231  48/ 81 FB		  cmp rbx, 07fffh
+ 00000283  48/ 81 FB		  cmp rbx, 07fffh
 	   00007FFF
 
- 00000238  48/ 3D		  cmp rax, 07fffffffh
+ 0000028A  48/ 3D		  cmp rax, 07fffffffh
 	   7FFFFFFF
- 0000023E  48/ 81 FB		  cmp rbx, 07fffffffh
+ 00000290  48/ 81 FB		  cmp rbx, 07fffffffh
 	   7FFFFFFF
 
 				;  cmp rax, 07fffffffffffffffh
 				;  cmp rbx, 07fffffffffffffffh
 
- 00000245  48/ 0F AF C3		  imul rax, rbx;
- 00000249  4D/ 0F AF C1		  imul r8, r9;
- 0000024D  66| 0F AF C3		  imul ax, bx;
+ 00000297  48/ 0F AF C3		  imul rax, rbx;
+ 0000029B  4D/ 0F AF C1		  imul r8, r9;
+ 0000029F  66| 0F AF C3		  imul ax, bx;
 
- 00000251  48/ B8		  mov rax, 07fffffffffffffffh
+ 000002A3  48/ B8		  mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 0000025B			main ENDP
+ 000002AD			main ENDP
 
 				END
 

@@ -107,6 +107,10 @@ namespace NativeJIT
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset);
 
+        // Two operands - indirect destination and register source.
+        template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+        void Emit(Register<8, false> dest, unsigned __int32 destOffset, Register<SIZE, ISFLOAT> src);
+
         // Top operands - register destination and immediate source.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
         void Emit(Register<SIZE, ISFLOAT> dest, T value);
@@ -143,6 +147,12 @@ namespace NativeJIT
                     Register<SIZE, false> dest,
                     Register<8, false> src,
                     __int32 srcOffset);
+
+        template <unsigned SIZE>
+        void Group1(unsigned __int8 baseOpCode,
+                    Register<8, false> dest,
+                    __int32 destOffset,
+                    Register<SIZE, false> src);
 
         // TODO: Would like some sort of compiletime error when T is quadword or floating point
         template <unsigned SIZE, typename T>
@@ -185,6 +195,9 @@ namespace NativeJIT
 
             template <unsigned SIZE, bool ISFLOAT>
             static void Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset);
+
+            template <unsigned SIZE, bool ISFLOAT>
+            static void Emit(X64CodeGenerator& code, Register<8, false> dest, __int32 destOffset, Register<SIZE, ISFLOAT> src);
 
             template <unsigned SIZE, bool ISFLOAT, typename T>
             static void Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, T value);
@@ -288,6 +301,28 @@ namespace NativeJIT
         else
         {
             Helper<OP>::Emit(*this, dest, src, srcOffset);
+        }
+    }
+
+
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Emit(Register<8, false> dest, unsigned __int32 destOffset, Register<SIZE, ISFLOAT> src)
+    {
+        if (m_out != nullptr)
+        {
+            unsigned start = CurrentPosition();
+            Helper<OP>::Emit(*this, dest, destOffset, src);
+            PrintBytes(start, CurrentPosition());
+            *m_out << OpCodeName(OP) << " [" << dest.GetName();
+            if (destOffset != 0)
+            {
+                *m_out << " + " << std::hex << destOffset << "h";
+            }
+            *m_out << "], " << src.GetName() << std::endl;
+        }
+        else
+        {
+            Helper<OP>::Emit(*this, dest, destOffset, src);
         }
     }
 
@@ -435,6 +470,29 @@ namespace NativeJIT
     }
 
 
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
+                                  Register<8, false> dest,
+                                  __int32 destOffset,
+                                  Register<SIZE, false> src)
+    {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+        EmitRex(src, dest);
+        if (SIZE == 1)
+        {
+            Emit8(baseOpCode + 0x2);
+        }
+        else
+        {
+            Emit8(baseOpCode + 0x3);
+        }
+        EmitModRMOffset(src, dest, destOffset);
+    }
+
+
     // TODO: Would like some sort of compiletime error when T is quadword or floating point
     template <unsigned SIZE, typename T>
     void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
@@ -523,17 +581,17 @@ namespace NativeJIT
     // TODO: Is W bit always determined by SIZE1? Is there any case where SIZE2 should specify the data size?
     // Do we need a separate ptemplate arameter for the data size?
     template <unsigned SIZE1, unsigned SIZE2>
-    void X64CodeGenerator::EmitRex(Register<SIZE1, false> dest, Register<SIZE2, false> src)
+    void X64CodeGenerator::EmitRex(Register<SIZE1, false> reg, Register<SIZE2, false> rm)
     {
         // WRXB
         // TODO: add cases for W and X bits.
 
-        unsigned d = dest.GetId();
-        unsigned s = src.GetId();
+        unsigned regId = reg.GetId();
+        unsigned rmId = rm.GetId();
 
-        if (d > 7 || s > 7 || SIZE1 == 8)
+        if (regId > 7 || rmId > 7 || SIZE1 == 8)
         {
-            Emit8(0x40 | ((SIZE1 == 8) ? 8 : 0) | ((d > 7) ? 4 : 0) | ((s > 7) ? 1 : 0));
+            Emit8(0x40 | ((SIZE1 == 8) ? 8 : 0) | ((regId > 7) ? 4 : 0) | ((rmId > 7) ? 1 : 0));
         }
     }
 
@@ -631,6 +689,17 @@ namespace NativeJIT
                                                      __int32 srcOffset)
     {
         code.Group1(0x88, dest, src, srcOffset);
+    }
+
+
+    template <>
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
+                                                     Register<8, false> dest,
+                                                     __int32 destOffset,
+                                                     Register<SIZE, ISFLOAT> src)
+    {
+        code.Group1(0x86, dest, destOffset, src);
     }
 
 

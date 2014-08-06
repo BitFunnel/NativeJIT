@@ -207,7 +207,28 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(rsp, 0x1234567812345678);
             buffer.Emit<OpCode::Mov>(r12, 0x1234567812345678);
 
-            // TODO: mov r/m reg
+            // mov [r + offset], r with zero, byte, word, and double word offsets
+            std::cout << "mov [r + offset], r with zero, byte, word, and double word offsets" << std::endl;
+            buffer.Emit<OpCode::Mov>(rax, 0, cl);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, bl);
+            buffer.Emit<OpCode::Mov>(rsi, 0x100, r9b);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, r15b);
+
+            buffer.Emit<OpCode::Mov>(rdx, 0, dl);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, cx);
+            buffer.Emit<OpCode::Mov>(rsi, 0x1234, r9w);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, r11w);
+
+            buffer.Emit<OpCode::Mov>(r9, 0, esp);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, edx);
+            buffer.Emit<OpCode::Mov>(rsi, 0x1234, esi);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, r11d);
+
+            buffer.Emit<OpCode::Mov>(r12, 0, rbx);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, rdi);
+            buffer.Emit<OpCode::Mov>(rsi, 0x1234, rbp);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, r10);
+
 
             // pop/push
             std::cout << "pop/push" << std::endl;
@@ -405,6 +426,36 @@ namespace NativeJIT
                 "           1234567812345678                                                                        \n"
                 " 000001CF  49/ BC               mov r12, 1234567812345678h                                         \n"
                 "           1234567812345678                                                                        \n"
+                "                                                                                                   \n"
+                "                                                                                                   \n"
+                "                                ; mov [r + offset], r with zero, byte, word, and dword offsets     \n"
+                " 000001ED  88 08                mov [rax], cl                                                      \n"
+                " 000001EF  88 59 12             mov [rcx + 12h], bl                                                \n"
+                " 000001F2  44/ 88 8E            mov [rsi + 100h], r9b                                              \n"
+                "           00000100                                                                                \n"
+                " 000001F9  44/ 88 BF            mov [rdi + 12345678h], r15b                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000200  88 12                mov [rdx], dl                                                      \n"
+                " 00000202  66| 89 49 12         mov [rcx + 12h], cx                                                \n"
+                " 00000206  66| 44/ 89 8E        mov [rsi + 1234h], r9w                                             \n"
+                "           00001234                                                                                \n"
+                " 0000020E  66| 44/ 89 9F        mov [rdi + 12345678h], r11w                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000216  41/ 89 21            mov [r9], esp                                                      \n"
+                " 00000219  89 51 12             mov [rcx + 12h], edx                                               \n"
+                " 0000021C  89 B6 00001234       mov [rsi + 1234h], esi                                             \n"
+                " 00000222  44/ 89 9F            mov [rdi + 12345678h], r11d                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000229  49/ 89 1C 24         mov [r12], rbx                                                     \n"
+                " 0000022D  48/ 89 79 12         mov [rcx + 12h], rdi                                               \n"
+                " 00000231  48/ 89 AE            mov [rsi + 1234h], rbp                                             \n"
+                "           00001234                                                                                \n"
+                " 00000238  4C/ 89 97            mov [rdi + 12345678h], r10                                         \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
                 "                                                                                                   \n"
                 "                                                                                                   \n"
                 "                                ; pop/push                                                         \n"

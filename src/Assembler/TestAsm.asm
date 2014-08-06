@@ -161,6 +161,29 @@ mov rbx, 1234567812345678h
 mov rsp, 1234567812345678h
 mov r12, 1234567812345678h
 
+
+; mov [r + offset], r with zero, byte, word, and double word offsets
+mov [rax], cl
+mov [rcx + 12h], bl
+mov [rsi + 100h], r9b
+mov [rdi + 12345678h], r15b
+
+mov [rdx], dl
+mov [rcx + 12h], cx
+mov [rsi + 1234h], r9w
+mov [rdi + 12345678h], r11w
+
+mov [r9], esp
+mov [rcx + 12h], edx
+mov [rsi + 1234h], esi
+mov [rdi + 12345678h], r11d
+
+mov [r12], rbx
+mov [rcx + 12h], rdi
+mov [rsi + 1234h], rbp
+mov [rdi + 12345678h], r10
+
+
 ;
 ; Push/Pop
 ;
