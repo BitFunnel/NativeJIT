@@ -324,10 +324,9 @@ namespace NativeJIT
         function.Return(a);
         function.Compile();
 
-        typedef int (*F)(int, int);
-        F f = reinterpret_cast<F>(code.GetEntryPoint());
+        auto f = function.GetEntryPoint();
 
-        int x = f(1, 2);
+        __int64 x = f(1, 2);
         std::cout << "x = " << x << std::endl;
     }
 

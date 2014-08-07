@@ -25,4 +25,10 @@ namespace NativeJIT
     {
         m_tree.Compile();
     }
+
+
+    void const * FunctionBase::GetUntypedEntryPoint() const
+    {
+        return m_code.GetEntryPoint();
+    }
 }

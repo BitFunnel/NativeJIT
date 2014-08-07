@@ -23,6 +23,8 @@ namespace NativeJIT
 
         void Compile();
 
+        void  const *GetUntypedEntryPoint() const;
+
     private:
         // TODO: Find a better solution to this problem.
         // WARNING: m_code is a parameter to the constructor of m_tree.
@@ -51,6 +53,8 @@ namespace NativeJIT
         void Return(Node<R>& value);
 
         typedef R (*FunctionType)(P1, P2);
+
+        FunctionType GetEntryPoint() const;
 
     private:
         ParameterNode<P1>* m_p1;
@@ -86,6 +90,13 @@ namespace NativeJIT
     void Function<R, P1, P2>::Return(Node<R>& value)
     {
         m_return = &m_factory.Return<R>(value);
+    }
+
+
+    template <typename R, typename P1, typename P2>
+    typename Function<R, P1, P2>::FunctionType Function<R, P1, P2>::GetEntryPoint() const
+    {
+        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
     }
 
 
