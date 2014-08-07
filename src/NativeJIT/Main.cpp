@@ -4,12 +4,14 @@
 
 #include <iostream>
 
+
 #include "CallNode.h"
 #include "Examples.h"
 #include "ExpressionTree.h"
 #include "ExpressionNodeFactory.h"
 #include "Function.h"
-#include "NativeJIT/X64CodeGenerator.h"
+#include "NativeJIT/ExecutionBuffer.h"
+#include "NativeJIT/FunctionBuffer.h"
 #include "Storage.h"
 #include "Temporary/Allocator.h"
 
@@ -58,8 +60,8 @@ namespace NativeJIT
 
     void TestFieldPointerPrimitive()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -75,8 +77,8 @@ namespace NativeJIT
 
     void TestFieldPointerEmbedded()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -93,8 +95,8 @@ namespace NativeJIT
 
     void TestBinary()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -111,8 +113,8 @@ namespace NativeJIT
 
     void TestFactory()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -133,8 +135,8 @@ namespace NativeJIT
 
     void TestArray()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -152,8 +154,8 @@ namespace NativeJIT
 
     void TestByte()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -174,8 +176,8 @@ namespace NativeJIT
 
     void TestDouble()
     {
-        //Allocator allocator(10000);
-        //X64CodeGenerator code(std::cout);
+        //ExecutionBuffer allocator(5000);
+        //FunctionBufferBase code(allocator, 2000, 3, 0, false);
         //ExpressionTree tree(allocator, code);
         //ExpressionNodeFactory factory(allocator, tree);
 
@@ -196,7 +198,8 @@ namespace NativeJIT
 
     void TestLabel()
     {
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
 
         Label l1 = code.AllocateLabel();
         code.PlaceLabel(l1);
@@ -205,8 +208,8 @@ namespace NativeJIT
 
     void TestConditional()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -270,8 +273,8 @@ namespace NativeJIT
 
     void TestStorageIntegration()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -287,8 +290,8 @@ namespace NativeJIT
     // To test register spilling, it is necessary to modify ExpressionTree to only allow a single register.
     void TestSpill()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -310,26 +313,22 @@ namespace NativeJIT
 
     void TestFunction()
     {
-        Allocator allocator(10000);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
 
-        Function<int, unsigned __int64, int*> function(allocator, std::cout);
+        Function<__int64, __int64, __int64> function(allocator, code);
 
         auto & factory = function.GetFactory();
         auto & a = factory.Add(function.GetP2(), function.GetP1());
-        auto & b = factory.Deref(a);
-        
-//        function.Return(factory.Deref(factory.Add(function.GetP2(), function.GetP1())));
 
-        function.Return(b);
+        function.Return(a);
         function.Compile();
 
-        //// WON'T COMPILE because sizeof(int*) != sizeof(int)
-        //Function<int, int, int*> function(allocator, std::cout);
-        //auto & factory = function.GetFactory();
-        //auto & a = factory.Add(function.GetP2(), function.GetP1());
-        //auto & b = factory.Deref(a);
-        //function.Return(b);
-        //function.Compile();
+        typedef int (*F)(int, int);
+        F f = reinterpret_cast<F>(code.GetEntryPoint());
+
+        int x = f(1, 2);
+        std::cout << "x = " << x << std::endl;
     }
 
 
@@ -338,10 +337,11 @@ namespace NativeJIT
         return x + y;
     }
 
+
     void TestCall()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -379,7 +379,7 @@ namespace NativeJIT
 //        TestStorageIntegration();
 //        TestSpill();
 
-//        TestFunction();
+        TestFunction();
 //        TestCall();
 
         JITExample1();

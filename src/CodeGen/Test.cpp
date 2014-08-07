@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "ExecutionBuffer.h"
-#include "FunctionBuffer.h"
+#include "NativeJIT/ExecutionBuffer.h"
+#include "NativeJIT/FunctionBuffer.h"
 
 
 namespace NativeJIT

@@ -40,7 +40,7 @@ namespace NativeJIT
     }
 
 
-    void JumpTable::AddCallSite(Label label, unsigned char* site, int size)
+    void JumpTable::AddCallSite(Label label, unsigned char* site, unsigned size)
     {
         m_callSites.push_back(CallSite(label, size, site));
     }
@@ -112,7 +112,7 @@ namespace NativeJIT
         m_site = NULL;
     }
 
-    CallSite::CallSite(Label label, int size, unsigned char* site)
+    CallSite::CallSite(Label label, unsigned size, unsigned char* site)
         : m_label(label)
     {
         m_size = size;

@@ -23,16 +23,16 @@ namespace NativeJIT
     // WARNING: When modifying JccType, be sure to also modify the function JccName().
     enum class JccType : unsigned
     {
-        JA,
-        JNA,
-        JB,
-        JNB,
-        JG,
-        JNG,
-        JL,
-        JNL,
-        JZ,
-        JNZ
+        JA = 7,
+        JNA = 6,
+        JB = 2,
+        JNB = 3,
+        JG = 7,
+        JNG = 6,
+        JL = 2,
+        JNL = 3,
+        JZ = 4,
+        JNZ = 5
     };
 
 
@@ -86,6 +86,9 @@ namespace NativeJIT
         //
         // X64 opcode emit methods.
         //
+
+        template <JccType JCC>
+        void Emit(Label l);
 
         // No operand (e.g nop, ret)
         template <OpCode OP>
@@ -211,6 +214,23 @@ namespace NativeJIT
     // Template definitions for X64CodeGenerator - public methods.
     //
     //*************************************************************************
+    template <JccType JCC>
+    void X64CodeGenerator::Emit(Label label)
+    {
+        unsigned start = CurrentPosition();
+
+        Emit8(0xf);
+        Emit8(0x80 + static_cast<unsigned __int8>(JCC));
+        EmitCallSite(label, 4);
+
+        if (m_out != nullptr)
+        {
+            PrintBytes(start, CurrentPosition());
+            *m_out << JccName(JCC) << " L" << label.GetId() << std::endl;
+        }
+    }
+
+
     template <OpCode OP>
     void X64CodeGenerator::Emit()
     {

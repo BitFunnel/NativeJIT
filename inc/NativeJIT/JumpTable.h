@@ -40,7 +40,7 @@ namespace NativeJIT
 
         // Records a position in memory containing call site (offset set portion of a JCC/JMP/CALL instruction)
         // that will need to be patch once all labels have been placed.
-        void AddCallSite(Label label, unsigned char* site, int size);
+        void AddCallSite(Label label, unsigned char* site, unsigned size);
 
         // Patches each call site with the correct offset derived from its resolved label.
         void PatchCallSites();
@@ -60,7 +60,7 @@ namespace NativeJIT
     {
     public:
         CallSite();
-        CallSite(Label label, int size, unsigned char* site);
+        CallSite(Label label, unsigned size, unsigned char* site);
 
         Label GetLabel() const;
 

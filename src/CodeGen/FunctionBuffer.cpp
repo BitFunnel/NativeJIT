@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <Windows.h>
 
-#include "FunctionBuffer.h"
+#include "NativeJIT/FunctionBuffer.h"
 #include "Temporary/IAllocator.h"
 #include "UnwindCode.h"
 
@@ -57,6 +57,12 @@ namespace NativeJIT
     unsigned char const * FunctionBufferBase::GetEntryPoint() const
     {
         return m_entryPoint;
+    }
+
+
+    void FunctionBufferBase::EmitJmpToEpilogue()
+    {
+        Jmp(m_epilogue);
     }
 
 

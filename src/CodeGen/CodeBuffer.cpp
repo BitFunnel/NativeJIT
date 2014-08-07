@@ -187,4 +187,25 @@ namespace NativeJIT
     {
         memset(m_bufferStart + start, value, length);
     }
+
+
+    void CodeBuffer::PatchCallSites()
+    {
+        m_localJumpTable->PatchCallSites();
+    }
+
+
+    void CodeBuffer::EmitCallSite(Label label, unsigned size)
+    {
+        m_localJumpTable->AddCallSite(label, m_current, size);
+
+#ifdef _DEBUG
+        while (size-- > 0)
+        {
+            Emit8(0);
+        }
+#else
+        Advance(size);
+#endif
+    }
 }

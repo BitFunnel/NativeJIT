@@ -7,9 +7,9 @@
 
 namespace NativeJIT
 {
-    FunctionBase::FunctionBase(Allocators::IAllocator& allocator, std::ostream& out)
-        : m_code(out),
-          m_tree(allocator, m_code),
+    FunctionBase::FunctionBase(Allocators::IAllocator& allocator, FunctionBufferBase& code)
+        : m_code(code),
+          m_tree(allocator, code),
           m_factory(allocator, m_tree)
     {
     }

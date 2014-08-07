@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "NativeJIT/FunctionBuffer.h"
 #include "NativeJIT/Register.h"
 #include "Temporary/NonCopyable.h"
 
@@ -47,7 +48,7 @@ namespace NativeJIT
     class ExpressionTree : public NonCopyable
     {
     public:
-        ExpressionTree(Allocators::IAllocator& allocator, X64CodeGenerator& code);
+        ExpressionTree(Allocators::IAllocator& allocator, FunctionBufferBase& code);
 
         Allocators::IAllocator& GetAllocator() const;
 
@@ -76,7 +77,7 @@ namespace NativeJIT
 
         RegisterFile& GetParameterRegisters();
 
-        X64CodeGenerator& GetCodeGenerator() const;
+        FunctionBufferBase& GetCodeGenerator() const;
 
         template <unsigned SIZE, bool ISFLOAT>
         bool IsBasePointer(Register<SIZE, ISFLOAT> r) const;
@@ -91,8 +92,6 @@ namespace NativeJIT
     private:
         void SetBasePointer(Register<sizeof(void*), false> r);
 
-        void Prologue();
-
         // Assigns registers to parameters.
         void Pass1();
 
@@ -101,8 +100,6 @@ namespace NativeJIT
 
         // Generates code to evaluate the entire tree.
         void Pass3();
-
-        void Epilogue();
 
         template <unsigned SIZE>
         Register<SIZE, false> AllocateRegisterInternal(Register<SIZE, false> ignore);
@@ -116,7 +113,7 @@ namespace NativeJIT
 
 
         Allocators::IAllocator& m_allocator;
-        X64CodeGenerator& m_code;
+        FunctionBufferBase & m_code;
 
         std::vector<NodeBase*> m_topologicalSort;
 

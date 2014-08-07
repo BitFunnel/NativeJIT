@@ -2,7 +2,7 @@
 
 #include <memory>                   // std::unique_ptr embedded.
 
-#include "JumpTable.h"              // Label parameter and return value.
+#include "NativeJIT/JumpTable.h"    // Label parameter and return value.
                                     // Also template parameter to std::unique_ptr.
 #include "Temporary/NonCopyable.h"  // Base class.
 
@@ -63,13 +63,18 @@ namespace NativeJIT
 
         void Fill(unsigned start, unsigned length, unsigned __int8 value);
 
+        // Patches each call site with the correct offset derived from its resolved label.
+        void PatchCallSites();
+
+    protected:
+        void EmitCallSite(Label label, unsigned size);
+
     private:
         unsigned m_capacity;
 
         unsigned __int8* m_bufferStart;
         unsigned __int8* m_bufferEnd;
         unsigned __int8* m_current;
-
 
         std::unique_ptr<JumpTable> m_localJumpTable;    // Jumps within a single CodeBuffer.
     };

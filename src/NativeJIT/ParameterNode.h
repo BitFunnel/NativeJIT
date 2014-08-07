@@ -60,7 +60,8 @@ namespace NativeJIT
         Assert(id < 4, "Exceeded maximum number of register parameters.");
 
         // Integer parameters are passed in RCX, RDX, R8, and R9.
-        static unsigned idMap[] = {2, 3, 8, 9};
+        // TODO: Use constants to encode registers.
+        static unsigned idMap[] = {1, 2, 8, 9};
 
         r = Register<SIZE, false>(idMap[id]);
     }

@@ -4,18 +4,19 @@
 
 #include "ExpressionNodeFactory.h"
 #include "ExpressionTree.h"
+#include "NativeJIT/FunctionBuffer.h"
 #include "ParameterNode.h"
 
 
 namespace NativeJIT
 {
     class ExpressionNodeFactory;
-
+    class X64CodeGenerator;
 
     class FunctionBase
     {
     public:
-        FunctionBase(Allocators::IAllocator& allocator, std::ostream& out);
+        FunctionBase(Allocators::IAllocator& allocator, FunctionBufferBase& code);
 
         // TODO: Can't be const if m_factory is embedded.
         ExpressionNodeFactory& GetFactory();
@@ -26,7 +27,7 @@ namespace NativeJIT
         // TODO: Find a better solution to this problem.
         // WARNING: m_code is a parameter to the constructor of m_tree.
         // Therefore, m_code, must be declared before m_tree.
-        X64CodeGenerator m_code;
+        FunctionBufferBase& m_code;
 
         // TODO: Find a better solution to this problem.
         // WARNING: m_tree is a parameter to the constructor of m_factory.
@@ -42,12 +43,14 @@ namespace NativeJIT
     class Function : public FunctionBase
     {
     public:
-        Function(Allocators::IAllocator& allocator, std::ostream& out);
+        Function(Allocators::IAllocator& allocator, FunctionBufferBase& code);
 
         ParameterNode<P1>& GetP1() const;
         ParameterNode<P2>& GetP2() const;
 
         void Return(Node<R>& value);
+
+        typedef R (*FunctionType)(P1, P2);
 
     private:
         ParameterNode<P1>* m_p1;
@@ -55,13 +58,15 @@ namespace NativeJIT
         NodeBase* m_return;
     };
 
+
     template <typename R, typename P1, typename P2>
-    Function<R, P1, P2>::Function(Allocators::IAllocator& allocator, std::ostream& out)
-        : FunctionBase(allocator, out)
+    Function<R, P1, P2>::Function(Allocators::IAllocator& allocator, FunctionBufferBase& code)
+        : FunctionBase(allocator, code)
     {
         m_p1 = &m_factory.Parameter<P1>();
         m_p2 = &m_factory.Parameter<P2>();
     }
+
 
     template <typename R, typename P1, typename P2>
     ParameterNode<P1>& Function<R, P1, P2>::GetP1() const
@@ -69,11 +74,13 @@ namespace NativeJIT
         return *m_p1;
     }
 
+
     template <typename R, typename P1, typename P2>
     ParameterNode<P2>& Function<R, P1, P2>::GetP2() const
     {
         return *m_p2;
     }
+
 
     template <typename R, typename P1, typename P2>
     void Function<R, P1, P2>::Return(Node<R>& value)

@@ -53,7 +53,7 @@ namespace NativeJIT
     // ExpressionTree
     //
     //*************************************************************************
-    ExpressionTree::ExpressionTree(Allocators::IAllocator& allocator, X64CodeGenerator& code)
+    ExpressionTree::ExpressionTree(Allocators::IAllocator& allocator, FunctionBufferBase& code)
         : m_allocator(allocator),
           m_code(code),
           m_parameterRegisters(code.GetRXXCount(), code.GetXMMCount()),
@@ -92,7 +92,7 @@ namespace NativeJIT
     }
 
 
-    X64CodeGenerator& ExpressionTree::GetCodeGenerator() const
+    FunctionBufferBase& ExpressionTree::GetCodeGenerator() const
     {
         return m_code;
     }
@@ -191,23 +191,12 @@ namespace NativeJIT
 
     void ExpressionTree::Compile()
     {
-        Prologue();
         Pass1();
         Pass2();
         Print();
         Pass3();
-        Epilogue();
+        m_code.PatchCallSites();
         Print();
-    }
-
-
-    // TODO: Remove this method.
-    void ExpressionTree::Prologue()
-    {
-        std::cout << "Prologue ..." << std::endl;
-        std::cout << "  NOT IMPLEMENTED" << std::endl;
-
-//        m_code.Op(OpCode::Mov, m_basePointer, m_stackPointer);
     }
 
 
@@ -284,13 +273,5 @@ namespace NativeJIT
 
         root.LabelSubtree(true);
         root.CompileAsRoot(*this);
-    }
-
-
-    // TODO: Remove this method.
-    void ExpressionTree::Epilogue()
-    {
-        std::cout << "Epilogue ..." << std::endl;
-        std::cout << "  NOT IMPLEMENTED" << std::endl;
     }
 }

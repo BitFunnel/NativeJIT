@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/06/14 13:37:02
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/06/14 15:56:00
 TestAsm.asm						     Page 1 - 1
 
 
@@ -253,54 +253,22 @@ TestAsm.asm						     Page 1 - 1
 				; Shift
 				;
 
+ 00000248			L1:
+ 00000248  74 FE		    jz L1
+ 0000024A  0F 84 FFFFFFF8	    jz near ptr L1
+ 00000250  74 F6		    jz L1
+ 00000252  0F 84 FFFFFFF0	    jz near ptr L1
+				//    jz far ptr L1
+TestAsm.asm(211) : error A2008:syntax error : /
 
- 00000248  48/ 03 C3		  add rax, rbx
- 0000024B  02 C3		  add al, bl
- 0000024D  48/ 03 43 12		  add rax, [rbx + 12h]
- 00000251  48/ 03 83		  add rax, [rbx + 12345678h]
-	   12345678
- 00000258  04 12		  add al, 12h
- 0000025A  48/ 83 C0 12		  add rax, 12h
- 0000025E  48/ 05		  add rax, 12345678h
-	   12345678
 
- 00000264			L1:
- 00000264  48/ 2B C3		  sub rax, rbx
+ 00000258  48/ 0F AF C3		  imul rax, rbx;
+ 0000025C  4D/ 0F AF C1		  imul r8, r9;
+ 00000260  66| 0F AF C3		  imul ax, bx;
 
- 00000267  49/ 3B C1		  cmp rax, r9;
-
- 0000026A  48/ 8D 43 12		  lea rax, [rbx + 12h]
-
- 0000026E  58			  pop rax;
- 0000026F  41/ 58		  pop r8;
- 00000271  50			  push rax;
- 00000272  41/ 50		  push r8;
-
- 00000274  C3			  ret
-
- 00000275  48/ 83 F8 7F		  cmp rax, 07fh
- 00000279  48/ 83 FB 7F		  cmp rbx, 07fh
-
- 0000027D  48/ 3D		  cmp rax, 07fffh
-	   00007FFF
- 00000283  48/ 81 FB		  cmp rbx, 07fffh
-	   00007FFF
-
- 0000028A  48/ 3D		  cmp rax, 07fffffffh
-	   7FFFFFFF
- 00000290  48/ 81 FB		  cmp rbx, 07fffffffh
-	   7FFFFFFF
-
-				;  cmp rax, 07fffffffffffffffh
-				;  cmp rbx, 07fffffffffffffffh
-
- 00000297  48/ 0F AF C3		  imul rax, rbx;
- 0000029B  4D/ 0F AF C1		  imul r8, r9;
- 0000029F  66| 0F AF C3		  imul ax, bx;
-
- 000002A3  48/ B8		  mov rax, 07fffffffffffffffh
+ 00000264  48/ B8		  mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 000002AD			main ENDP
+ 0000026E			main ENDP
 
 				END
 

@@ -87,10 +87,18 @@ namespace NativeJIT
     }
 
 
-    void X64CodeGenerator::Jmp(Label l)
+    void X64CodeGenerator::Jmp(Label label)
     {
-        Indent();
-        *m_out << "jmp L" << l.GetId() << std::endl;
+        unsigned start = CurrentPosition();
+
+        Emit8(0xe9);
+        EmitCallSite(label, 4);
+
+        if (m_out != nullptr)
+        {
+            PrintBytes(start, CurrentPosition());
+            *m_out << "jmp L" << label.GetId() << std::endl;
+        }
     }
 
 

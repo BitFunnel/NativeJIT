@@ -31,6 +31,8 @@ namespace NativeJIT
 
         unsigned char const * GetEntryPoint() const;
 
+        void EmitJmpToEpilogue();
+
 
     private:
         void EmitUnwindInfo(unsigned char slotCount,

@@ -4,9 +4,9 @@
 #include <iostream>             // TODO: Temporary - for debugging.
 #include <vector>
 
-#include "ExecutionBuffer.h"
-#include "FunctionBuffer.h"
 #include "ML64Verifier.h"
+#include "NativeJIT/ExecutionBuffer.h"
+#include "NativeJIT/FunctionBuffer.h"
 #include "SuiteCpp/UnitTest.h"
 
 
@@ -55,6 +55,17 @@ namespace NativeJIT
             //std::cout << std::endl;
             //std::cout << "Ret" << std::endl;
             //buffer.Emit<OpCode::Ret>();
+        }
+
+
+        TestCase(JCC)
+        {
+            ExecutionBuffer allocator(1000);
+            FunctionBufferBase buffer(allocator, 200, 3, 0, false);
+
+            Label l1 = buffer.AllocateLabel();
+            buffer.PlaceLabel(l1);
+            buffer.Emit<JccType::JG>(l1);
         }
 
 
@@ -246,12 +257,14 @@ namespace NativeJIT
             // jcc
             //   each opcode
             //   correct offsets
-            // mov
+            // jmp
+            // call
             // imul
 
             // shift
 
             // floating point
+            // signed
 
             //*********************************************************************
             //

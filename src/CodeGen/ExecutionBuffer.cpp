@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <Windows.h>
 
-#include "ExecutionBuffer.h"
+#include "NativeJIT/ExecutionBuffer.h"
 
 
 namespace NativeJIT

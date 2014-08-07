@@ -5,7 +5,8 @@
 #include "Examples.h"
 #include "ExpressionNodeFactory.h"
 #include "ExpressionTree.h"
-#include "NativeJIT/X64CodeGenerator.h"
+#include "NativeJIT/ExecutionBuffer.h"
+#include "NativeJIT/FunctionBuffer.h"
 #include "Temporary/Allocator.h"
 
 
@@ -40,8 +41,8 @@ namespace NativeJIT
 
     void JITExample1()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
@@ -73,8 +74,8 @@ namespace NativeJIT
 
     void ConditionalExample()
     {
-        Allocator allocator(10000);
-        X64CodeGenerator code(std::cout);
+        ExecutionBuffer allocator(5000);
+        FunctionBufferBase code(allocator, 2000, 3, 0, false);
         ExpressionTree tree(allocator, code);
         ExpressionNodeFactory factory(allocator, tree);
 
