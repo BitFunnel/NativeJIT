@@ -42,9 +42,10 @@ namespace NativeJIT
         // New initialization sequence.
         //
         EmitUnwindInfo(static_cast<unsigned char>(slotCount), registerSaveMask, isLeaf);
-        EmitEpilogue();
         EmitPrologue();
         RegisterUnwindInfo();
+
+        CreateEpilogue();
     }
 
 
@@ -60,9 +61,18 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EmitJmpToEpilogue()
+    void FunctionBufferBase::Reset()
     {
-        Jmp(m_epilogue);
+        CodeBuffer::Reset(static_cast<unsigned>(m_bodyStart));
+    }
+
+
+    void FunctionBufferBase::EmitEpilogue()
+    {
+        for (unsigned i = 0 ; i < m_epilogueCode.size(); ++i)
+        {
+            Emit8(m_epilogueCode[i]);
+        }
     }
 
 
@@ -209,10 +219,9 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EmitEpilogue()
+    void FunctionBufferBase::CreateEpilogue()
     {
-        m_epilogue = AllocateLabel();
-        PlaceLabel(m_epilogue);
+        unsigned start = CurrentPosition();
 
         // Generate epilogue code from unwind information.
         for (int i = 0; i < m_unwindInfo->m_countOfCodes; ++i)
@@ -235,6 +244,14 @@ namespace NativeJIT
         }
 
         Emit<OpCode::Ret>();
+
+        // Save a copy of the epilogue.
+        unsigned size = CurrentPosition() - start;
+        m_epilogueCode.resize(size);
+        memcpy(&m_epilogueCode[0], BufferStart() + start, size);
+
+        // Now that epilogue has been saved, reset buffer to end of prologue.
+        Reset();
     }
 
 

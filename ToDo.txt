@@ -16,6 +16,22 @@ x        mov rax, r9
 x        ret
 x        // release r9
 
+
+Need some way to reuse a FunctionBufferBase over and over
+  Reset()
+    OPTION - epilogue and prologue at head of buffer
+      Need to move m_current back to m_bodyStart
+      Need to roll back some, but not all of the JumpTable (unless epilogue is always at the start).
+    OPTION - Progloue at head of buffer; epilogue is stored elsewhere.
+      Need to move m_current back to m_bodyStart
+      Roll back entire JumpTable. No need to save label to epilogue.
+    OPTION
+      Generate epilogue
+      Copy to other storage
+      Generate prologue
+
+
+
 x Complete implementation of temporaries.
 
 Should CodeBuffer have a Reset() method or is it created on each use?

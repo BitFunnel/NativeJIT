@@ -4,6 +4,7 @@
 
 #include "NativeJIT/CodeBuffer.h"
 #include "NativeJIT/JumpTable.h"
+#include "Temporary/Assert.h"
 
 
 namespace NativeJIT
@@ -168,6 +169,14 @@ namespace NativeJIT
     unsigned CodeBuffer::CurrentPosition() const
     {
         return static_cast<unsigned>(m_current - m_bufferStart);
+    }
+
+
+    void CodeBuffer::Reset(unsigned position)
+    {
+        Assert(position < m_capacity, "Invalid position.");
+        m_current = m_bufferStart + position;
+        m_localJumpTable->Clear();
     }
 
 

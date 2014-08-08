@@ -62,8 +62,7 @@ namespace NativeJIT
             CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), dest, s);
         }
 
-//        tree.GetCodeGenerator().Emit<OpCode::Ret>();
-        tree.GetCodeGenerator().EmitJmpToEpilogue();
+        tree.GetCodeGenerator().EmitEpilogue();
     }
 
 

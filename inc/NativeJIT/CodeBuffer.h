@@ -56,6 +56,7 @@ namespace NativeJIT
         // Return the offset of the current write position in the buffer.
         unsigned CurrentPosition() const;
 
+        void Reset(unsigned position);
 
         // Advances the current write position by byteCount and returns a pointer to the write position
         // before advancing.

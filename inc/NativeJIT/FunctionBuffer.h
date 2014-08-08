@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>                          // ostream& paramter.
+#include <vector>                           // std::vector embedded.
 #include <Windows.h>                        // RUNTIME_FUNCTION embedded.
 
 
@@ -31,7 +32,9 @@ namespace NativeJIT
 
         unsigned char const * GetEntryPoint() const;
 
-        void EmitJmpToEpilogue();
+        void EmitEpilogue();
+
+        void Reset();
 
 
     private:
@@ -39,7 +42,7 @@ namespace NativeJIT
                             unsigned registerSaveMask,
                             bool isLeaf);
 
-        void EmitEpilogue();
+        void CreateEpilogue();
         void EmitPrologue();
         void RegisterUnwindInfo();
 
@@ -59,7 +62,7 @@ namespace NativeJIT
 
         void FillWithBreakCode(unsigned start, unsigned length);
 
-        Label m_epilogue;
+        std::vector<unsigned __int8> m_epilogueCode; 
         unsigned char const * m_entryPoint;
 
         // Structures used to register stack unwind information with Windows.
@@ -83,7 +86,6 @@ namespace NativeJIT
         // Leaf functions do not call other functions or allocate space on the
         // stack.
 //        bool m_isLeaf;
-
 
         Allocators::IAllocator& m_allocator;
     };

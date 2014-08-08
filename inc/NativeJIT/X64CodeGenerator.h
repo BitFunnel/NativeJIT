@@ -58,8 +58,6 @@ namespace NativeJIT
     class X64CodeGenerator : public CodeBuffer
     {
     public:
-        X64CodeGenerator(std::ostream& out);
-
         X64CodeGenerator(unsigned __int8* buffer,
                          unsigned capacity,
                          unsigned maxLabels,

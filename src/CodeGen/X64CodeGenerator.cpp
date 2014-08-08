@@ -36,14 +36,6 @@ namespace NativeJIT
     // X64CodeGenerator public methods
     //
     //*************************************************************************
-    X64CodeGenerator::X64CodeGenerator(std::ostream& out)
-        // TODO: Handle buffer allocation
-        : CodeBuffer(new unsigned __int8[1000], 1000, 100, 100),
-          m_out(&out)
-    {
-    }
-
-
     X64CodeGenerator::X64CodeGenerator(unsigned __int8* buffer,
                                        unsigned capacity,
                                        unsigned maxLabels,
