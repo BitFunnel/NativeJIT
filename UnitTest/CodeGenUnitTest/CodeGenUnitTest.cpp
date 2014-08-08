@@ -260,7 +260,33 @@ namespace NativeJIT
             // jmp
             // call
             // imul
+            std::cout << "imul" << std::endl;
+            buffer.Emit<OpCode::IMul>(bx, cx);
+            buffer.Emit<OpCode::IMul>(ebx, ecx);
+            buffer.Emit<OpCode::IMul>(rbx, rcx);
 
+            buffer.Emit<OpCode::IMul>(cx, rcx, 0x12);
+            buffer.Emit<OpCode::IMul>(r9w, rsi, 0x1234);
+            buffer.Emit<OpCode::IMul>(r11w, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::IMul>(esp, r9, 0);
+            buffer.Emit<OpCode::IMul>(edx, rcx, 0x12);
+            buffer.Emit<OpCode::IMul>(esi, rsi, 0x1234);
+            buffer.Emit<OpCode::IMul>(r11d, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::IMul>(rbx, r12, 0);
+            buffer.Emit<OpCode::IMul>(rdi, rcx, 0x12);
+            buffer.Emit<OpCode::IMul>(rbp, rsi, 0x1234);
+            buffer.Emit<OpCode::IMul>(r10, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::IMul>(cx, 0x56);
+            buffer.Emit<OpCode::IMul>(dx, 0x5678);
+            buffer.Emit<OpCode::IMul>(ebp, 0x12);
+            buffer.Emit<OpCode::IMul>(ebp, 0x1234);
+            buffer.Emit<OpCode::IMul>(ebp, 0x12345678);
+            buffer.Emit<OpCode::IMul>(r12, 0x12);
+            buffer.Emit<OpCode::IMul>(r12, 0x1234);
+            buffer.Emit<OpCode::IMul>(r12, 0x12345678);
             // shift
 
             // floating point
@@ -480,7 +506,49 @@ namespace NativeJIT
                 " 0000010E  41/ 54               push r12                                                           \n"
                 "                                                                                                   \n"
                 "                                ; ret                                                              \n"
-                " 00000110  C3                   ret                                                                \n";
+              
+                " 00000110  C3                   ret                                                                \n"
+                "                                                                                                   \n"
+                "                                ; IMul                                                             \n"
+                " 00000258  66| 0F AF D9           imul bx, cx                                                      \n"
+                " 0000025C  0F AF D9               imul ebx, ecx                                                    \n"
+                " 0000025F  48/ 0F AF D9           imul rbx, rcx                                                    \n"
+                "                                                                                                   \n"
+                "                                                                                                   \n"
+                " 0000026F  66| 0F AF 49         imul cx, [rcx + 12h]                                               \n"
+                "           12                                                                                      \n"
+                " 00000274  66| 44/ 0F AF 8E     imul r9w, [rsi + 1234h]                                            \n"
+                "           00001234                                                                                \n"
+                " 0000027D  66| 44/ 0F AF 9F     imul r11w, [rdi + 12345678h]                                       \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000286  41/ 0F AF 21         imul esp, [r9]                                                     \n"
+                " 0000028A  0F AF 51 12          imul edx, [rcx + 12h]                                              \n"
+                " 0000028E  0F AF B6             imul esi, [rsi + 1234h]                                            \n"
+                "           00001234                                                                                \n"
+                " 00000295  44/ 0F AF 9F         imul r11d, [rdi + 12345678h]                                       \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 0000029D  49/ 0F AF 1C 24      imul rbx, [r12]                                                    \n"
+                " 000002A2  48/ 0F AF 79         imul rdi, [rcx + 12h]                                              \n"
+                "           12                                                                                      \n"
+                " 000002A7  48/ 0F AF AE         imul rbp, [rsi + 1234h]                                            \n"
+                "           00001234                                                                                \n"
+                " 000002AF  4C/ 0F AF 97         imul r10, [rdi + 12345678h]                                        \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                                                                                                   \n"
+                " 000002B7  66| 6B C9 56         imul cx, 56h                                                       \n"
+                " 000002BB  66| 69 D2 5678       imul dx, 5678h                                                     \n"
+                " 000002C0  6B ED 12             imul ebp, 12h                                                      \n"
+                " 000002C3  69 ED 00001234       imul ebp, 1234h                                                    \n"
+                " 000002C9  69 ED 12345678       imul ebp, 12345678h                                                \n"
+                " 000002CF  4D/ 6B E4 12         imul r12, 12h                                                      \n"
+                " 000002D3  4D/ 69 E4            imul r12, 1234h                                                    \n"
+                "           00001234                                                                                \n"
+                " 000002DA  4D/ 69 E4            imul r12, 12345678h                                                \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n";
 
             ML64Verifier v(ml64Output, start);
         }

@@ -146,7 +146,7 @@ namespace NativeJIT
     template <typename L, typename R>
     Node<L>& ExpressionNodeFactory::Mul(Node<L>& left, Node<R>& right)
     {
-        return Binary<OpCode::Mul>(left, right);
+        return Binary<OpCode::IMul>(left, right);
     }
 
 

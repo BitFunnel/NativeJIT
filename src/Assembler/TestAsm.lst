@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/06/14 15:56:00
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/07/14 17:33:25
 TestAsm.asm						     Page 1 - 1
 
 
@@ -258,17 +258,56 @@ TestAsm.asm						     Page 1 - 1
  0000024A  0F 84 FFFFFFF8	    jz near ptr L1
  00000250  74 F6		    jz L1
  00000252  0F 84 FFFFFFF0	    jz near ptr L1
-				//    jz far ptr L1
-TestAsm.asm(211) : error A2008:syntax error : /
+				;    jz far ptr L1
 
 
- 00000258  48/ 0F AF C3		  imul rax, rbx;
- 0000025C  4D/ 0F AF C1		  imul r8, r9;
- 00000260  66| 0F AF C3		  imul ax, bx;
+ 00000258  66| 0F AF D9		imul bx, cx
+ 0000025C  0F AF D9		imul ebx, ecx
+ 0000025F  48/ 0F AF D9		imul rbx, rcx
 
- 00000264  48/ B8		  mov rax, 07fffffffffffffffh
+ 00000263  48/ 0F AF C3		imul rax, rbx;
+ 00000267  4D/ 0F AF C1		imul r8, r9;
+ 0000026B  66| 0F AF C3		imul ax, bx;
+
+ 0000026F  66| 0F AF 49		imul cx, [rcx + 12h]
+	   12
+ 00000274  66| 44/ 0F AF 8E	imul r9w, [rsi + 1234h]
+	   00001234
+ 0000027D  66| 44/ 0F AF 9F	imul r11w, [rdi + 12345678h]
+	   12345678
+
+ 00000286  41/ 0F AF 21		imul esp, [r9]
+ 0000028A  0F AF 51 12		imul edx, [rcx + 12h]
+ 0000028E  0F AF B6		imul esi, [rsi + 1234h]
+	   00001234
+ 00000295  44/ 0F AF 9F		imul r11d, [rdi + 12345678h]
+	   12345678
+
+ 0000029D  49/ 0F AF 1C 24	imul rbx, [r12]
+ 000002A2  48/ 0F AF 79		imul rdi, [rcx + 12h]
+	   12
+ 000002A7  48/ 0F AF AE		imul rbp, [rsi + 1234h]
+	   00001234
+ 000002AF  4C/ 0F AF 97		imul r10, [rdi + 12345678h]
+	   12345678
+
+				imul bl, 34h
+TestAsm.asm(236) : error A2149:byte register cannot be first operand
+ 000002B7  66| 6B C9 56		imul cx, 56h
+ 000002BB  66| 69 D2 5678	imul dx, 5678h
+ 000002C0  6B ED 12		imul ebp, 12h
+ 000002C3  69 ED 00001234	imul ebp, 1234h
+ 000002C9  69 ED 12345678	imul ebp, 12345678h
+ 000002CF  4D/ 6B E4 12		imul r12, 12h
+ 000002D3  4D/ 69 E4		imul r12, 1234h
+	   00001234
+ 000002DA  4D/ 69 E4		imul r12, 12345678h
+	   12345678
+
+
+ 000002E1  48/ B8		  mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 0000026E			main ENDP
+ 000002EB			main ENDP
 
 				END
 

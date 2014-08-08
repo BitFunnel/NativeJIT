@@ -208,12 +208,41 @@ L1:
     jz near ptr L1
     jz L1
     jz near ptr L1
-//    jz far ptr L1
+;    jz far ptr L1
 
 
-  imul rax, rbx;
-  imul r8, r9;
-  imul ax, bx;
+imul bx, cx
+imul ebx, ecx
+imul rbx, rcx
+
+imul rax, rbx;
+imul r8, r9;
+imul ax, bx;
+
+imul cx, [rcx + 12h]
+imul r9w, [rsi + 1234h]
+imul r11w, [rdi + 12345678h]
+
+imul esp, [r9]
+imul edx, [rcx + 12h]
+imul esi, [rsi + 1234h]
+imul r11d, [rdi + 12345678h]
+
+imul rbx, [r12]
+imul rdi, [rcx + 12h]
+imul rbp, [rsi + 1234h]
+imul r10, [rdi + 12345678h]
+
+;;imul bl, 34h
+imul cx, 56h
+imul dx, 5678h
+imul ebp, 12h
+imul ebp, 1234h
+imul ebp, 12345678h
+imul r12, 12h
+imul r12, 1234h
+imul r12, 12345678h
+
 
   mov rax, 07fffffffffffffffh
 main ENDP

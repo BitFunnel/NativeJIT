@@ -43,9 +43,9 @@ namespace NativeJIT
         And,
         Call,
         Cmp,
+        IMul,    // Consider IMUL?
         Lea,
         Mov,
-        Mul,    // Consider IMUL?
         Nop,
         Or,
         Pop,
@@ -117,6 +117,20 @@ namespace NativeJIT
 
     private:
         void Call(Register<8, false> /*r*/);
+
+        template <unsigned SIZE>
+        void IMul(Register<SIZE, false> dest,
+                  Register<SIZE, false> src);
+
+        template <unsigned SIZE>
+        void IMul(Register<SIZE, false> dest,
+                  Register<8, false> src,
+                  __int32 srcOffset);
+
+        // TODO: Would like some sort of compiletime error when T is quadword or floating point
+        template <unsigned SIZE, typename T>
+        void IMul(Register<SIZE, false> dest,
+                  T value);
 
         template <unsigned SIZE>
         void Lea(Register<SIZE, false> dest,
@@ -355,6 +369,74 @@ namespace NativeJIT
     //
     // X64 opcodes
     //
+    template <unsigned SIZE>
+    void X64CodeGenerator::IMul(Register<SIZE, false> dest,
+                                Register<SIZE, false> src)
+    {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+        EmitRex(dest, src);
+        Emit8(0x0f);
+        Emit8(0xAF);
+        EmitModRM(dest, src);
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::IMul(Register<SIZE, false> dest,
+                                Register<8, false> src,
+                                __int32 srcOffset)
+    {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+        EmitRex(dest, src);
+        Emit8(0x0f);
+        Emit8(0xAF);
+        EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    // Illegal for SIZE == 1?
+    template <unsigned SIZE, typename T>
+    void X64CodeGenerator::IMul(Register<SIZE, false> dest,
+                                T value)
+    {
+        unsigned valueSize = Size(value);
+
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+
+        EmitRex(dest, dest);
+
+        if (valueSize == 1)
+        {
+            Emit8(0x6b);
+            EmitModRM(dest, dest);
+            Emit8(static_cast<unsigned __int8>(value));
+        }
+        else
+        {
+            Emit8(0x69);
+            EmitModRM(dest, dest);
+            if (SIZE == 2)
+            {
+                Assert(valueSize <= 2, "Expected two-byte value.");
+                Emit16(static_cast<unsigned __int16>(value));
+            }
+            else
+            {
+                Assert(valueSize <= 4, "Expected four-byte value.");
+                Emit32(static_cast<unsigned __int32>(value));
+            }
+        }
+    }
+
 
     template <unsigned SIZE>
     void X64CodeGenerator::Lea(Register<SIZE, false> dest,
@@ -656,6 +738,20 @@ namespace NativeJIT
     //
     //*************************************************************************
 
+    //
+    // IMul
+    //
+
+    //template <>
+    //template <unsigned SIZE, bool ISFLOAT>
+    //void X64CodeGenerator::Helper<OpCode::IMul>::Emit(X64CodeGenerator& code,
+    //                                                  Register<SIZE, ISFLOAT> dest,
+    //                                                  Register<SIZE, ISFLOAT> src)
+    //{
+    //    code.Imul(dest, src);
+    //}
+
+
     template <>
     template <unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::Helper<OpCode::Lea>::Emit(X64CodeGenerator& code,
@@ -719,32 +815,32 @@ namespace NativeJIT
 
     template <>
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Helper<OpCode::Mul>::Emit(X64CodeGenerator& /*code*/,
-                                                     Register<SIZE, ISFLOAT> /*dest*/,
-                                                     Register<SIZE, ISFLOAT> /*src*/)
+    void X64CodeGenerator::Helper<OpCode::IMul>::Emit(X64CodeGenerator& code,
+                                                      Register<SIZE, ISFLOAT> dest,
+                                                      Register<SIZE, ISFLOAT> src)
     {
-        std::cout << "[Implement mul dest, src]";
+        code.IMul(dest, src);
     }
 
 
     template <>
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Helper<OpCode::Mul>::Emit(X64CodeGenerator& /*code*/,
-                                                     Register<SIZE, ISFLOAT> /*dest*/,
-                                                     Register<8, false> /*src*/,
-                                                     __int32 /*srcOffset*/)
+    void X64CodeGenerator::Helper<OpCode::IMul>::Emit(X64CodeGenerator& code,
+                                                      Register<SIZE, ISFLOAT> dest,
+                                                      Register<8, false> src,
+                                                      __int32 srcOffset)
     {
-        std::cout << "[Implement mul dest, [src + offset]]";
+        code.IMul(dest, src, srcOffset);
     }
 
 
     template <>
     template <unsigned SIZE, bool ISFLOAT, typename T>
-    void X64CodeGenerator::Helper<OpCode::Mul>::Emit(X64CodeGenerator& /*code*/,
-                                                     Register<SIZE, ISFLOAT> /*dest*/,
-                                                     T /*value*/)
+    void X64CodeGenerator::Helper<OpCode::IMul>::Emit(X64CodeGenerator& code,
+                                                      Register<SIZE, ISFLOAT> dest,
+                                                      T value)
     {
-        std::cout << "[Implement mul dest, value]";
+        code.IMul(dest, value);
     }
 
 
