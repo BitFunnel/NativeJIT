@@ -18,11 +18,14 @@ namespace NativeJIT
     class CodeBuffer : public NonCopyable
     {
     public:
+        // Allocates a buffer from the allocator.
+        // Configures the JumpTable for the specified number of labels and call sites.
         CodeBuffer(Allocators::IAllocator& allocator,
                    unsigned capacity,
                    unsigned maxLabels,
                    unsigned maxCallSites);
 
+        // Frees the buffer.
         ~CodeBuffer();
 
         // Allocating and resolving jump labels.

@@ -4,20 +4,17 @@
 
 #include <iostream>
 
-
 #include "CallNode.h"
+#include "ConditionalNode.h"
 #include "Examples.h"
 #include "ExpressionTree.h"
 #include "ExpressionNodeFactory.h"
-#include "ExpressionNodeFactory2.h"
-#include "Function2.h"
+#include "Function.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
 #include "Storage.h"
 #include "Temporary/Allocator.h"
 
-
-#include "ConditionalNode.h"
 
 namespace NativeJIT
 {
@@ -65,7 +62,7 @@ namespace NativeJIT
         AutoResetAllocator reset(allocator);
 
         {
-            Function2<unsigned __int64> function(allocator, code);
+            Function<unsigned __int64> function(allocator, code);
 
             auto & a = function.Immediate(0x1234ull);
             auto f = function.Compile(a);
@@ -81,7 +78,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Parameter<InnerClass*>();
         auto & b = factory.FieldPointer(a, &InnerClass::m_b);
@@ -97,7 +94,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
@@ -114,7 +111,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Parameter<unsigned __int64>();
         auto & b = factory.Parameter<unsigned __int64*>();
@@ -131,7 +128,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
@@ -152,7 +149,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.Parameter<unsigned __int64>();
@@ -170,7 +167,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Parameter<char>();
         auto & b = factory.Immediate<char>(123);
@@ -223,7 +220,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Immediate(5ull);
         auto & b = factory.Immediate(6ull);
@@ -288,7 +285,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Immediate<unsigned __int64>(5);
         auto & b = factory.Immediate<unsigned __int64>(6);
@@ -304,7 +301,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Immediate<unsigned __int64>(5);
         auto & b = factory.Immediate<unsigned __int64>(6);
@@ -327,7 +324,7 @@ namespace NativeJIT
         AutoResetAllocator reset(allocator);
 
         {
-            Function2<__int64, __int64> function(allocator, code);
+            Function<__int64, __int64> function(allocator, code);
 
             auto & a = function.Add(function.GetP1(), function.Immediate<unsigned __int64>(5ull));
             auto f = function.Compile(a);
@@ -343,7 +340,7 @@ namespace NativeJIT
         AutoResetAllocator reset(allocator);
 
         {
-            Function2<__int64, __int64, __int64> function(allocator, code);
+            Function<__int64, __int64, __int64> function(allocator, code);
 
             auto & a = function.Add(function.GetP2(), function.GetP1());
             auto f = function.Compile(a);
@@ -364,7 +361,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Immediate<int>(5);
         auto & b = factory.Immediate<int>(6);

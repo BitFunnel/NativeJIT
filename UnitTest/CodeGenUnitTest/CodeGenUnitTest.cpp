@@ -14,50 +14,6 @@ namespace NativeJIT
 {
     namespace CodeGenUnitTest
     {
-        TestCase(SampleTest)
-        {
-            TestAssert(true, "Test passed.");
-        }
-
-
-        TestCase(ExecutionBuffer)
-        {
-            //ExecutionBuffer allocator(1000);
-            //FunctionBuffer buffer(allocator, 200, 3, 0, false);
-
-            //std::cout << "Add" << std::endl;
-
-            //buffer.Emit<OpCode::Add>(rax, rbx);
-            //buffer.Emit<OpCode::Add>(al, bl);
-            //buffer.Emit<OpCode::Add>(rax, rbx, 0x12);
-            //buffer.Emit<OpCode::Add>(rax, rbx, 0x12345678);
-            //buffer.Emit<OpCode::Add>(al, static_cast<__int8>(0x12));
-            //buffer.Emit<OpCode::Add>(rax, 0x12);
-            //buffer.Emit<OpCode::Add>(rax, 0x12345678);
-
-            //std::cout << std::endl;
-            //std::cout << "Sub/Cmp" << std::endl;
-
-            //buffer.Emit<OpCode::Sub>(rax, rbx);
-            //buffer.Emit<OpCode::Cmp>(rax, r9);
-
-            //std::cout << std::endl;
-            //std::cout << "Lea" << std::endl;
-            //buffer.Emit<OpCode::Lea>(rax, rbx, 0x12);
-
-            //std::cout << std::endl;
-            //std::cout << "Pop/Push" << std::endl;
-            //buffer.Emit<OpCode::Pop>(rax);
-            //buffer.Emit<OpCode::Pop>(r8);
-            //buffer.Emit<OpCode::Push>(rax);
-            //buffer.Emit<OpCode::Push>(r8);
-
-            //std::cout << std::endl;
-            //std::cout << "Ret" << std::endl;
-            //buffer.Emit<OpCode::Ret>();
-        }
-
-
         TestCase(JCC)
         {
             ExecutionBuffer allocator(1000);

@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "Examples.h"
-#include "ExpressionNodeFactory2.h"
+#include "ExpressionNodeFactory.h"
 #include "ExpressionTree.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
@@ -43,7 +43,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & arrayOfA = factory.Parameter<A*>();
         auto & index = factory.Parameter<unsigned __int64>();
@@ -96,7 +96,7 @@ namespace NativeJIT
     {
         ExecutionBuffer allocator(5000);
         FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory2 factory(allocator, code);
+        ExpressionNodeFactory factory(allocator, code);
 
         auto & a = factory.Immediate(5ull);
         auto & b = factory.Immediate(6ull);

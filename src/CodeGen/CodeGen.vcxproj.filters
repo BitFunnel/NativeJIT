@@ -32,9 +32,6 @@
     <ClCompile Include="ExecutionBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CodeBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -79,14 +79,12 @@
     <ClInclude Include="BinaryNode.h" />
     <ClInclude Include="CallNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
-    <ClInclude Include="ExpressionNodeFactory2.h" />
     <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
     <ClInclude Include="ExpressionNodeFactory.h" />
     <ClInclude Include="ExpressionTree.h" />
     <ClInclude Include="FieldPointerNode.h" />
-    <ClInclude Include="Function2.h" />
     <ClInclude Include="ImmediateNode.h" />
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
@@ -102,10 +100,7 @@
     <ClCompile Include="ConditionalNode.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
-    <ClCompile Include="ExpressionNodeFactory2.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />
-    <ClCompile Include="Function.cpp" />
-    <ClCompile Include="Function2.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="ParameterNode.cpp" />

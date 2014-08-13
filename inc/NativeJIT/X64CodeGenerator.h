@@ -5,7 +5,6 @@
 
 // http://wiki.osdev.org/X86-64_Instruction_Encoding
 
-#include <iostream>         // TODO: Remove - temporary for debugging.
 #include <ostream>
 
 #include "NativeJIT/CodeBuffer.h"       // Inherits from CodeBuffer.
@@ -65,10 +64,6 @@ namespace NativeJIT
     class X64CodeGenerator : public CodeBuffer
     {
     public:
-        //X64CodeGenerator(unsigned __int8* buffer,
-        //                 unsigned capacity,
-        //                 unsigned maxLabels,
-        //                 unsigned maxCallSites);
         X64CodeGenerator(Allocators::IAllocator& allocator,
                          unsigned capacity,
                          unsigned maxLabels,
