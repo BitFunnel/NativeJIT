@@ -19,16 +19,21 @@ namespace NativeJIT
     struct UnwindInfo;
     struct UnwindCode;
 
-    class FunctionBufferBase : public X64CodeGenerator
+    // TODO: Add methods to copy data in.
+    // TODO: Add methods to extract data. EntryPoint and Size. Is prologue sent over the wire?
+    //       Perhaps unwind data should be sent as well and verified.
+    // TODO: Verify that generating and executing function buffers use same parameters.
+    // (or at least that numbers of slots, labels, and call sites are compatible.
+    class FunctionBuffer : public X64CodeGenerator
     {
     public:
-        FunctionBufferBase(Allocators::IAllocator& allocator,
+        FunctionBuffer(Allocators::IAllocator& allocator,
                            unsigned capacity,
+                           unsigned maxLabels,
+                           unsigned maxCallSites,
                            unsigned slotCount,
                            unsigned registerSaveMask,
                            bool isLeaf);
-
-        ~FunctionBufferBase();
 
         unsigned char const * GetEntryPoint() const;
 
@@ -86,55 +91,5 @@ namespace NativeJIT
         // Leaf functions do not call other functions or allocate space on the
         // stack.
 //        bool m_isLeaf;
-
-        Allocators::IAllocator& m_allocator;
     };
-
-
-    template <typename FUNCTION>
-    class FunctionBuffer : public FunctionBufferBase
-    {
-    public:
-        // Create CodeBuffer from memory in ExecutionBuffer.
-        // Generate prologue.
-        // Generate epilogue.
-        // Generate unwind information. (Any possibility of unwinding multiple functions?)
-        // Register unwind information.
-        FunctionBuffer(Allocators::IAllocator& allocator,
-                       unsigned capacity,
-                       unsigned slotCount,
-                       unsigned registerSaveMask,
-                       bool isLeaf);
-
-        FUNCTION* GetFunction();
-    };
-
-
-    //*************************************************************************
-    //
-    // FunctionBuffer template definitions.
-    //
-    //*************************************************************************
-    template <typename FUNCTION>
-    FunctionBuffer<FUNCTION>::FunctionBuffer(Allocators::IAllocator& allocator,
-                                             unsigned capacity,
-                                             unsigned slotCount,
-                                             unsigned registerSaveMask,
-                                             bool isLeaf)
-        : FunctionBufferBase(allocator,
-                             capacity,
-                             slotCount,
-                             registerSaveMask,
-                             isLeaf)
-    {
-    }
-
-
-    template <typename FUNCTION>
-    FUNCTION* FunctionBuffer<FUNCTION>::GetFunction()
-    {
-        // TODO: implement.
-        // TODO: Should this return FUNCTION or FUNCTION*?
-        return reinterpret_cast<FUNCTION*>(const_cast<unsigned char *>(GetEntryPoint()));
-    }
 }

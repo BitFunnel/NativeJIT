@@ -17,7 +17,7 @@ namespace NativeJIT
 {
     class NodeBase;
     class ParameterBase;
-    class X64CodeGenerator;
+//    class X64CodeGenerator;
 
 
     class RegisterFile
@@ -48,7 +48,7 @@ namespace NativeJIT
     class ExpressionTree : public NonCopyable
     {
     public:
-        ExpressionTree(Allocators::IAllocator& allocator, FunctionBufferBase& code);
+        ExpressionTree(Allocators::IAllocator& allocator, FunctionBuffer& code);
 
         Allocators::IAllocator& GetAllocator() const;
 
@@ -77,7 +77,7 @@ namespace NativeJIT
 
         RegisterFile& GetParameterRegisters();
 
-        FunctionBufferBase& GetCodeGenerator() const;
+        FunctionBuffer& GetCodeGenerator() const;
 
         template <unsigned SIZE, bool ISFLOAT>
         bool IsBasePointer(Register<SIZE, ISFLOAT> r) const;
@@ -88,6 +88,13 @@ namespace NativeJIT
 
         void Print() const;
         void Compile();
+
+    protected:
+        void  const * GetUntypedEntryPoint() const;
+
+        Allocators::IAllocator& m_allocator;
+        FunctionBuffer & m_code;
+
 
     private:
         void SetBasePointer(Register<sizeof(void*), false> r);
@@ -111,9 +118,6 @@ namespace NativeJIT
         template <unsigned SIZE>
         unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
 
-
-        Allocators::IAllocator& m_allocator;
-        FunctionBufferBase & m_code;
 
         std::vector<NodeBase*> m_topologicalSort;
 

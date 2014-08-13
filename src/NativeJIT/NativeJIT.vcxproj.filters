@@ -69,6 +69,12 @@
     <ClInclude Include="CodeGenHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ExpressionNodeFactory2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Function2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -102,6 +108,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Function.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionNodeFactory2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Function2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

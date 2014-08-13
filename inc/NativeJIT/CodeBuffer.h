@@ -7,17 +7,23 @@
 #include "Temporary/NonCopyable.h"  // Base class.
 
 
+namespace Allocators
+{
+    class IAllocator;
+}
+
+
 namespace NativeJIT
 {
     class CodeBuffer : public NonCopyable
     {
     public:
-        CodeBuffer(unsigned __int8* buffer,
+        CodeBuffer(Allocators::IAllocator& allocator,
                    unsigned capacity,
                    unsigned maxLabels,
                    unsigned maxCallSites);
 
-        //~CodeBuffer();
+        ~CodeBuffer();
 
         // Allocating and resolving jump labels.
         //   Use AllocateLabel() at any time to allocated a label representing a jump target.
@@ -71,6 +77,7 @@ namespace NativeJIT
         void EmitCallSite(Label label, unsigned size);
 
     private:
+        Allocators::IAllocator& m_allocator;
         unsigned m_capacity;
 
         unsigned __int8* m_bufferStart;

@@ -12,27 +12,26 @@
 
 namespace NativeJIT
 {
-    void TODO()
-    {
-        throw 0;
-    }
+    //void TODO()
+    //{
+    //    throw 0;
+    //}
 
 
     //*************************************************************************
     //
-    // FunctionBufferBase
+    // FunctionBuffer
     //
     //*************************************************************************
-    FunctionBufferBase::FunctionBufferBase(Allocators::IAllocator& allocator,
+    FunctionBuffer::FunctionBuffer(Allocators::IAllocator& allocator,
                                            unsigned capacity,
+                                           unsigned maxLabels,
+                                           unsigned maxCallSites,
                                            unsigned slotCount,
                                            unsigned registerSaveMask,
                                            bool isLeaf)
-        : m_allocator(allocator),
-          X64CodeGenerator(static_cast<unsigned __int8*>(allocator.Allocate(capacity)), capacity, 0, 0)
+        : X64CodeGenerator(allocator, capacity, maxLabels, maxCallSites)
     {
-        // TODO: Need to deallocate buffer passed to X64CodeGenerator constructor.
-
 #ifdef _DEBUG
         FillWithBreakCode(0, BufferSize());
 #endif
@@ -49,25 +48,19 @@ namespace NativeJIT
     }
 
 
-    FunctionBufferBase::~FunctionBufferBase()
-    {
-        // TODO: Need to deallocate buffer passed to m_code constructor.
-    }
-
-
-    unsigned char const * FunctionBufferBase::GetEntryPoint() const
+    unsigned char const * FunctionBuffer::GetEntryPoint() const
     {
         return m_entryPoint;
     }
 
 
-    void FunctionBufferBase::Reset()
+    void FunctionBuffer::Reset()
     {
         CodeBuffer::Reset(static_cast<unsigned>(m_bodyStart));
     }
 
 
-    void FunctionBufferBase::EmitEpilogue()
+    void FunctionBuffer::EmitEpilogue()
     {
         for (unsigned i = 0 ; i < m_epilogueCode.size(); ++i)
         {
@@ -76,7 +69,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EmitUnwindInfo(unsigned char slotCount,
+    void FunctionBuffer::EmitUnwindInfo(unsigned char slotCount,
                                             unsigned registerSaveMask,
                                             bool isLeaf)
     {
@@ -184,7 +177,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EmitPrologue()
+    void FunctionBuffer::EmitPrologue()
     {
         m_entryPoint = BufferStart() + CurrentPosition();
         unsigned start = CurrentPosition();
@@ -219,7 +212,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::CreateEpilogue()
+    void FunctionBuffer::CreateEpilogue()
     {
         unsigned start = CurrentPosition();
 
@@ -255,7 +248,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::RegisterUnwindInfo()
+    void FunctionBuffer::RegisterUnwindInfo()
     {
         if (!RtlAddFunctionTable(&m_runtimeFunction, 1, (DWORD64)BufferStart()))
         {
@@ -264,8 +257,10 @@ namespace NativeJIT
     }
 
 
+    // TODO: Allocate on heap.
+    // TODO: Document reverse order fillings.
     // Creates an UnwindInfo structure in the code buffer.
-    void FunctionBufferBase::AllocateUnwindInfo(unsigned unwindCodeCount)
+    void FunctionBuffer::AllocateUnwindInfo(unsigned unwindCodeCount)
     {
         if (unwindCodeCount > UnwindInfo::c_maxUnwindCodes)
         {
@@ -276,7 +271,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::ProloguePushNonVolatile(Register<8, false> r)
+    void FunctionBuffer::ProloguePushNonVolatile(Register<8, false> r)
     {
         // TODO: Review this static_cast. Is there a better way to do this?
         EmitUnwindCode(UnwindCode(static_cast<unsigned char>(CurrentPosition() - m_prologueStart),
@@ -286,7 +281,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::PrologueStackAllocate(unsigned __int8 slots)
+    void FunctionBuffer::PrologueStackAllocate(unsigned __int8 slots)
     {
         // Compare with 16 (vs 15) is correct since UWOP_ALLOC_SMALL encodes 1..16 as 0..15.
         if (slots > 16)
@@ -306,7 +301,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::PrologueSetFrameRegister(unsigned __int8 slots)
+    void FunctionBuffer::PrologueSetFrameRegister(unsigned __int8 slots)
     {
         unsigned desiredOffset = slots / 2;     // Want offset to put frame pointer in the middle of the slots.
         if (desiredOffset %2 == 1)              // Need an offset that is divisible by 16.
@@ -321,14 +316,14 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EmitUnwindCode(const UnwindCode& code)
+    void FunctionBuffer::EmitUnwindCode(const UnwindCode& code)
     {
         // TODO: Buffer overflow handling. Perhaps this should use Emit8 instead of its own m_unwindCodePtr.
         *--m_unwindCodePtr = code;
     }
 
 
-    bool FunctionBufferBase::UnwindInfoIsValid(std::ostream& out,
+    bool FunctionBuffer::UnwindInfoIsValid(std::ostream& out,
                                                RUNTIME_FUNCTION& runtimeFunction)
     {
         bool success = true;
@@ -396,7 +391,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::FillWithBreakCode(unsigned start, unsigned length)
+    void FunctionBuffer::FillWithBreakCode(unsigned start, unsigned length)
     {
         Fill(start, length, 0xcc);
     }

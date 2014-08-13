@@ -25,25 +25,25 @@ namespace NativeJIT
     }
 
 
-    int A(int, int)
-    {
-        return 0;
-    }
+    //int A(int, int)
+    //{
+    //    return 0;
+    //}
 
-    int B(int)
-    {
-        return 0;
-    }
+    //int B(int)
+    //{
+    //    return 0;
+    //}
 
     void Test()
     {
-        std::cout << ParameterCount(&A);
-        std::cout << ParameterCount(&B);
+        //std::cout << ParameterCount(&A);
+        //std::cout << ParameterCount(&B);
 
-        ExecutionBuffer buffer(1000);
-        FunctionBuffer<F> function(buffer, 500, 1, 1, false);
+        //ExecutionBuffer buffer(1000);
+        //FunctionBuffer<F> function(buffer, 500, 1, 1, false);
 
-        (*function.GetFunction())(1,2);
+        //(*function.GetFunction())(1,2);
 
         //function.Emit(OpCode::Add, rax, rbx);
         //function.Emit(OpCode::Add, xmm0, xmm1);

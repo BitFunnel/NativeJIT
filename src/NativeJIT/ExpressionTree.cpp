@@ -53,7 +53,7 @@ namespace NativeJIT
     // ExpressionTree
     //
     //*************************************************************************
-    ExpressionTree::ExpressionTree(Allocators::IAllocator& allocator, FunctionBufferBase& code)
+    ExpressionTree::ExpressionTree(Allocators::IAllocator& allocator, FunctionBuffer& code)
         : m_allocator(allocator),
           m_code(code),
           m_parameterRegisters(code.GetRXXCount(), code.GetXMMCount()),
@@ -92,7 +92,7 @@ namespace NativeJIT
     }
 
 
-    FunctionBufferBase& ExpressionTree::GetCodeGenerator() const
+    FunctionBuffer& ExpressionTree::GetCodeGenerator() const
     {
         return m_code;
     }
@@ -191,12 +191,19 @@ namespace NativeJIT
 
     void ExpressionTree::Compile()
     {
+        m_code.Reset();
         Pass1();
         Pass2();
         Print();
         Pass3();
         m_code.PatchCallSites();
         Print();
+    }
+
+
+    void  const * ExpressionTree::GetUntypedEntryPoint() const
+    {
+        return m_code.GetEntryPoint();
     }
 
 

@@ -9,7 +9,8 @@
 #include "Examples.h"
 #include "ExpressionTree.h"
 #include "ExpressionNodeFactory.h"
-#include "Function.h"
+#include "ExpressionNodeFactory2.h"
+#include "Function2.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
 #include "Storage.h"
@@ -58,12 +59,29 @@ namespace NativeJIT
     };
 
 
+    void TestImmediate(Allocators::IAllocator& allocator, FunctionBuffer& code)
+    {
+        // Is this worth it, vx just manually resetting after the block (even if a try/catch isn't used)?
+        AutoResetAllocator reset(allocator);
+
+        {
+            Function2<unsigned __int64> function(allocator, code);
+
+            auto & a = function.Immediate(0x1234ull);
+            auto f = function.Compile(a);
+
+            auto x = f();
+
+            std::cout << "x = " << x << std::endl;
+        }
+    }
+
+
     void TestFieldPointerPrimitive()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Parameter<InnerClass*>();
         auto & b = factory.FieldPointer(a, &InnerClass::m_b);
@@ -71,16 +89,15 @@ namespace NativeJIT
 
         factory.Return(c);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void TestFieldPointerEmbedded()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
@@ -89,16 +106,15 @@ namespace NativeJIT
 
         factory.Return(d);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void TestBinary()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Parameter<unsigned __int64>();
         auto & b = factory.Parameter<unsigned __int64*>();
@@ -107,16 +123,15 @@ namespace NativeJIT
 
         factory.Return(d);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void TestFactory()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
@@ -129,16 +144,15 @@ namespace NativeJIT
 
         factory.Return(f);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void TestArray()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Parameter<OuterClass*>();
         auto & b = factory.Parameter<unsigned __int64>();
@@ -148,16 +162,15 @@ namespace NativeJIT
 
         factory.Return(e);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void TestByte()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Parameter<char>();
         auto & b = factory.Immediate<char>(123);
@@ -170,14 +183,14 @@ namespace NativeJIT
 
         factory.Return(f);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void TestDouble()
     {
         //ExecutionBuffer allocator(5000);
-        //FunctionBufferBase code(allocator, 2000, 3, 0, false);
+        //FunctionBuffer code(allocator, 2000, 3, 0, false);
         //ExpressionTree tree(allocator, code);
         //ExpressionNodeFactory factory(allocator, tree);
 
@@ -199,7 +212,7 @@ namespace NativeJIT
     void TestLabel()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
 
         Label l1 = code.AllocateLabel();
         code.PlaceLabel(l1);
@@ -209,22 +222,22 @@ namespace NativeJIT
     void TestConditional()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Immediate(5ull);
         auto & b = factory.Immediate(6ull);
 
         auto & c = factory.Immediate(12345ull);
-        IsTrue<unsigned __int64> d(tree, c);
+
+        IsTrue<unsigned __int64> d(factory, c);     // What is this line for?
 
         auto & e = factory.GreaterThan(a, b);
         auto & f = factory.Conditional(e, a, b);
 
         factory.Return(f);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
@@ -274,16 +287,15 @@ namespace NativeJIT
     void TestStorageIntegration()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Immediate<unsigned __int64>(5);
         auto & b = factory.Immediate<unsigned __int64>(6);
         auto & c = factory.Add(a, b);
         factory.Return(c);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
@@ -291,9 +303,8 @@ namespace NativeJIT
     void TestSpill()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Immediate<unsigned __int64>(5);
         auto & b = factory.Immediate<unsigned __int64>(6);
@@ -307,27 +318,39 @@ namespace NativeJIT
 
         factory.Return(g);
 
-        tree.Compile();
+        factory.Compile();
     }
 
 
-    void TestFunction()
+    void TestFunction1(Allocators::IAllocator& allocator, FunctionBuffer& code)
     {
-        ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
+        AutoResetAllocator reset(allocator);
 
-        Function<__int64, __int64, __int64> function(allocator, code);
+        {
+            Function2<__int64, __int64> function(allocator, code);
 
-        auto & factory = function.GetFactory();
-        auto & a = factory.Add(function.GetP2(), function.GetP1());
+            auto & a = function.Add(function.GetP1(), function.Immediate<unsigned __int64>(5ull));
+            auto f = function.Compile(a);
 
-        function.Return(a);
-        function.Compile();
+            auto x = f(1);
+            std::cout << "x = " << x << std::endl;
+        }
+    }
 
-        auto f = function.GetEntryPoint();
 
-        __int64 x = f(1, 2);
-        std::cout << "x = " << x << std::endl;
+    void TestFunction2(Allocators::IAllocator& allocator, FunctionBuffer& code)
+    {
+        AutoResetAllocator reset(allocator);
+
+        {
+            Function2<__int64, __int64, __int64> function(allocator, code);
+
+            auto & a = function.Add(function.GetP2(), function.GetP1());
+            auto f = function.Compile(a);
+
+            auto x = f(1, 2);
+            std::cout << "x = " << x << std::endl;
+        }
     }
 
 
@@ -340,9 +363,8 @@ namespace NativeJIT
     void TestCall()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Immediate<int>(5);
         auto & b = factory.Immediate<int>(6);
@@ -353,12 +375,19 @@ namespace NativeJIT
         auto & d = factory.Call(function, a, b);
 
         factory.Return(d);
-        tree.Compile();
+        factory.Compile();
     }
 
 
     void RunTests()
     {
+        ExecutionBuffer executionBuffer(5000);
+        FunctionBuffer code(executionBuffer, 2000, 10, 10, 3, 0, false);
+
+        Allocator allocator(5000);
+
+
+
 //        TestConditional();
 //        JITExample1();
 //        ConditionalExample();
@@ -378,10 +407,12 @@ namespace NativeJIT
 //        TestStorageIntegration();
 //        TestSpill();
 
-        TestFunction();
+//        TestFunction1(allocator, code);
+//        TestFunction2(allocator, code);
+        TestImmediate(allocator, code);
 //        TestCall();
 
-        JITExample1();
+//        JITExample1();
     }
 }
 

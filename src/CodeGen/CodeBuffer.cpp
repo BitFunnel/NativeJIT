@@ -4,22 +4,38 @@
 
 #include "NativeJIT/CodeBuffer.h"
 #include "NativeJIT/JumpTable.h"
+#include "Temporary/Allocator.h"
 #include "Temporary/Assert.h"
 
 
 namespace NativeJIT
 {
-    CodeBuffer::CodeBuffer(unsigned __int8* buffer, 
+    CodeBuffer::CodeBuffer(Allocators::IAllocator& allocator, 
                            unsigned capacity,
                            unsigned maxLabels,
                            unsigned maxCallSites)
-        : m_bufferStart(buffer),
-          m_bufferEnd(buffer + capacity),
-          m_current(buffer),
+        : m_allocator(allocator),
+          m_bufferStart(nullptr),
           m_capacity(capacity),
           m_localJumpTable(new JumpTable(maxLabels, maxCallSites))
     {
+        //m_bufferStart(allocator.Allocate(capacity)),
+        //m_bufferEnd(buffer + capacity),
+        //m_current(buffer),
+        m_bufferStart = static_cast<unsigned __int8*>(allocator.Allocate(capacity));
+        m_bufferEnd = m_bufferStart + capacity;
+        m_current = m_bufferStart;
     }
+
+
+    CodeBuffer::~CodeBuffer()
+    {
+        if (m_bufferStart != nullptr)
+        {
+            m_allocator.Deallocate(m_bufferStart);
+        }
+    }
+
 
 
     // Allocating and resolving jump labels.

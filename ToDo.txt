@@ -17,7 +17,7 @@ x        ret
 x        // release r9
 
 
-Need some way to reuse a FunctionBufferBase over and over
+Need some way to reuse a FunctionBuffer over and over
   Reset()
     OPTION - epilogue and prologue at head of buffer
       Need to move m_current back to m_bodyStart

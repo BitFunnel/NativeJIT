@@ -18,6 +18,13 @@
 #pragma warning(push)
 #pragma warning(disable:4127)
 
+
+namespace Allocators
+{
+    class IAllocator;
+}
+
+
 namespace NativeJIT
 {
     // WARNING: When modifying JccType, be sure to also modify the function JccName().
@@ -58,11 +65,14 @@ namespace NativeJIT
     class X64CodeGenerator : public CodeBuffer
     {
     public:
-        X64CodeGenerator(unsigned __int8* buffer,
+        //X64CodeGenerator(unsigned __int8* buffer,
+        //                 unsigned capacity,
+        //                 unsigned maxLabels,
+        //                 unsigned maxCallSites);
+        X64CodeGenerator(Allocators::IAllocator& allocator,
                          unsigned capacity,
                          unsigned maxLabels,
                          unsigned maxCallSites);
-
 
         void EnableDiagnostics(std::ostream& out);
         void DisableDiagnostics();

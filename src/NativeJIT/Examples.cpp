@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "Examples.h"
-#include "ExpressionNodeFactory.h"
+#include "ExpressionNodeFactory2.h"
 #include "ExpressionTree.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
@@ -42,9 +42,8 @@ namespace NativeJIT
     void JITExample1()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & arrayOfA = factory.Parameter<A*>();
         auto & index = factory.Parameter<unsigned __int64>();
@@ -68,7 +67,7 @@ namespace NativeJIT
 
         factory.Return(k);
 
-        tree.Compile();
+        factory.Compile();
 
         typedef unsigned __int64 (*F)(A *, unsigned __int64, unsigned __int64*, unsigned __int64);
 
@@ -96,9 +95,8 @@ namespace NativeJIT
     void ConditionalExample()
     {
         ExecutionBuffer allocator(5000);
-        FunctionBufferBase code(allocator, 2000, 3, 0, false);
-        ExpressionTree tree(allocator, code);
-        ExpressionNodeFactory factory(allocator, tree);
+        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+        ExpressionNodeFactory2 factory(allocator, code);
 
         auto & a = factory.Immediate(5ull);
         auto & b = factory.Immediate(6ull);
@@ -107,6 +105,6 @@ namespace NativeJIT
 
         factory.Return(d);
 
-        tree.Compile();
+        factory.Compile();
     }
 }

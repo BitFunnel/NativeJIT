@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 #include "NativeJIT/ExecutionBuffer.h"
+#include "Temporary/Assert.h"
 
 
 namespace NativeJIT
@@ -74,7 +75,7 @@ namespace NativeJIT
     // Allocates a block of a specified byte size.
     void* ExecutionBuffer::Allocate(size_t size)
     {
-        // Assert(m_bytesAllocated + size <= m_bufferSize, "Out of memory");
+        Assert(m_bytesAllocated + size <= m_bufferSize, "Out of memory");
 
         void* result = static_cast<void*>(m_buffer + m_bytesAllocated);
         m_bytesAllocated += size;

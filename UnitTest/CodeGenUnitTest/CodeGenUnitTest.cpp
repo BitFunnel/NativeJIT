@@ -23,7 +23,7 @@ namespace NativeJIT
         TestCase(ExecutionBuffer)
         {
             //ExecutionBuffer allocator(1000);
-            //FunctionBufferBase buffer(allocator, 200, 3, 0, false);
+            //FunctionBuffer buffer(allocator, 200, 3, 0, false);
 
             //std::cout << "Add" << std::endl;
 
@@ -61,7 +61,7 @@ namespace NativeJIT
         TestCase(JCC)
         {
             ExecutionBuffer allocator(1000);
-            FunctionBufferBase buffer(allocator, 200, 3, 0, false);
+            FunctionBuffer buffer(allocator, 200, 10, 10, 3, 0, false);
 
             Label l1 = buffer.AllocateLabel();
             buffer.PlaceLabel(l1);
@@ -72,7 +72,7 @@ namespace NativeJIT
         TestCase(OpCodes)
         {
             ExecutionBuffer allocator(5000);
-            FunctionBufferBase buffer(allocator, 2000, 3, 0, false);
+            FunctionBuffer buffer(allocator, 200, 10, 10, 3, 0, false);
 
             unsigned __int8 const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
