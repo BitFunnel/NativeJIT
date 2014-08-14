@@ -28,16 +28,19 @@ namespace NativeJIT
     {
     public:
         FunctionBuffer(Allocators::IAllocator& allocator,
-                           unsigned capacity,
-                           unsigned maxLabels,
-                           unsigned maxCallSites,
-                           unsigned slotCount,
-                           unsigned registerSaveMask,
-                           bool isLeaf);
+                       unsigned capacity,
+                       unsigned maxLabels,
+                       unsigned maxCallSites,
+                       unsigned slotCount,
+                       unsigned registerSaveMask,
+                       bool isLeaf);
 
         unsigned char const * GetEntryPoint() const;
 
         void EmitEpilogue();
+
+        void SaveVolatileRegisters();
+        void RestoreVolatileRegisters();
 
         void Reset();
 

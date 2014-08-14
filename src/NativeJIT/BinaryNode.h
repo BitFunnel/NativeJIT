@@ -79,6 +79,16 @@ namespace NativeJIT
             // both l and r are greater than a. Since there are not
             // enough registers available, need to spill to memory.
             auto sRight = m_right.CodeGen(tree);
+
+            // TODO: What if this register holds a CSE that is referenced by m_left?
+            // In this case, the spill will allocate another location, but retain the
+            // original location. Also, it is possible that sRight has already been
+            // spilled and is BP indirect, so that spilling won't free up any registers.
+            // Need to ensure this code works in all situations. If there aren't enough
+            // registers to compute m_left and spilling sRight won't free up a register,
+            // the operation will fail unless we can free up some other register.
+            // NOTE: when considering a fix, search the codebase for other instances
+            // of Storage::Spill().
             sRight.Spill(tree);
 
             auto sLeft = m_left.CodeGen(tree);

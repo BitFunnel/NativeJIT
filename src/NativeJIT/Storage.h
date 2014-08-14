@@ -29,44 +29,17 @@ namespace NativeJIT
         typedef enum {Immediate, Indirect, Direct} Class;
 
         template <typename T>
-        Data(ExpressionTree& tree, T immediate)
-            : m_refCount(0),
-              m_tree(tree),
-              m_storageClass(Immediate)
-        {
-            static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
-            *reinterpret_cast<T*>(&m_immediate2) = immediate;
-        }
-
+        Data(ExpressionTree& tree, T immediate);
 
         template <unsigned SIZE, bool ISFLOAT>
-        Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r)
-            : m_refCount(0),
-              m_tree(tree),
-              m_storageClass(Direct),
-              m_registerId(r.GetId())
-        {
-        }
-
+        Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r);
 
         Data(ExpressionTree& tree, Register<sizeof(void*), false> base, __int32 offset);
 
-
         template <typename T>
-        T GetImmediate() const
-        {
-            static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
-            return *(reinterpret_cast<T*>(&m_immediate2));
-        }
+        T GetImmediate() const;
 
-
-        Data* ConvertToIndirect(unsigned registerId, __int32 offset)
-        {
-            m_storageClass = Indirect;
-            m_registerId = registerId;
-            m_offset = offset;
-            return this;
-        }
+        Data* ConvertToIndirect(unsigned registerId, __int32 offset);
 
     private:
         template <typename OTHER> friend class Storage;
@@ -100,12 +73,7 @@ namespace NativeJIT
         Storage(ExpressionTree& tree, Storage<T*>& base, __int32 offset);
 
         template <typename U>
-        Storage(ExpressionTree& /*tree*/, Storage<U> other)
-            : m_data(nullptr)
-        {
-            SetData(other.m_data);
-        }
-
+        Storage(ExpressionTree& /*tree*/, Storage<U> other);
 
         Storage(Storage const & other);
 
@@ -159,6 +127,40 @@ namespace NativeJIT
 
     //*************************************************************************
     //
+    // Template definitions for Data.
+    //
+    //*************************************************************************
+    template <typename T>
+    Data::Data(ExpressionTree& tree, T immediate)
+        : m_refCount(0),
+          m_tree(tree),
+          m_storageClass(Immediate)
+    {
+        static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
+        *reinterpret_cast<T*>(&m_immediate2) = immediate;
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    Data::Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r)
+        : m_refCount(0),
+            m_tree(tree),
+            m_storageClass(Direct),
+            m_registerId(r.GetId())
+    {
+    }
+
+
+    template <typename T>
+    T Data::GetImmediate() const
+    {
+        static_assert(sizeof(T) <= sizeof(m_immediate2), "Unsupported type.");
+        return *(reinterpret_cast<T*>(&m_immediate2));
+    }
+
+
+    //*************************************************************************
+    //
     // Template definitions for Storage.
     //
     //*************************************************************************
@@ -192,6 +194,14 @@ namespace NativeJIT
         SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, r, offset));
     }
 
+
+    template <typename T>
+    template <typename U>
+    Storage<T>::Storage(ExpressionTree& /*tree*/, Storage<U> other)
+        : m_data(nullptr)
+    {
+        SetData(other.m_data);
+    }
 
 
     template <typename T>
@@ -346,6 +356,7 @@ namespace NativeJIT
             }
         }
     }
+
 
     template <typename T>
     void Storage<T>::Spill(ExpressionTree& tree)

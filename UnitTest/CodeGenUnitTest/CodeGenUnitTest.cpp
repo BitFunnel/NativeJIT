@@ -14,6 +14,9 @@ namespace NativeJIT
 {
     namespace CodeGenUnitTest
     {
+        // TODO: JMP
+        // TODO: JCC - all cases.
+
         TestCase(JCC)
         {
             ExecutionBuffer allocator(1000);

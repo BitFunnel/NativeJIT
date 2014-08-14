@@ -17,7 +17,6 @@ namespace NativeJIT
 {
     class NodeBase;
     class ParameterBase;
-//    class X64CodeGenerator;
 
 
     class RegisterFile

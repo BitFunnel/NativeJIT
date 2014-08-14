@@ -14,12 +14,6 @@
 #include "Temporary/NonCopyable.h"
 
 
-//namespace Allocators
-//{
-//    class IAllocator;
-//}
-
-
 namespace NativeJIT
 {
     class ExpressionTree;

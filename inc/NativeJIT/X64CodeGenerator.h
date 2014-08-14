@@ -86,6 +86,7 @@ namespace NativeJIT
         void PlaceLabel(Label l);
 
         void Jmp(Label l);
+        void Jmp(void* functionPtr);
 
         // These two methods are public in order to allow access for BinaryNode debugging text.
         static char const * OpCodeName(OpCode op);

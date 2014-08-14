@@ -84,6 +84,7 @@
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="ParameterNode.h" />
+    <ClInclude Include="ParameterStage.h" />
     <ClInclude Include="ReturnNode.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Storage.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="ParameterNode.cpp" />
+    <ClCompile Include="ParameterStage.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

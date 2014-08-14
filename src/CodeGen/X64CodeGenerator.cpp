@@ -94,6 +94,13 @@ namespace NativeJIT
     }
 
 
+    void X64CodeGenerator::Jmp(void* functionPtr)
+    {
+        Emit8(0xe9);
+        Emit64(reinterpret_cast<unsigned __int64>(functionPtr));
+    }
+
+
     char const * X64CodeGenerator::OpCodeName(OpCode op)
     {
         static char const * names[] = {

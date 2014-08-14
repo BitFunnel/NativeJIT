@@ -12,4 +12,13 @@ namespace NativeJIT
           m_offset(offset)
     {
     }
+
+
+    Data* Data::ConvertToIndirect(unsigned registerId, __int32 offset)
+    {
+        m_storageClass = Indirect;
+        m_registerId = registerId;
+        m_offset = offset;
+        return this;
+    }
 }

@@ -207,6 +207,8 @@ namespace NativeJIT
             // Array indexing
             //
 
+            // TODO: Array of primitive
+
             TestCase(ArrayOfClass)
             {
                 AutoResetAllocator reset(m_allocator);
@@ -223,14 +225,14 @@ namespace NativeJIT
                     OuterClass* p1 = array;
                     unsigned __int64 p2 = 3ull;
 
+                    // TODO: First set p1[p2].m_q
+
                     auto expected = p1[p2].m_q;
                     auto observed = function(p1, p2);
 
                     TestAssert(observed == expected);
                 }
             }
-
-
 
 
             //
