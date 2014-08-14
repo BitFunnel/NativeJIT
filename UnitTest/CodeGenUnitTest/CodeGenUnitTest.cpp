@@ -28,7 +28,7 @@ namespace NativeJIT
         TestCase(OpCodes)
         {
             ExecutionBuffer allocator(5000);
-            FunctionBuffer buffer(allocator, 200, 10, 10, 3, 0, false);
+            FunctionBuffer buffer(allocator, 2000, 10, 10, 3, 0, false);
 
             unsigned __int8 const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 

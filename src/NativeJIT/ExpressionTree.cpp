@@ -167,20 +167,20 @@ namespace NativeJIT
             std::cout << "m_rxxRegistersAvailable = 0x" << std::hex << m_rxxRegistersAvailable << std::dec << std::endl;
         }
 
-        for (unsigned i = 0 ; i < 16;  ++i)
-        {
-            std::cout << Register<8, false>(i).GetName();
-            if ((registers & 1) == 0)
-            {
-                std::cout << " in use";
-            }
-            else
-            {
-                std::cout << " free";
-            }
-            registers >>= 1;
-            std::cout << std::endl;
-        }
+        //for (unsigned i = 0 ; i < 16;  ++i)
+        //{
+        //    std::cout << Register<8, false>(i).GetName();
+        //    if ((registers & 1) == 0)
+        //    {
+        //        std::cout << " in use";
+        //    }
+        //    else
+        //    {
+        //        std::cout << " free";
+        //    }
+        //    registers >>= 1;
+        //    std::cout << std::endl;
+        //}
 
         std::cout << "Temporaries used: " << m_temporaryCount << std::endl;
         std::cout << "Temporaries still in use: " << m_temporaryCount - m_temporaries.size() << std::endl;

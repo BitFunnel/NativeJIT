@@ -192,20 +192,20 @@ namespace NativeJIT
 
         X64CodeGenerator& code = tree.GetCodeGenerator();
         Label l1 = code.AllocateLabel();
-        code.Jcc(JCC, l1);
+        code.Emit<JCC>(l1);
 
-        auto trueValue = m_trueExpression.CodeGen(tree);
-        trueValue.ConvertToValue(tree, true);
-        auto rTrue = trueValue.GetDirectRegister();
+        auto falseValue = m_falseExpression.CodeGen(tree);
+        falseValue.ConvertToValue(tree, true);
+        auto rFalse = falseValue.GetDirectRegister();
 
         Label l2 = code.AllocateLabel();
         code.Jmp(l2);
 
         code.PlaceLabel(l1);
 
-        auto falseValue = m_falseExpression.CodeGen(tree);
-        falseValue.ConvertToValue(tree, false);
-        auto rFalse = falseValue.GetDirectRegister();
+        auto trueValue = m_trueExpression.CodeGen(tree);
+        trueValue.ConvertToValue(tree, false);
+        auto rTrue = trueValue.GetDirectRegister();
 
         // TODO: Use Register::operator==()
         if (rTrue.GetId() != rFalse.GetId())
@@ -213,12 +213,12 @@ namespace NativeJIT
             // TODO: Do we always need to move the value?
             // In the case of caching, r2 may not be equal to r.
             // TODO: unit test for this case
-            code.Emit<OpCode::Mov>(rTrue, rFalse);
+            code.Emit<OpCode::Mov>(rFalse, rTrue);
         }
 
         code.PlaceLabel(l2);
 
-        return trueValue;
+        return falseValue;
     }
 
 
@@ -351,7 +351,8 @@ namespace NativeJIT
         CodeGenFlags(tree);
 
         Label l1 = code.AllocateLabel();
-        code.Jcc(JccType::JZ, l1);
+        code.Emit<JCC>(l1);
+//        code.Jcc(JccType::JZ, l1);
 
         RegisterType r = tree.AllocateRegister<RegisterType>();
         code.Emit<OpCode::Mov>(r, 1);

@@ -56,72 +56,72 @@ namespace NativeJIT
     };
 
 
-    void TestImmediate(Allocators::IAllocator& allocator, FunctionBuffer& code)
-    {
-        // Is this worth it, vx just manually resetting after the block (even if a try/catch isn't used)?
-        AutoResetAllocator reset(allocator);
+    //void TestImmediate(Allocators::IAllocator& allocator, FunctionBuffer& code)
+    //{
+    //    // Is this worth it, vx just manually resetting after the block (even if a try/catch isn't used)?
+    //    AutoResetAllocator reset(allocator);
 
-        {
-            Function<unsigned __int64> function(allocator, code);
+    //    {
+    //        Function<unsigned __int64> function(allocator, code);
 
-            auto & a = function.Immediate(0x1234ull);
-            auto f = function.Compile(a);
+    //        auto & a = function.Immediate(0x1234ull);
+    //        auto f = function.Compile(a);
 
-            auto x = f();
+    //        auto x = f();
 
-            std::cout << "x = " << x << std::endl;
-        }
-    }
-
-
-    void TestFieldPointerPrimitive()
-    {
-        ExecutionBuffer allocator(5000);
-        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory factory(allocator, code);
-
-        auto & a = factory.Parameter<InnerClass*>();
-        auto & b = factory.FieldPointer(a, &InnerClass::m_b);
-        auto & c = factory.Deref(b);
-
-        factory.Return(c);
-
-        factory.Compile();
-    }
+    //        std::cout << "x = " << x << std::endl;
+    //    }
+    //}
 
 
-    void TestFieldPointerEmbedded()
-    {
-        ExecutionBuffer allocator(5000);
-        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory factory(allocator, code);
+    //void TestFieldPointerPrimitive()
+    //{
+    //    ExecutionBuffer allocator(5000);
+    //    FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+    //    ExpressionNodeFactory factory(allocator, code);
 
-        auto & a = factory.Parameter<OuterClass*>();
-        auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
-        auto & c = factory.FieldPointer(b, &InnerClass::m_b);
-        auto & d = factory.Deref(c);
+    //    auto & a = factory.Parameter<InnerClass*>();
+    //    auto & b = factory.FieldPointer(a, &InnerClass::m_b);
+    //    auto & c = factory.Deref(b);
 
-        factory.Return(d);
+    //    factory.Return(c);
 
-        factory.Compile();
-    }
+    //    factory.Compile();
+    //}
 
 
-    void TestBinary()
-    {
-        ExecutionBuffer allocator(5000);
-        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory factory(allocator, code);
+    //void TestFieldPointerEmbedded()
+    //{
+    //    ExecutionBuffer allocator(5000);
+    //    FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+    //    ExpressionNodeFactory factory(allocator, code);
 
-        auto & a = factory.Parameter<unsigned __int64>();
-        auto & b = factory.Parameter<unsigned __int64*>();
-        auto & c = factory.Deref(b);
-        auto & d = factory.Add(a, c);
+    //    auto & a = factory.Parameter<OuterClass*>();
+    //    auto & b = factory.FieldPointer(a, &OuterClass::m_innerEmbedded);
+    //    auto & c = factory.FieldPointer(b, &InnerClass::m_b);
+    //    auto & d = factory.Deref(c);
 
-        factory.Return(d);
+    //    factory.Return(d);
 
-        factory.Compile();
-    }
+    //    factory.Compile();
+    //}
+
+
+    //void TestBinary()
+    //{
+    //    ExecutionBuffer allocator(5000);
+    //    FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+    //    ExpressionNodeFactory factory(allocator, code);
+
+    //    auto & a = factory.Parameter<unsigned __int64>();
+    //    auto & b = factory.Parameter<unsigned __int64*>();
+    //    auto & c = factory.Deref(b);
+    //    auto & d = factory.Add(a, c);
+
+    //    factory.Return(d);
+
+    //    factory.Compile();
+    //}
 
 
     void TestFactory()
@@ -145,22 +145,22 @@ namespace NativeJIT
     }
 
 
-    void TestArray()
-    {
-        ExecutionBuffer allocator(5000);
-        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory factory(allocator, code);
+    //void TestArray()
+    //{
+    //    ExecutionBuffer allocator(5000);
+    //    FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+    //    ExpressionNodeFactory factory(allocator, code);
 
-        auto & a = factory.Parameter<OuterClass*>();
-        auto & b = factory.Parameter<unsigned __int64>();
-        auto & c = factory.Add(a, b);
-        auto & d = factory.FieldPointer(c, &OuterClass::m_q);
-        auto & e = factory.Deref(d);
+    //    auto & a = factory.Parameter<OuterClass*>();
+    //    auto & b = factory.Parameter<unsigned __int64>();
+    //    auto & c = factory.Add(a, b);
+    //    auto & d = factory.FieldPointer(c, &OuterClass::m_q);
+    //    auto & e = factory.Deref(d);
 
-        factory.Return(e);
+    //    factory.Return(e);
 
-        factory.Compile();
-    }
+    //    factory.Compile();
+    //}
 
 
     void TestByte()
@@ -216,26 +216,26 @@ namespace NativeJIT
     }
 
 
-    void TestConditional()
-    {
-        ExecutionBuffer allocator(5000);
-        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
-        ExpressionNodeFactory factory(allocator, code);
+    //void TestConditional()
+    //{
+    //    ExecutionBuffer allocator(5000);
+    //    FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
+    //    ExpressionNodeFactory factory(allocator, code);
 
-        auto & a = factory.Immediate(5ull);
-        auto & b = factory.Immediate(6ull);
+    //    auto & a = factory.Immediate(5ull);
+    //    auto & b = factory.Immediate(6ull);
 
-        auto & c = factory.Immediate(12345ull);
+    //    auto & c = factory.Immediate(12345ull);
 
-        IsTrue<unsigned __int64> d(factory, c);     // What is this line for?
+    //    IsTrue<unsigned __int64> d(factory, c);     // What is this line for?
 
-        auto & e = factory.GreaterThan(a, b);
-        auto & f = factory.Conditional(e, a, b);
+    //    auto & e = factory.GreaterThan(a, b);
+    //    auto & f = factory.Conditional(e, a, b);
 
-        factory.Return(f);
+    //    factory.Return(f);
 
-        factory.Compile();
-    }
+    //    factory.Compile();
+    //}
 
 
     template <typename T>
@@ -319,36 +319,36 @@ namespace NativeJIT
     }
 
 
-    void TestFunction1(Allocators::IAllocator& allocator, FunctionBuffer& code)
-    {
-        AutoResetAllocator reset(allocator);
+    //void TestFunction1(Allocators::IAllocator& allocator, FunctionBuffer& code)
+    //{
+    //    AutoResetAllocator reset(allocator);
 
-        {
-            Function<__int64, __int64> function(allocator, code);
+    //    {
+    //        Function<__int64, __int64> function(allocator, code);
 
-            auto & a = function.Add(function.GetP1(), function.Immediate<unsigned __int64>(5ull));
-            auto f = function.Compile(a);
+    //        auto & a = function.Add(function.GetP1(), function.Immediate<unsigned __int64>(5ull));
+    //        auto f = function.Compile(a);
 
-            auto x = f(1);
-            std::cout << "x = " << x << std::endl;
-        }
-    }
+    //        auto x = f(1);
+    //        std::cout << "x = " << x << std::endl;
+    //    }
+    //}
 
 
-    void TestFunction2(Allocators::IAllocator& allocator, FunctionBuffer& code)
-    {
-        AutoResetAllocator reset(allocator);
+    //void TestFunction2(Allocators::IAllocator& allocator, FunctionBuffer& code)
+    //{
+    //    AutoResetAllocator reset(allocator);
 
-        {
-            Function<__int64, __int64, __int64> function(allocator, code);
+    //    {
+    //        Function<__int64, __int64, __int64> function(allocator, code);
 
-            auto & a = function.Add(function.GetP2(), function.GetP1());
-            auto f = function.Compile(a);
+    //        auto & a = function.Add(function.GetP2(), function.GetP1());
+    //        auto f = function.Compile(a);
 
-            auto x = f(1, 2);
-            std::cout << "x = " << x << std::endl;
-        }
-    }
+    //        auto x = f(1, 2);
+    //        std::cout << "x = " << x << std::endl;
+    //    }
+    //}
 
 
     int SampleFunction(int x, int y)
@@ -406,7 +406,7 @@ namespace NativeJIT
 
 //        TestFunction1(allocator, code);
 //        TestFunction2(allocator, code);
-        TestImmediate(allocator, code);
+//        TestImmediate(allocator, code);
 //        TestCall();
 
 //        JITExample1();
@@ -414,9 +414,9 @@ namespace NativeJIT
 }
 
 
-int _tmain(int /*argc*/, char* /*argv*/[])
-{
-    NativeJIT::RunTests();
-
-    return 0;
-}
+//int _tmain(int /*argc*/, char* /*argv*/[])
+//{
+//    NativeJIT::RunTests();
+//
+//    return 0;
+//}

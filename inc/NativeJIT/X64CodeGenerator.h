@@ -29,16 +29,22 @@ namespace NativeJIT
     // WARNING: When modifying JccType, be sure to also modify the function JccName().
     enum class JccType : unsigned
     {
-        JA = 7,
-        JNA = 6,
+        JO = 0,
+        JNO = 1,
         JB = 2,
-        JNB = 3,
-        JG = 7,
-        JNG = 6,
-        JL = 2,
-        JNL = 3,
-        JZ = 4,
-        JNZ = 5
+        JAE = 3, JNB = 3, JNC = 3,
+        JE = 4, JZ =4,
+        JNE = 5, JNZ = 5,
+        JBE = 6, JNA = 6,
+        JA = 7, JNBE = 7,
+        JS = 8,
+        JNS = 9,
+        JP = 0xa, JPE = 0xa,
+        JNP = 0xb, JPO = 0xb,
+        JL = 0xc, JNGE = 0xc,
+        JNL = 0xd, JGE = 0xd,
+        JLE = 0xe, JNG = 0xe,
+        JNLE = 0xf, JG = 0xf
     };
 
 
@@ -80,7 +86,6 @@ namespace NativeJIT
         void PlaceLabel(Label l);
 
         void Jmp(Label l);
-        void Jcc(JccType type, Label l);
 
         // These two methods are public in order to allow access for BinaryNode debugging text.
         static char const * OpCodeName(OpCode op);

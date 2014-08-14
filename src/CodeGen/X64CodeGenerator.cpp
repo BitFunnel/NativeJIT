@@ -94,13 +94,6 @@ namespace NativeJIT
     }
 
 
-    void X64CodeGenerator::Jcc(JccType jcc, Label l)
-    {
-        Indent();
-        *m_out << JccName(jcc) << " L" << l.GetId() << std::endl;
-    }
-
-
     char const * X64CodeGenerator::OpCodeName(OpCode op)
     {
         static char const * names[] = {
@@ -128,11 +121,22 @@ namespace NativeJIT
     char const * X64CodeGenerator::JccName(JccType jcc)
     {
         static char const * names[] = {
-            "ja", "jna",
-            "jb", "jnb",
-            "jg", "jng",
-            "jl", "jnl",
-            "jz", "jnz"
+            "jo",
+            "jno", 
+            "jb",
+            "jae",
+            "je",
+            "jne",
+            "jbe",
+            "ja",
+            "js",
+            "jns",
+            "jp",
+            "jnp",
+            "jl",
+            "jnl",
+            "jle",
+            "jnle"
         };
 
         Assert(static_cast<unsigned>(jcc)  < sizeof(names)/sizeof(char const*), "Invalid JCC");

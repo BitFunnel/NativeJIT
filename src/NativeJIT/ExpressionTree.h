@@ -258,7 +258,7 @@ namespace NativeJIT
     template <unsigned SIZE>
     void ExpressionTree::ReleaseRegister(Register<SIZE, false> r)
     {
-        std::cout << "// release " << r.GetName() << std::endl;
+//        std::cout << "// release " << r.GetName() << std::endl;
 
         // TODO: Verify that this register isn't already free.
 
@@ -270,7 +270,7 @@ namespace NativeJIT
     template <unsigned SIZE>
     void ExpressionTree::ReleaseRegister(Register<SIZE, true> r)
     {
-        std::cout << "// release " << r.GetName() << std::endl;
+//        std::cout << "// release " << r.GetName() << std::endl;
 
         // TODO: Verify that this register isn't already free.
 
