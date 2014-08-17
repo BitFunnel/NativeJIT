@@ -86,12 +86,6 @@ namespace NativeJIT
     }
 
 
-    RegisterFile& ExpressionTree::GetParameterRegisters()
-    {
-        return m_parameterRegisters;
-    }
-
-
     FunctionBuffer& ExpressionTree::GetCodeGenerator() const
     {
         return m_code;

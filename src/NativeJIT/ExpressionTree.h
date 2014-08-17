@@ -51,30 +51,19 @@ namespace NativeJIT
 
         Allocators::IAllocator& GetAllocator() const;
 
-        unsigned AddNode(NodeBase& node);
+        unsigned AddNode(NodeBase& node);                       // Called by Node::Node()
         unsigned AddParameter(ParameterBase& parameter);
 
         template <typename REGISTERTYPE>
         REGISTERTYPE AllocateRegister();
 
-        template <unsigned SIZE>
-        void Prefer(Register<SIZE, false> r);
-
-        template <unsigned SIZE>
-        void Prefer(Register<SIZE, true> r);
-
         template <typename REGISTERTYPE>
         unsigned GetAvailableRegisterCount() const;
-
-        template <unsigned SIZE, bool ISFLOAT>
-        Register<SIZE, ISFLOAT> CopyRegister(Register<SIZE, ISFLOAT> r);
 
         template <unsigned SIZE>
         void ReleaseRegister(Register<SIZE, false> r);
         template <unsigned SIZE>
         void ReleaseRegister(Register<SIZE, true> r);
-
-        RegisterFile& GetParameterRegisters();
 
         FunctionBuffer& GetCodeGenerator() const;
 
@@ -193,37 +182,6 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::Prefer(Register<SIZE, false> r)
-    {
-        unsigned id = r.GetId();
-        if ((m_rxxRegistersAvailable & (1 << id)) != 0)
-        {
-            // The preferred register is available.
-            // Move it to the head of the free list.
-            unsigned last = static_cast<unsigned>(m_rxxRegisters.size() - 1);
-            for (unsigned i = 0 ; i < last; ++i)
-            {
-                if (m_rxxRegisters[i] == id)
-                {
-                    // We've found the preferred register in a position before the last.
-                    // Swap it with the last register.
-                    m_rxxRegisters[i] = m_rxxRegisters[last];
-                    m_rxxRegisters[last] = id;
-                    break;
-                }
-            }
-        }
-    }
-
-
-    template <unsigned SIZE>
-    void ExpressionTree::Prefer(Register<SIZE, true> r)
-    {
-        // TODO: Implement
-    }
-
-
     template <typename REGISTERTYPE>
     unsigned ExpressionTree::GetAvailableRegisterCount() const
     {
@@ -242,15 +200,6 @@ namespace NativeJIT
     unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, true> /*ignore*/) const
     {
         return static_cast<unsigned>(m_xmmRegisters.size());
-    }
-
-
-    template <unsigned SIZE, bool ISFLOAT>
-    Register<SIZE, ISFLOAT> ExpressionTree::CopyRegister(Register<SIZE, ISFLOAT> src)
-    {
-        auto dest = AllocateRegister<Register<SIZE, ISFLOAT>>();
-        m_code.Emit<OpCode::Mov>(dest, src);
-        return dest;
     }
 
 

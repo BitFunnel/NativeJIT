@@ -61,7 +61,7 @@ namespace NativeJIT
 
 
     template <typename R, typename P1, typename P2>
-    Storage<R> CallNode<R, P1, P2>::CodeGenValue(ExpressionTree& tree)
+    Storage<R> CallNode<R, P1, P2>::CodeGenValue(ExpressionTree& /*tree*/)
     {
         // Save non-volatile registers.
         // Evaluate parameters.
@@ -72,34 +72,37 @@ namespace NativeJIT
         // Make call
         // Potentially move result into new register.
         // Restore non-volatile registers.
-        std::cout << "// Push volatile registers." << std::endl;
 
-        {
-            auto f = m_function.CodeGen(tree);
-            f.ConvertToValue(tree, false);
+        // TODO: Implement this function.
+        throw 0;
+        //std::cout << "// Push volatile registers." << std::endl;
 
-            tree.Prefer(rcx);
-            auto s1 = m_p1.CodeGen(tree);
-            s1.ConvertToValue(tree, false);
+        //{
+        //    auto f = m_function.CodeGen(tree);
+        //    f.ConvertToValue(tree, false);
 
-            tree.Prefer(rdx);
-            auto s2 = m_p2.CodeGen(tree);
-            s2.ConvertToValue(tree, false);
+        //    tree.Prefer(rcx);
+        //    auto s1 = m_p1.CodeGen(tree);
+        //    s1.ConvertToValue(tree, false);
 
-            std::cout << "// Set up parameter registers." << std::endl;
+        //    tree.Prefer(rdx);
+        //    auto s2 = m_p2.CodeGen(tree);
+        //    s2.ConvertToValue(tree, false);
 
-            tree.GetCodeGenerator().Emit<OpCode::Call>(f.GetDirectRegister());
-        }
+        //    std::cout << "// Set up parameter registers." << std::endl;
 
-        std::cout << "// Pop volatile registers." << std::endl;
+        //    tree.GetCodeGenerator().Emit<OpCode::Call>(f.GetDirectRegister());
+        //}
 
-        auto x = tree.AllocateRegister<Storage<R>::DirectRegister>();
-        Storage<R> result(tree, x);
-        tree.GetCodeGenerator().Emit<OpCode::Mov>(result.GetDirectRegister(), Storage<R>::DirectRegister(0));
+        //std::cout << "// Pop volatile registers." << std::endl;
 
-        // TODO: This is wrong. Need copy RAX or XMM0 to correct register.
-        // Return storage has to be compatible with type R.
-        return result;
+        //auto x = tree.AllocateRegister<Storage<R>::DirectRegister>();
+        //Storage<R> result(tree, x);
+        //tree.GetCodeGenerator().Emit<OpCode::Mov>(result.GetDirectRegister(), Storage<R>::DirectRegister(0));
+
+        //// TODO: This is wrong. Need copy RAX or XMM0 to correct register.
+        //// Return storage has to be compatible with type R.
+        //return result;
     }
 
 

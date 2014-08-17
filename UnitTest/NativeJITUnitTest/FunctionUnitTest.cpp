@@ -299,6 +299,64 @@ namespace NativeJIT
             }
 
 
+            //
+            // Common sub expressions
+            //
+
+            TestCase(CommonSubExpressions)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<__int64, __int64, __int64> expression(m_allocator, *m_code);
+
+                    // This tree has three common subexpressions: P1, P2, and node "a".
+                    // Each common subexpression is referenced twice.
+
+                    auto & a = expression.Add(expression.GetP1(), expression.GetP2());
+                    auto & b = expression.Add(a, expression.GetP1());
+
+                    // Perform this add after 2nd and last use of P1 to see if RCX is recycled.
+                    auto & c = expression.Add(expression.Immediate(1ll), expression.Immediate(2ll));
+
+                    auto & d = expression.Add(b, c);
+                    auto & e = expression.Add(d, expression.GetP2());
+
+                    // Perform this add after 2nd and last use of P2 to see if RDX is recycled.
+                    auto & f = expression.Add(expression.Immediate(3ll), expression.Immediate(4ll));
+
+                    auto & g = expression.Add(e, f);
+                    auto & h = expression.Add(g, a);
+
+                    // Perform this add after 2nd and last use of a to see if a's register is recycled.
+                    auto & i = expression.Add(expression.Immediate(5ll), expression.Immediate(6ll));
+
+                    auto & j = expression.Add(h, i);
+                    auto function = expression.Compile(j);
+
+                    __int64 p1 = 1ll;
+                    __int64 p2 = 10ll;
+
+                    auto expectedA = p1 + p2;
+                    auto expectedB = expectedA + p1;
+                    auto expectedC = 1ll + 2ll;
+                    auto expectedD = expectedB + expectedC;
+                    auto expectedE = expectedD + p2;
+                    auto expectedF = 3ll + 4ll;
+                    auto expectedG = expectedE + expectedF;
+                    auto expectedH = expectedG + expectedA;
+                    auto expectedI = 5ll + 6ll;
+
+                    auto expected = expectedH + expectedI;
+
+                    auto observed = function(p1, p2);
+
+                    TestAssert(observed == expected);
+                }
+            }
+
+
+
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;
