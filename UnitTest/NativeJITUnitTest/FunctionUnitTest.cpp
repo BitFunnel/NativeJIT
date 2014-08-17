@@ -209,6 +209,32 @@ namespace NativeJIT
 
             // TODO: Array of primitive
 
+            TestCase(ArrayOfInt)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<unsigned __int64, unsigned __int64*> expression(m_allocator, *m_code);
+
+                    auto & a = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(1ull));
+                    auto & b = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(2ull));
+                    auto & c = expression.Add(expression.Deref(a), expression.Deref(b));
+                    auto function = expression.Compile(c);
+
+                    unsigned __int64 array[10];
+                    array[1] = 456;
+                    array[2] = 123000;
+
+                    unsigned __int64 * p1 = array;
+
+                    auto expected = array[1] + array[2];
+                    auto observed = function(p1);
+
+                    TestAssert(observed == expected);
+                }
+            }
+
+
             TestCase(ArrayOfClass)
             {
                 AutoResetAllocator reset(m_allocator);

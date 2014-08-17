@@ -144,9 +144,9 @@ namespace NativeJIT
     template <unsigned SIZE, bool ISFLOAT>
     Data::Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r)
         : m_refCount(0),
-            m_tree(tree),
-            m_storageClass(Direct),
-            m_registerId(r.GetId())
+          m_tree(tree),
+          m_storageClass(Direct),
+          m_registerId(r.GetId())
     {
     }
 

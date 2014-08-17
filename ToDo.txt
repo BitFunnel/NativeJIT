@@ -16,6 +16,27 @@ x        mov rax, r9
 x        ret
 x        // release r9
 
+Common subexpressions in typical scoring scenario
+  index
+    .models
+       .termModel
+       .languageModel
+       .marketModel
+    .docTable
+       [docIndex]
+          .scoreTable
+          .language
+          .market
+  matcher
+    docIndex
+    callback
+  query
+    .language
+    .market
+
+
+
+
 
 Need some way to reuse a FunctionBuffer over and over
   Reset()

@@ -55,7 +55,7 @@ namespace NativeJIT
         And,
         Call,
         Cmp,
-        IMul,    // Consider IMUL?
+        IMul,
         Lea,
         Mov,
         Nop,
