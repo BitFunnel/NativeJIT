@@ -35,7 +35,13 @@ namespace NativeJIT
 
             unsigned __int8 const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
-            // Mod/RM special cases for r12.
+            // Another special case
+            std::cout << "Another special case." << std::endl;
+            buffer.Emit<OpCode::Add>(r13, r13, 0);
+            buffer.Emit<OpCode::Mov>(r13, r13, 0);
+
+
+            // Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8]
             std::cout << "Mod/RM special cases for r12." << std::endl;
             buffer.Emit<OpCode::Sub>(rbx, r12, 0);
             buffer.Emit<OpCode::Sub>(rdi, r12, 0x12);
@@ -270,6 +276,11 @@ namespace NativeJIT
             //
             //*********************************************************************
             char const * ml64Output = 
+                "                                ; Another special case                                             \n"
+                " 00000000  4D/ 03 6D 00         add r13, [r13]                                                     \n"
+                " 00000000  4D/ 8B 6D 00         mov r13, [r13]                                                     \n"
+                "                                                                                                   \n"
+                "                                ; Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8] \n"
                 " 00000000  49/ 2B 1C 24         sub rbx, [r12]                                                     \n"
                 " 00000004  49/ 2B 7C 24         sub rdi, [r12 + 12h]                                               \n"
                 "           12                                                                                      \n"

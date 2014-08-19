@@ -15,7 +15,7 @@ namespace NativeJIT
         unsigned GetPosition() const;
         void PrintParameter() const;
 
-        virtual void ReserveRegister(ExpressionTree& tree, RegisterFile& registers) = 0;
+        virtual void ReserveRegister(ExpressionTree& tree) = 0;
 
     private:
         unsigned m_position;
@@ -31,7 +31,7 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
         virtual void Print() const override;
 
@@ -39,7 +39,7 @@ namespace NativeJIT
         //
         // Overrides of ParameterBase methods.
         //
-        virtual void ReserveRegister(ExpressionTree& tree, RegisterFile& registers) override;
+        virtual void ReserveRegister(ExpressionTree& tree) override;
     };
 
 
@@ -88,7 +88,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& /*tree*/)
+    typename ExpressionTree::Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& /*tree*/)
     {
         Assert(IsCached(), "Must assign register before attempting code generation.");
 
@@ -110,11 +110,11 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ParameterNode<T>::ReserveRegister(ExpressionTree& tree, RegisterFile& registers)
+    void ParameterNode<T>::ReserveRegister(ExpressionTree& tree)
     {
         RegisterType r;
         GetParameterRegister(GetPosition(), r);
-        registers.ReserveRegister(r);
-        SetCache(Storage<T>(tree, r));
+
+        SetCache(tree.Direct<T>(r));
     }
 }

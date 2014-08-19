@@ -2,7 +2,8 @@
 
 #pragma warning(disable:4505)
 
-#include "Storage.h"
+#include "ExpressionTree.h"             // ExpressionTree::Storage<T> return type.
+//#include "Storage.h"
 #include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"
 #include "TypePredicates.h"
@@ -55,14 +56,14 @@ namespace NativeJIT
 
         Node(ExpressionTree& tree);
 
-        void SetCache(Storage<T> s);
-        Storage<T> GetCache();
+        void SetCache(ExpressionTree::Storage<T> s);
+        ExpressionTree::Storage<T> GetCache();
         void ReleaseCache();
 
         unsigned GetRegisterCount() const;
 
-        Storage<T> CodeGen(ExpressionTree& tree);
-        virtual Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
+        ExpressionTree::Storage<T> CodeGen(ExpressionTree& tree);
+        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
 
         //
         // Overrides of NodeBase methods.
@@ -79,7 +80,7 @@ namespace NativeJIT
     private:
         bool m_isCached;
         unsigned m_cacheReferenceCount;
-        Storage<T> m_cache;
+        ExpressionTree::Storage<T> m_cache;
 
         unsigned m_registerCount;
     };
@@ -102,7 +103,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Node<T>::SetCache(Storage<T> s)
+    void Node<T>::SetCache(ExpressionTree::Storage<T> s)
     {
         Assert(!IsCached(), "Cache register is already set.");
 
@@ -112,7 +113,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Storage<T> Node<T>::GetCache()
+    ExpressionTree::Storage<T> Node<T>::GetCache()
     {
         return m_cache;
     }
@@ -203,7 +204,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> Node<T>::CodeGen(ExpressionTree& tree)
+    typename ExpressionTree::Storage<T> Node<T>::CodeGen(ExpressionTree& tree)
     {
         if (IsCached())
         {

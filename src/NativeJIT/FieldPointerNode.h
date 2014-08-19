@@ -15,7 +15,7 @@ namespace NativeJIT
 
         virtual bool IsFieldPointer() const override;
 
-        virtual Storage<FIELD*> CodeGenBase(ExpressionTree& tree) = 0;
+        virtual ExpressionTree::Storage<FIELD*> CodeGenBase(ExpressionTree& tree) = 0;
     };
 
 
@@ -29,13 +29,13 @@ namespace NativeJIT
         // Overrides of FieldPointerBase methods
         //
 
-        virtual Storage<FIELD*> CodeGenBase(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<FIELD*> CodeGenBase(ExpressionTree& tree) override;
 
         //
         // Overrides of Node methods
         //
 
-        virtual Storage<FIELD*> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<FIELD*> CodeGenValue(ExpressionTree& tree) override;
         virtual __int32 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -89,7 +89,7 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenBase(ExpressionTree& tree)
+    typename ExpressionTree::Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenBase(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
@@ -99,13 +99,13 @@ namespace NativeJIT
         else
         {
             auto base = m_base.CodeGen(tree);
-            return Storage<FIELD*>(tree, base);
+            return ExpressionTree::Storage<FIELD*>(base);  // TODO: BUGBUG?
         }
     }
 
 
     template <typename OBJECT, typename FIELD>
-    typename Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
+    typename ExpressionTree::Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
         auto base = CodeGenBase(tree);
         __int32 offset = m_base.GetOffset();

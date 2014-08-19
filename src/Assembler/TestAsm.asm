@@ -8,6 +8,10 @@ myMessage BYTE "MASM program example",0dh,0ah,0
 .code
 main PROC
 
+; Another special case
+add r13, [r13]
+mov r13, [r13]
+
 ;
 ; Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8]
 ;

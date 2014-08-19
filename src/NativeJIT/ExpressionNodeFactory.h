@@ -1,8 +1,8 @@
 #pragma once
 
 #include "BinaryNode.h"
-#include "CallNode.h"
-#include "ConditionalNode.h"
+//#include "CallNode.h"
+//#include "ConditionalNode.h"
 #include "ExpressionTree.h"             // Base class.
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
@@ -10,8 +10,8 @@
 #include "Node.h"
 #include "ParameterNode.h"
 #include "ReturnNode.h"
-#include "Temporary/Allocator.h"
-#include "Temporary/NonCopyable.h"
+//#include "Temporary/Allocator.h"
+//#include "Temporary/NonCopyable.h"
 
 
 namespace NativeJIT
@@ -24,16 +24,16 @@ namespace NativeJIT
     public:
         ExpressionNodeFactory(Allocators::IAllocator& allocator, FunctionBuffer& code);
 
-        //
-        // Leaf nodes
-        //
+    //    //
+    //    // Leaf nodes
+    //    //
         template <typename T> Node<T>& Immediate(T value);
         template <typename T> ParameterNode<T>& Parameter();
 
 
-        //
-        // Unary operators
-        //
+    //    //
+    //    // Unary operators
+    //    //
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
         template <typename T> NodeBase& Return(Node<T>& value);
@@ -43,41 +43,41 @@ namespace NativeJIT
         // Binary arithmetic operators
         //
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
-        template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
+    //    template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
 
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 
 
-        //
-        // Relational operators
-        //
-        template <typename T> FlagExpressionNode<JccType::JG>& GreaterThan(Node<T>& left, Node<T>& right);
+    //    //
+    //    // Relational operators
+    //    //
+    //    template <typename T> FlagExpressionNode<JccType::JG>& GreaterThan(Node<T>& left, Node<T>& right);
 
 
-        //
-        // Conditional operator
-        //
-        template <typename T, JccType JCC>
-        Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
+    //    //
+    //    // Conditional operator
+    //    //
+    //    template <typename T, JccType JCC>
+    //    Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
 
 
-        //
-        // Call node
-        //
-        template <typename R, typename P1, typename P2>
-        Node<R>& Call(Node<R (*)(P1,P2)>& function, Node<P1>& param1, Node<P2>& param2);
+    //    //
+    //    // Call node
+    //    //
+    //    template <typename R, typename P1, typename P2>
+    //    Node<R>& Call(Node<R (*)(P1,P2)>& function, Node<P1>& param1, Node<P2>& param2);
 
     private:
         template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, Node<R>& right);
     };
 
 
-    //*************************************************************************
-    //
-    // Template definitions for ExpressionNodeFactory.
-    //
-    //*************************************************************************
+    ////*************************************************************************
+    ////
+    //// Template definitions for ExpressionNodeFactory.
+    ////
+    ////*************************************************************************
 
     //
     // Leaf nodes
@@ -148,45 +148,45 @@ namespace NativeJIT
     }
 
 
-    //
-    // Relational operators
-    //
-    template <typename T>
-    FlagExpressionNode<JccType::JG>&
-    ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
-    {
-        typedef RelationalOperatorNode<T, JccType::JG> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, left, right);
-    }
+    ////
+    //// Relational operators
+    ////
+    //template <typename T>
+    //FlagExpressionNode<JccType::JG>&
+    //ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
+    //{
+    //    typedef RelationalOperatorNode<T, JccType::JG> NodeType;
+    //    return * new (m_allocator.Allocate(sizeof(NodeType)))
+    //                 NodeType(*this, left, right);
+    //}
 
 
-    //
-    // Conditional operator
-    //
-    template <typename T, JccType JCC>
-    Node<T>& ExpressionNodeFactory::Conditional(FlagExpressionNode<JCC>& condition,
-                                                Node<T>& left,
-                                                Node<T>& right)
-    {
-        typedef ConditionalNode<T, JCC> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, condition, left, right);
-    }
+    ////
+    //// Conditional operator
+    ////
+    //template <typename T, JccType JCC>
+    //Node<T>& ExpressionNodeFactory::Conditional(FlagExpressionNode<JCC>& condition,
+    //                                            Node<T>& left,
+    //                                            Node<T>& right)
+    //{
+    //    typedef ConditionalNode<T, JCC> NodeType;
+    //    return * new (m_allocator.Allocate(sizeof(NodeType)))
+    //                 NodeType(*this, condition, left, right);
+    //}
 
 
-    //
-    // Call external function
-    //
-    template <typename R, typename P1, typename P2>
-    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1,P2)>& function,
-                                         Node<P1>& param1,
-                                         Node<P2>& param2)
-    {
-        typedef CallNode<R, P1, P2> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, function, param1, param2);
-    }
+    ////
+    //// Call external function
+    ////
+    //template <typename R, typename P1, typename P2>
+    //Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1,P2)>& function,
+    //                                     Node<P1>& param1,
+    //                                     Node<P2>& param2)
+    //{
+    //    typedef CallNode<R, P1, P2> NodeType;
+    //    return * new (m_allocator.Allocate(sizeof(NodeType)))
+    //                 NodeType(*this, function, param1, param2);
+    //}
 
 
     //

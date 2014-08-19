@@ -74,6 +74,7 @@
     <ClInclude Include="BinaryNode.h" />
     <ClInclude Include="CallNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
+    <ClInclude Include="ExpressionTree-Old.h" />
     <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
@@ -95,6 +96,7 @@
     <ClCompile Include="Allocator.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
+    <ClCompile Include="ExpressionTree-Old.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />

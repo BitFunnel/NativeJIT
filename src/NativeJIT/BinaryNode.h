@@ -13,7 +13,7 @@ namespace NativeJIT
     public:
         BinaryNode(ExpressionTree& tree, Node<L>& left, Node<R>& right);
 
-        virtual Storage<L> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -45,7 +45,7 @@ namespace NativeJIT
 
 
     template <OpCode OP, typename L, typename R>
-    typename Storage<L> BinaryNode<OP, L, R>::CodeGenValue(ExpressionTree& tree)
+    typename ExpressionTree::Storage<L> BinaryNode<OP, L, R>::CodeGenValue(ExpressionTree& tree)
     {
         unsigned l = m_left.GetRegisterCount();
         unsigned r = m_right.GetRegisterCount();

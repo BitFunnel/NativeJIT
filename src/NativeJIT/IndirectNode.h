@@ -13,13 +13,13 @@ namespace NativeJIT
 
         IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 offset);
 
-        Storage<T*> CodeGenBase(ExpressionTree& tree);
+        ExpressionTree::Storage<T*> CodeGenBase(ExpressionTree& tree);
 
         //
         // Overrides of Node methods.
         //
 
-        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
         virtual __int32 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
@@ -48,7 +48,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T*> IndirectNode<T>::CodeGenBase(ExpressionTree& tree)
+    typename ExpressionTree::Storage<T*> IndirectNode<T>::CodeGenBase(ExpressionTree& tree)
     {
         if (m_base.IsFieldPointer())
         {
@@ -63,12 +63,12 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
+    typename ExpressionTree::Storage<T> IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         auto base = CodeGenBase(tree);
         __int32 offset = m_base.GetOffset();
 
-        Storage<T> value(tree, base, m_offset + offset);
+        ExpressionTree::Storage<T> value(tree, base, m_offset + offset);
 
         return value;
     }
