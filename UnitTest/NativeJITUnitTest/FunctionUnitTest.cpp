@@ -207,34 +207,30 @@ namespace NativeJIT
             // Array indexing
             //
 
-            // TODO: Array of primitive
+            TestCase(ArrayOfInt)
+            {
+                AutoResetAllocator reset(m_allocator);
 
-            // This case fails because of a bug generating mov r13, [r13]. This is a problem
-            // with all Group1 register indirect when the dest % 7 == 5.
-            //TestCase(ArrayOfInt)
-            //{
-            //    AutoResetAllocator reset(m_allocator);
+                {
+                    Function<unsigned __int64, unsigned __int64*> expression(m_allocator, *m_code);
 
-            //    {
-            //        Function<unsigned __int64, unsigned __int64*> expression(m_allocator, *m_code);
+                    auto & a = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(1ull));
+                    auto & b = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(2ull));
+                    auto & c = expression.Add(expression.Deref(a), expression.Deref(b));
+                    auto function = expression.Compile(c);
 
-            //        auto & a = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(1ull));
-            //        auto & b = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(2ull));
-            //        auto & c = expression.Add(expression.Deref(a), expression.Deref(b));
-            //        auto function = expression.Compile(c);
+                    unsigned __int64 array[10];
+                    array[1] = 456;
+                    array[2] = 123000;
 
-            //        unsigned __int64 array[10];
-            //        array[1] = 456;
-            //        array[2] = 123000;
+                    unsigned __int64 * p1 = array;
 
-            //        unsigned __int64 * p1 = array;
+                    auto expected = array[1] + array[2];
+                    auto observed = function(p1);
 
-            //        auto expected = array[1] + array[2];
-            //        auto observed = function(p1);
-
-            //        TestAssert(observed == expected);
-            //    }
-            //}
+                    TestAssert(observed == expected);
+                }
+            }
 
 
             TestCase(ArrayOfClass)

@@ -717,7 +717,18 @@ namespace NativeJIT
     template <unsigned SIZE>
     void X64CodeGenerator::EmitModRMOffset(Register<SIZE, false> dest, Register<8, false> src, __int32 srcOffset)
     {
-        unsigned __int8 mod = (srcOffset == 0) ? 0 : ((srcOffset <= 127 && srcOffset >= -128)? 0x40 : 0x80);
+        unsigned offsetSize = Size(srcOffset);
+
+        unsigned __int8 mod;
+
+        if ((src.GetId() & 0x7) == 5)
+        {
+            mod = (offsetSize <= 1) ? 0x40 : 0x80;
+        }
+        else
+        {
+            mod = (offsetSize == 0) ? 0 : ((offsetSize == 1) ? 0x40 : 0x80);
+        }
 
         Emit8(mod | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
@@ -727,10 +738,15 @@ namespace NativeJIT
         // Special case for RSP, R12.
         if ((src.GetId() & 0x7) == 4)
         {
+            // Special case for RSP, R12.
             Emit8(0x24);
         }
 
-        if (mod == 0x40)
+        if (mod == 0x0 && ((src.GetId() & 0x7) == 4) && ((dest.GetId() & 0x7) == 5) && (srcOffset != 0))
+        {
+            Emit32(srcOffset);
+        }
+        else if (mod == 0x40)
         {
             Emit8(static_cast<unsigned __int8>(srcOffset));
         }
