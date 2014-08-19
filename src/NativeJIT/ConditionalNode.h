@@ -40,7 +40,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
 
     private:
@@ -68,7 +68,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual Storage<bool> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<bool> CodeGenValue(ExpressionTree& tree) override;
 
 
         //
@@ -100,7 +100,7 @@ namespace NativeJIT
         //
         // Overrides of Node<T> methods.
         //
-        virtual Storage<bool> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<bool> CodeGenValue(ExpressionTree& tree) override;
 
 
         //
@@ -186,7 +186,7 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    typename Storage<T> ConditionalNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
+    typename ExpressionTree::Storage<T> ConditionalNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
     {
         m_condition.CodeGenFlags(tree);
 
@@ -256,7 +256,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<bool> IsTrue<T>::CodeGenValue(ExpressionTree& tree)
+    typename ExpressionTree::Storage<bool> IsTrue<T>::CodeGenValue(ExpressionTree& tree)
     {
         X64CodeGenerator& code = tree.GetCodeGenerator();
 
@@ -275,7 +275,7 @@ namespace NativeJIT
         code.Emit<OpCode::Mov>(r, 1);
         code.PlaceLabel(l2);
 
-        return Storage<bool>(tree, r);
+        return ExpressionTree::Storage<bool>(tree, r);
     }
 
 
@@ -344,7 +344,7 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    typename Storage<bool> RelationalOperatorNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
+    typename ExpressionTree::Storage<bool> RelationalOperatorNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
     {
         X64CodeGenerator& code = tree.GetCodeGenerator();
 
@@ -354,17 +354,17 @@ namespace NativeJIT
         code.Emit<JCC>(l1);
 //        code.Jcc(JccType::JZ, l1);
 
-        RegisterType r = tree.AllocateRegister<RegisterType>();
-        code.Emit<OpCode::Mov>(r, 1);
+        auto result = tree.Direct<bool>();
+        code.Emit<OpCode::Mov>(result.GetDirectRegister(), 1);
 
         Label l2 = code.AllocateLabel();
         code.Jmp(l2);
         code.PlaceLabel(l1);
 
-        code.Emit<OpCode::Mov>(r, 1);
+        code.Emit<OpCode::Mov>(result.GetDirectRegister(), 1);
         code.PlaceLabel(l2);
 
-        return Storage<bool>(tree, r);
+        return result;
     }
 
 

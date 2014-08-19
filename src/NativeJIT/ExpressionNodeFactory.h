@@ -2,7 +2,7 @@
 
 #include "BinaryNode.h"
 //#include "CallNode.h"
-//#include "ConditionalNode.h"
+#include "ConditionalNode.h"
 #include "ExpressionTree.h"             // Base class.
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
@@ -49,17 +49,17 @@ namespace NativeJIT
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 
 
-    //    //
-    //    // Relational operators
-    //    //
-    //    template <typename T> FlagExpressionNode<JccType::JG>& GreaterThan(Node<T>& left, Node<T>& right);
+        //
+        // Relational operators
+        //
+        template <typename T> FlagExpressionNode<JccType::JG>& GreaterThan(Node<T>& left, Node<T>& right);
 
 
-    //    //
-    //    // Conditional operator
-    //    //
-    //    template <typename T, JccType JCC>
-    //    Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
+        //
+        // Conditional operator
+        //
+        template <typename T, JccType JCC>
+        Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
 
 
     //    //
@@ -148,31 +148,31 @@ namespace NativeJIT
     }
 
 
-    ////
-    //// Relational operators
-    ////
-    //template <typename T>
-    //FlagExpressionNode<JccType::JG>&
-    //ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
-    //{
-    //    typedef RelationalOperatorNode<T, JccType::JG> NodeType;
-    //    return * new (m_allocator.Allocate(sizeof(NodeType)))
-    //                 NodeType(*this, left, right);
-    //}
+    //
+    // Relational operators
+    //
+    template <typename T>
+    FlagExpressionNode<JccType::JG>&
+    ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
+    {
+        typedef RelationalOperatorNode<T, JccType::JG> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, left, right);
+    }
 
 
-    ////
-    //// Conditional operator
-    ////
-    //template <typename T, JccType JCC>
-    //Node<T>& ExpressionNodeFactory::Conditional(FlagExpressionNode<JCC>& condition,
-    //                                            Node<T>& left,
-    //                                            Node<T>& right)
-    //{
-    //    typedef ConditionalNode<T, JCC> NodeType;
-    //    return * new (m_allocator.Allocate(sizeof(NodeType)))
-    //                 NodeType(*this, condition, left, right);
-    //}
+    //
+    // Conditional operator
+    //
+    template <typename T, JccType JCC>
+    Node<T>& ExpressionNodeFactory::Conditional(FlagExpressionNode<JCC>& condition,
+                                                Node<T>& left,
+                                                Node<T>& right)
+    {
+        typedef ConditionalNode<T, JCC> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, condition, left, right);
+    }
 
 
     ////
