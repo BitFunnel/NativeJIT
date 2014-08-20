@@ -56,6 +56,12 @@ namespace NativeJIT
     }
 
 
+    unsigned ExpressionTree::GetRXXUsageMask() const
+    {
+        return m_rxxFreeList.GetUsageMask();
+    }
+
+
     bool ExpressionTree::IsBasePointer(Register<8, false> r) const
     {
         return r.GetId() == m_basePointer.GetId();
@@ -251,7 +257,7 @@ namespace NativeJIT
     {
          Assert(m_refCount > 0, "Attempting to decrement zero ref count.");
         --m_refCount;
-        std::cout << "Decrement " << this << " to " << m_refCount << std::endl;
+//        std::cout << "Decrement " << this << " to " << m_refCount << std::endl;
         return m_refCount;
     }
 
@@ -259,6 +265,6 @@ namespace NativeJIT
     void ExpressionTree::Data::Increment()
     {
         ++m_refCount;
-        std::cout << "Increment " << this << " to " << m_refCount << std::endl;
+//        std::cout << "Increment " << this << " to " << m_refCount << std::endl;
     }
 }

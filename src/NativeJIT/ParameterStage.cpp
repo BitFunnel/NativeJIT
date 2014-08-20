@@ -1,9 +1,8 @@
 #include "stdafx.h"
 
-
+#include "ExpressionTree.h"
 #include "NativeJIT/FunctionBuffer.h"
 #include "ParameterStage.h"
-#include "Temporary/Assert.h"
 
 
 namespace NativeJIT
@@ -14,106 +13,56 @@ namespace NativeJIT
     //
     //*************************************************************************
     ParameterStage::ParameterStage(FunctionBuffer& code)
-        : m_code(code)
+        : m_code(code),
+          m_rxxParameters(0)
     {
     }
 
 
-    void ParameterStage::EmitCall(void* functionPtr)
+    void ParameterStage::SaveVolatiles(ExpressionTree& tree)
     {
-        // Stage each of the parameters.
-        for (unsigned i = 0; i < m_parameters.size(); ++i)
+        // Save those volatiles that are not staged for parameters, not the
+        // return value, and are actually in use in the tree.
+        unsigned rxxVolatiles = c_rxxVolatiles & ~m_rxxParameters & ~1ul & tree.GetRXXUsageMask();
+        unsigned r = 0;
+        while (rxxVolatiles != 0)
         {
-            StageOneParameter();
-        }
-
-        // Save volatile registers that are in use.
-        m_code.SaveVolatileRegisters();
-
-        // Emit the call.
-        m_code.Jmp(functionPtr);
-
-        // Restore volatile registers.
-        m_code.RestoreVolatileRegisters();
-
-        // Restore any spilled registers.
-        for (unsigned i = 0; i < m_parameters.size(); ++i)
-        {
-            m_parameters[i]->Restore();
-        }
-    }
-
-
-    void ParameterStage::StageOneParameter()
-    {
-        ParameterBase* parameterToStage = nullptr;
-
-        // Scan through the list examining parameters that haven't yet been staged.
-        for (unsigned i = 0; i < m_parameters.size(); ++i)
-        {
-            if (!m_parameters[i]->IsStaged())
+            if ((rxxVolatiles & 1) != 0)
             {
-                // Attempt to stage this parameter.
-                parameterToStage = m_parameters[i];
-                if (parameterToStage->TryEmitStaging(*this, false))
-                {
-                    return;
-                }
+                tree.GetCodeGenerator().Emit<OpCode::Push>(Register<8, false>(r));
             }
+            ++r;
+            rxxVolatiles >>= 1;
         }
+    }
 
-        // If no parameter was successfully staged, then force the staging of one
-        // of the unstaged parameters, by spilling its destination register.
-        if (parameterToStage != nullptr)
+
+    void ParameterStage::RestoreVolatiles(ExpressionTree& tree)
+    {
+        // Save those volatiles that are not staged for parameters, not the
+        // return value, and are actually in use in the tree.
+        unsigned rxxVolatiles = c_rxxVolatiles & ~m_rxxParameters & ~1ul & tree.GetRXXUsageMask();
+        rxxVolatiles <<= 16;
+        unsigned r = 15;
+        while (rxxVolatiles != 0)
         {
-            // We found a parameter to stage, but were unable to emit the
-            // staging code because the destination register was unavailable.
-            parameterToStage->TryEmitStaging(*this, true);
+            if ((rxxVolatiles & 0x80000000) != 0)
+            {
+                tree.GetCodeGenerator().Emit<OpCode::Pop>(Register<8, false>(r));
+            }
+            --r;
+            rxxVolatiles <<= 1;
         }
     }
 
 
     //*************************************************************************
     //
-    // ParameterStage::ParameterInfo
+    // ParameterStage::ParameterBase
     //
     //*************************************************************************
-    //bool ParameterStage::ParameterInfo::IsStaged() const
-    //{
-    //    return m_isStaged;
-    //}
-
-
-    //bool ParameterStage::ParameterInfo::TryEmitStaging(bool /*spillIfNecessary*/)
-    //{
-    //    Assert(!IsStaged(), "Parameter already staged.");
-
-    //    //if (true /* !m_tree.IsAvailable(Register<8, false>(m_dest) && spillIfNecessary */)
-    //    //{
-    //    //    // Spill.
-    //    //}
-
-    //    // If the destination register is not available, it could be for two reasons:
-    //    //   1. Holding some value that is not a parameter to this function call.
-    //    //      Just save the value on the stack and restore later.
-    //    //   2. Holding another parameter to this function call.
-    //    //      Need to spill and then update that parameter info with the new location.
-    //    //      Could we instead swap with the other parameter?
-
-    //    // Idea: polymorphic wrapper for Storage<T> that has virtual methods for spilling,
-    //    // transferring, etc.
-    //    //
-    //    // IsStaged() - returns true if embedded storage register is correct.
-    //    // TryEmitStaging(true):
-    //    //   Case: Destination is available. Move Storage to destination. Free source.
-    //    //   Case: Destination is not available - not used by ParameterStage. Spill destination. Mark for restore.
-    //    //   Case: Destination is not available - is used by ParameterStage. Transfer destination to temp.
-
-    //    return true;
-    //}
-
-
-    //void ParameterStage::ParameterInfo::Restore()
-    //{
-    //}
+    ParameterStage::ParameterBase::ParameterBase(unsigned position)
+        : m_position(position)
+    {
+    }
 }

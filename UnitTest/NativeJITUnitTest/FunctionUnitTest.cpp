@@ -353,9 +353,15 @@ namespace NativeJIT
                 }
             }
 
+            static int s_sampleFunctionCalls;
+            static int s_parameterX;
+            static int s_parameterY;
 
             static int SampleFunction(int x, int y)
             {
+                TestAssert(x == s_parameterY);
+                TestAssert(y == s_parameterX);
+                ++FunctionTest::s_sampleFunctionCalls;
                 return x + y;
             }
 
@@ -372,15 +378,24 @@ namespace NativeJIT
                     auto & a = expression.Call(sampleFunction, expression.GetP2(), expression.GetP1());
                     auto function = expression.Compile(a);
 
-                    int p1 = 12340000ll;
-                    int p2 = 5678ll;
+                    int& p1 = s_parameterX;
+                    int& p2 = s_parameterY;
 
-                    auto expected = SampleFunction(p1, p2);
+                    p1 = 12340000ll;
+                    p2 = 5678ll;
+
+                    auto expected = SampleFunction(p2, p1);
+
+                    FunctionTest::s_sampleFunctionCalls = 0;
                     auto observed = function(p1, p2);
 
                     TestAssert(observed == expected);
+                    TestAssert(FunctionTest::s_sampleFunctionCalls == 1);
                 }
             }
+
+            // TODO: Test register save/restore across call.
+            // TODO: Test call register indirect.
 
 
         private:
@@ -388,5 +403,9 @@ namespace NativeJIT
             ExecutionBuffer m_executionBuffer;
             std::unique_ptr<FunctionBuffer> m_code;
         };
+
+        int FunctionTest::s_sampleFunctionCalls;
+        int FunctionTest::s_parameterX;
+        int FunctionTest::s_parameterY;
     }
 }

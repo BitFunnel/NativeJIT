@@ -247,6 +247,11 @@ imul r12, 12h
 imul r12, 1234h
 imul r12, 12345678h
 
+call rax
+call rsp
+call rbp
+call r12
+call r13
 
   mov rax, 07fffffffffffffffh
 main ENDP

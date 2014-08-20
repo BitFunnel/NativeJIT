@@ -3,7 +3,8 @@
 #include <iostream>     // TODO: Delete this file after removing all references to std::cout.
 
 #include "NativeJIT/X64CodeGenerator.h"
-#include "Node.h"
+#include "Node.h"                           // Base class.
+#include "ParameterStage.h"                 // Used by template definition.
 
 
 namespace NativeJIT
@@ -75,52 +76,10 @@ namespace NativeJIT
         // Potentially move result into new register.
         // Restore non-volatile registers.
 
-        {
-            auto f = m_function.CodeGen(tree);
-            f.ConvertToValue(tree, false);
-
-            auto s1 = m_p1.CodeGen(tree);
-            s1.ConvertToValue(tree, false);
-            ExpressionTree::Storage<P1> s1a;
-            if (s1.GetDirectRegister().GetId() != 1)
-            {
-                Node<P1>::RegisterType rcx(1);
-                s1a = tree.Direct<P1>(rcx);
-                std::cout << "P1" << std::endl;
-                tree.GetCodeGenerator().Emit<OpCode::Mov>(rcx, s1.GetDirectRegister());
-            }
-            s1.Reset();
-
-            auto s2 = m_p2.CodeGen(tree);
-            s2.ConvertToValue(tree, false);
-            ExpressionTree::Storage<P2> s2a;
-            if (s2.GetDirectRegister().GetId() != 2)
-            {
-                Node<P2>::RegisterType rdx(2);
-                s2a = tree.Direct<P2>(rdx);
-                std::cout << "P2" << std::endl;
-                tree.GetCodeGenerator().Emit<OpCode::Mov>(rdx, s2.GetDirectRegister());
-
-                // PROBLEM1: When s2a goes out of scope, RCX gets released.
-                // PROBLEM2: Even if s2a doesn't go out of scope, RCX will be bumped.
-                // Issue is criss cross: rcx = rdx, rdx = rcx.
-                // Can't rely solely on bumping.
-            }
-            s2.Reset();
-
-            std::cout << "// Set up parameter registers." << std::endl;
-
-            tree.GetCodeGenerator().Emit<OpCode::Call>(f.GetDirectRegister());
-
-            // TODO: Need to reserve register 0 system wide. Otherwise need to allocate register 0.
-            auto result = tree.Direct<R>();
-            if (result.GetDirectRegister().GetId() != 0)
-            {
-                tree.GetCodeGenerator().Emit<OpCode::Mov>(result.GetDirectRegister(), Node<R>::RegisterType(0));
-            }
-
-            return result;
-        }
+        ParameterStage stage(tree.GetCodeGenerator());
+        stage.AddParameter(m_p1);
+        stage.AddParameter(m_p2);
+        return stage.EmitCall<R>(tree, m_function);
     }
 
 
@@ -167,6 +126,5 @@ namespace NativeJIT
         {
             return left + 1;
         }
-
     }
 }

@@ -85,6 +85,8 @@ namespace NativeJIT
         template <typename REGISTERTYPE>
         unsigned GetAvailableRegisterCount() const;
 
+        unsigned GetRXXUsageMask() const;
+
     protected:
         void  const * GetUntypedEntryPoint() const;
 
@@ -113,11 +115,14 @@ namespace NativeJIT
             Data* GetData(unsigned id) const;
             void MoveData(unsigned dest, unsigned src);
 
+            unsigned GetUsageMask() const;
+
         private:
             unsigned m_positions[SIZE];
             unsigned m_free[SIZE];
             Data* m_data[SIZE];
             unsigned m_count;
+            unsigned m_usageMask;
         };
 
 
@@ -810,7 +815,8 @@ namespace NativeJIT
     //*************************************************************************
     template <unsigned SIZE>
     ExpressionTree::FreeList<SIZE>::FreeList()
-        : m_count(0)
+        : m_count(0),
+          m_usageMask(0)
     {
         // Mark all positions as unavailable.
         for (unsigned i = 0 ; i < SIZE; ++i)
@@ -843,6 +849,7 @@ namespace NativeJIT
 
         unsigned id = m_free[m_count - 1];
         m_positions[id] = SIZE;
+        m_usageMask |= (1ul << id);
         m_count--;
 
         return id;
@@ -876,6 +883,8 @@ namespace NativeJIT
             m_positions[id] = SIZE;
             m_count--;
         }
+
+        m_usageMask |= (1ul << id);
     }
 
 
@@ -888,6 +897,7 @@ namespace NativeJIT
         m_free[m_count] = id;
         m_positions[id] = m_count;
         m_data[id] = nullptr; 
+        m_usageMask &= ~(1ul << id);
         m_count++;
     }
 
@@ -928,5 +938,12 @@ namespace NativeJIT
 
 //        m_positions[dest] = SIZE;
         Release(src);
+    }
+
+
+    template <unsigned SIZE>
+    unsigned ExpressionTree::FreeList<SIZE>::GetUsageMask() const
+    {
+        return m_usageMask;
     }
 }

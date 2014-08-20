@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/18/14 16:48:49
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/20/14 14:52:28
 TestAsm.asm						     Page 1 - 1
 
 
@@ -307,10 +307,15 @@ TestAsm.asm						     Page 1 - 1
  000002E2  4D/ 69 E4		imul r12, 12345678h
 	   12345678
 
+ 000002E9  FF D0		call rax
+ 000002EB  FF D4		call rsp
+ 000002ED  FF D5		call rbp
+ 000002EF  41/ FF D4		call r12
+ 000002F2  41/ FF D5		call r13
 
- 000002E9  48/ B8		  mov rax, 07fffffffffffffffh
+ 000002F5  48/ B8		  mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 000002F3			main ENDP
+ 000002FF			main ENDP
 
 				END
 

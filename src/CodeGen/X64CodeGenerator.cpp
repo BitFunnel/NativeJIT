@@ -189,9 +189,14 @@ namespace NativeJIT
     }
 
 
-    void X64CodeGenerator::Call(Register<8, false> /*r*/)
+    void X64CodeGenerator::Call(Register<8, false> r)
     {
-        std::cout << "[IMPLEMENT CALL]";
+        if (r.GetId() > 7)
+        {
+            Emit8(0x41);
+        }
+        Emit8(0xff);
+        Emit8(0xD0 | r.GetId() & 0x7);
     }
 
 

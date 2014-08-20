@@ -252,6 +252,16 @@ namespace NativeJIT
             buffer.Emit<OpCode::IMul>(r12, 0x12);
             buffer.Emit<OpCode::IMul>(r12, 0x1234);
             buffer.Emit<OpCode::IMul>(r12, 0x12345678);
+
+            //
+            // Call
+            //
+            buffer.Emit<OpCode::Call>(rax);
+            buffer.Emit<OpCode::Call>(rsp);
+            buffer.Emit<OpCode::Call>(rbp);
+            buffer.Emit<OpCode::Call>(r12);
+            buffer.Emit<OpCode::Call>(r13);
+
             // shift
 
             // floating point
@@ -518,7 +528,13 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 000002DA  4D/ 69 E4            imul r12, 12345678h                                                \n"
                 "           12345678                                                                                \n"
-                "                                                                                                   \n";
+                "                                                                                                   \n"
+                "                                ; Call                                                             \n"
+                " 000002E9  FF D0                call rax                                                           \n"
+                " 000002EB  FF D4                call rsp                                                           \n"
+                " 000002ED  FF D5                call rbp                                                           \n"
+                " 000002EF  41/ FF D4            call r12                                                           \n"
+                " 000002F2  41/ FF D5            call r13                                                           \n";
 
             ML64Verifier v(ml64Output, start);
         }
