@@ -354,6 +354,34 @@ namespace NativeJIT
             }
 
 
+            static int SampleFunction(int x, int y)
+            {
+                return x + y;
+            }
+
+
+            TestCase(CallTwoParameters)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<int, int, int> expression(m_allocator, *m_code);
+
+                    typedef int (*F)(int, int);
+                    auto &sampleFunction = expression.Immediate<F>(SampleFunction);
+                    auto & a = expression.Call(sampleFunction, expression.GetP2(), expression.GetP1());
+                    auto function = expression.Compile(a);
+
+                    int p1 = 12340000ll;
+                    int p2 = 5678ll;
+
+                    auto expected = SampleFunction(p1, p2);
+                    auto observed = function(p1, p2);
+
+                    TestAssert(observed == expected);
+                }
+            }
+
 
         private:
             Allocator m_allocator;

@@ -29,7 +29,7 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual Storage<R> CodeGenValue(ExpressionTree& tree) override;
+        virtual ExpressionTree::Storage<R> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -57,11 +57,13 @@ namespace NativeJIT
           m_p1(p1),
           m_p2(p2)
     {
+        p1.IncrementParentCount();
+        p2.IncrementParentCount();
     }
 
 
     template <typename R, typename P1, typename P2>
-    Storage<R> CallNode<R, P1, P2>::CodeGenValue(ExpressionTree& /*tree*/)
+    ExpressionTree::Storage<R> CallNode<R, P1, P2>::CodeGenValue(ExpressionTree& tree)
     {
         // Save non-volatile registers.
         // Evaluate parameters.
@@ -73,36 +75,52 @@ namespace NativeJIT
         // Potentially move result into new register.
         // Restore non-volatile registers.
 
-        // TODO: Implement this function.
-        throw 0;
-        //std::cout << "// Push volatile registers." << std::endl;
+        {
+            auto f = m_function.CodeGen(tree);
+            f.ConvertToValue(tree, false);
 
-        //{
-        //    auto f = m_function.CodeGen(tree);
-        //    f.ConvertToValue(tree, false);
+            auto s1 = m_p1.CodeGen(tree);
+            s1.ConvertToValue(tree, false);
+            ExpressionTree::Storage<P1> s1a;
+            if (s1.GetDirectRegister().GetId() != 1)
+            {
+                Node<P1>::RegisterType rcx(1);
+                s1a = tree.Direct<P1>(rcx);
+                std::cout << "P1" << std::endl;
+                tree.GetCodeGenerator().Emit<OpCode::Mov>(rcx, s1.GetDirectRegister());
+            }
+            s1.Reset();
 
-        //    tree.Prefer(rcx);
-        //    auto s1 = m_p1.CodeGen(tree);
-        //    s1.ConvertToValue(tree, false);
+            auto s2 = m_p2.CodeGen(tree);
+            s2.ConvertToValue(tree, false);
+            ExpressionTree::Storage<P2> s2a;
+            if (s2.GetDirectRegister().GetId() != 2)
+            {
+                Node<P2>::RegisterType rdx(2);
+                s2a = tree.Direct<P2>(rdx);
+                std::cout << "P2" << std::endl;
+                tree.GetCodeGenerator().Emit<OpCode::Mov>(rdx, s2.GetDirectRegister());
 
-        //    tree.Prefer(rdx);
-        //    auto s2 = m_p2.CodeGen(tree);
-        //    s2.ConvertToValue(tree, false);
+                // PROBLEM1: When s2a goes out of scope, RCX gets released.
+                // PROBLEM2: Even if s2a doesn't go out of scope, RCX will be bumped.
+                // Issue is criss cross: rcx = rdx, rdx = rcx.
+                // Can't rely solely on bumping.
+            }
+            s2.Reset();
 
-        //    std::cout << "// Set up parameter registers." << std::endl;
+            std::cout << "// Set up parameter registers." << std::endl;
 
-        //    tree.GetCodeGenerator().Emit<OpCode::Call>(f.GetDirectRegister());
-        //}
+            tree.GetCodeGenerator().Emit<OpCode::Call>(f.GetDirectRegister());
 
-        //std::cout << "// Pop volatile registers." << std::endl;
+            // TODO: Need to reserve register 0 system wide. Otherwise need to allocate register 0.
+            auto result = tree.Direct<R>();
+            if (result.GetDirectRegister().GetId() != 0)
+            {
+                tree.GetCodeGenerator().Emit<OpCode::Mov>(result.GetDirectRegister(), Node<R>::RegisterType(0));
+            }
 
-        //auto x = tree.AllocateRegister<Storage<R>::DirectRegister>();
-        //Storage<R> result(tree, x);
-        //tree.GetCodeGenerator().Emit<OpCode::Mov>(result.GetDirectRegister(), Storage<R>::DirectRegister(0));
-
-        //// TODO: This is wrong. Need copy RAX or XMM0 to correct register.
-        //// Return storage has to be compatible with type R.
-        //return result;
+            return result;
+        }
     }
 
 

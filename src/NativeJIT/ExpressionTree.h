@@ -64,7 +64,8 @@ namespace NativeJIT
         template <typename T>
         Storage<T> Indirect(Register<sizeof(T), false> base, __int32 offset);
 
-        template <typename T>
+        template 
+            <typename T>
         Storage<T> Temporary();
 
         template <typename T>
@@ -281,11 +282,15 @@ namespace NativeJIT
         if (!m_rxxFreeList.IsAvailable(src))
         {
             // Register is not available - bump it.
+            // TODO: Should be able to allocate a temporary if no registers are available.
+            // This requires some knowledge of how to dereference indirects since an
+            // indirect may have to be spilled to a temporary. At the very least, need to
+            // know how to move the data (i.e. its size).
             unsigned dest = m_rxxFreeList.Allocate();
-            m_rxxFreeList.MoveData(dest, src);
 
-            // TODO: Emit<OpCode>::Mov(Register, Register)
-            std::cout << "mov r" << dest << ", r" << src << std::endl;
+            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
+
+            m_rxxFreeList.MoveData(dest, src);
         }
 
         m_rxxFreeList.Allocate(src);
@@ -318,11 +323,12 @@ namespace NativeJIT
         if (!m_rxxFreeList.IsAvailable(src))
         {
             // Register is not available - bump it.
+            // TODO: Should be able to allocate a temporary if no registers are available.
             unsigned dest = m_rxxFreeList.Allocate();
-            m_rxxFreeList.MoveData(dest, src);
 
-            // TODO: Emit<OpCode>::Mov(Register, Register)
-            std::cout << "mov r" << dest << ", r" << src << std::endl;
+            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
+
+            m_rxxFreeList.MoveData(dest, src);
         }
 
         m_rxxFreeList.Allocate(src);
@@ -843,6 +849,9 @@ namespace NativeJIT
     }
 
 
+    // TODO: Perhaps this should return a Data*.
+    // If nothing is displaced, returns nullptr.
+    // Otherwise returns Data* for displaced.
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::Allocate(unsigned id)
     {
@@ -916,5 +925,8 @@ namespace NativeJIT
         m_data[src] = nullptr;
 
         m_data[dest]->SetRegisterId(dest);
+
+//        m_positions[dest] = SIZE;
+        Release(src);
     }
 }
