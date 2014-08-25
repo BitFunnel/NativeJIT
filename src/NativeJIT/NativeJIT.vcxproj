@@ -72,6 +72,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BinaryNode.h" />
+    <ClInclude Include="CallNode2.h" />
     <ClInclude Include="CallNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
     <ClInclude Include="ExpressionTree-Old.h" />
@@ -94,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocator.cpp" />
+    <ClCompile Include="CallNode.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
     <ClCompile Include="ExpressionTree-Old.cpp" />

@@ -37,6 +37,8 @@ namespace NativeJIT
     private:
         static unsigned ComputeRegisterCount(unsigned p1, unsigned p2);
 
+        ParameterStage<R> m_stage;
+
         Node<FunctionPointer>& m_function;
         Node<P1>& m_p1;
         Node<P2>& m_p2;
@@ -54,6 +56,7 @@ namespace NativeJIT
                                   Node<P1>& p1,
                                   Node<P2>& p2)
         : Node(tree),
+          m_stage(tree.GetCodeGenerator()),
           m_function(function),
           m_p1(p1),
           m_p2(p2)
@@ -76,10 +79,10 @@ namespace NativeJIT
         // Potentially move result into new register.
         // Restore non-volatile registers.
 
-        ParameterStage stage(tree.GetCodeGenerator());
+        ParameterStage<R> stage(tree.GetCodeGenerator());
         stage.AddParameter(m_p1);
         stage.AddParameter(m_p2);
-        return stage.EmitCall<R>(tree, m_function);
+        return stage.EmitCall(tree, m_function);
     }
 
 

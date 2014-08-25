@@ -1,25 +1,23 @@
 #include "stdafx.h"
 
-#include "ExpressionTree.h"
+#include "CallNode2.h"
 #include "NativeJIT/FunctionBuffer.h"
-#include "ParameterStage.h"
 
 
 namespace NativeJIT
 {
     //*************************************************************************
     //
-    // ParameterStageBase
+    // SaveRestoreVolatilesHelper
     //
     //*************************************************************************
-    ParameterStageBase::ParameterStageBase(FunctionBuffer& code)
-        : m_code(code),
-          m_rxxParameters(0)
+    SaveRestoreVolatilesHelper::SaveRestoreVolatilesHelper()
+        : m_rxxParameters(0)
     {
     }
 
 
-    void ParameterStageBase::SaveVolatiles(ExpressionTree& tree)
+    void SaveRestoreVolatilesHelper::SaveVolatiles(ExpressionTree& tree)
     {
         // Save those volatiles that are not staged for parameters, not the
         // return value, and are actually in use in the tree.
@@ -37,7 +35,7 @@ namespace NativeJIT
     }
 
 
-    void ParameterStageBase::RestoreVolatiles(ExpressionTree& tree)
+    void SaveRestoreVolatilesHelper::RestoreVolatiles(ExpressionTree& tree)
     {
         // Save those volatiles that are not staged for parameters, not the
         // return value, and are actually in use in the tree.
@@ -54,26 +52,4 @@ namespace NativeJIT
             rxxVolatiles <<= 1;
         }
     }
-
-
-    ////*************************************************************************
-    ////
-    //// ParameterStage
-    ////
-    ////*************************************************************************
-    //ParameterStage::ParameterStage(FunctionBuffer& code)
-    //    : ParameterStageBase(code)
-    //{
-    //}
-
-
-    ////*************************************************************************
-    ////
-    //// ParameterStage::ParameterBase
-    ////
-    ////*************************************************************************
-    //ParameterStage::ParameterBase::ParameterBase(unsigned position)
-    //    : m_position(position)
-    //{
-    //}
 }

@@ -13,7 +13,30 @@ namespace NativeJIT
     template <typename T> class Storage;
 
 
-    class ParameterStage : public NonCopyable
+    class ParameterStageBase : public NonCopyable
+    {
+    public:
+        ParameterStageBase(FunctionBuffer& code);
+
+    protected:
+        void SaveVolatiles(ExpressionTree& tree);
+        void RestoreVolatiles(ExpressionTree& tree);
+
+        template <unsigned SIZE>
+        void RecordParameterRegister(Register<SIZE, false> r);
+
+        FunctionBuffer& m_code;
+
+        // TODO: m_xmmParameters
+        unsigned m_rxxParameters;
+
+        // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
+        static const unsigned c_rxxVolatiles = 0xf07; //1111 0000 0111
+    };
+
+
+    template <typename R>
+    class ParameterStage : public ParameterStageBase
     {
     public:
         ParameterStage(FunctionBuffer& code);
@@ -21,7 +44,7 @@ namespace NativeJIT
         template <typename T>
         void AddParameter(Node<T>& expression);
 
-        template <typename R, typename F>
+        template <typename F>
         ExpressionTree::Storage<R> EmitCall(ExpressionTree& tree, Node<F>& function);
 
     private:
@@ -56,22 +79,21 @@ namespace NativeJIT
             typename ExpressionTree::Storage<T>::DirectRegister m_destination;
         };
 
-        void SaveVolatiles(ExpressionTree& tree);
-        void RestoreVolatiles(ExpressionTree& tree);
 
-        template <unsigned SIZE>
-        void RecordParameterRegister(Register<SIZE, false> r);
-
-
-        FunctionBuffer& m_code;
         std::vector<ParameterBase*> m_parameters;
-
-        // TODO: m_xmmParameters
-        unsigned m_rxxParameters;
-
-        // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
-        static const unsigned c_rxxVolatiles = 0xf07; //1111 0000 0111
     };
+
+
+    //*************************************************************************
+    //
+    // Template definitions for ParameterStageBase
+    //
+    //*************************************************************************
+    template <unsigned SIZE>
+    void ParameterStageBase::RecordParameterRegister(Register<SIZE, false> r)
+    {
+        m_rxxParameters |= (1ul << r.GetId());
+    }
 
 
     //*************************************************************************
@@ -79,8 +101,16 @@ namespace NativeJIT
     // Template definitions for ParameterStage
     //
     //*************************************************************************
+    template <typename R>
+    ParameterStage<R>::ParameterStage(FunctionBuffer& code)
+        : ParameterStageBase(code)
+    {
+    }
+
+
+    template <typename R>
     template <typename T>
-    void ParameterStage::AddParameter(Node<T>& expression)
+    void ParameterStage<R>::AddParameter(Node<T>& expression)
     {
         // TODO: Use arena allocator.
         Parameter<T>* parameter = new Parameter<T>(expression, static_cast<unsigned>(m_parameters.size()));
@@ -89,8 +119,9 @@ namespace NativeJIT
     }
 
 
-    template <typename R, typename F>
-    ExpressionTree::Storage<R> ParameterStage::EmitCall(ExpressionTree& tree, Node<F>& function)
+    template <typename R>
+    template <typename F>
+    ExpressionTree::Storage<R> ParameterStage<R>::EmitCall(ExpressionTree& tree, Node<F>& function)
     {
         // Stage each of the parameters.
         for (unsigned i = 0; i < m_parameters.size(); ++i)
@@ -132,10 +163,15 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    void ParameterStage::RecordParameterRegister(Register<SIZE, false> r)
+    //*************************************************************************
+    //
+    // Template definitions for ParameterStage<R>::ParameterBase
+    //
+    //*************************************************************************
+    template <typename R>
+    ParameterStage<R>::ParameterBase::ParameterBase(unsigned position)
+        : m_position(position)
     {
-        m_rxxParameters |= (1ul << r.GetId());
     }
 
 
@@ -145,8 +181,9 @@ namespace NativeJIT
     //
     //*************************************************************************
 
+    template <typename R>
     template <typename T>
-    ParameterStage::Parameter<T>::Parameter(Node<T>& expression, unsigned position)
+    ParameterStage<R>::Parameter<T>::Parameter(Node<T>& expression, unsigned position)
         : ParameterBase(position),
           m_expression(expression)
     {
@@ -154,8 +191,9 @@ namespace NativeJIT
     }
 
 
+    template <typename R>
     template <typename T>
-    void ParameterStage::Parameter<T>::EmitStaging(ExpressionTree& tree)
+    void ParameterStage<R>::Parameter<T>::EmitStaging(ExpressionTree& tree)
     {
         m_storage = m_expression.CodeGen(tree);
 
@@ -170,15 +208,17 @@ namespace NativeJIT
     }
 
 
+    template <typename R>
     template <typename T>
-    void ParameterStage::Parameter<T>::Release()
+    void ParameterStage<R>::Parameter<T>::Release()
     {
         m_storage.Reset();
     }
 
 
+    template <typename R>
     template <typename T>
-    typename ExpressionTree::Storage<T>::DirectRegister ParameterStage::Parameter<T>::GetRegister() const
+    typename ExpressionTree::Storage<T>::DirectRegister ParameterStage<R>::Parameter<T>::GetRegister() const
     {
         return m_destination;
     }
