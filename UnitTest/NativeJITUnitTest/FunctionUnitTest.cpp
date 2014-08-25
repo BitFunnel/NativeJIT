@@ -8,7 +8,7 @@
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
 
-#include "CallNode2.h"
+#include "CallNode.h"
 
 namespace NativeJIT
 {
@@ -354,6 +354,7 @@ namespace NativeJIT
                 }
             }
 
+
             static int s_sampleFunctionCalls;
             static int s_parameterX;
             static int s_parameterY;
@@ -397,33 +398,6 @@ namespace NativeJIT
 
             // TODO: Test register save/restore across call.
             // TODO: Test call register indirect.
-
-            TestCase(CallNode2)
-            {
-                    Function<int, int, int> expression(m_allocator, *m_code);
-
-                    typedef int (*F)(int, int);
-                    auto & sampleFunction = expression.Immediate<F>(SampleFunction);
-
-
-                    auto & a = * new CallNode2<int, int, int>(expression, sampleFunction, expression.GetP2(), expression.GetP1());
-
-                    auto function = expression.Compile(a);
-
-                    int& p1 = s_parameterX;
-                    int& p2 = s_parameterY;
-
-                    p1 = 12340000ll;
-                    p2 = 5678ll;
-
-                    auto expected = SampleFunction(p2, p1);
-
-                    FunctionTest::s_sampleFunctionCalls = 0;
-                    auto observed = function(p1, p2);
-
-                    TestAssert(observed == expected);
-                    TestAssert(FunctionTest::s_sampleFunctionCalls == 1);
-            }
 
 
         private:

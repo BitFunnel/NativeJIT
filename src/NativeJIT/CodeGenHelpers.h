@@ -1,9 +1,8 @@
 #pragma once
 
 #include "ExpressionTree.h"                 // ExpressionTree::Storage<T> parameter.
-#include "NativeJIT/X64CodeGenerator.h"
-#include "Storage.h"
-#include "Temporary/Assert.h"
+#include "NativeJIT/X64CodeGenerator.h"     // Emit<OP> referenced by template definition.
+#include "Temporary/Assert.h"               // Assert() referenced by template definition.
 
 
 namespace NativeJIT

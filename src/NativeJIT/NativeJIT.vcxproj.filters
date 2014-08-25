@@ -54,9 +54,6 @@
     <ClInclude Include="ConditionalNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Storage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TypePredicates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -67,15 +64,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CodeGenHelpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ParameterStage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExpressionTree-Old.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CallNode2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -102,15 +90,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ParameterNode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Storage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ParameterStage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ExpressionTree-Old.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CallNode.cpp">

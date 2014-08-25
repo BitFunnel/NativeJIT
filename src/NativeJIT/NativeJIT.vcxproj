@@ -72,10 +72,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BinaryNode.h" />
-    <ClInclude Include="CallNode2.h" />
     <ClInclude Include="CallNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
-    <ClInclude Include="ExpressionTree-Old.h" />
     <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
@@ -86,10 +84,8 @@
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="ParameterNode.h" />
-    <ClInclude Include="ParameterStage.h" />
     <ClInclude Include="ReturnNode.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Storage.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TypePredicates.h" />
   </ItemGroup>
@@ -98,17 +94,14 @@
     <ClCompile Include="CallNode.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
-    <ClCompile Include="ExpressionTree-Old.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="ParameterNode.cpp" />
-    <ClCompile Include="ParameterStage.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Storage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CodeGen\CodeGen.vcxproj">
