@@ -136,21 +136,97 @@ namespace NativeJIT
     };
 
 
+    template <typename R, typename P1 = void, typename P2 = void, typename P3 = void, typename P4 = void>
+    class CallNode;
+
+
+    template <typename R>
+    class CallNode<R> : public CallNodeBase<R, 0>
+    {
+    public:
+        typedef R (*FunctionPointer)();
+
+        CallNode(ExpressionTree& tree,
+                 Node<FunctionPointer>& function);
+
+    private:
+        FunctionChild<FunctionPointer> m_f;
+    };
+
+
+    template <typename R, typename P1>
+    class CallNode<R, P1> : public CallNodeBase<R, 1>
+    {
+    public:
+        typedef R (*FunctionPointer)(P1);
+
+        CallNode(ExpressionTree& tree,
+                 Node<FunctionPointer>& function,
+                 Node<P1>& p1);
+
+    private:
+        FunctionChild<FunctionPointer> m_f;
+        ParameterChild<P1> m_p1;
+    };
+
+
     template <typename R, typename P1, typename P2>
-    class CallNode : public CallNodeBase<R, 2>
+    class CallNode<R, P1, P2> : public CallNodeBase<R, 2>
     {
     public:
         typedef R (*FunctionPointer)(P1, P2);
 
         CallNode(ExpressionTree& tree,
-                  Node<FunctionPointer>& function,
-                  Node<P1>& p1,
-                  Node<P2>& p2);
+                 Node<FunctionPointer>& function,
+                 Node<P1>& p1,
+                 Node<P2>& p2);
 
     private:
         FunctionChild<FunctionPointer> m_f;
         ParameterChild<P1> m_p1;
-        ParameterChild<P1> m_p2;
+        ParameterChild<P2> m_p2;
+    };
+
+
+    template <typename R, typename P1, typename P2, typename P3>
+    class CallNode<R, P1, P2, P3> : public CallNodeBase<R, 3>
+    {
+    public:
+        typedef R (*FunctionPointer)(P1, P2, P3);
+
+        CallNode(ExpressionTree& tree,
+                 Node<FunctionPointer>& function,
+                 Node<P1>& p1,
+                 Node<P2>& p2,
+                 Node<P3>& p3);
+
+    private:
+        FunctionChild<FunctionPointer> m_f;
+        ParameterChild<P1> m_p1;
+        ParameterChild<P2> m_p2;
+        ParameterChild<P3> m_p3;
+    };
+
+
+    template <typename R, typename P1, typename P2, typename P3, typename P4>
+    class CallNode : public CallNodeBase<R, 4>
+    {
+    public:
+        typedef R (*FunctionPointer)(P1, P2, P3, P4);
+
+        CallNode(ExpressionTree& tree,
+                 Node<FunctionPointer>& function,
+                 Node<P1>& p1,
+                 Node<P2>& p2,
+                 Node<P3>& p3,
+                 Node<P4>& p4);
+
+    private:
+        FunctionChild<FunctionPointer> m_f;
+        ParameterChild<P1> m_p1;
+        ParameterChild<P2> m_p2;
+        ParameterChild<P3> m_p3;
+        ParameterChild<P4> m_p4;
     };
 
 
@@ -374,11 +450,36 @@ namespace NativeJIT
     // Template definitions for CallNode<R, P1, P2>
     //
     //*************************************************************************
+    template <typename R>
+    CallNode<R>::CallNode(ExpressionTree& tree,
+                          Node<FunctionPointer>& function)
+        : CallNodeBase(tree),
+          m_f(function)
+    {
+        m_function = &m_f;
+        m_children[0] = &m_f;
+    }
+
+
+    template <typename R, typename P1>
+    CallNode<R, P1>::CallNode(ExpressionTree& tree,
+                                  Node<FunctionPointer>& function,
+                                  Node<P1>& p1)
+        : CallNodeBase(tree),
+          m_f(function),
+          m_p1(p1, 0)
+    {
+        m_function = &m_f;
+        m_children[0] = &m_f;
+        m_children[1] = &m_p1;
+    }
+
+
     template <typename R, typename P1, typename P2>
     CallNode<R, P1, P2>::CallNode(ExpressionTree& tree,
-                                    Node<FunctionPointer>& function,
-                                    Node<P1>& p1,
-                                    Node<P2>&p2)
+                                  Node<FunctionPointer>& function,
+                                  Node<P1>& p1,
+                                  Node<P2>& p2)
         : CallNodeBase(tree),
           m_f(function),
           m_p1(p1, 0),
@@ -388,5 +489,48 @@ namespace NativeJIT
         m_children[0] = &m_f;
         m_children[1] = &m_p1;
         m_children[2] = &m_p2;
+    }
+
+
+    template <typename R, typename P1, typename P2, typename P3>
+    CallNode<R, P1, P2, P3>::CallNode(ExpressionTree& tree,
+                                      Node<FunctionPointer>& function,
+                                      Node<P1>& p1,
+                                      Node<P2>& p2,
+                                      Node<P3>& p3)
+        : CallNodeBase(tree),
+          m_f(function),
+          m_p1(p1, 0),
+          m_p2(p2, 1),
+          m_p3(p3, 2)
+    {
+        m_function = &m_f;
+        m_children[0] = &m_f;
+        m_children[1] = &m_p1;
+        m_children[2] = &m_p2;
+        m_children[3] = &m_p3;
+    }
+
+
+    template <typename R, typename P1, typename P2, typename P3, typename P4>
+    CallNode<R, P1, P2, P3, P4>::CallNode(ExpressionTree& tree,
+                                          Node<FunctionPointer>& function,
+                                          Node<P1>& p1,
+                                          Node<P2>& p2,
+                                          Node<P3>& p3,
+                                          Node<P4>& p4)
+        : CallNodeBase(tree),
+          m_f(function),
+          m_p1(p1, 0),
+          m_p2(p2, 1),
+          m_p3(p3, 2),
+          m_p4(p4, 3)
+    {
+        m_function = &m_f;
+        m_children[0] = &m_f;
+        m_children[1] = &m_p1;
+        m_children[2] = &m_p2;
+        m_children[3] = &m_p3;
+        m_children[4] = &m_p4;
     }
 }

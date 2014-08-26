@@ -293,7 +293,12 @@ namespace NativeJIT
             // know how to move the data (i.e. its size).
             unsigned dest = m_rxxFreeList.Allocate();
 
-            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
+            // TODO: BUGBUG: Should be saving entire 64 bit register. Reason is that we don't know the
+            // size required by the previous user. They may be using 64 bits, but we only saved 8.
+//            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
+
+            // Important to preserve all bits of register.
+            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
             m_rxxFreeList.MoveData(dest, src);
         }
@@ -330,8 +335,10 @@ namespace NativeJIT
             // Register is not available - bump it.
             // TODO: Should be able to allocate a temporary if no registers are available.
             unsigned dest = m_rxxFreeList.Allocate();
+//            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
 
-            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
+            // Important to preserve all bits of register.
+            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
             m_rxxFreeList.MoveData(dest, src);
         }

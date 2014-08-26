@@ -24,16 +24,16 @@ namespace NativeJIT
     public:
         ExpressionNodeFactory(Allocators::IAllocator& allocator, FunctionBuffer& code);
 
-    //    //
-    //    // Leaf nodes
-    //    //
+        //
+        // Leaf nodes
+        //
         template <typename T> Node<T>& Immediate(T value);
         template <typename T> ParameterNode<T>& Parameter();
 
 
-    //    //
-    //    // Unary operators
-    //    //
+        //
+        // Unary operators
+        //
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
         template <typename T> NodeBase& Return(Node<T>& value);
@@ -43,7 +43,7 @@ namespace NativeJIT
         // Binary arithmetic operators
         //
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
-    //    template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
+        template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
 
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
@@ -65,19 +65,38 @@ namespace NativeJIT
         //
         // Call node
         //
+        template <typename R>
+        Node<R>& Call(Node<R (*)()>& function);
+
+        template <typename R, typename P1>
+        Node<R>& Call(Node<R (*)(P1)>& function, Node<P1>& param1);
+
         template <typename R, typename P1, typename P2>
-        Node<R>& Call(Node<R (*)(P1,P2)>& function, Node<P1>& param1, Node<P2>& param2);
+        Node<R>& Call(Node<R (*)(P1, P2)>& function, Node<P1>& param1, Node<P2>& param2);
+
+        template <typename R, typename P1, typename P2, typename P3>
+        Node<R>& Call(Node<R (*)(P1, P2, P3)>& function,
+                      Node<P1>& param1,
+                      Node<P2>& param2,
+                      Node<P3>& param3);
+
+        template <typename R, typename P1, typename P2, typename P3, typename P4>
+        Node<R>& Call(Node<R (*)(P1, P2, P3, P4)>& function,
+                      Node<P1>& param1,
+                      Node<P2>& param2,
+                      Node<P3>& param3,
+                      Node<P4>& param4);
 
     private:
         template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, Node<R>& right);
     };
 
 
-    ////*************************************************************************
-    ////
-    //// Template definitions for ExpressionNodeFactory.
-    ////
-    ////*************************************************************************
+    //*************************************************************************
+    //
+    // Template definitions for ExpressionNodeFactory.
+    //
+    //*************************************************************************
 
     //
     // Leaf nodes
@@ -133,6 +152,13 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Sub(Node<L>& left, Node<R>& right)
+    {
+        return Binary<OpCode::Sub>(left, right);
+    }
+
+
+    template <typename L, typename R>
     Node<L>& ExpressionNodeFactory::Mul(Node<L>& left, Node<R>& right)
     {
         return Binary<OpCode::IMul>(left, right);
@@ -178,14 +204,58 @@ namespace NativeJIT
     //
     // Call external function
     //
+    template <typename R>
+    Node<R>& ExpressionNodeFactory::Call(Node<R (*)()>& function)
+    {
+        typedef CallNode<R> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, function);
+    }
+
+
+    template <typename R, typename P1>
+    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1)>& function,
+                                         Node<P1>& param1)
+    {
+        typedef CallNode<R, P1> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, function, param1);
+    }
+
+
     template <typename R, typename P1, typename P2>
-    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1,P2)>& function,
+    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1, P2)>& function,
                                          Node<P1>& param1,
                                          Node<P2>& param2)
     {
         typedef CallNode<R, P1, P2> NodeType;
         return * new (m_allocator.Allocate(sizeof(NodeType)))
                      NodeType(*this, function, param1, param2);
+    }
+
+
+    template <typename R, typename P1, typename P2, typename P3>
+    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1, P2, P3)>& function,
+                                         Node<P1>& param1,
+                                         Node<P2>& param2,
+                                         Node<P3>& param3)
+    {
+        typedef CallNode<R, P1, P2, P3> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, function, param1, param2, param3);
+    }
+
+
+    template <typename R, typename P1, typename P2, typename P3, typename P4>
+    Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1, P2, P3, P4)>& function,
+                                         Node<P1>& param1,
+                                         Node<P2>& param2,
+                                         Node<P3>& param3,
+                                         Node<P4>& param4)
+    {
+        typedef CallNode<R, P1, P2, P3, P4> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, function, param1, param2, param3, param4);
     }
 
 
