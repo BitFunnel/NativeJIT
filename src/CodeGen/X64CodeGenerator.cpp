@@ -117,6 +117,7 @@ namespace NativeJIT
             "push",
             "ret",
             "sub",
+            "vmovq",
         };
 
         Assert(static_cast<unsigned>(op)  < sizeof(names)/sizeof(char const*), "Invalid OpCode");
@@ -226,6 +227,59 @@ namespace NativeJIT
     }
 
 
+    void X64CodeGenerator::EmitVex3(Register<8, true> dest, Register<8, false> src)
+    {
+        Emit8(0xc4);
+        Emit8( 0x41 | ((src.GetId() > 7) ? 0 : 0x20) | ((dest.GetId() > 7) ? 0 : 0x80) );
+        Emit8(0xf9);
+    }
+
+
+    void X64CodeGenerator::EmitVex3(Register<8, true> dest, Register<8, true> src)
+    {
+        Emit8(0xc4);
+        Emit8( 0x41 | ((src.GetId() > 7) ? 0 : 0x20) | ((dest.GetId() > 7) ? 0 : 0x80) );
+        Emit8(0xf9);
+    }
+
+
+    void X64CodeGenerator::VMovQ(Register<8, true> dest, Register<8, false> src)
+    {
+        EmitVex3(dest, src);
+        Emit8(0x6e);
+        EmitModRM(dest, src);
+    }
+
+
+    void X64CodeGenerator::EmitVex2(Register<8, true> /*dest*/, Register<8, true> /*src*/)
+    {
+        Emit8(0xc5);
+        Emit8(0xfa);
+    }
+
+
+    void X64CodeGenerator::VMovQ(Register<8, true> dest, Register<8, true> src)
+    {
+        if ( ((dest.GetId() & 7) != 4) && ((src.GetId() & 7) != 4) )
+        {
+            EmitVex2(dest, src);
+            Emit8(0x7e);
+            EmitModRM(dest, src);
+        }
+        else
+        {
+            EmitVex3(dest, src);
+            Emit8(0x7e);
+            EmitModRM(dest, src);
+        }
+    }
+
+
+    //*************************************************************************
+    //
+    // X64CodeGenerator::Helper<Op> methods.
+    //
+    //*************************************************************************
     template <>
     template <>
     void X64CodeGenerator::Helper<OpCode::Call>::Emit(X64CodeGenerator& code, Register<8, false> dest)

@@ -137,8 +137,16 @@ namespace NativeJIT
 
         template <unsigned SIZE>
         unsigned GetAvailableRegisterCountInternal(Register<SIZE, false> ignore) const;
+
         template <unsigned SIZE>
         unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
+
+
+        template <unsigned SIZE, typename T>
+        void Mov(Register<SIZE, false> dest, T value);
+
+        template <unsigned SIZE, typename T>
+        void Mov(Register<SIZE, true> dest, T value);
 
 
         std::vector<NodeBase*> m_topologicalSort;
@@ -420,6 +428,22 @@ namespace NativeJIT
     }
 
 
+    template <unsigned SIZE, typename T>
+    void ExpressionTree::Mov(Register<SIZE, false> dest, T value)
+    {
+        m_code.Emit<Mov>(dest, value);
+    }
+
+
+    template <unsigned SIZE, typename T>
+    void ExpressionTree::Mov(Register<SIZE, true> dest, T value)
+    {
+        m_code.Emit<OpCode::Mov>(rax, *(reinterpret_cast<unsigned __int64*>(&value)));
+        m_code.Emit<OpCode::Mov>(rsp, -8, rax);
+        m_code.Emit<OpCode::Mov>(dest, rsp, -8);
+    }
+
+
     //*************************************************************************
     //
     // Template definitions for ExpressionTree::Data
@@ -616,7 +640,8 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = tree.Direct<T>();
-                    tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+//                    tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+                    tree.Mov(dest.GetDirectRegister(), m_data->GetImmediate<T>());
                     SetData(dest);
 
                     //auto dest = tree.AllocateRegister<DirectRegister>();

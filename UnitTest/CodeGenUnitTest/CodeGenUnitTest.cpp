@@ -253,14 +253,45 @@ namespace NativeJIT
             buffer.Emit<OpCode::IMul>(r12, 0x1234);
             buffer.Emit<OpCode::IMul>(r12, 0x12345678);
 
-            //
             // Call
-            //
             buffer.Emit<OpCode::Call>(rax);
             buffer.Emit<OpCode::Call>(rsp);
             buffer.Emit<OpCode::Call>(rbp);
             buffer.Emit<OpCode::Call>(r12);
             buffer.Emit<OpCode::Call>(r13);
+
+            // VMovQ
+            buffer.Emit<OpCode::Mov>(xmm1, rax);
+            buffer.Emit<OpCode::Mov>(xmm1, rcx);
+            buffer.Emit<OpCode::Mov>(xmm1, r8);
+            buffer.Emit<OpCode::Mov>(xmm1, rbp);
+            buffer.Emit<OpCode::Mov>(xmm1, r12);
+
+            buffer.Emit<OpCode::Mov>(xmm0, rcx);
+            buffer.Emit<OpCode::Mov>(xmm1, rcx);
+            buffer.Emit<OpCode::Mov>(xmm2, rcx);
+            buffer.Emit<OpCode::Mov>(xmm5, rcx);
+            buffer.Emit<OpCode::Mov>(xmm12, rcx);
+
+            buffer.Emit<OpCode::Mov>(xmm1, xmm2);
+            buffer.Emit<OpCode::Mov>(xmm0, xmm12);
+            buffer.Emit<OpCode::Mov>(xmm5, xmm12);
+            buffer.Emit<OpCode::Mov>(xmm5, xmm3);
+            buffer.Emit<OpCode::Mov>(xmm13, xmm5);
+            buffer.Emit<OpCode::Mov>(xmm0, xmm15);
+
+
+            buffer.Emit<OpCode::Mov>(xmm0, r12, 0);
+            buffer.Emit<OpCode::Mov>(xmm4, rcx, 0x12);
+            buffer.Emit<OpCode::Mov>(xmm5, rsi, 0x1234);
+            buffer.Emit<OpCode::Mov>(xmm12, rdi, 0x12345678);
+
+
+            buffer.Emit<OpCode::Mov>(r12, 0, xmm0);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, xmm0);
+            buffer.Emit<OpCode::Mov>(rsi, 0x1234, xmm0);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, xmm0);
+
 
             // shift
 
@@ -534,7 +565,20 @@ namespace NativeJIT
                 " 000002EB  FF D4                call rsp                                                           \n"
                 " 000002ED  FF D5                call rbp                                                           \n"
                 " 000002EF  41/ FF D4            call r12                                                           \n"
-                " 000002F2  41/ FF D5            call r13                                                           \n";
+                " 000002F2  41/ FF D5            call r13                                                           \n"
+                "                                                                                                   \n"
+                "                                ; VMovQ                                                            \n"
+                " 000002FF  C4 E1 F9 6E C8       vmovq xmm1, rax                                                    \n"
+                " 00000304  C4 E1 F9 6E C9       vmovq xmm1, rcx                                                    \n"
+                " 00000309  C4 C1 F9 6E C8       vmovq xmm1, r8                                                     \n"
+                " 0000030E  C4 E1 F9 6E CD       vmovq xmm1, rbp                                                    \n"
+                " 00000313  C4 C1 F9 6E CC       vmovq xmm1, r12                                                    \n"
+                "                                                                                                   \n"
+                " 00000318  C4 E1 F9 6E C1       vmovq xmm0, rcx                                                    \n"
+                " 0000031D  C4 E1 F9 6E C9       vmovq xmm1, rcx                                                    \n"
+                " 00000322  C4 E1 F9 6E D1       vmovq xmm2, rcx                                                    \n"
+                " 00000327  C4 E1 F9 6E E9       vmovq xmm5, rcx                                                    \n"
+                " 0000032C  C4 61 F9 6E E1       vmovq xmm12, rcx                                                   \n";
 
             ML64Verifier v(ml64Output, start);
         }

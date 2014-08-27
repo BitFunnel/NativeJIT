@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/20/14 14:52:28
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/26/14 16:55:08
 TestAsm.asm						     Page 1 - 1
 
 
@@ -313,9 +313,48 @@ TestAsm.asm						     Page 1 - 1
  000002EF  41/ FF D4		call r12
  000002F2  41/ FF D5		call r13
 
- 000002F5  48/ B8		  mov rax, 07fffffffffffffffh
+ 000002F5  48/ B8		mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
- 000002FF			main ENDP
+
+ 000002FF  C4 E1 F9 6E C8	vmovq xmm1, rax
+ 00000304  C4 E1 F9 6E C9	vmovq xmm1, rcx
+ 00000309  C4 C1 F9 6E C8	vmovq xmm1, r8
+ 0000030E  C4 E1 F9 6E CD	vmovq xmm1, rbp
+ 00000313  C4 C1 F9 6E CC	vmovq xmm1, r12
+
+ 00000318  C4 E1 F9 6E C1	vmovq xmm0, rcx
+ 0000031D  C4 E1 F9 6E C9	vmovq xmm1, rcx
+ 00000322  C4 E1 F9 6E D1	vmovq xmm2, rcx
+ 00000327  C4 E1 F9 6E E9	vmovq xmm5, rcx
+ 0000032C  C4 61 F9 6E E1	vmovq xmm12, rcx
+
+ 00000331  C5 FA 7E CA		vmovq xmm1, xmm2
+ 00000335  C4 C1 7A 7E C4	vmovq xmm0, xmm12
+ 0000033A  C4 C1 7A 7E EC	vmovq xmm5, xmm12
+ 0000033F  C5 FA 7E EB		vmovq xmm5, xmm3
+ 00000343  C5 7A 7E ED		vmovq xmm13, xmm5
+ 00000347  C4 C1 7A 7E C7	vmovq xmm0, xmm15
+
+ 0000034C  F2/ 41/ 0F 10 04	movsd xmm0, mmword ptr [r12]
+	   24
+ 00000352  F2/ 0F 10 61		movsd xmm4, mmword ptr [rcx + 12h]
+	   12
+ 00000357  F2/ 0F 10 AE		movsd xmm5, mmword ptr [rsi + 1234h]
+	   00001234
+ 0000035F  F2/ 44/ 0F 10 A7	movsd xmm12, mmword ptr [rdi + 12345678h]
+	   12345678
+
+ 00000368  F2/ 41/ 0F 11 04	movsd mmword ptr [r12], xmm0
+	   24
+ 0000036E  F2/ 0F 11 61		movsd mmword ptr [rcx + 12h], xmm4
+	   12
+ 00000373  F2/ 0F 11 AE		movsd mmword ptr [rsi + 1234h], xmm5
+	   00001234
+ 0000037B  F2/ 44/ 0F 11 A7	movsd mmword ptr [rdi + 12345678h], xmm12
+	   12345678
+
+
+ 00000384			main ENDP
 
 				END
 

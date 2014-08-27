@@ -253,7 +253,38 @@ call rbp
 call r12
 call r13
 
-  mov rax, 07fffffffffffffffh
+mov rax, 07fffffffffffffffh
+
+vmovq xmm1, rax
+vmovq xmm1, rcx
+vmovq xmm1, r8
+vmovq xmm1, rbp
+vmovq xmm1, r12
+
+vmovq xmm0, rcx
+vmovq xmm1, rcx
+vmovq xmm2, rcx
+vmovq xmm5, rcx
+vmovq xmm12, rcx
+
+vmovq xmm1, xmm2
+vmovq xmm0, xmm12
+vmovq xmm5, xmm12
+vmovq xmm5, xmm3
+vmovq xmm13, xmm5
+vmovq xmm0, xmm15
+
+movsd xmm0, mmword ptr [r12]
+movsd xmm4, mmword ptr [rcx + 12h]
+movsd xmm5, mmword ptr [rsi + 1234h]
+movsd xmm12, mmword ptr [rdi + 12345678h]
+
+movsd mmword ptr [r12], xmm0
+movsd mmword ptr [rcx + 12h], xmm4
+movsd mmword ptr [rsi + 1234h], xmm5
+movsd mmword ptr [rdi + 12345678h], xmm12
+
+
 main ENDP
 
 END
