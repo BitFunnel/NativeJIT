@@ -260,7 +260,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Call>(r12);
             buffer.Emit<OpCode::Call>(r13);
 
-            // VMovQ
+            // MovD
             buffer.Emit<OpCode::Mov>(xmm1, rax);
             buffer.Emit<OpCode::Mov>(xmm1, rcx);
             buffer.Emit<OpCode::Mov>(xmm1, r8);
@@ -273,6 +273,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(xmm5, rcx);
             buffer.Emit<OpCode::Mov>(xmm12, rcx);
 
+            // MovSD
             buffer.Emit<OpCode::Mov>(xmm1, xmm2);
             buffer.Emit<OpCode::Mov>(xmm0, xmm12);
             buffer.Emit<OpCode::Mov>(xmm5, xmm12);
@@ -288,10 +289,22 @@ namespace NativeJIT
 
 
             buffer.Emit<OpCode::Mov>(r12, 0, xmm0);
-            buffer.Emit<OpCode::Mov>(rcx, 0x12, xmm0);
-            buffer.Emit<OpCode::Mov>(rsi, 0x1234, xmm0);
-            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, xmm0);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, xmm4);
+            buffer.Emit<OpCode::Mov>(rsi, 0x1234, xmm5);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, xmm12);
 
+
+            buffer.Emit<OpCode::Add>(xmm1, xmm2);
+            buffer.Emit<OpCode::Add>(xmm0, xmm12);
+            buffer.Emit<OpCode::IMul>(xmm5, xmm12);
+            buffer.Emit<OpCode::IMul>(xmm5, xmm3);
+            buffer.Emit<OpCode::Sub>(xmm13, xmm5);
+            buffer.Emit<OpCode::Sub>(xmm0, xmm15);
+
+            buffer.Emit<OpCode::Add>(xmm0, r12, 0);
+            buffer.Emit<OpCode::Add>(xmm4, rcx, 0x12);
+            buffer.Emit<OpCode::IMul>(xmm5, rsi, 0x1234);
+            buffer.Emit<OpCode::Sub>(xmm12, rdi, 0x12345678);
 
             // shift
 
@@ -567,18 +580,60 @@ namespace NativeJIT
                 " 000002EF  41/ FF D4            call r12                                                           \n"
                 " 000002F2  41/ FF D5            call r13                                                           \n"
                 "                                                                                                   \n"
-                "                                ; VMovQ                                                            \n"
-                " 000002FF  C4 E1 F9 6E C8       vmovq xmm1, rax                                                    \n"
-                " 00000304  C4 E1 F9 6E C9       vmovq xmm1, rcx                                                    \n"
-                " 00000309  C4 C1 F9 6E C8       vmovq xmm1, r8                                                     \n"
-                " 0000030E  C4 E1 F9 6E CD       vmovq xmm1, rbp                                                    \n"
-                " 00000313  C4 C1 F9 6E CC       vmovq xmm1, r12                                                    \n"
+                "                                ; MovD                                                             \n"
+                " 0000030D  66| 48/ 0F 6E C8     movd xmm1, rax                                                     \n"
+                " 00000312  66| 48/ 0F 6E C9     movd xmm1, rcx                                                     \n"
+                " 00000317  66| 49/ 0F 6E C8     movd xmm1, r8                                                      \n"
+                " 0000031C  66| 48/ 0F 6E CD     movd xmm1, rbp                                                     \n"
+                " 00000321  66| 49/ 0F 6E CC     movd xmm1, r12                                                     \n"
                 "                                                                                                   \n"
-                " 00000318  C4 E1 F9 6E C1       vmovq xmm0, rcx                                                    \n"
-                " 0000031D  C4 E1 F9 6E C9       vmovq xmm1, rcx                                                    \n"
-                " 00000322  C4 E1 F9 6E D1       vmovq xmm2, rcx                                                    \n"
-                " 00000327  C4 E1 F9 6E E9       vmovq xmm5, rcx                                                    \n"
-                " 0000032C  C4 61 F9 6E E1       vmovq xmm12, rcx                                                   \n";
+                " 00000326  66| 48/ 0F 6E C1     movd xmm0, rcx                                                     \n"
+                " 0000032B  66| 48/ 0F 6E C9     movd xmm1, rcx                                                     \n"
+                " 00000330  66| 48/ 0F 6E D1     movd xmm2, rcx                                                     \n"
+                " 00000335  66| 48/ 0F 6E E9     movd xmm5, rcx                                                     \n"
+                " 0000033A  66| 4C/ 0F 6E E1     movd xmm12, rcx                                                    \n"
+                "                                                                                                   \n"
+                "                                ; MovSd                                                            \n"
+                " 00000343  F2/ 0F 10 CA         movsd xmm1, xmm2                                                   \n"
+                " 00000347  F2/ 41/ 0F 10 C4     movsd xmm0, xmm12                                                  \n"
+                " 0000034C  F2/ 41/ 0F 10 EC     movsd xmm5, xmm12                                                  \n"
+                " 00000351  F2/ 0F 10 EB         movsd xmm5, xmm3                                                   \n"
+                " 00000355  F2/ 44/ 0F 10 ED     movsd xmm13, xmm5                                                  \n"
+                " 0000035A  F2/ 41/ 0F 10 C7     movsd xmm0, xmm15                                                  \n"
+                "                                                                                                   \n"
+                " 0000035F  F2/ 41/ 0F 10 04     movsd xmm0, mmword ptr [r12]                                       \n"
+                "           24                                                                                      \n"
+                " 00000365  F2/ 0F 10 61         movsd xmm4, mmword ptr [rcx + 12h]                                 \n"
+                "           12                                                                                      \n"
+                " 0000036A  F2/ 0F 10 AE         movsd xmm5, mmword ptr [rsi + 1234h]                               \n"
+                "           00001234                                                                                \n"
+                " 00000372  F2/ 44/ 0F 10 A7     movsd xmm12, mmword ptr [rdi + 12345678h]                          \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 0000037B  F2/ 41/ 0F 11 04     movsd mmword ptr [r12], xmm0                                       \n"
+                "           24                                                                                      \n"
+                " 00000381  F2/ 0F 11 61         movsd mmword ptr [rcx + 12h], xmm4                                 \n"
+                "           12                                                                                      \n"
+                " 00000386  F2/ 0F 11 AE         movsd mmword ptr [rsi + 1234h], xmm5                               \n"
+                "           00001234                                                                                \n"
+                " 0000038E  F2/ 44/ 0F 11 A7     movsd mmword ptr [rdi + 12345678h], xmm12                          \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000397  F2/ 0F 58 CA         addsd xmm1, xmm2                                                   \n"
+                " 0000039B  F2/ 41/ 0F 58 C4     addsd xmm0, xmm12                                                  \n"
+                " 000003A0  F2/ 41/ 0F 59 EC     mulsd xmm5, xmm12                                                  \n"
+                " 000003A5  F2/ 0F 59 EB         mulsd xmm5, xmm3                                                   \n"
+                " 000003A9  F2/ 44/ 0F 5C ED     subsd xmm13, xmm5                                                  \n"
+                " 000003AE  F2/ 41/ 0F 5C C7     subsd xmm0, xmm15                                                  \n"
+                "                                                                                                   \n"
+                " 000003B3  F2/ 41/ 0F 58 04     addsd xmm0, mmword ptr [r12]                                       \n"
+                "           24                                                                                      \n"
+                " 000003B9  F2/ 0F 58 61         addsd xmm4, mmword ptr [rcx + 12h]                                 \n"
+                "           12                                                                                      \n"
+                " 000003BE  F2/ 0F 59 AE         mulsd xmm5, mmword ptr [rsi + 1234h]                               \n"
+                "           00001234                                                                                \n"
+                " 000003C6  F2/ 44/ 0F 5C A7     subsd xmm12, mmword ptr [rdi + 12345678h]                          \n"
+                "           12345678                                                                                \n";
 
             ML64Verifier v(ml64Output, start);
         }

@@ -277,6 +277,7 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Direct()
     {
+        // TODO: Need variants for floating point.
         unsigned id = m_rxxFreeList.Allocate();
         Register<sizeof(T), IsFloatingPointType<T>::value> r(id);
 
@@ -301,11 +302,8 @@ namespace NativeJIT
             // know how to move the data (i.e. its size).
             unsigned dest = m_rxxFreeList.Allocate();
 
-            // TODO: BUGBUG: Should be saving entire 64 bit register. Reason is that we don't know the
-            // size required by the previous user. They may be using 64 bits, but we only saved 8.
-//            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
-
-            // Important to preserve all bits of register.
+            // Important to preserve all bits of register. Reason is that we don't know the
+            // size required by the previous user.
             GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
             m_rxxFreeList.MoveData(dest, src);
@@ -343,9 +341,9 @@ namespace NativeJIT
             // Register is not available - bump it.
             // TODO: Should be able to allocate a temporary if no registers are available.
             unsigned dest = m_rxxFreeList.Allocate();
-//            GetCodeGenerator().Emit<OpCode::Mov>(Register<sizeof(T), false>(dest), Register<sizeof(T), false>(src));
 
-            // Important to preserve all bits of register.
+            // Important to preserve all bits of register. Reason is that we don't know the
+            // size required by the previous user.
             GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
             m_rxxFreeList.MoveData(dest, src);
@@ -431,16 +429,21 @@ namespace NativeJIT
     template <unsigned SIZE, typename T>
     void ExpressionTree::Mov(Register<SIZE, false> dest, T value)
     {
-        m_code.Emit<Mov>(dest, value);
+        m_code.Emit<OpCode::Mov>(dest, value);
     }
 
 
     template <unsigned SIZE, typename T>
     void ExpressionTree::Mov(Register<SIZE, true> dest, T value)
     {
-        m_code.Emit<OpCode::Mov>(rax, *(reinterpret_cast<unsigned __int64*>(&value)));
-        m_code.Emit<OpCode::Mov>(rsp, -8, rax);
-        m_code.Emit<OpCode::Mov>(dest, rsp, -8);
+        // TODO: Consider RIP-relative addressing to eliminate a register allocation.
+        // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
+        // must be 4 byte.
+        // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
+        auto temp = Direct<unsigned __int64>();
+        auto r = temp.GetDirectRegister();
+        m_code.Emit<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int64*>(&value)));
+        m_code.Emit<OpCode::Mov>(dest, r);
     }
 
 
@@ -640,15 +643,8 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = tree.Direct<T>();
-//                    tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(), m_data->GetImmediate<T>());
                     tree.Mov(dest.GetDirectRegister(), m_data->GetImmediate<T>());
                     SetData(dest);
-
-                    //auto dest = tree.AllocateRegister<DirectRegister>();
-                    //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, m_data->GetImmediate<T>());
-
-                    //m_data->GetStorageClass() = Data::Direct;
-                    //m_data->m_registerId = dest.GetId();
                 }
                 break;
             case StorageClass::Direct:
@@ -670,20 +666,6 @@ namespace NativeJIT
                                                                   base,
                                                                   m_data->GetOffset());
                         SetData(dest);
-
-                        //DirectRegister dest = tree.AllocateRegister<DirectRegister>();
-                        //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, base, m_data->m_offset);
-
-                        //if (tree.IsBasePointer(base))
-                        //{
-                        //    tree.ReleaseTemporary(m_data->m_offset);
-                        //}
-                        //else
-                        //{
-                        //    tree.ReleaseRegister(base);
-                        //}
-                        //m_data->m_registerId = dest.GetId();
-                        //m_data->m_storageClass = Data::Direct;
                     }
                     else
                     {
@@ -695,10 +677,6 @@ namespace NativeJIT
 
                         tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, base, offset);
                         m_data->SetStorageClass(StorageClass::Direct);
-                        //DirectRegister dest(m_data->m_registerId);
-                        //BaseRegister base = BaseRegister(m_data->m_registerId);
-                        //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, base, m_data->m_offset);
-                        //m_data->GetStorageClass() = Data::Direct;
                     }
                 }
                 break;
@@ -721,12 +699,6 @@ namespace NativeJIT
                     tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(),
                                                               m_data->GetImmediate<T>());
                     SetData(dest);
-
-                    //// Allocate a register and load this value into the register.
-                    //auto dest = tree.AllocateRegister<DirectRegister>();
-                    //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, m_data->GetImmediate<T>());
-
-                    //SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
                 break;
             case StorageClass::Direct:
@@ -737,14 +709,6 @@ namespace NativeJIT
                     auto src = DirectRegister(m_data->GetRegisterId());
                     tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(), src);
                     SetData(dest);
-
-
-                    //// We need to allocate a new register for the value.
-                    //DirectRegister dest = tree.AllocateRegister<DirectRegister>();
-                    //DirectRegister src = DirectRegister(m_data->m_registerId);
-                    //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, src);
-
-                    //SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
                 break;
             case StorageClass::Indirect:
@@ -758,13 +722,6 @@ namespace NativeJIT
                                                               base,
                                                               offset);
                     SetData(dest);
-
-                    //// We need to allocate a new register for the value.
-                    //DirectRegister dest = tree.AllocateRegister<DirectRegister>();
-                    //BaseRegister base = BaseRegister(m_data->m_registerId);
-                    //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, base, m_data->m_offset);
-
-                    //SetData(new (tree.GetAllocator().Allocate(sizeof(Data))) Data(tree, dest));
                 }
                 break;
             default:
@@ -781,10 +738,6 @@ namespace NativeJIT
         auto dest = tree.Temporary<T>();
         tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
         *this = dest;
-
-        //Storage dest(tree, tree.GetBasePointer(), tree.AllocateTemporary());
-        //tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
-        //*this = dest;
     }
 
 
@@ -968,7 +921,6 @@ namespace NativeJIT
 
         m_data[dest]->SetRegisterId(dest);
 
-//        m_positions[dest] = SIZE;
         Release(src);
     }
 

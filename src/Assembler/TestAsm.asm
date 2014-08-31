@@ -8,6 +8,13 @@ myMessage BYTE "MASM program example",0dh,0ah,0
 .code
 main PROC
 
+add [rcx + 5], rax
+add rax, [rcx + 5]
+movd xmm0, rax
+movsd xmm0, xmm1
+; vmovq xmm0, rax       // Illegal instruction
+ret
+
 ; Another special case
 add r13, [r13]
 mov r13, [r13]
@@ -255,24 +262,24 @@ call r13
 
 mov rax, 07fffffffffffffffh
 
-vmovq xmm1, rax
-vmovq xmm1, rcx
-vmovq xmm1, r8
-vmovq xmm1, rbp
-vmovq xmm1, r12
+movd xmm1, rax
+movd xmm1, rcx
+movd xmm1, r8
+movd xmm1, rbp
+movd xmm1, r12
 
-vmovq xmm0, rcx
-vmovq xmm1, rcx
-vmovq xmm2, rcx
-vmovq xmm5, rcx
-vmovq xmm12, rcx
+movd xmm0, rcx
+movd xmm1, rcx
+movd xmm2, rcx
+movd xmm5, rcx
+movd xmm12, rcx
 
-vmovq xmm1, xmm2
-vmovq xmm0, xmm12
-vmovq xmm5, xmm12
-vmovq xmm5, xmm3
-vmovq xmm13, xmm5
-vmovq xmm0, xmm15
+movsd xmm1, xmm2
+movsd xmm0, xmm12
+movsd xmm5, xmm12
+movsd xmm5, xmm3
+movsd xmm13, xmm5
+movsd xmm0, xmm15
 
 movsd xmm0, mmword ptr [r12]
 movsd xmm4, mmword ptr [rcx + 12h]
@@ -284,6 +291,17 @@ movsd mmword ptr [rcx + 12h], xmm4
 movsd mmword ptr [rsi + 1234h], xmm5
 movsd mmword ptr [rdi + 12345678h], xmm12
 
+addsd xmm1, xmm2
+addsd xmm0, xmm12
+mulsd xmm5, xmm12
+mulsd xmm5, xmm3
+subsd xmm13, xmm5
+subsd xmm0, xmm15
+
+addsd xmm0, mmword ptr [r12]
+addsd xmm4, mmword ptr [rcx + 12h]
+mulsd xmm5, mmword ptr [rsi + 1234h]
+subsd xmm12, mmword ptr [rdi + 12345678h]
 
 main ENDP
 
