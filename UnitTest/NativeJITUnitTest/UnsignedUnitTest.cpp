@@ -210,44 +210,6 @@ namespace NativeJIT
 
 
             //
-            // Conditionals
-            //
-
-            TestCase(Conditional)
-            {
-                AutoResetAllocator reset(m_allocator);
-
-                {
-                    Function<unsigned __int64, unsigned __int64, unsigned __int64> expression(m_allocator, *m_code);
-
-                    unsigned __int64 trueValue = 5;
-                    unsigned __int64 falseValue = 6;
-
-                    auto & a = expression.GreaterThan(expression.GetP1(), expression.GetP2());
-                    auto & b = expression.Conditional(a, expression.Immediate(trueValue), expression.Immediate(falseValue));
-                    auto function = expression.Compile(b);
-
-                    unsigned __int64 p1 = 3;
-                    unsigned __int64 p2 = 4;
-
-                    auto expected = (p1 > p2) ? trueValue : falseValue;
-                    auto observed = function(p1, p2);
-
-                    TestAssert(observed == expected);
-
-                    p1 = 5;
-                    p2 = 4;
-
-                    expected = (p1 > p2) ? trueValue : falseValue;
-                    observed = function(p1, p2);
-
-                    // TODO: Enable after implementing conditional jumps.
-                    // TestAssert(observed == expected);
-                }
-            }
-
-
-            //
             // Common sub expressions
             //
 

@@ -278,7 +278,10 @@ namespace NativeJIT
     ExpressionTree::Storage<T> ExpressionTree::Direct()
     {
         // TODO: Need variants for floating point.
+        // TODO: What if Allocate() fails?
         unsigned id = m_rxxFreeList.Allocate();
+
+        // TODO: Use Storage<T>::DirectType().
         Register<sizeof(T), IsFloatingPointType<T>::value> r(id);
 
         // TODO: Use allocator.
@@ -300,6 +303,7 @@ namespace NativeJIT
             // This requires some knowledge of how to dereference indirects since an
             // indirect may have to be spilled to a temporary. At the very least, need to
             // know how to move the data (i.e. its size).
+            // TODO: What if Allocate() fails?
             unsigned dest = m_rxxFreeList.Allocate();
 
             // Important to preserve all bits of register. Reason is that we don't know the
@@ -322,6 +326,8 @@ namespace NativeJIT
     ExpressionTree::Storage<T> ExpressionTree::Indirect(__int32 offset)
     {
         unsigned id = m_rxxFreeList.Allocate();
+
+        // TODO: Use Storage<T>::IndirectType.
         Register<sizeof(T), IsFloatingPointType<T>::value> base(id);
 
         // TODO: Use allocator.

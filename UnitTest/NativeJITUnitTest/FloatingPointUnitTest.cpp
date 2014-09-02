@@ -41,6 +41,10 @@ namespace NativeJIT
 
                     double value = 123.456;;
                     auto & a = expression.Immediate(value);
+
+                    // Not sure that success of test implies implementation is correct.
+                    // It seems that Storage<double>::ConvertToValue() may be allocating RXX register ids
+                    // in this case when it really needs to be allocating XMM register ids.
                     auto function = expression.Compile(a);
 
                     auto expected = value;

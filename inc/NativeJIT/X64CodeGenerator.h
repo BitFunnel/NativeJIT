@@ -56,7 +56,7 @@ namespace NativeJIT
         And,
         Call,
         Cmp,
-        IMul,
+        IMul,       // TODO: Consider calling this Mul. These opcodes are not X64 opcodes.
         Lea,
         Mov,
         Nop,
@@ -156,11 +156,6 @@ namespace NativeJIT
                  T* value);
 
         template <unsigned SIZE>
-        void Mov(Register<SIZE, true> dest,
-                 Register<8, false> src,
-                 __int32 srcOffset);
-
-        template <unsigned SIZE>
         void Mov(Register<SIZE, false> dest,
                  __int32 destOffset,
                  Register<8, true> src);
@@ -171,7 +166,6 @@ namespace NativeJIT
         void Ret();
 
         void MovD(Register<8, true> dest, Register<8, false> src);
-        //void MovSD(Register<8, true> dest, Register<8, true> src);
 
         template <unsigned __int8 OPCODE>
         void SSE(Register<8, true> dest, Register<8, true> src);
@@ -559,19 +553,6 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    void X64CodeGenerator::Mov(Register<SIZE, true> dest,
-                               Register<8, false> src,
-                               __int32 srcOffset)
-    {
-        Emit8(0xf2);
-        EmitRexW<0>(dest, src);
-        Emit8(0x0f);
-        Emit8(0x10);
-        EmitModRMOffset(dest, src, srcOffset);
-    }
-
-
-    template <unsigned SIZE>
     void X64CodeGenerator::Mov(Register<SIZE, false> dest,
                                __int32 destOffset,
                                Register<8, true> src)
@@ -661,6 +642,7 @@ namespace NativeJIT
 
     // TODO: It appears that this cases is not directly tested for Group1 opcodes.
     // It might be tested for mov.
+    // TODO: This doesn't seem correct for Add, etc. since the base opcode doesn't change.
     template <unsigned SIZE>
     void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
                                   Register<8, false> dest,
@@ -843,6 +825,7 @@ namespace NativeJIT
             Emit8(0x24);
         }
 
+        // TODO: Is this condition correct?
         if (mod == 0x0 && ((src.GetId() & 0x7) == 4) && ((dest.GetId() & 0x7) == 5) && (srcOffset != 0))
         {
             Emit32(srcOffset);
@@ -937,7 +920,6 @@ namespace NativeJIT
                                                      Register<SIZE, true> dest,
                                                      Register<SIZE, true> src)
     {
-//        code.MovSD(dest, src);
         code.SSE<0x10>(dest, src);
     }
 
@@ -950,7 +932,6 @@ namespace NativeJIT
                                                      __int32 srcOffset)
     {
         code.SSE<0x10>(dest, src, srcOffset);
-//        code.Mov(dest, src, srcOffset);
     }
 
 

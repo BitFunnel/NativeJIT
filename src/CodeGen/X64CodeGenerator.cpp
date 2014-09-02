@@ -236,16 +236,6 @@ namespace NativeJIT
     }
 
 
-    //void X64CodeGenerator::MovSD(Register<8, true> dest, Register<8, true> src)
-    //{
-    //    Emit8(0xf2);
-    //    EmitRexW<0>(dest, src);
-    //    Emit8(0x0f);
-    //    Emit8(0x10);
-    //    EmitModRM(dest, src);
-    //}
-
-
     //*************************************************************************
     //
     // X64CodeGenerator::Helper<Op> methods.

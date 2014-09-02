@@ -28,8 +28,11 @@ namespace NativeJIT
             //
             // TODO:
             //   Test register save/restore across call.
+            //      Caller save volatiles
+            //      Callee save non-volatiles
             //   Test call register indirect.
             //   Test throws from within generated code.
+            //   Test that tries all permutations of parameter from Function to Call.
 
 
             //
