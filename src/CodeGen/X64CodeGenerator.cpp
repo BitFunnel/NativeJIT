@@ -226,6 +226,17 @@ namespace NativeJIT
     }
 
 
+    // TODO: Can the 4-byte MovD be coalesced with the 8-byte MovD?
+    void X64CodeGenerator::MovD(Register<4, true> dest, Register<4, false> src)
+    {
+        Emit8(0x66);
+        EmitRexW<0>(dest,src);
+        Emit8(0x0f);
+        Emit8(0x6e);
+        EmitModRM(dest, src);
+    }
+
+
     void X64CodeGenerator::MovD(Register<8, true> dest, Register<8, false> src)
     {
         Emit8(0x66);

@@ -120,9 +120,12 @@ namespace NativeJIT
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<8, false> dest, unsigned __int32 destOffset, Register<SIZE, ISFLOAT> src);
 
-        // Top operands - register destination and immediate source.
+        // Two operands - register destination and immediate source.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
         void Emit(Register<SIZE, ISFLOAT> dest, T value);
+
+        //template <OpCode OP>
+        //void Emit(Register<4, true> dest, float value);
 
 
     private:
@@ -165,13 +168,20 @@ namespace NativeJIT
 
         void Ret();
 
+        void MovD(Register<4, true> dest, Register<4, false> src);
         void MovD(Register<8, true> dest, Register<8, false> src);
 
         template <unsigned __int8 OPCODE>
         void SSE(Register<8, true> dest, Register<8, true> src);
 
         template <unsigned __int8 OPCODE>
+        void SSE(Register<4, true> dest, Register<4, true> src);
+
+        template <unsigned __int8 OPCODE>
         void SSE(Register<8, true> dest, Register<8, false> src, __int32 srcOffset);
+
+        template <unsigned __int8 OPCODE>
+        void SSE(Register<4, true> dest, Register<8, false> src, __int32 srcOffset);
 
         template <unsigned SIZE>
         void Group1(unsigned __int8 baseOpCode,
@@ -578,12 +588,38 @@ namespace NativeJIT
     }
 
 
+    // TODO: coalesce with previous?
+    template <unsigned __int8 OPCODE>
+    void X64CodeGenerator::SSE(Register<4, true> dest, Register<4, true> src)
+    {
+        Emit8(0xf3);
+        EmitRexW<0>(dest, src);
+        Emit8(0x0f);
+        Emit8(OPCODE);
+        EmitModRM(dest, src);
+    }
+
+
     template <unsigned __int8 OPCODE>
     void X64CodeGenerator::SSE(Register<8, true> dest,
                                Register<8, false> src,
                                __int32 srcOffset)
     {
         Emit8(0xf2);
+        EmitRexW<0>(dest, src);
+        Emit8(0x0f);
+        Emit8(OPCODE);
+        EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    // TODO: coalesce with previous?
+    template <unsigned __int8 OPCODE>
+    void X64CodeGenerator::SSE(Register<4, true> dest,
+                               Register<8, false> src,
+                               __int32 srcOffset)
+    {
+        Emit8(0xf3);
         EmitRexW<0>(dest, src);
         Emit8(0x0f);
         Emit8(OPCODE);
@@ -757,6 +793,11 @@ namespace NativeJIT
     }
 
 
+    // This version of EmitRex is used by SSE and MovD instructions.
+    // MovD uses REX.W to specify the width of the RXX register.
+    // SSE operations need REX.W == 0. The size (single or double) comes from the opcode.
+    // What happens if REX.w == 1 for SSE instruction? I think that W is "don't care" and
+    // ml64.exe happens to set it to zero.
     template <unsigned W, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
     void X64CodeGenerator::EmitRexW(Register<SIZE1, ISFLOAT1> reg, Register<SIZE2, ISFLOAT2> rm)
     {
@@ -943,16 +984,6 @@ namespace NativeJIT
                                                      Register<SIZE, true> src)
     {
         code.Mov(dest, destOffset, src);
-    }
-
-
-    template <>
-    template <unsigned SIZE, typename T>
-    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code, Register<SIZE, true> dest, T value)
-    {
-        // TODO: Implement correctly.
-        code.Mov(rax, *(reinterpret_cast<unsigned __int64*>(&value)));
-        code.MovD(dest, rax);
     }
 
 

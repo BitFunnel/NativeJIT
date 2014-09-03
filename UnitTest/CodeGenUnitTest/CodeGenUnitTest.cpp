@@ -260,7 +260,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Call>(r12);
             buffer.Emit<OpCode::Call>(r13);
 
-            // MovD
+            // MovD - double
             buffer.Emit<OpCode::Mov>(xmm1, rax);
             buffer.Emit<OpCode::Mov>(xmm1, rcx);
             buffer.Emit<OpCode::Mov>(xmm1, r8);
@@ -273,7 +273,23 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(xmm5, rcx);
             buffer.Emit<OpCode::Mov>(xmm12, rcx);
 
-            // MovSD
+            // TODO: Why does this even compile as mov xmm1, #imm?
+            // buffer.Emit<OpCode::Mov>(xmm1, eax);
+
+            // MovD - float
+            buffer.Emit<OpCode::Mov>(xmm1s, eax);
+            buffer.Emit<OpCode::Mov>(xmm1s, ecx);
+            buffer.Emit<OpCode::Mov>(xmm1s, r8d);
+            buffer.Emit<OpCode::Mov>(xmm1s, ebp);
+            buffer.Emit<OpCode::Mov>(xmm1s, r12d);
+
+            buffer.Emit<OpCode::Mov>(xmm0s, ecx);
+            buffer.Emit<OpCode::Mov>(xmm1s, ecx);
+            buffer.Emit<OpCode::Mov>(xmm2s, ecx);
+            buffer.Emit<OpCode::Mov>(xmm5s, ecx);
+            buffer.Emit<OpCode::Mov>(xmm12s, ecx);
+
+            // MovSD - double
             buffer.Emit<OpCode::Mov>(xmm1, xmm2);
             buffer.Emit<OpCode::Mov>(xmm0, xmm12);
             buffer.Emit<OpCode::Mov>(xmm5, xmm12);
@@ -293,7 +309,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(rsi, 0x1234, xmm5);
             buffer.Emit<OpCode::Mov>(rdi, 0x12345678, xmm12);
 
-
+            // General SSE operations - double.
             buffer.Emit<OpCode::Add>(xmm1, xmm2);
             buffer.Emit<OpCode::Add>(xmm0, xmm12);
             buffer.Emit<OpCode::IMul>(xmm5, xmm12);
@@ -305,6 +321,19 @@ namespace NativeJIT
             buffer.Emit<OpCode::Add>(xmm4, rcx, 0x12);
             buffer.Emit<OpCode::IMul>(xmm5, rsi, 0x1234);
             buffer.Emit<OpCode::Sub>(xmm12, rdi, 0x12345678);
+
+            // General SSE operations - double.
+            buffer.Emit<OpCode::Add>(xmm1s, xmm2s);
+            buffer.Emit<OpCode::Add>(xmm0s, xmm12s);
+            buffer.Emit<OpCode::IMul>(xmm5s, xmm12s);
+            buffer.Emit<OpCode::IMul>(xmm5s, xmm3s);
+            buffer.Emit<OpCode::Sub>(xmm13s, xmm5s);
+            buffer.Emit<OpCode::Sub>(xmm0s, xmm15s);
+
+            buffer.Emit<OpCode::Add>(xmm0s, r12, 0);
+            buffer.Emit<OpCode::Add>(xmm4s, rcx, 0x12);
+            buffer.Emit<OpCode::IMul>(xmm5s, rsi, 0x1234);
+            buffer.Emit<OpCode::Sub>(xmm12s, rdi, 0x12345678);
 
             // shift
 
@@ -593,6 +622,19 @@ namespace NativeJIT
                 " 00000335  66| 48/ 0F 6E E9     movd xmm5, rcx                                                     \n"
                 " 0000033A  66| 4C/ 0F 6E E1     movd xmm12, rcx                                                    \n"
                 "                                                                                                   \n"
+                " 00000343  66| 0F 6E C8         movd xmm1, eax                                                     \n"
+                " 00000347  66| 0F 6E C9         movd xmm1, ecx                                                     \n"
+                " 0000034B  66| 41/ 0F 6E C8     movd xmm1, r8d                                                     \n"
+                " 00000350  66| 0F 6E CD         movd xmm1, ebp                                                     \n"
+                " 00000354  66| 41/ 0F 6E CC     movd xmm1, r12d                                                    \n"
+                "                                                                                                   \n"
+                " 00000359  66| 0F 6E C1         movd xmm0, ecx                                                     \n"
+                " 0000035D  66| 0F 6E C9         movd xmm1, ecx                                                     \n"
+                " 00000361  66| 0F 6E D1         movd xmm2, ecx                                                     \n"
+                " 00000365  66| 0F 6E E9         movd xmm5, ecx                                                     \n"
+                " 00000369  66| 44/ 0F 6E E1     movd xmm12, ecx                                                    \n"
+                "                                                                                                   \n"
+                "                                                                                                   \n"
                 "                                ; MovSd                                                            \n"
                 " 00000343  F2/ 0F 10 CA         movsd xmm1, xmm2                                                   \n"
                 " 00000347  F2/ 41/ 0F 10 C4     movsd xmm0, xmm12                                                  \n"
@@ -600,6 +642,7 @@ namespace NativeJIT
                 " 00000351  F2/ 0F 10 EB         movsd xmm5, xmm3                                                   \n"
                 " 00000355  F2/ 44/ 0F 10 ED     movsd xmm13, xmm5                                                  \n"
                 " 0000035A  F2/ 41/ 0F 10 C7     movsd xmm0, xmm15                                                  \n"
+                "                                                                                                   \n"
                 "                                                                                                   \n"
                 " 0000035F  F2/ 41/ 0F 10 04     movsd xmm0, mmword ptr [r12]                                       \n"
                 "           24                                                                                      \n"
@@ -633,7 +676,24 @@ namespace NativeJIT
                 " 000003BE  F2/ 0F 59 AE         mulsd xmm5, mmword ptr [rsi + 1234h]                               \n"
                 "           00001234                                                                                \n"
                 " 000003C6  F2/ 44/ 0F 5C A7     subsd xmm12, mmword ptr [rdi + 12345678h]                          \n"
-                "           12345678                                                                                \n";
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 000003FA  F3/ 0F 58 CA         addss xmm1, xmm2                                                   \n"
+                " 000003FE  F3/ 41/ 0F 58 C4     addss xmm0, xmm12                                                  \n"
+                " 00000403  F3/ 41/ 0F 59 EC     mulss xmm5, xmm12                                                  \n"
+                " 00000408  F3/ 0F 59 EB         mulss xmm5, xmm3                                                   \n"
+                " 0000040C  F3/ 44/ 0F 5C ED     subss xmm13, xmm5                                                  \n"
+                " 00000411  F3/ 41/ 0F 5C C7     subss xmm0, xmm15                                                  \n"
+                "                                                                                                   \n"
+                " 00000416  F3/ 41/ 0F 58 04     addss xmm0, dword ptr [r12]                                        \n"
+                "           24                                                                                      \n"
+                " 0000041C  F3/ 0F 58 61         addss xmm4, dword ptr [rcx + 12h]                                  \n"
+                "           12                                                                                      \n"
+                " 00000421  F3/ 0F 59 AE         mulss xmm5, dword ptr [rsi + 1234h]                                \n"
+                "           00001234                                                                                \n"
+                " 00000429  F3/ 44/ 0F 5C A7     subss xmm12, dword ptr [rdi + 12345678h]                           \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n";
 
             ML64Verifier v(ml64Output, start);
         }

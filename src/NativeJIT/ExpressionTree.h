@@ -142,11 +142,22 @@ namespace NativeJIT
         unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
 
 
+        //
+        // Mov() helper methods to get around limitation that X64 does not support op xmm, imm.
+        // RIP-relative addressing for floating point immediates should simplify these methods.
+        // May still need some sort of indirection because mov rxx, imm is still supported and is
+        // called by code templated by ISFLOAT.
+        //
+        // TODO: Consider renaming these to something like MovHelper. Consider moving into
+        // CodeGenHelpers.
         template <unsigned SIZE, typename T>
         void Mov(Register<SIZE, false> dest, T value);
 
-        template <unsigned SIZE, typename T>
-        void Mov(Register<SIZE, true> dest, T value);
+        template <typename T>
+        void Mov(Register<8, true> dest, T value);
+
+        template <typename T>
+        void Mov(Register<4, true> dest, T value);
 
 
         template <typename T>
@@ -392,8 +403,6 @@ namespace NativeJIT
 
         unsigned id = freeList.Allocate();
 
-        // TODO: Use Storage<T>::IndirectType.
-//        Register<sizeof(T), IsFloatingPointType<T>::value> base(id);
         Storage<T>::IndirectRegister base(id);
 
         // TODO: Use allocator.
@@ -419,7 +428,6 @@ namespace NativeJIT
             // Important to preserve all bits of register. Reason is that we don't know the
             // size required by the previous user.
             GetCodeGenerator().Emit<OpCode::Mov>(Storage<T>::FullRegister(dest), Storage<T>::FullRegister(src));
-//            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
             freeList.MoveData(dest, src);
         }
@@ -508,8 +516,8 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE, typename T>
-    void ExpressionTree::Mov(Register<SIZE, true> dest, T value)
+    template <typename T>
+    void ExpressionTree::Mov(Register<8, true> dest, T value)
     {
         // TODO: Consider RIP-relative addressing to eliminate a register allocation.
         // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
@@ -518,6 +526,21 @@ namespace NativeJIT
         auto temp = Direct<unsigned __int64>();
         auto r = temp.GetDirectRegister();
         m_code.Emit<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int64*>(&value)));
+        m_code.Emit<OpCode::Mov>(dest, r);
+    }
+
+
+    // TODO: Coalesc with previous.
+    template <typename T>
+    void ExpressionTree::Mov(Register<4, true> dest, T value)
+    {
+        // TODO: Consider RIP-relative addressing to eliminate a register allocation.
+        // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
+        // must be 4 byte.
+        // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
+        auto temp = Direct<unsigned __int32>();
+        auto r = temp.GetDirectRegister();
+        m_code.Emit<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int32*>(&value)));
         m_code.Emit<OpCode::Mov>(dest, r);
     }
 
@@ -537,10 +560,8 @@ namespace NativeJIT
           m_offset(0),
           m_refCount(0)
     {
-        // TODO: This may have to support m_xmmFreeList.
         auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
         freeList.SetData(m_registerId, this);
-//        tree.m_rxxFreeList.SetData(m_registerId, this);
     }
 
 
@@ -556,10 +577,8 @@ namespace NativeJIT
           m_offset(offset),
           m_refCount(0)
     {
-        // TODO: This may have to support m_xmmFreeList.
         auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
         freeList.SetData(m_registerId, this);
-//        tree.m_rxxFreeList.SetData(m_registerId, this);
     }
 
 
@@ -779,8 +798,7 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = tree.Direct<T>();
-                    tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(),
-                                                              m_data->GetImmediate<T>());
+                    tree.Mov(dest.GetDirectRegister(), m_data->GetImmediate<T>());
                     SetData(dest);
                 }
                 break;

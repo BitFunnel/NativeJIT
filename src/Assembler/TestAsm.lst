@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   08/31/14 16:12:00
+Microsoft (R) Macro Assembler (x64) Version 11.00.50727.1   09/03/14 11:07:31
 TestAsm.asm						     Page 1 - 1
 
 
@@ -335,48 +335,76 @@ TestAsm.asm						     Page 1 - 1
  00000339  66| 48/ 0F 6E E9	movd xmm5, rcx
  0000033E  66| 4C/ 0F 6E E1	movd xmm12, rcx
 
- 00000343  F2/ 0F 10 CA		movsd xmm1, xmm2
- 00000347  F2/ 41/ 0F 10 C4	movsd xmm0, xmm12
- 0000034C  F2/ 41/ 0F 10 EC	movsd xmm5, xmm12
- 00000351  F2/ 0F 10 EB		movsd xmm5, xmm3
- 00000355  F2/ 44/ 0F 10 ED	movsd xmm13, xmm5
- 0000035A  F2/ 41/ 0F 10 C7	movsd xmm0, xmm15
+ 00000343  66| 0F 6E C8		movd xmm1, eax
+ 00000347  66| 0F 6E C9		movd xmm1, ecx
+ 0000034B  66| 41/ 0F 6E C8	movd xmm1, r8d
+ 00000350  66| 0F 6E CD		movd xmm1, ebp
+ 00000354  66| 41/ 0F 6E CC	movd xmm1, r12d
 
- 0000035F  F2/ 41/ 0F 10 04	movsd xmm0, mmword ptr [r12]
+ 00000359  66| 0F 6E C1		movd xmm0, ecx
+ 0000035D  66| 0F 6E C9		movd xmm1, ecx
+ 00000361  66| 0F 6E D1		movd xmm2, ecx
+ 00000365  66| 0F 6E E9		movd xmm5, ecx
+ 00000369  66| 44/ 0F 6E E1	movd xmm12, ecx
+
+ 0000036E  F2/ 0F 10 CA		movsd xmm1, xmm2
+ 00000372  F2/ 41/ 0F 10 C4	movsd xmm0, xmm12
+ 00000377  F2/ 41/ 0F 10 EC	movsd xmm5, xmm12
+ 0000037C  F2/ 0F 10 EB		movsd xmm5, xmm3
+ 00000380  F2/ 44/ 0F 10 ED	movsd xmm13, xmm5
+ 00000385  F2/ 41/ 0F 10 C7	movsd xmm0, xmm15
+
+ 0000038A  F2/ 41/ 0F 10 04	movsd xmm0, mmword ptr [r12]
 	   24
- 00000365  F2/ 0F 10 61		movsd xmm4, mmword ptr [rcx + 12h]
+ 00000390  F2/ 0F 10 61		movsd xmm4, mmword ptr [rcx + 12h]
 	   12
- 0000036A  F2/ 0F 10 AE		movsd xmm5, mmword ptr [rsi + 1234h]
+ 00000395  F2/ 0F 10 AE		movsd xmm5, mmword ptr [rsi + 1234h]
 	   00001234
- 00000372  F2/ 44/ 0F 10 A7	movsd xmm12, mmword ptr [rdi + 12345678h]
+ 0000039D  F2/ 44/ 0F 10 A7	movsd xmm12, mmword ptr [rdi + 12345678h]
 	   12345678
 
- 0000037B  F2/ 41/ 0F 11 04	movsd mmword ptr [r12], xmm0
+ 000003A6  F2/ 41/ 0F 11 04	movsd mmword ptr [r12], xmm0
 	   24
- 00000381  F2/ 0F 11 61		movsd mmword ptr [rcx + 12h], xmm4
+ 000003AC  F2/ 0F 11 61		movsd mmword ptr [rcx + 12h], xmm4
 	   12
- 00000386  F2/ 0F 11 AE		movsd mmword ptr [rsi + 1234h], xmm5
+ 000003B1  F2/ 0F 11 AE		movsd mmword ptr [rsi + 1234h], xmm5
 	   00001234
- 0000038E  F2/ 44/ 0F 11 A7	movsd mmword ptr [rdi + 12345678h], xmm12
+ 000003B9  F2/ 44/ 0F 11 A7	movsd mmword ptr [rdi + 12345678h], xmm12
 	   12345678
 
- 00000397  F2/ 0F 58 CA		addsd xmm1, xmm2
- 0000039B  F2/ 41/ 0F 58 C4	addsd xmm0, xmm12
- 000003A0  F2/ 41/ 0F 59 EC	mulsd xmm5, xmm12
- 000003A5  F2/ 0F 59 EB		mulsd xmm5, xmm3
- 000003A9  F2/ 44/ 0F 5C ED	subsd xmm13, xmm5
- 000003AE  F2/ 41/ 0F 5C C7	subsd xmm0, xmm15
+ 000003C2  F2/ 0F 58 CA		addsd xmm1, xmm2
+ 000003C6  F2/ 41/ 0F 58 C4	addsd xmm0, xmm12
+ 000003CB  F2/ 41/ 0F 59 EC	mulsd xmm5, xmm12
+ 000003D0  F2/ 0F 59 EB		mulsd xmm5, xmm3
+ 000003D4  F2/ 44/ 0F 5C ED	subsd xmm13, xmm5
+ 000003D9  F2/ 41/ 0F 5C C7	subsd xmm0, xmm15
 
- 000003B3  F2/ 41/ 0F 58 04	addsd xmm0, mmword ptr [r12]
+ 000003DE  F2/ 41/ 0F 58 04	addsd xmm0, mmword ptr [r12]
 	   24
- 000003B9  F2/ 0F 58 61		addsd xmm4, mmword ptr [rcx + 12h]
+ 000003E4  F2/ 0F 58 61		addsd xmm4, mmword ptr [rcx + 12h]
 	   12
- 000003BE  F2/ 0F 59 AE		mulsd xmm5, mmword ptr [rsi + 1234h]
+ 000003E9  F2/ 0F 59 AE		mulsd xmm5, mmword ptr [rsi + 1234h]
 	   00001234
- 000003C6  F2/ 44/ 0F 5C A7	subsd xmm12, mmword ptr [rdi + 12345678h]
+ 000003F1  F2/ 44/ 0F 5C A7	subsd xmm12, mmword ptr [rdi + 12345678h]
 	   12345678
 
- 000003CF			main ENDP
+ 000003FA  F3/ 0F 58 CA		addss xmm1, xmm2
+ 000003FE  F3/ 41/ 0F 58 C4	addss xmm0, xmm12
+ 00000403  F3/ 41/ 0F 59 EC	mulss xmm5, xmm12
+ 00000408  F3/ 0F 59 EB		mulss xmm5, xmm3
+ 0000040C  F3/ 44/ 0F 5C ED	subss xmm13, xmm5
+ 00000411  F3/ 41/ 0F 5C C7	subss xmm0, xmm15
+
+ 00000416  F3/ 41/ 0F 58 04	addss xmm0, dword ptr [r12]
+	   24
+ 0000041C  F3/ 0F 58 61		addss xmm4, dword ptr [rcx + 12h]
+	   12
+ 00000421  F3/ 0F 59 AE		mulss xmm5, dword ptr [rsi + 1234h]
+	   00001234
+ 00000429  F3/ 44/ 0F 5C A7	subss xmm12, dword ptr [rdi + 12345678h]
+	   12345678
+
+ 00000432			main ENDP
 
 				END
 

@@ -274,6 +274,18 @@ movd xmm2, rcx
 movd xmm5, rcx
 movd xmm12, rcx
 
+movd xmm1, eax
+movd xmm1, ecx
+movd xmm1, r8d
+movd xmm1, ebp
+movd xmm1, r12d
+
+movd xmm0, ecx
+movd xmm1, ecx
+movd xmm2, ecx
+movd xmm5, ecx
+movd xmm12, ecx
+
 movsd xmm1, xmm2
 movsd xmm0, xmm12
 movsd xmm5, xmm12
@@ -302,6 +314,18 @@ addsd xmm0, mmword ptr [r12]
 addsd xmm4, mmword ptr [rcx + 12h]
 mulsd xmm5, mmword ptr [rsi + 1234h]
 subsd xmm12, mmword ptr [rdi + 12345678h]
+
+addss xmm1, xmm2
+addss xmm0, xmm12
+mulss xmm5, xmm12
+mulss xmm5, xmm3
+subss xmm13, xmm5
+subss xmm0, xmm15
+
+addss xmm0, dword ptr [r12]
+addss xmm4, dword ptr [rcx + 12h]
+mulss xmm5, dword ptr [rsi + 1234h]
+subss xmm12, dword ptr [rdi + 12345678h]
 
 main ENDP
 

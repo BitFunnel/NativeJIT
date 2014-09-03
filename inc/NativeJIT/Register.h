@@ -134,6 +134,23 @@ namespace NativeJIT
     extern Register<8, false> r14;
     extern Register<8, false> r15;
 
+    extern Register<4, true> xmm0s;
+    extern Register<4, true> xmm1s;
+    extern Register<4, true> xmm2s;
+    extern Register<4, true> xmm3s;
+    extern Register<4, true> xmm4s;
+    extern Register<4, true> xmm5s;
+    extern Register<4, true> xmm6s;
+    extern Register<4, true> xmm7s;
+    extern Register<4, true> xmm8s;
+    extern Register<4, true> xmm9s;
+    extern Register<4, true> xmm10s;
+    extern Register<4, true> xmm11s;
+    extern Register<4, true> xmm12s;
+    extern Register<4, true> xmm13s;
+    extern Register<4, true> xmm14s;
+    extern Register<4, true> xmm15s;
+
     extern Register<8, true> xmm0;
     extern Register<8, true> xmm1;
     extern Register<8, true> xmm2;

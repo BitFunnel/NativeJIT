@@ -34,9 +34,7 @@ namespace NativeJIT
         {
             switch (right.GetStorageClass())
             {
-            case StorageClass::Immediate:
-                code.Emit<OP>(left, right.GetImmediate());
-                break;
+            // NOTE: X64 floating point instructions do no support StorageClass::Immediate.
             case StorageClass::Direct:
                 code.Emit<OP>(left, right.GetDirectRegister());
                 break;

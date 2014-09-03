@@ -39,12 +39,29 @@ namespace NativeJIT
                 {
                     Function<double> expression(m_allocator, *m_code);
 
-                    double value = 123.456;;
+                    double value = 123.456;
                     auto & a = expression.Immediate(value);
 
-                    // Not sure that success of test implies implementation is correct.
-                    // It seems that Storage<double>::ConvertToValue() may be allocating RXX register ids
-                    // in this case when it really needs to be allocating XMM register ids.
+                    auto function = expression.Compile(a);
+
+                    auto expected = value;
+                    auto observed = function();
+
+                    TestAssert(observed == expected);
+                }
+            }
+
+
+            TestCase(ImmediateFloat)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<float> expression(m_allocator, *m_code);
+
+                    float value = 123.456f;
+                    auto & a = expression.Immediate(value);
+
                     auto function = expression.Compile(a);
 
                     auto expected = value;
@@ -59,28 +76,49 @@ namespace NativeJIT
             // Binary operations
             //
 
+            TestCase(AddDouble)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<double, double, double> expression(m_allocator, *m_code);
+
+                    auto & a = expression.Add(expression.GetP2(), expression.GetP1());
+                    auto function = expression.Compile(a);
+
+                    double p1 = 12340000.0;
+                    double p2 = 5678.0;
+
+                    auto expected = p1 + p2;
+                    auto observed = function(p1, p2);
+
+                    TestAssert(observed == expected);
+                }
+            }
+
+
             //
             // Codebase needs some work before this test can be enabled.
-            //   X TODO: Need support for free list of XMM registers.
-            //   X TODO: ExpressionTree::Direct().
-            //   TODO: BinaryNode:: op xmm, imm needs implementation.
-            //         Probably want immediate nodes to be immediately converted to RIP-relative indirect.
+            //   TODO: RIP relative addressing.
+            //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
+            //
 
-            //TestCase(AddDouble)
+            //TestCase(AddImmediateDouble)
             //{
             //    AutoResetAllocator reset(m_allocator);
 
             //    {
-            //        Function<double, double, double> expression(m_allocator, *m_code);
+            //        Function<double, double> expression(m_allocator, *m_code);
 
-            //        auto & a = expression.Add(expression.GetP2(), expression.GetP1());
-            //        auto function = expression.Compile(a);
+            //        double immediate = 123.456;
+            //        auto & a = expression.Immediate(immediate);
+            //        auto & b = expression.Add(expression.GetP1(), a);
+            //        auto function = expression.Compile(b);
 
             //        double p1 = 12340000.0;
-            //        double p2 = 5678.0;
 
-            //        auto expected = p1 + p2;
-            //        auto observed = function(p1, p2);
+            //        auto expected = p1 + immediate;
+            //        auto observed = function(p1);
 
             //        TestAssert(observed == expected);
             //    }
