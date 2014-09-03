@@ -30,8 +30,10 @@ namespace NativeJIT
         {
             {},
             {},
-            {},
-            { "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"}
+            { "xmm0s", "xmm1s", "xmm2s", "xmm3s", "xmm4s", "xmm5s", "xmm6s", "xmm7s",
+              "xmm8s", "xmm9s", "xmm10s", "xmm11s", "xmm12s", "xmm13s", "xmm14s", "xmm15s"},
+            { "xmm0d", "xmm1d", "xmm2d", "xmm3d", "xmm4d", "xmm5d", "xmm6d", "xmm7d",
+              "xmm8d", "xmm9d", "xmm10d", "xmm11d", "xmm12d", "xmm13d", "xmm14d", "xmm15d"}
         }
     };
 
@@ -106,6 +108,24 @@ namespace NativeJIT
     Register<8, false> r13(13);
     Register<8, false> r14(14);
     Register<8, false> r15(15);
+
+
+    Register<4, true> xmm0s(0);
+    Register<4, true> xmm1s(1);
+    Register<4, true> xmm2s(2);
+    Register<4, true> xmm3s(3);
+    Register<4, true> xmm4s(4);
+    Register<4, true> xmm5s(5);
+    Register<4, true> xmm6s(6);
+    Register<4, true> xmm7s(7);
+    Register<4, true> xmm8s(8);
+    Register<4, true> xmm9s(9);
+    Register<4, true> xmm10s(10);
+    Register<4, true> xmm11s(11);
+    Register<4, true> xmm12s(12);
+    Register<4, true> xmm13s(13);
+    Register<4, true> xmm14s(14);
+    Register<4, true> xmm15s(15);
 
 
     Register<8, true> xmm0(0);

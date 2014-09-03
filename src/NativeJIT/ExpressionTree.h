@@ -56,7 +56,7 @@ namespace NativeJIT
         Storage<T> Direct();
 
         template <typename T>
-        Storage<T> Direct(Register<sizeof(T), false> r);
+        Storage<T> Direct(Register<sizeof(T), IsFloatingPointType<T>::value> r);
 
         template <typename T>
         Storage<T> Indirect(__int32 offset);
@@ -149,6 +149,10 @@ namespace NativeJIT
         void Mov(Register<SIZE, true> dest, T value);
 
 
+        template <typename T>
+        class FreeListHelper;
+
+
         std::vector<NodeBase*> m_topologicalSort;
         std::vector<ParameterBase*> m_parameters;
 
@@ -156,7 +160,7 @@ namespace NativeJIT
         FreeList<c_rxxCount> m_rxxFreeList;
 
         static const unsigned c_xmmCount = 16;
-        FreeList<c_rxxCount> m_xmmFreeList;
+        FreeList<c_xmmCount> m_xmmFreeList;
 
         // TODO: Do we want to use an std::vector here?
         unsigned m_temporaryCount;
@@ -226,6 +230,7 @@ namespace NativeJIT
     public:
         typedef Register<sizeof(T), IsFloatingPointType<T>::value/*, IsSigned<T>::value*/> DirectRegister;
         typedef Register<sizeof(T*), false/*, false*/> BaseRegister;
+        typedef Register<8, IsFloatingPointType<T>::value> FullRegister;
 
         Storage();
 
@@ -275,14 +280,69 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <typename T>
+    class ExpressionTree::FreeListHelper
+    {
+    public:
+        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_rxxFreeList ) &
+        {
+            return tree.m_rxxFreeList;
+        }
+    };
+
+
+    template <>
+    class ExpressionTree::FreeListHelper<float>
+    {
+    public:
+        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_xmmFreeList ) &
+        {
+            return tree.m_xmmFreeList;
+        }
+    };
+
+
+    template <>
+    class ExpressionTree::FreeListHelper<double>
+    {
+    public:
+        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_xmmFreeList ) &
+        {
+            return tree.m_xmmFreeList;
+        }
+    };
+
+
+    template <unsigned SIZE>
+    class ExpressionTree::FreeListHelper<Register<SIZE, false>>
+    {
+    public:
+        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_rxxFreeList ) &
+        {
+            return tree.m_rxxFreeList;
+        }
+    };
+
+
+    template <unsigned SIZE>
+    class ExpressionTree::FreeListHelper<Register<SIZE, true>>
+    {
+    public:
+        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_rxxFreeList ) &
+        {
+            return tree.m_xmmFreeList;
+        }
+    };
+
+
+    template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Direct()
     {
-        // TODO: Need variants for floating point.
-        // TODO: What if Allocate() fails?
-        unsigned id = m_rxxFreeList.Allocate();
+        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
 
-        // TODO: Use Storage<T>::DirectType().
-        Register<sizeof(T), IsFloatingPointType<T>::value> r(id);
+        // TODO: What if Allocate() fails?
+        unsigned id = freeList.Allocate();
+
+        Storage<T>::DirectRegister r(id);
 
         // TODO: Use allocator.
         Data* data = new Data(*this, r);
@@ -293,10 +353,12 @@ namespace NativeJIT
 
     template <typename T>
     ExpressionTree::Storage<T>
-    ExpressionTree::Direct(Register<sizeof(T), false> r)
+    ExpressionTree::Direct(Register<sizeof(T), IsFloatingPointType<T>::value> r)
     {
+        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
+
         unsigned src = r.GetId();
-        if (!m_rxxFreeList.IsAvailable(src))
+        if (!freeList.IsAvailable(src))
         {
             // Register is not available - bump it.
             // TODO: Should be able to allocate a temporary if no registers are available.
@@ -304,16 +366,17 @@ namespace NativeJIT
             // indirect may have to be spilled to a temporary. At the very least, need to
             // know how to move the data (i.e. its size).
             // TODO: What if Allocate() fails?
-            unsigned dest = m_rxxFreeList.Allocate();
+            unsigned dest = freeList.Allocate();
 
             // Important to preserve all bits of register. Reason is that we don't know the
             // size required by the previous user.
-            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
+            GetCodeGenerator().Emit<OpCode::Mov>(Storage<T>::FullRegister(dest), Storage<T>::FullRegister(src));
+//            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
-            m_rxxFreeList.MoveData(dest, src);
+            freeList.MoveData(dest, src);
         }
 
-        m_rxxFreeList.Allocate(src);
+        freeList.Allocate(src);
 
         // TODO: Use allocator.
         Data* data = new Data(*this, r);
@@ -325,10 +388,13 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Indirect(__int32 offset)
     {
-        unsigned id = m_rxxFreeList.Allocate();
+        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
+
+        unsigned id = freeList.Allocate();
 
         // TODO: Use Storage<T>::IndirectType.
-        Register<sizeof(T), IsFloatingPointType<T>::value> base(id);
+//        Register<sizeof(T), IsFloatingPointType<T>::value> base(id);
+        Storage<T>::IndirectRegister base(id);
 
         // TODO: Use allocator.
         Data* data = new Data(*this, base, offset);
@@ -341,21 +407,24 @@ namespace NativeJIT
     ExpressionTree::Storage<T>
     ExpressionTree::Indirect(Register<sizeof(T), false> base, __int32 offset)
     {
+        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
+
         unsigned src = base.GetId();
-        if (!m_rxxFreeList.IsAvailable(src))
+        if (!freeList.IsAvailable(src))
         {
             // Register is not available - bump it.
             // TODO: Should be able to allocate a temporary if no registers are available.
-            unsigned dest = m_rxxFreeList.Allocate();
+            unsigned dest = freeList.Allocate();
 
             // Important to preserve all bits of register. Reason is that we don't know the
             // size required by the previous user.
-            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
+            GetCodeGenerator().Emit<OpCode::Mov>(Storage<T>::FullRegister(dest), Storage<T>::FullRegister(src));
+//            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
-            m_rxxFreeList.MoveData(dest, src);
+            freeList.MoveData(dest, src);
         }
 
-        m_rxxFreeList.Allocate(src);
+        freeList.Allocate(src);
 
         // TODO: Use allocator.
         Data* data = new Data(*this, base, offset);
@@ -469,10 +538,13 @@ namespace NativeJIT
           m_refCount(0)
     {
         // TODO: This may have to support m_xmmFreeList.
-        tree.m_rxxFreeList.SetData(m_registerId, this);
+        auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
+        freeList.SetData(m_registerId, this);
+//        tree.m_rxxFreeList.SetData(m_registerId, this);
     }
 
 
+    // TODO: This should never allow ISFLOAT == true.
     template <unsigned SIZE, bool ISFLOAT>
     ExpressionTree::Data::Data(ExpressionTree& tree,
                                Register<SIZE, ISFLOAT> base,
@@ -485,7 +557,9 @@ namespace NativeJIT
           m_refCount(0)
     {
         // TODO: This may have to support m_xmmFreeList.
-        tree.m_rxxFreeList.SetData(m_registerId, this);
+        auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
+        freeList.SetData(m_registerId, this);
+//        tree.m_rxxFreeList.SetData(m_registerId, this);
     }
 
 
@@ -650,6 +724,9 @@ namespace NativeJIT
                     // Allocate a register and load this value into the register.
                     auto dest = tree.Direct<T>();
                     tree.Mov(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+
+                    // Problem here is that SetData occurs after Mov which allocates another register???
+
                     SetData(dest);
                 }
                 break;

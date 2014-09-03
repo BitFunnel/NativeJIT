@@ -51,7 +51,9 @@ namespace NativeJIT
 
         char const * GetName() const
         {
-            return c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
+            char const * name = c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
+            Assert(name != nullptr, "Attempting to get name for invalid register.");
+            return name;
         }
 
 

@@ -11,7 +11,7 @@
 
 namespace NativeJIT
 {
-    namespace FloatingPointUnitTest
+    namespace FloatingPointUnitTest3
     {
         TestClass(FunctionTest)
         {
@@ -61,9 +61,10 @@ namespace NativeJIT
 
             //
             // Codebase needs some work before this test can be enabled.
-            //   TODO: Need support for free list of XMM registers.
-            //   TODO: ExpressionTree::Direct().
-            //
+            //   X TODO: Need support for free list of XMM registers.
+            //   X TODO: ExpressionTree::Direct().
+            //   TODO: BinaryNode:: op xmm, imm needs implementation.
+            //         Probably want immediate nodes to be immediately converted to RIP-relative indirect.
 
             //TestCase(AddDouble)
             //{

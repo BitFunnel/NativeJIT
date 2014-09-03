@@ -1055,8 +1055,8 @@ namespace NativeJIT
     template <>                                                                         \
     template <unsigned SIZE>                                                            \
     void X64CodeGenerator::Helper<OpCode::##name##>::Emit(X64CodeGenerator& code,       \
-                                                     Register<SIZE, true> dest,         \
-                                                     Register<SIZE, true> src)          \
+                                                          Register<SIZE, true> dest,    \
+                                                          Register<SIZE, true> src)     \
     {                                                                                   \
         code.SSE<opcode>(dest, src);                                                    \
     }                                                                                   \
@@ -1065,9 +1065,9 @@ namespace NativeJIT
     template <>                                                                         \
     template <unsigned SIZE>                                                            \
     void X64CodeGenerator::Helper<OpCode::##name##>::Emit(X64CodeGenerator& code,       \
-                                                     Register<SIZE, true> dest,         \
-                                                     Register<8, false> src,            \
-                                                     __int32 srcOffset)                 \
+                                                          Register<SIZE, true> dest,    \
+                                                          Register<8, false> src,       \
+                                                          __int32 srcOffset)            \
     {                                                                                   \
         code.SSE<opcode>(dest, src, srcOffset);                                         \
     }                                                                                   \

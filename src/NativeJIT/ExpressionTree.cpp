@@ -29,6 +29,11 @@ namespace NativeJIT
         {
             m_rxxFreeList.Release(i);
         }
+
+        for (unsigned i = 0 ; i < c_xmmCount; ++i)
+        {
+            m_xmmFreeList.Release(i);
+        }
     }
 
 
