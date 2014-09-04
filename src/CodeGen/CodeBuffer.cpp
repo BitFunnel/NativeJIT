@@ -161,6 +161,22 @@ namespace NativeJIT
     }
 
 
+    void CodeBuffer::EmitFloatingPoint(float x)
+    {
+        Assert(m_current + sizeof(x) <= m_bufferEnd, "X64 code generator code buffer overrun.");
+        *reinterpret_cast<float*>(m_current) = x;
+        m_current += sizeof(x);
+    }
+
+
+    void CodeBuffer::EmitFloatingPoint(double x)
+    {
+        Assert(m_current + sizeof(x) <= m_bufferEnd, "X64 code generator code buffer overrun.");
+        *reinterpret_cast<double*>(m_current) = x;
+        m_current += sizeof(x);
+    }
+
+
     // Return the size of the buffer, in bytes.
     unsigned CodeBuffer::BufferSize() const
     {

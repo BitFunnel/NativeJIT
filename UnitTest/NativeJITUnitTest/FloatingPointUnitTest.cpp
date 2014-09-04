@@ -38,56 +38,34 @@ namespace NativeJIT
             //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
             //
 
-            //TestCase(ImmediateDouble)
-            //{
-            //    AutoResetAllocator reset(m_allocator);
-
-            //    {
-            //        Function<double> expression(m_allocator, *m_code);
-
-            //        double value = 123.456;
-            //        auto & a = expression.Immediate(value);
-
-            //        auto function = expression.Compile(a);
-
-            //        auto expected = value;
-            //        auto observed = function();
-
-            //        TestAssert(observed == expected);
-            //    }
-            //}
-
-
-            //TestCase(ImmediateFloat)
-            //{
-            //    AutoResetAllocator reset(m_allocator);
-
-            //    {
-            //        Function<float> expression(m_allocator, *m_code);
-
-            //        float value = 123.456f;
-            //        auto & a = expression.Immediate(value);
-
-            //        auto function = expression.Compile(a);
-
-            //        auto expected = value;
-            //        auto observed = function();
-
-            //        TestAssert(observed == expected);
-            //    }
-            //}
-
-
-            // Temporary test case for development testing.
-            // TODO: Remove.
-            TestCase(ImmediateInt)
+            TestCase(ImmediateDouble)
             {
                 AutoResetAllocator reset(m_allocator);
 
                 {
-                    Function<int> expression(m_allocator, *m_code);
+                    Function<double> expression(m_allocator, *m_code);
 
-                    int value = 123;
+                    double value = 123.456;
+                    auto & a = expression.Immediate(value);
+
+                    auto function = expression.Compile(a);
+
+                    auto expected = value;
+                    auto observed = function();
+
+                    TestAssert(observed == expected);
+                }
+            }
+
+
+            TestCase(ImmediateFloat)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<float> expression(m_allocator, *m_code);
+
+                    float value = 123.456f;
                     auto & a = expression.Immediate(value);
 
                     auto function = expression.Compile(a);
@@ -131,26 +109,74 @@ namespace NativeJIT
             //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
             //
 
-            //TestCase(AddImmediateDouble)
+            TestCase(AddImmediateDouble)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<double, double> expression(m_allocator, *m_code);
+
+                    double immediate = 123.456;
+                    auto & a = expression.Immediate(immediate);
+                    auto & b = expression.Add(expression.GetP1(), a);
+                    auto function = expression.Compile(b);
+
+                    double p1 = 12340000.0;
+
+                    auto expected = p1 + immediate;
+                    auto observed = function(p1);
+
+                    TestAssert(observed == expected);
+                }
+            }
+
+
+// The following test won't compile.
+// Error	1	error C2664: 'void NativeJIT::X64CodeGenerator::Mov<8>(NativeJIT::Register<SIZE,ISFLOAT>,int,NativeJIT::Register<8,true>)' : cannot convert parameter 3 from 'NativeJIT::Register<SIZE,ISFLOAT>' to 'NativeJIT::Register<SIZE,ISFLOAT>'	c:\git\nativejit\nativejit\inc\nativejit\x64codegenerator.h	1011
+            //TestCase(AddTwoImmediateFloat)
             //{
             //    AutoResetAllocator reset(m_allocator);
 
             //    {
-            //        Function<double, double> expression(m_allocator, *m_code);
+            //        Function<float> expression(m_allocator, *m_code);
 
-            //        double immediate = 123.456;
-            //        auto & a = expression.Immediate(immediate);
-            //        auto & b = expression.Add(expression.GetP1(), a);
-            //        auto function = expression.Compile(b);
+            //        float immediate1 = 123.0f;
+            //        float immediate2 = 0.456f;
+            //        auto & a = expression.Immediate(immediate1);
+            //        auto & b = expression.Immediate(immediate2);
+            //        auto & c = expression.Add(a, b);
+            //        auto function = expression.Compile(c);
 
-            //        double p1 = 12340000.0;
 
-            //        auto expected = p1 + immediate;
-            //        auto observed = function(p1);
+            //        auto expected = immediate1 + immediate2;
+            //        auto observed = function();
 
             //        TestAssert(observed == expected);
             //    }
             //}
+
+
+            TestCase(AddTwoImmediateDouble)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<double> expression(m_allocator, *m_code);
+
+                    double immediate1 = 123.0;
+                    double immediate2 = 0.456;
+                    auto & a = expression.Immediate(immediate1);
+                    auto & b = expression.Immediate(immediate2);
+                    auto & c = expression.Add(a, b);
+                    auto function = expression.Compile(c);
+
+
+                    auto expected = immediate1 + immediate2;
+                    auto observed = function();
+
+                    TestAssert(observed == expected);
+                }
+            }
 
 
         private:

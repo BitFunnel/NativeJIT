@@ -24,6 +24,7 @@ namespace NativeJIT
     class FunctionBuffer;
     class NodeBase;
     class ParameterBase;
+    class RIPRelativeImmediate;
 
     enum class StorageClass {Direct, Indirect, Immediate};
 
@@ -44,6 +45,7 @@ namespace NativeJIT
         //
         unsigned AddNode(NodeBase& node);
         unsigned AddParameter(ParameterBase& parameter);
+        void AddRIPRelative(RIPRelativeImmediate& node);
         void Compile();
 
         //
@@ -169,6 +171,7 @@ namespace NativeJIT
 
         std::vector<NodeBase*> m_topologicalSort;
         std::vector<ParameterBase*> m_parameters;
+        std::vector<RIPRelativeImmediate*> m_ripRelatives;
 
         static const unsigned c_rxxCount = 16;
         FreeList<c_rxxCount> m_rxxFreeList;

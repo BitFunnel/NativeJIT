@@ -49,15 +49,25 @@ namespace NativeJIT
     // Template specializations for ImmediateNode<double>
     //
     //*************************************************************************
+    class RIPRelativeImmediate
+    {
+    public:
+        virtual void EmitStaticData(ExpressionTree& tree) = 0;
+    };
+
+
     template <typename T>
-    class ImmediateNode<T, typename std::enable_if<std::is_floating_point<T>::value>::type> : public Node<T>
+    class ImmediateNode<T, typename std::enable_if<std::is_floating_point<T>::value>::type> : public Node<T>, public RIPRelativeImmediate
     {
     public:
         ImmediateNode(ExpressionTree& tree, T value)
             : Node<T>(tree),
               m_value(value)
         {
-            // TODO: Correct offset.
+            tree.AddRIPRelative(*this);
+
+            // m_offset will be initialized with the correct value during pass0
+            // of compilation in the call to EmitStaticData().
             m_offset = 0;
         }
 
@@ -81,6 +91,17 @@ namespace NativeJIT
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override
         {
             return tree.RIPRelative<T>(m_offset);
+        }
+
+        //
+        // Overrrides of RIPRelativeImmediate methods
+        //
+        virtual void EmitStaticData(ExpressionTree& tree) override
+        {
+            auto & code = tree.GetCodeGenerator();
+            code.AdvanceToAlignment<T>();
+            m_offset = code.CurrentPosition();
+            code.EmitFloatingPoint(m_value);
         }
 
     private:

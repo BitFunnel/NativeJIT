@@ -4,6 +4,7 @@
 
 #include "Assert.h"
 #include "ExpressionTree.h"
+#include "ImmediateNode.h"
 #include "NativeJIT/FunctionBuffer.h"
 #include "ParameterNode.h"
 
@@ -93,6 +94,12 @@ namespace NativeJIT
     }
 
 
+    void ExpressionTree::AddRIPRelative(RIPRelativeImmediate& node)
+    {
+        m_ripRelatives.push_back(&node);
+    }
+
+
     void ExpressionTree::Compile()
     {
         m_code.Reset();
@@ -120,7 +127,13 @@ namespace NativeJIT
 
     void ExpressionTree::Pass0()
     {
-        // TODO: Emit RIP-relative constants.
+        std::cout << "=== Pass0 ===" << std::endl;
+
+        // Emit RIP-relative constants.
+        for (unsigned i = 0 ; i < m_ripRelatives.size(); ++i)
+        {
+            m_ripRelatives[i]->EmitStaticData(*this);
+        }
     }
 
 

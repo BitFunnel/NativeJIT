@@ -50,6 +50,10 @@ namespace NativeJIT
         // WARNING: Non portable. Assumes little endian machine architecture.
         void Emit64(unsigned __int64 x);
 
+        void EmitFloatingPoint(float x);
+
+        void EmitFloatingPoint(double x);
+
         // Return the size of the buffer, in bytes.
         // TODO: Rename GetCapacity()?
         unsigned BufferSize() const;
@@ -71,6 +75,9 @@ namespace NativeJIT
         // before advancing.
         unsigned char* Advance(int byteCount);
 
+        template <typename T>
+        void AdvanceToAlignment();
+
         void Fill(unsigned start, unsigned length, unsigned __int8 value);
 
         // Patches each call site with the correct offset derived from its resolved label.
@@ -89,4 +96,19 @@ namespace NativeJIT
 
         std::unique_ptr<JumpTable> m_localJumpTable;    // Jumps within a single CodeBuffer.
     };
+
+
+    //*************************************************************************
+    //
+    // Template definitions for CodeBuffer.
+    //
+    //*************************************************************************
+    template <typename T>
+    void CodeBuffer::AdvanceToAlignment()
+    {
+        while ( (CurrentPosition() % sizeof(T)) != 0)
+        {
+            Emit8(0xaa);
+        }
+    }
 }
