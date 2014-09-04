@@ -8,6 +8,7 @@ namespace NativeJIT
     class RegisterBase
     {
     protected:
+        // TODO: Magic numbers.
         static unsigned c_sizes[9];
         static char const * c_names[2][4][16];
     };
@@ -26,6 +27,7 @@ namespace NativeJIT
         Register(unsigned id)
             : m_id(id)
         {
+            // TODO: Remove this magic number.
             Assert(id < 16, "Register id cannot exceed 15.");
         }
 
@@ -51,14 +53,34 @@ namespace NativeJIT
 
         char const * GetName() const
         {
-            char const * name = c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
-            Assert(name != nullptr, "Attempting to get name for invalid register.");
-            return name;
+            // TODO: Magic number.
+            if (m_id == 17)
+            {
+                // TODO: Text of name should be near other register names.
+                return "rip";
+            }
+            else
+            {
+                char const * name = c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
+                Assert(name != nullptr, "Attempting to get name for invalid register.");
+                return name;
+            }
         }
 
 
-    private:
+    protected:
         unsigned m_id;
+    };
+
+
+    class RegisterIP : public Register<8, false>
+    {
+    public:
+        RegisterIP()
+        {
+            // TODO: Magic number.
+            m_id = 17;
+        }
     };
 
 
@@ -133,6 +155,7 @@ namespace NativeJIT
     extern Register<8, false> r13;
     extern Register<8, false> r14;
     extern Register<8, false> r15;
+    extern RegisterIP rip;
 
     extern Register<4, true> xmm0s;
     extern Register<4, true> xmm1s;

@@ -39,6 +39,10 @@ namespace NativeJIT
             std::cout << "Another special case." << std::endl;
             buffer.Emit<OpCode::Add>(r13, r13, 0);
             buffer.Emit<OpCode::Mov>(r13, r13, 0);
+            buffer.Emit<OpCode::Mov>(rax, rbp, 0);
+            buffer.Emit<OpCode::Mov>(rax, rbp, 0x12);
+            buffer.Emit<OpCode::Mov>(rbx, r13, 0x34);
+            buffer.Emit<OpCode::Mov>(rcx, rbp, 0x1234);
 
 
             // Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8]
@@ -362,6 +366,11 @@ namespace NativeJIT
                 "                                ; Another special case                                             \n"
                 " 00000000  4D/ 03 6D 00         add r13, [r13]                                                     \n"
                 " 00000000  4D/ 8B 6D 00         mov r13, [r13]                                                     \n"
+                " 0000001A  48/ 8B 45 00         mov rax, [rbp]                                                     \n"
+                " 0000001E  48/ 8B 45 12         mov rax, [rbp + 12h]                                               \n"
+                " 00000022  49/ 8B 5D 34         mov rbx, [r13 + 34h]                                               \n"
+                " 00000026  48/ 8B 8D            mov rcx, [rbp + 1234h]                                             \n"
+                "           00001234                                                                                \n"
                 "                                                                                                   \n"
                 "                                ; Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8] \n"
                 " 00000000  49/ 2B 1C 24         sub rbx, [r12]                                                     \n"

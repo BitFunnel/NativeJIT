@@ -18,6 +18,10 @@ ret
 ; Another special case
 add r13, [r13]
 mov r13, [r13]
+mov rax, [rbp]
+mov rax, [rbp + 12h]
+mov rbx, [r13 + 34h]
+mov rcx, [rbp + 1234h]
 
 ;
 ; Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8]

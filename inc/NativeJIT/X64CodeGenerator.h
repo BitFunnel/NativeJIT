@@ -838,46 +838,56 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::EmitModRMOffset(Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset)
+    inline unsigned __int8 Mod(__int32 offset)
     {
-        unsigned offsetSize = Size(srcOffset);
-
-        unsigned __int8 mod;
-
-        if ((src.GetId() & 0x7) == 5)
+        if (offset == 0)
         {
-            mod = (offsetSize <= 1) ? 0x40 : 0x80;
+            return 0;
+        }
+        else if (offset >= -0x80 && offset <= 0x7f)
+        {
+            return 1;
         }
         else
         {
-            mod = (offsetSize == 0) ? 0 : ((offsetSize == 1) ? 0x40 : 0x80);
+            return 2;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::EmitModRMOffset(Register<SIZE, ISFLOAT> reg, Register<8, false> rm, __int32 offset)
+    {
+        unsigned __int8 mod = Mod(offset);
+        unsigned __int8 rmField = rm.GetId() & 0x7;
+        unsigned __int8 regField = reg.GetId() & 0x7;
+
+        if (rmField == 5 && mod == 0)
+        {
+            // The combination of rmField == 5 && mod == 0 is a special case
+            // which is used for RIP-relative addressing. Convert to mod 01
+            // and emit an 8-bit displacement of 0.
+            mod = 1;
         }
 
-        Emit8(mod | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
-        // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
-        // this function is only used for Register-Register encoding. Problem will 
-        // crop up if caller passes the base register from an X64Indirect.
+        Emit8( (mod << 6) | (regField << 3) | rmField );
 
-        // Special case for RSP, R12.
-        if ((src.GetId() & 0x7) == 4)
+        if (rmField == 4)
         {
-            // Special case for RSP, R12.
+            // When rm is RSP or R12 or XMM4 or XMM12, rmField == 4, which
+            // is a special case used for SIB addressing. Emit an SIB byte
+            // which encodes the same register with no scaled index.
+            // Want SS = 00, Index = 100 (none), and Base = 100 (4).
             Emit8(0x24);
         }
 
-        // TODO: Is this condition correct?
-        if (mod == 0x0 && ((src.GetId() & 0x7) == 4) && ((dest.GetId() & 0x7) == 5) && (srcOffset != 0))
+        if (mod == 1)
         {
-            Emit32(srcOffset);
+            Emit8(static_cast<unsigned __int8>(offset));
         }
-        else if (mod == 0x40)
+        else if (mod == 2)
         {
-            Emit8(static_cast<unsigned __int8>(srcOffset));
-        }
-        else if (mod == 0x80)
-        {
-            Emit32(srcOffset);
+            Emit32(offset);
         }
     }
 

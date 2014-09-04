@@ -108,6 +108,7 @@ namespace NativeJIT
     Register<8, false> r13(13);
     Register<8, false> r14(14);
     Register<8, false> r15(15);
+    RegisterIP rip;
 
 
     Register<4, true> xmm0s(0);
