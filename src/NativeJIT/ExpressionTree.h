@@ -64,8 +64,10 @@ namespace NativeJIT
         template <typename T>
         Storage<T> Indirect(Register<sizeof(T), false> base, __int32 offset);
 
-        template 
-            <typename T>
+        template <typename T>
+        Storage<T> RIPRelative(unsigned __int32 offset);
+
+        template <typename T>
         Storage<T> Temporary();
 
         template <typename T>
@@ -414,7 +416,7 @@ namespace NativeJIT
 
     template <typename T>
     ExpressionTree::Storage<T>
-    ExpressionTree::Indirect(Register<sizeof(T), false> base, __int32 offset)
+    ExpressionTree::Indirect(Register<sizeof(T), false> base, __int32 offset) // TODO: This should be Register<8, false> or Register<sizeof(T*), false>
     {
         auto & freeList = FreeListHelper<T>::GetFreeList(*this);
 
@@ -436,6 +438,16 @@ namespace NativeJIT
 
         // TODO: Use allocator.
         Data* data = new Data(*this, base, offset);
+
+        return Storage<T>(data);
+    }
+
+
+    template <typename T>
+    ExpressionTree::Storage<T> ExpressionTree::RIPRelative(unsigned __int32 offset)
+    {
+        // TODO: Use allocator.
+        Data* data = new Data(*this, rip, offset);
 
         return Storage<T>(data);
     }
@@ -577,8 +589,11 @@ namespace NativeJIT
           m_offset(offset),
           m_refCount(0)
     {
-        auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
-        freeList.SetData(m_registerId, this);
+        if (!base.IsRIP())
+        {
+            auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
+            freeList.SetData(m_registerId, this);
+        }
     }
 
 
@@ -862,7 +877,11 @@ namespace NativeJIT
                     {
                         BaseRegister base(m_data->GetRegisterId());
 
-                        if (m_data->GetTree().IsBasePointer(base))
+                        if (base.IsRIP())
+                        {
+                            std::cout << "Don't release RIP-relative constant at " << m_data->GetOffset() << std::endl;
+                        }
+                        else if (m_data->GetTree().IsBasePointer(base))
                         {
                             std::cout << "Release temporary " << m_data->GetOffset() << std::endl;
                             m_data->GetTree().ReleaseTemporary(m_data->GetOffset());

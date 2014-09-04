@@ -128,7 +128,7 @@ namespace NativeJIT
         m_unwindInfo->m_flags = 0;
 
         m_runtimeFunction.BeginAddress = CurrentPosition();
-        m_runtimeFunction.EndAddress = BufferSize();
+        m_runtimeFunction.EndAddress = BufferSize();            // TODO: Is this correct or do we want BufferSize() + start?
 
         // Push non-volatile registers
         // TODO: investigate whether pushing volatiles causes problems for stack unwinding.

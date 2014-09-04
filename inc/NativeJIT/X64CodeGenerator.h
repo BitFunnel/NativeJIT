@@ -858,36 +858,51 @@ namespace NativeJIT
     template <unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::EmitModRMOffset(Register<SIZE, ISFLOAT> reg, Register<8, false> rm, __int32 offset)
     {
-        unsigned __int8 mod = Mod(offset);
-        unsigned __int8 rmField = rm.GetId() & 0x7;
-        unsigned __int8 regField = reg.GetId() & 0x7;
-
-        if (rmField == 5 && mod == 0)
+        if (rm.IsRIP())
         {
-            // The combination of rmField == 5 && mod == 0 is a special case
-            // which is used for RIP-relative addressing. Convert to mod 01
-            // and emit an 8-bit displacement of 0.
-            mod = 1;
+            // RIP-relative addressing. Hard-code mod = 0 and rmField = 5.
+            unsigned __int8 mod = 0;
+            unsigned __int8 rmField = 5;
+            unsigned __int8 regField = reg.GetId() & 0x7;
+
+            Emit8( (mod << 6) | (regField << 3) | rmField );
+
+            Emit32(offset - CurrentPosition() - 4);
         }
-
-        Emit8( (mod << 6) | (regField << 3) | rmField );
-
-        if (rmField == 4)
+        else
         {
-            // When rm is RSP or R12 or XMM4 or XMM12, rmField == 4, which
-            // is a special case used for SIB addressing. Emit an SIB byte
-            // which encodes the same register with no scaled index.
-            // Want SS = 00, Index = 100 (none), and Base = 100 (4).
-            Emit8(0x24);
-        }
+            // Normal, GPR-indirect addressing.
+            unsigned __int8 mod = Mod(offset);
+            unsigned __int8 rmField = rm.GetId() & 0x7;
+            unsigned __int8 regField = reg.GetId() & 0x7;
 
-        if (mod == 1)
-        {
-            Emit8(static_cast<unsigned __int8>(offset));
-        }
-        else if (mod == 2)
-        {
-            Emit32(offset);
+            if (rmField == 5 && mod == 0)
+            {
+                // The combination of rmField == 5 && mod == 0 is a special case
+                // which is used for RIP-relative addressing. Convert to mod 01
+                // and emit an 8-bit displacement of 0.
+                mod = 1;
+            }
+
+            Emit8( (mod << 6) | (regField << 3) | rmField );
+
+            if (rmField == 4)
+            {
+                // When rm is RSP or R12 or XMM4 or XMM12, rmField == 4, which
+                // is a special case used for SIB addressing. Emit an SIB byte
+                // which encodes the same register with no scaled index.
+                // Want SS = 00, Index = 100 (none), and Base = 100 (4).
+                Emit8(0x24);
+            }
+
+            if (mod == 1)
+            {
+                Emit8(static_cast<unsigned __int8>(offset));
+            }
+            else if (mod == 2)
+            {
+                Emit32(offset);
+            }
         }
     }
 

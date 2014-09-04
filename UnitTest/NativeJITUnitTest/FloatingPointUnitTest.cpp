@@ -32,34 +32,62 @@ namespace NativeJIT
             // Immediate values.
             //
 
-            TestCase(ImmediateDouble)
+            //
+            // Codebase needs some work before this test can be enabled.
+            //   TODO: Complete RIP relative addressing.
+            //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
+            //
+
+            //TestCase(ImmediateDouble)
+            //{
+            //    AutoResetAllocator reset(m_allocator);
+
+            //    {
+            //        Function<double> expression(m_allocator, *m_code);
+
+            //        double value = 123.456;
+            //        auto & a = expression.Immediate(value);
+
+            //        auto function = expression.Compile(a);
+
+            //        auto expected = value;
+            //        auto observed = function();
+
+            //        TestAssert(observed == expected);
+            //    }
+            //}
+
+
+            //TestCase(ImmediateFloat)
+            //{
+            //    AutoResetAllocator reset(m_allocator);
+
+            //    {
+            //        Function<float> expression(m_allocator, *m_code);
+
+            //        float value = 123.456f;
+            //        auto & a = expression.Immediate(value);
+
+            //        auto function = expression.Compile(a);
+
+            //        auto expected = value;
+            //        auto observed = function();
+
+            //        TestAssert(observed == expected);
+            //    }
+            //}
+
+
+            // Temporary test case for development testing.
+            // TODO: Remove.
+            TestCase(ImmediateInt)
             {
                 AutoResetAllocator reset(m_allocator);
 
                 {
-                    Function<double> expression(m_allocator, *m_code);
+                    Function<int> expression(m_allocator, *m_code);
 
-                    double value = 123.456;
-                    auto & a = expression.Immediate(value);
-
-                    auto function = expression.Compile(a);
-
-                    auto expected = value;
-                    auto observed = function();
-
-                    TestAssert(observed == expected);
-                }
-            }
-
-
-            TestCase(ImmediateFloat)
-            {
-                AutoResetAllocator reset(m_allocator);
-
-                {
-                    Function<float> expression(m_allocator, *m_code);
-
-                    float value = 123.456f;
+                    int value = 123;
                     auto & a = expression.Immediate(value);
 
                     auto function = expression.Compile(a);
@@ -99,7 +127,7 @@ namespace NativeJIT
 
             //
             // Codebase needs some work before this test can be enabled.
-            //   TODO: RIP relative addressing.
+            //   TODO: Complete RIP relative addressing.
             //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
             //
 

@@ -11,6 +11,8 @@ namespace NativeJIT
         // TODO: Magic numbers.
         static unsigned c_sizes[9];
         static char const * c_names[2][4][16];
+
+        static const unsigned c_RIP = 16;
     };
 
 
@@ -28,7 +30,7 @@ namespace NativeJIT
             : m_id(id)
         {
             // TODO: Remove this magic number.
-            Assert(id < 16, "Register id cannot exceed 15.");
+            Assert(id < c_RIP || (id == c_RIP && !ISFLOAT), "Invalid register id.");
         }
 
 
@@ -53,8 +55,7 @@ namespace NativeJIT
 
         char const * GetName() const
         {
-            // TODO: Magic number.
-            if (m_id == 17)
+            if (m_id == c_RIP)
             {
                 // TODO: Text of name should be near other register names.
                 return "rip";
@@ -68,6 +69,12 @@ namespace NativeJIT
         }
 
 
+        bool IsRIP() const
+        {
+            return m_id == c_RIP;
+        }
+
+
     protected:
         unsigned m_id;
     };
@@ -78,8 +85,7 @@ namespace NativeJIT
     public:
         RegisterIP()
         {
-            // TODO: Magic number.
-            m_id = 17;
+            m_id = c_RIP;
         }
     };
 
