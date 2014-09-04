@@ -32,13 +32,13 @@ namespace NativeJIT
 //        m_isLeaf = isLeaf;
 
         //
-        // New initialization sequence.
+        // Newer initialization sequence.
         //
         EmitUnwindInfo(static_cast<unsigned char>(slotCount), registerSaveMask, isLeaf);
-        EmitPrologue();
+        CreatePrologue();
         RegisterUnwindInfo();
-
         CreateEpilogue();
+        Reset();
     }
 
 
@@ -50,7 +50,17 @@ namespace NativeJIT
 
     void FunctionBuffer::Reset()
     {
-        CodeBuffer::Reset(static_cast<unsigned>(m_bodyStart));
+        CodeBuffer::Reset(static_cast<unsigned>(m_codeGenStart));
+    }
+
+
+    void FunctionBuffer::EmitPrologue()
+    {
+        m_entryPoint = BufferStart() + CurrentPosition();
+        for (unsigned i = 0 ; i < m_prologueCode.size(); ++i)
+        {
+            Emit8(m_prologueCode[i]);
+        }
     }
 
 
@@ -171,9 +181,8 @@ namespace NativeJIT
     }
 
 
-    void FunctionBuffer::EmitPrologue()
+    void FunctionBuffer::CreatePrologue()
     {
-        m_entryPoint = BufferStart() + CurrentPosition();
         unsigned start = CurrentPosition();
 
         // Generate prologue code from unwind information.
@@ -202,7 +211,9 @@ namespace NativeJIT
         Assert(size < 256, "Prologue cannot exceed 255 bytes.");
         m_unwindInfo->m_sizeOfProlog = static_cast<unsigned __int8>(size);
 
-        m_bodyStart = CurrentPosition();
+        // Save a copy of the prologue.
+        m_prologueCode.resize(size);
+        memcpy(&m_prologueCode[0], BufferStart() + start, size);
     }
 
 
@@ -251,7 +262,9 @@ namespace NativeJIT
     }
 
 
-    // TODO: Allocate on heap.
+    // TODO: Allocate on heap. Is this right? 
+    //         Perhaps we should send the UnwindInfo and entry point over the wire.
+    //         Unwind info would be compared with receiver unwind info.
     // TODO: Document reverse order fillings.
     // Creates an UnwindInfo structure in the code buffer.
     void FunctionBuffer::AllocateUnwindInfo(unsigned unwindCodeCount)
@@ -262,6 +275,7 @@ namespace NativeJIT
         }
         m_unwindInfo = (UnwindInfo*)Advance(sizeof(UnwindInfo));
         m_unwindCodePtr = m_unwindInfo->m_unwindCodes + unwindCodeCount;
+        m_codeGenStart = CurrentPosition();
     }
 
 
@@ -318,7 +332,7 @@ namespace NativeJIT
 
 
     bool FunctionBuffer::UnwindInfoIsValid(std::ostream& out,
-                                               RUNTIME_FUNCTION& runtimeFunction)
+                                           RUNTIME_FUNCTION& runtimeFunction)
     {
         bool success = true;
 

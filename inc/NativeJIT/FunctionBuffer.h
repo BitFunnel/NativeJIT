@@ -37,6 +37,7 @@ namespace NativeJIT
 
         unsigned char const * GetEntryPoint() const;
 
+        void EmitPrologue();
         void EmitEpilogue();
 
         void SaveVolatileRegisters();
@@ -50,8 +51,9 @@ namespace NativeJIT
                             unsigned registerSaveMask,
                             bool isLeaf);
 
+        void CreatePrologue();
         void CreateEpilogue();
-        void EmitPrologue();
+
         void RegisterUnwindInfo();
 
         // Creates an UnwindInfo structure in the code buffer.
@@ -70,6 +72,7 @@ namespace NativeJIT
 
         void FillWithBreakCode(unsigned start, unsigned length);
 
+        std::vector<unsigned __int8> m_prologueCode; 
         std::vector<unsigned __int8> m_epilogueCode; 
         unsigned char const * m_entryPoint;
 
@@ -81,8 +84,8 @@ namespace NativeJIT
         // Buffer offset of first instruction in the prologue.
         size_t m_prologueStart;
 
-        // Buffer offset of first instruction in function after the prologue.
-        size_t m_bodyStart;
+        // Buffer offset of the first byte after the unwind info.
+        unsigned m_codeGenStart;
 
         // Total amount of stack used for return address, saved registers,
         // locals, etc.

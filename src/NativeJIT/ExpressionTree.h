@@ -131,6 +131,7 @@ namespace NativeJIT
         bool IsBasePointer(Register<8, false> r) const;
         Register<sizeof(void*), false> GetBasePointer() const;
 
+        void Pass0();
         void Pass1();
         void Pass2();
         void Pass3();

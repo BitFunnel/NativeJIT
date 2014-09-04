@@ -96,11 +96,18 @@ namespace NativeJIT
     void ExpressionTree::Compile()
     {
         m_code.Reset();
+
+        // Generate constants.
+        Pass0();
+
+        // Generate code.
+        m_code.EmitPrologue();
         Pass1();
         Pass2();
         Print();
         Pass3();
         m_code.PatchCallSites();
+
         Print();
     }
 
@@ -108,6 +115,12 @@ namespace NativeJIT
     void  const * ExpressionTree::GetUntypedEntryPoint() const
     {
         return m_code.GetEntryPoint();
+    }
+
+
+    void ExpressionTree::Pass0()
+    {
+        // TODO: Emit RIP-relative constants.
     }
 
 
