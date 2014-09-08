@@ -340,6 +340,19 @@ namespace NativeJIT
             buffer.Emit<OpCode::Sub>(xmm12s, rdi, 0x12345678);
 
             // shift
+            buffer.Emit<OpCode::Rol>(al);
+            buffer.Emit<OpCode::Sal>(ebx);
+            buffer.Emit<OpCode::Shr>(r12);
+
+            // TODO: Test other register sizes.
+            // TODO: Add verification.
+            buffer.Emit<OpCode::Rol>(rax, static_cast<unsigned __int8>(3));
+            buffer.Emit<OpCode::Sal>(bl, static_cast<unsigned __int8>(4));
+            buffer.Emit<OpCode::Shr>(r12d, static_cast<unsigned __int8>(5));
+
+            buffer.Emit<OpCode::Shld>(edx, esi);
+            buffer.Emit<OpCode::Shld>(r12, rbp);
+            buffer.Emit<OpCode::Shld>(rbp, r12);
 
             // floating point
             // signed
@@ -702,7 +715,19 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 00000429  F3/ 44/ 0F 5C A7     subss xmm12, dword ptr [rdi + 12345678h]                           \n"
                 "           12345678                                                                                \n"
-                "                                                                                                   \n";
+                "                                                                                                   \n"
+                "                                                                                                   \n"
+                " 0000047F  D2 C0                rol al, cl                                                         \n"
+                " 00000481  D3 E3                sal ebx, cl                                                        \n"
+                " 00000483  49/ D3 EC            shr r12, cl                                                        \n"
+                "                                                                                                   \n"
+                " 00000486  48/ C1 C0 03         rol rax, 3                                                         \n"
+                " 0000048A  C0 E3 04             sal bl, 4                                                          \n"
+                " 0000048D  41/ C1 EC 05         shr r12d, 5                                                        \n"
+                "                                                                                                   \n"
+                " 00000491  0F A5 F2             shld edx, esi, cl                                                  \n"
+                " 00000494  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
+                " 00000498  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n";
 
             ML64Verifier v(ml64Output, start);
         }

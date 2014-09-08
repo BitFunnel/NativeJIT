@@ -8,6 +8,38 @@ myMessage BYTE "MASM program example",0dh,0ah,0
 .code
 main PROC
 
+    mov rcx, 16;
+    mov rax, 1234567812345678h
+    mov rbx, 2108765432108765h
+    ; expect 2238767832348778
+
+l0:
+    cmp rax, rbx
+    jae l1
+
+    ; rbx is greater - shift its high bits into the low bits of rax
+    shld rax,rbx, 4
+    jmp l2
+
+l1:
+
+    ; rax is greater - rotate its high bits into the low bits of rax
+    rol rax, 4
+l2:
+
+    ; both cases, shift the high order bits of rbx out of the way
+    shl rbx, 4
+
+    ;; decrement the loop counter and go back to the top if there are more fields
+    dec rcx
+    jnz l0
+    ret
+
+
+shld rax, rbx, 4
+;movd xmm1, rax
+;vprotq xmm0, xmm1, 4
+
 add [rcx + 5], rax
 add rax, [rcx + 5]
 movd xmm0, rax
@@ -218,12 +250,12 @@ ret
 ; Shift
 ;
 
-L1:
-    jz L1
-    jz near ptr L1
-    jz L1
-    jz near ptr L1
-;    jz far ptr L1
+LL1:
+    jz LL1
+    jz near ptr LL1
+    jz LL1
+    jz near ptr LL1
+;    jz far ptr LL1
 
 
 imul bx, cx
@@ -330,6 +362,20 @@ addss xmm0, dword ptr [r12]
 addss xmm4, dword ptr [rcx + 12h]
 mulss xmm5, dword ptr [rsi + 1234h]
 subss xmm12, dword ptr [rdi + 12345678h]
+
+
+rol al, cl
+sal ebx, cl
+shr r12, cl
+
+rol rax, 3
+sal bl, 4
+shr r12d, 5
+
+shld edx, esi, cl
+shld r12, rbp, cl
+shld rbp, r12, cl
+
 
 main ENDP
 

@@ -64,6 +64,10 @@ namespace NativeJIT
         Pop,
         Push,
         Ret,
+        Rol,
+        Sal,
+        Shld,
+        Shr,
         Sub,
     };
 
@@ -171,6 +175,9 @@ namespace NativeJIT
         void MovD(Register<4, true> dest, Register<4, false> src);
         void MovD(Register<8, true> dest, Register<8, false> src);
 
+        template <unsigned SIZE>
+        void Shld(Register<SIZE, false> dest, Register<SIZE, false> src);
+
         template <unsigned __int8 OPCODE>
         void SSE(Register<8, true> dest, Register<8, true> src);
 
@@ -207,8 +214,14 @@ namespace NativeJIT
                     Register<SIZE, false> dest,
                     T value);
 
-        //template <unsigned SIZE1, unsigned SIZE2>
-        //void EmitRex(Register<SIZE1, false> dest, Register<SIZE2, false> src);
+        template <unsigned SIZE>
+        void Group2(unsigned __int8 extensionOpCode,
+                    Register<SIZE, false> dest);
+
+        template <unsigned SIZE>
+        void Group2(unsigned __int8 extensionOpCode,
+                    unsigned __int8 shift,
+                    Register<SIZE, false> dest);
 
         template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
         void EmitRex(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
@@ -574,6 +587,23 @@ namespace NativeJIT
         EmitModRMOffset(src, dest, destOffset);
     }
 
+
+    // TODO: Consider coalescing with Group2. Pattern is very similar.
+    // TODO: Support for SHRD.
+    template <unsigned SIZE>
+    void X64CodeGenerator::Shld(Register<SIZE, false> dest, Register<SIZE, false> src)
+    {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+        EmitRex(src, dest);
+        Emit8(0x0f);
+        Emit8(0xa5);
+        EmitModRM(src, dest);
+    }
+
+
     //
     // SSE instructions
     //
@@ -767,6 +797,55 @@ namespace NativeJIT
                 throw 0;
             }
         }
+    }
+
+
+    //
+    // X64 group2 opcodes
+    //
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group2(unsigned __int8 extensionOpCode,
+                                  Register<SIZE, false> dest)
+    {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+        EmitRex(dest);
+        if (SIZE == 1)
+        {
+            Emit8(0xd2);
+        }
+        else
+        {
+            Emit8(0xd3);
+        }
+        EmitModRM(extensionOpCode, dest);
+    }
+
+
+    // Coalesce with previous by calling previous before emitting shift.
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group2(unsigned __int8 extensionOpCode,
+                                  unsigned __int8 shift,
+                                  Register<SIZE, false> dest)
+    {
+        if (SIZE == 2)
+        {
+            Emit8(0x66);                // Size override prefix.
+        }
+        EmitRex(dest);
+        if (SIZE == 1)
+        {
+            Emit8(0xc0);
+        }
+        else
+        {
+            Emit8(0xc1);
+        }
+        EmitModRM(extensionOpCode, dest);
+        Emit8(shift);
     }
 
 
@@ -1051,6 +1130,7 @@ namespace NativeJIT
     // Pop/Push
     //
 
+    // TODO: No longer templated by ISFLOAT because addition of Group2 added prototype with ISFLOAT false.
     template <>
     template <unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::Helper<OpCode::Pop>::Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest)
@@ -1066,6 +1146,18 @@ namespace NativeJIT
         code.Push(dest);
     }
 
+
+    //
+    // Shld
+    //
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Shld>::Emit(X64CodeGenerator& code,
+                                                      Register<SIZE, false> dest,
+                                                      Register<SIZE, false> src)
+    {
+        code.Shld(dest, src);
+    }
 
 #define DEFINE_GROUP1(name, baseOpCode, extensionOpCode) \
     template <>                                                                          \
@@ -1105,6 +1197,34 @@ namespace NativeJIT
     DEFINE_GROUP1(Cmp, 0x38, 7);
 
 #undef DEFINE_GROUP1
+
+
+#define DEFINE_GROUP2(name, extensionOpCode)                                             \
+    template <>                                                                          \
+    template <unsigned SIZE, bool ISFLOAT>                                               \
+    void X64CodeGenerator::Helper<OpCode::##name##>::Emit(X64CodeGenerator& code,        \
+                                                          Register<SIZE, ISFLOAT> dest)  \
+    {                                                                                    \
+        code.Group2(extensionOpCode, dest);                                              \
+    }                                                                                    \
+                                                                                         \
+                                                                                         \
+                                                                                         \
+                                                                                         \
+    template <>                                                                          \
+    template <unsigned SIZE, typename T>                                                 \
+    void X64CodeGenerator::Helper<OpCode::##name##>::Emit(X64CodeGenerator& code,        \
+                                                     Register<SIZE, false> dest,         \
+                                                     T value)                            \
+    {                                                                                    \
+        code.Group2(extensionOpCode, value, dest);                                       \
+    }                                                                                    
+
+    DEFINE_GROUP2(Rol, 0);
+    DEFINE_GROUP2(Sal, 4);
+    DEFINE_GROUP2(Shr, 5);
+
+#undef DEFINE_GROUP2
 
 
 #define DEFINE_SSE(name, opcode) \

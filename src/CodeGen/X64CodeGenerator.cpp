@@ -116,6 +116,10 @@ namespace NativeJIT
             "pop",
             "push",
             "ret",
+            "rol",
+            "sal",
+            "shld",
+            "shr",
             "sub",
         };
 
