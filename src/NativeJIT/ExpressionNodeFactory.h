@@ -8,10 +8,10 @@
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
 #include "Node.h"
+#include "PackedMinMaxNode.h"
 #include "ParameterNode.h"
 #include "ReturnNode.h"
-//#include "Temporary/Allocator.h"
-//#include "Temporary/NonCopyable.h"
+#include "Temporary/Allocator.h"
 
 
 namespace NativeJIT
@@ -86,6 +86,13 @@ namespace NativeJIT
                       Node<P2>& param2,
                       Node<P3>& param3,
                       Node<P4>& param4);
+
+        //
+        // Packed operators
+        //
+        // TODO: use traits to ensure PACKED is a Packed type.
+        template <typename PACKED>
+        Node<PACKED>& MinMax(Node<PACKED>& left, Node<PACKED>& right);
 
     private:
         template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, Node<R>& right);
@@ -256,6 +263,18 @@ namespace NativeJIT
         typedef CallNode<R, P1, P2, P3, P4> NodeType;
         return * new (m_allocator.Allocate(sizeof(NodeType)))
                      NodeType(*this, function, param1, param2, param3, param4);
+    }
+
+
+    //
+    // PackedMinMax
+    //
+    template <typename PACKED>
+    Node<PACKED>& ExpressionNodeFactory::MinMax(Node<PACKED>& left, Node<PACKED>& right)
+    {
+        typedef PackedMinMaxNode<PACKED> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, left, right);
     }
 
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CodeGenHelpers.h"
-#include "Node.h"
 #include "NativeJIT/X64CodeGenerator.h"     // OpCode type.
+#include "Node.h"
 
 
 namespace NativeJIT

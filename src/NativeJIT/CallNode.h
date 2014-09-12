@@ -252,6 +252,7 @@ namespace NativeJIT
     CallNodeBase<R, PARAMETERCOUNT>::CallNodeBase(ExpressionTree& tree)
         : Node(tree)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
     }
 
 
@@ -465,6 +466,8 @@ namespace NativeJIT
         : CallNodeBase(tree),
           m_f(function)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+
         m_function = &m_f;
         m_children[0] = &m_f;
     }
@@ -478,6 +481,9 @@ namespace NativeJIT
           m_f(function),
           m_p1(p1, 0)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+
         m_function = &m_f;
         m_children[0] = &m_f;
         m_children[1] = &m_p1;
@@ -494,6 +500,10 @@ namespace NativeJIT
           m_p1(p1, 0),
           m_p2(p2, 1)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+
         m_function = &m_f;
         m_children[0] = &m_f;
         m_children[1] = &m_p1;
@@ -513,6 +523,11 @@ namespace NativeJIT
           m_p2(p2, 1),
           m_p3(p3, 2)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
+
         m_function = &m_f;
         m_children[0] = &m_f;
         m_children[1] = &m_p1;
@@ -535,6 +550,12 @@ namespace NativeJIT
           m_p3(p3, 2),
           m_p4(p4, 3)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
+        static_assert(std::is_pod<P4>::value, "P4 must be a POD type.");
+
         m_function = &m_f;
         m_children[0] = &m_f;
         m_children[1] = &m_p1;

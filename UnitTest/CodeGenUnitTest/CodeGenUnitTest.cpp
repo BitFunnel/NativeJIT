@@ -339,13 +339,11 @@ namespace NativeJIT
             buffer.Emit<OpCode::IMul>(xmm5s, rsi, 0x1234);
             buffer.Emit<OpCode::Sub>(xmm12s, rdi, 0x12345678);
 
-            // shift
+            // Shift
             buffer.Emit<OpCode::Rol>(al);
             buffer.Emit<OpCode::Sal>(ebx);
             buffer.Emit<OpCode::Shr>(r12);
 
-            // TODO: Test other register sizes.
-            // TODO: Add verification.
             buffer.Emit<OpCode::Rol>(rax, static_cast<unsigned __int8>(3));
             buffer.Emit<OpCode::Sal>(bl, static_cast<unsigned __int8>(4));
             buffer.Emit<OpCode::Shr>(r12d, static_cast<unsigned __int8>(5));

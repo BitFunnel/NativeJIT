@@ -12,8 +12,6 @@
 
 namespace NativeJIT
 {
-    extern void Foo();
-
     //*************************************************************************
     //
     // This file contains temporary unit test used during development of
@@ -21,7 +19,7 @@ namespace NativeJIT
     // eventually be deleted.
     //
     //*************************************************************************
-    namespace TemporaryUnitTest2
+    namespace PackedUnitTest2
     {
         TestClass(FunctionTest)
         {

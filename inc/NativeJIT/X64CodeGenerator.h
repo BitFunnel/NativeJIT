@@ -1130,7 +1130,6 @@ namespace NativeJIT
     // Pop/Push
     //
 
-    // TODO: No longer templated by ISFLOAT because addition of Group2 added prototype with ISFLOAT false.
     template <>
     template <unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::Helper<OpCode::Pop>::Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest)

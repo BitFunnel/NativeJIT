@@ -66,6 +66,9 @@
     <ClInclude Include="CodeGenHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PackedMinMaxNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -93,6 +96,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CallNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PackedOperations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

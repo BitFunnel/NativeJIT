@@ -83,6 +83,7 @@
     <ClInclude Include="ImmediateNode.h" />
     <ClInclude Include="IndirectNode.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="PackedMinMaxNode.h" />
     <ClInclude Include="ParameterNode.h" />
     <ClInclude Include="ReturnNode.h" />
     <ClInclude Include="stdafx.h" />
@@ -97,6 +98,7 @@
     <ClCompile Include="ExpressionTree.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
+    <ClCompile Include="PackedOperations.cpp" />
     <ClCompile Include="ParameterNode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

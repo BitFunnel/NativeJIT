@@ -139,6 +139,12 @@ namespace NativeJIT
                                           FunctionBuffer& code)
         : ExpressionNodeFactory(allocator, code)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
+        static_assert(std::is_pod<P4>::value, "P4 must be a POD type.");
+
         m_p1 = &Parameter<P1>();
         m_p2 = &Parameter<P2>();
         m_p3 = &Parameter<P3>();
@@ -210,6 +216,11 @@ namespace NativeJIT
                                       FunctionBuffer& code)
         : ExpressionNodeFactory(allocator, code)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
+
         m_p1 = &Parameter<P1>();
         m_p2 = &Parameter<P2>();
         m_p3 = &Parameter<P3>();
@@ -273,6 +284,10 @@ namespace NativeJIT
                                   FunctionBuffer& code)
         : ExpressionNodeFactory(allocator, code)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+
         m_p1 = &Parameter<P1>();
         m_p2 = &Parameter<P2>();
     }
@@ -328,6 +343,9 @@ namespace NativeJIT
                               FunctionBuffer& code)
         : ExpressionNodeFactory(allocator, code)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+
         m_p1 = &Parameter<P1>();
     }
 
@@ -375,6 +393,7 @@ namespace NativeJIT
                           FunctionBuffer& code)
         : ExpressionNodeFactory(allocator, code)
     {
+        static_assert(std::is_pod<R>::value, "R must be a POD type.");
     }
 
 
