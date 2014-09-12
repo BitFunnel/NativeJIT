@@ -44,6 +44,9 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_fieldCount = 1 + REST::c_fieldCount;
+        static const unsigned c_bitCount = W + REST::c_bitCount;
+
+        // TODO: c_fieldSizes is a NativeJIT concept and should be moved out of this class.
         static const unsigned __int64 c_fieldSizes = (W << (REST::c_fieldCount * 8)) | REST::c_fieldSizes;
 
         static Packed Create(unsigned __int64 value)
@@ -90,6 +93,9 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_fieldCount = 1;
+        static const unsigned c_bitCount = W;
+
+        // TODO: c_fieldSizes is a NativeJIT concept and should be moved out of this class.
         static const unsigned __int64 c_fieldSizes = W;
 
         static Packed Create(unsigned __int64 value)
@@ -130,6 +136,9 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_fieldCount = 0;
+        static const unsigned c_bitCount = 0;
+
+        // TODO: c_fieldSizes is a NativeJIT concept and should be moved out of this class.
         static const unsigned __int64 c_fieldSizes = 0;
 
         template <unsigned X>

@@ -92,7 +92,10 @@ namespace NativeJIT
         //
         // TODO: use traits to ensure PACKED is a Packed type.
         template <typename PACKED>
-        Node<PACKED>& MinMax(Node<PACKED>& left, Node<PACKED>& right);
+        Node<PACKED>& PackedMax(Node<PACKED>& left, Node<PACKED>& right);
+
+        template <typename PACKED>
+        Node<PACKED>& PackedMin(Node<PACKED>& left, Node<PACKED>& right);
 
     private:
         template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, Node<R>& right);
@@ -270,9 +273,18 @@ namespace NativeJIT
     // PackedMinMax
     //
     template <typename PACKED>
-    Node<PACKED>& ExpressionNodeFactory::MinMax(Node<PACKED>& left, Node<PACKED>& right)
+    Node<PACKED>& ExpressionNodeFactory::PackedMax(Node<PACKED>& left, Node<PACKED>& right)
     {
-        typedef PackedMinMaxNode<PACKED> NodeType;
+        typedef PackedMinMaxNode<PACKED, true> NodeType;
+        return * new (m_allocator.Allocate(sizeof(NodeType)))
+                     NodeType(*this, left, right);
+    }
+
+
+    template <typename PACKED>
+    Node<PACKED>& ExpressionNodeFactory::PackedMin(Node<PACKED>& left, Node<PACKED>& right)
+    {
+        typedef PackedMinMaxNode<PACKED, false> NodeType;
         return * new (m_allocator.Allocate(sizeof(NodeType)))
                      NodeType(*this, left, right);
     }

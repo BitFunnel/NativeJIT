@@ -41,9 +41,6 @@
     <ClCompile Include="ConditionalUnitTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Temporary.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PackedUnitTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

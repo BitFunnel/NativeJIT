@@ -19,7 +19,7 @@ namespace NativeJIT
     // eventually be deleted.
     //
     //*************************************************************************
-    namespace PackedUnitTest2
+    namespace PackedUnitTest5
     {
         TestClass(FunctionTest)
         {
@@ -43,7 +43,7 @@ namespace NativeJIT
 
                     Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
 
-                    auto & a = expression.MinMax(expression.GetP1(), expression.GetP2());
+                    auto & a = expression.PackedMax(expression.GetP1(), expression.GetP2());
 
                     auto function = expression.Compile(a);
 
@@ -51,6 +51,32 @@ namespace NativeJIT
                     auto right = Packed<>::Push<5>(2).Push<4>(9).Push<3>(1);
 
                     auto expected = Packed<5>::Create(5).Push<4>(9).Push<3>(7);
+                    auto observed = function(left, right);
+
+                    TestAssert(observed.GetBits() == expected.GetBits());
+                }
+            }
+
+
+            TestCase(PackedMin)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    typedef Packed<3, Packed<4, Packed<5>>> PackedType;
+                    size_t x = sizeof(PackedType);
+                    x += 0;
+
+                    Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
+
+                    auto & a = expression.PackedMin(expression.GetP1(), expression.GetP2());
+
+                    auto function = expression.Compile(a);
+
+                    auto left = Packed<>::Push<5>(5).Push<4>(6).Push<3>(7);
+                    auto right = Packed<>::Push<5>(2).Push<4>(9).Push<3>(1);
+
+                    auto expected = Packed<5>::Create(2).Push<4>(6).Push<3>(1);
                     auto observed = function(left, right);
 
                     TestAssert(observed.GetBits() == expected.GetBits());
