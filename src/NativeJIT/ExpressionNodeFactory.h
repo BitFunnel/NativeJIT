@@ -7,6 +7,8 @@
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
+#include "ModelNode.h"                  // Rename to CastNode.h.
+#include "NativeJIT/Model.h"
 #include "Node.h"
 #include "PackedMinMaxNode.h"
 #include "ParameterNode.h"
@@ -37,6 +39,7 @@ namespace NativeJIT
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
         template <typename T> NodeBase& Return(Node<T>& value);
+        template <typename FROM, typename TO> Node<TO>& Cast(Node<FROM>& value);
 
 
         //
@@ -47,6 +50,12 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
 
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
+
+
+        //
+        // Model related.
+        //
+        template <typename PACKED> Node<float>& ApplyModel(Node<Model<PACKED>*>& model, Node<PACKED>& packed);
 
 
         //
@@ -151,6 +160,14 @@ namespace NativeJIT
     }
 
 
+    template <typename FROM, typename TO>
+    Node<TO>& ExpressionNodeFactory::Cast(Node<FROM>& value)
+    {
+        return * new (m_allocator.Allocate(sizeof(CastNode<FROM, TO>)))
+                     CastNode<FROM, TO>(*this, value);
+    }
+
+
     //
     // Binary arithmetic operators
     //
@@ -178,9 +195,49 @@ namespace NativeJIT
     template <typename T, typename INDEX>
     Node<T*>& ExpressionNodeFactory::Add(Node<T*>& array, Node<INDEX>& index)
     {
-        auto & size = Immediate<INDEX>(sizeof(T));
-        auto & offset = Mul(index, size);
-        return Binary<OpCode::Add>(array, offset);
+        // Need some sort of ShiftImmediate node. ExpressionNodeFactory::Shift(Node<T>, unsigned __int8 shift);
+        // This would be different than a binary shift operator node that has two node children.
+        //
+        //if (sizeof(T) == 8)
+        //{
+        //    // TODO: Implement.
+        //    throw 0;
+        //}
+        //else if (sizeof(T) == 4)
+        //{
+        //    auto & size = Immediate(static_cast<unsigned __int8>(2));
+        //    auto & offset = Shl(index, size);
+        //    return Binary<OpCode::Add>(array, offset);
+        //}
+        //else if (sizeof(T) == 2)
+        //{
+        //    // TODO: Implement.
+        //    throw 0;
+        //}
+        //else if (sizeof(T) == 1)
+        //{
+        //    // TODO: Implement.
+        //    throw 0;
+        //}
+        //else
+        {
+            auto & size = Immediate<INDEX>(sizeof(T));
+            auto & offset = Mul(index, size);
+            return Binary<OpCode::Add>(array, offset);
+        }
+    }
+
+
+    //
+    // Model related
+    //
+    template <typename PACKED>
+    Node<float>& ExpressionNodeFactory::ApplyModel(Node<Model<PACKED>*>& model, Node<PACKED>& packed)
+    {
+        auto & array = reinterpret_cast<Node<float*>&>(FieldPointer(model, &Model<PACKED>::m_data));
+//        auto & index = Cast<PACKED, unsigned __int64>(packed);
+        auto & index = reinterpret_cast<Node<unsigned __int64>&>(packed);       // TODO: Should this be unsigned __int64?
+        return Deref(Add(array, index));
     }
 
 

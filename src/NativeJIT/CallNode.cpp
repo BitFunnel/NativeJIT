@@ -12,7 +12,8 @@ namespace NativeJIT
     //
     //*************************************************************************
     SaveRestoreVolatilesHelper::SaveRestoreVolatilesHelper()
-        : m_rxxParameters(0)
+        : m_rxxParameters(0),
+          m_xmmParameters(0)
     {
     }
 
@@ -32,6 +33,8 @@ namespace NativeJIT
             ++r;
             rxxVolatiles >>= 1;
         }
+
+        // TODO: xmm registers.
     }
 
 
@@ -51,5 +54,7 @@ namespace NativeJIT
             --r;
             rxxVolatiles <<= 1;
         }
+
+        // TODO: xmm registers.
     }
 }

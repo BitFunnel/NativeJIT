@@ -388,7 +388,6 @@ namespace NativeJIT
             // Important to preserve all bits of register. Reason is that we don't know the
             // size required by the previous user.
             GetCodeGenerator().Emit<OpCode::Mov>(Storage<T>::FullRegister(dest), Storage<T>::FullRegister(src));
-//            GetCodeGenerator().Emit<OpCode::Mov>(Register<8, false>(dest), Register<8, false>(src));
 
             freeList.MoveData(dest, src);
         }

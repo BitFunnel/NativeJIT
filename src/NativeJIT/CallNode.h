@@ -26,9 +26,13 @@ namespace NativeJIT
         template <unsigned SIZE>
         void RecordParameterRegister(Register<SIZE, false> r);
 
+        template <unsigned SIZE>
+        void RecordParameterRegister(Register<SIZE, true> r);
+
     private:
         // TODO: m_xmmParameters
         unsigned m_rxxParameters;
+        unsigned m_xmmParameters;
 
         // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
         static const unsigned c_rxxVolatiles = 0xf07; //1111 0000 0111
@@ -240,6 +244,13 @@ namespace NativeJIT
     void SaveRestoreVolatilesHelper::RecordParameterRegister(Register<SIZE, false> r)
     {
         m_rxxParameters |= (1ul << r.GetId());
+    }
+
+
+    template <unsigned SIZE>
+    void SaveRestoreVolatilesHelper::RecordParameterRegister(Register<SIZE, true> r)
+    {
+        m_xmmParameters |= (1ul << r.GetId());
     }
 
 

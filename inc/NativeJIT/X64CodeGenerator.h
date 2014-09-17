@@ -763,7 +763,7 @@ namespace NativeJIT
             // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
             EmitRex(dest);
 
-            if (valueSize == 1)
+            if (valueSize <= 1)
             {
                 if (SIZE == 1)
                 {
@@ -793,6 +793,7 @@ namespace NativeJIT
             else
             {
                 // Can't do 8-byte immdediate values.
+                // More accurately, can't do cases where valueSize is 3,5,6, or 7.
                 // TODO: Template should be disabled for this size to avoid runtime error.
                 throw 0;
             }

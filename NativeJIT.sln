@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{
 		inc\NativeJIT\ExecutionBuffer.h = inc\NativeJIT\ExecutionBuffer.h
 		inc\NativeJIT\FunctionBuffer.h = inc\NativeJIT\FunctionBuffer.h
 		inc\NativeJIT\JumpTable.h = inc\NativeJIT\JumpTable.h
+		inc\NativeJIT\Model.h = inc\NativeJIT\Model.h
 		inc\NativeJIT\Packed.h = inc\NativeJIT\Packed.h
 		inc\NativeJIT\Register.h = inc\NativeJIT\Register.h
 		inc\NativeJIT\ValuePredicates.h = inc\NativeJIT\ValuePredicates.h
