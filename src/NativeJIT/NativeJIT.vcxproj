@@ -82,7 +82,6 @@
     <ClInclude Include="FieldPointerNode.h" />
     <ClInclude Include="ImmediateNode.h" />
     <ClInclude Include="IndirectNode.h" />
-    <ClInclude Include="ModelNode.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PackedMinMaxNode.h" />
     <ClInclude Include="ParameterNode.h" />

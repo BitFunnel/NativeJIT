@@ -20,7 +20,7 @@ namespace NativeJIT
     // eventually be deleted.
     //
     //*************************************************************************
-    namespace PackedUnitTest5
+    namespace PackedUnitTest
     {
         TestClass(FunctionTest)
         {

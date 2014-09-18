@@ -7,7 +7,6 @@
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
-#include "ModelNode.h"                  // Rename to CastNode.h.
 #include "NativeJIT/Model.h"
 #include "Node.h"
 #include "PackedMinMaxNode.h"
@@ -39,7 +38,6 @@ namespace NativeJIT
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
         template <typename T> NodeBase& Return(Node<T>& value);
-        template <typename FROM, typename TO> Node<TO>& Cast(Node<FROM>& value);
 
 
         //
@@ -48,6 +46,10 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
+
+        // TODO: Implement following version of Add for arrays.
+        //template <typename T, size_t SIZE, typename INDEX>
+        //Node<T*> Add(Node<*(T[SIZE])>& array, Node<INDEX>& index);
 
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 
@@ -160,14 +162,6 @@ namespace NativeJIT
     }
 
 
-    template <typename FROM, typename TO>
-    Node<TO>& ExpressionNodeFactory::Cast(Node<FROM>& value)
-    {
-        return * new (m_allocator.Allocate(sizeof(CastNode<FROM, TO>)))
-                     CastNode<FROM, TO>(*this, value);
-    }
-
-
     //
     // Binary arithmetic operators
     //
@@ -195,6 +189,9 @@ namespace NativeJIT
     template <typename T, typename INDEX>
     Node<T*>& ExpressionNodeFactory::Add(Node<T*>& array, Node<INDEX>& index)
     {
+        // TODO: Implement the following optimization for using Sal instead of Mul for sizeof(T) values
+        // that are powers of 2.
+        //
         // Need some sort of ShiftImmediate node. ExpressionNodeFactory::Shift(Node<T>, unsigned __int8 shift);
         // This would be different than a binary shift operator node that has two node children.
         //
@@ -234,8 +231,8 @@ namespace NativeJIT
     template <typename PACKED>
     Node<float>& ExpressionNodeFactory::ApplyModel(Node<Model<PACKED>*>& model, Node<PACKED>& packed)
     {
+        // TODO: Replace below code once new form of array + index add is implemented.
         auto & array = reinterpret_cast<Node<float*>&>(FieldPointer(model, &Model<PACKED>::m_data));
-//        auto & index = Cast<PACKED, unsigned __int64>(packed);
         auto & index = reinterpret_cast<Node<unsigned __int64>&>(packed);       // TODO: Should this be unsigned __int64?
         return Deref(Add(array, index));
     }

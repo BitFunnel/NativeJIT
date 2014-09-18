@@ -36,6 +36,7 @@ namespace NativeJIT
 
         // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
         static const unsigned c_rxxVolatiles = 0xf07; //1111 0000 0111
+        // TODO: c_xmmVolatiles
     };
 
 
@@ -132,12 +133,6 @@ namespace NativeJIT
         static const unsigned c_childCount = PARAMETERCOUNT + 1;
         Child* m_children[c_childCount];
         FunctionChildBase* m_function;
-
-        // TODO: m_xmmParameters
-        unsigned m_rxxParameters;
-
-        // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
-        static const unsigned c_rxxVolatiles = 0xf07; //1111 0000 0111
     };
 
 
