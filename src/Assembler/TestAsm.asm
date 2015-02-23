@@ -505,6 +505,12 @@ rol rax, 3
 sal bl, 4
 shr r12d, 5
 
+shld ax, bx, 11
+shld edx, esi, 24
+shld r12, rbp, 43
+shld rbp, r12, 43
+
+shld ax, bx, cl
 shld edx, esi, cl
 shld r12, rbp, cl
 shld rbp, r12, cl
@@ -512,4 +518,3 @@ shld rbp, r12, cl
 main ENDP
 
 END
-

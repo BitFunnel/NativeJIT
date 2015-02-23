@@ -460,6 +460,12 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Sal>(bl, static_cast<unsigned __int8>(4));
             buffer.EmitImmediate<OpCode::Shr>(r12d, static_cast<unsigned __int8>(5));
 
+            buffer.EmitImmediate<OpCode::Shld>(ax, bx, static_cast<unsigned __int8>(11));
+            buffer.EmitImmediate<OpCode::Shld>(edx, esi, static_cast<unsigned __int8>(24));
+            buffer.EmitImmediate<OpCode::Shld>(r12, rbp, static_cast<unsigned __int8>(43));
+            buffer.EmitImmediate<OpCode::Shld>(rbp, r12, static_cast<unsigned __int8>(43));
+
+            buffer.Emit<OpCode::Shld>(ax, bx);
             buffer.Emit<OpCode::Shld>(edx, esi);
             buffer.Emit<OpCode::Shld>(r12, rbp);
             buffer.Emit<OpCode::Shld>(rbp, r12);
@@ -1015,10 +1021,18 @@ namespace NativeJIT
                 " 0000048A  C0 E3 04             sal bl, 4                                                          \n"
                 " 0000048D  41/ C1 EC 05         shr r12d, 5                                                        \n"
                 "                                                                                                   \n"
-                " 00000491  0F A5 F2             shld edx, esi, cl                                                  \n"
-                " 00000494  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
-                " 00000498  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n"
-                "";
+                " 0000067B  66| 0F A4 D8         shld ax, bx, 11                                                    \n"
+                "           0B                                                                                      \n"
+                " 00000680  0F A4 F2 18          shld edx, esi, 24                                                  \n"
+                " 00000684  49/ 0F A4 EC         shld r12, rbp, 43                                                  \n"
+                "           2B                                                                                      \n"
+                " 00000689  4C/ 0F A4 E5         shld rbp, r12, 43                                                  \n"
+                "           2B                                                                                      \n"
+                "                                                                                                   \n"
+                " 0000068E  66| 0F A5 D8         shld ax, bx, cl                                                    \n"
+                " 00000692  0F A5 F2             shld edx, esi, cl                                                  \n"
+                " 00000695  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
+                " 00000699  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n";
 
             ML64Verifier v(ml64Output, start);
         }

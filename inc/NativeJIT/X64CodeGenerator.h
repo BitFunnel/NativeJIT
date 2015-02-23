@@ -160,6 +160,10 @@ namespace NativeJIT
         template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
         void EmitImmediate(Register<SIZE, ISFLOAT> dest, T value);
 
+        // Three operands: two register operands of the same size and type and
+        // an immediate (f. ex. shld eax, ebx, 4).
+        template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
+        void EmitImmediate(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src, T value);
 
     private:
         void Call(Register<8, false> r);
@@ -203,6 +207,9 @@ namespace NativeJIT
 
         template <unsigned SIZE1, unsigned SIZE2>
         void MovZX(Register<SIZE1, false> dest, Register<8, false> src, __int32 srcOffset);
+
+        template <unsigned SIZE>
+        void Shld(Register<SIZE, false> dest, Register<SIZE, false> src, unsigned __int8 bitCount);
 
         template <unsigned SIZE>
         void Shld(Register<SIZE, false> dest, Register<SIZE, false> src);
@@ -407,6 +414,9 @@ namespace NativeJIT
 
                 template <unsigned SIZE, typename T>
                 static void EmitImmediate(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, T value);
+
+                template <unsigned SIZE, typename T>
+                static void EmitImmediate(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src, T value);
             };
 
 
@@ -472,6 +482,8 @@ namespace NativeJIT
             template <unsigned SIZE, bool ISFLOAT, typename T>
             void PrintImmediate(OpCode op, Register<SIZE, ISFLOAT> dest, T value);
 
+            template <unsigned SIZE, bool ISFLOAT, typename T>
+            void PrintImmediate(OpCode op, Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src, T value);
 
         private:
             X64CodeGenerator& m_code;
@@ -610,6 +622,32 @@ namespace NativeJIT
     }
 
 
+    template <unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::CodePrinter::PrintImmediate(OpCode op,
+                                                       Register<SIZE, ISFLOAT> dest,
+                                                       Register<SIZE, ISFLOAT> src,
+                                                       T value)
+    {
+        static_assert(!std::is_floating_point<T>::value,
+                      "Floating point values cannot be used as immediates.");
+
+        // Cast UInt8 to UInt64 to prevent it from being printed as char.
+        typedef std::conditional<std::is_same<T, unsigned __int8>::value,
+                                 unsigned __int64,
+                                 T>::type ValueType;
+
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op)
+                   << ' ' << dest.GetName()
+                   << ", " << src.GetName()
+                   << ", " << std::hex << static_cast<ValueType>(value) << 'h'
+                   << std::endl;
+        }
+    }
+
 
     //*************************************************************************
     //
@@ -725,6 +763,17 @@ namespace NativeJIT
         Helper<OP>::ArgTypes1<ISFLOAT>::EmitImmediate<SIZE, T>(*this, dest, value);
 
         printer.PrintImmediate(OP, dest, value);
+    }
+
+
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::EmitImmediate(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src, T value)
+    {
+        CodePrinter printer(*this);
+
+        Helper<OP>::ArgTypes1<ISFLOAT>::EmitImmediate<SIZE, T>(*this, dest, src, value);
+
+        printer.PrintImmediate(OP, dest, src, value);
     }
 
 
@@ -920,6 +969,20 @@ namespace NativeJIT
         Emit8(0x0f);
         Emit8(twoByteSource ? 0xb7 : 0xb6);
         EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Shld(Register<SIZE, false> dest, Register<SIZE, false> src, unsigned __int8 bitCount)
+    {
+        // Note: operand encoding is MRC, so the order of arguments for the
+        // Emit*() methods is reversed.
+        EmitOpSizeOverrideDirect(src, dest);
+        EmitRexDirect(src, dest);
+        Emit8(0x0f);
+        Emit8(0xa4);
+        EmitModRM(src, dest);
+        Emit8(bitCount);
     }
 
 
@@ -1659,6 +1722,20 @@ namespace NativeJIT
     //
     // Shld
     //
+
+    template <>
+    template <>
+    template <unsigned SIZE, typename T>
+    void X64CodeGenerator::Helper<OpCode::Shld>::ArgTypes1<false>::EmitImmediate(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> src,
+        T bitCount)
+    {
+        code.Shld(dest, src, bitCount);
+    }
+
+
     template <>
     template <>
     template <unsigned SIZE>
