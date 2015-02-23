@@ -156,61 +156,43 @@ namespace NativeJIT
 
 
 /*************************************I*************************
-imul r8, 14h			// r8 = docIndex * sizeof(DocInfo)
-mov r12, rcx
-mov r12, [r12 + 8h]		// r12 = processResources->m_docTable
-mov r12, [r12]			// r12 = docTable->m_entries
-add r12, r8			// r12 = &(docTable->m_entries[docIndex])
+imul r8, 14h                    // r8 = docIndex * sizeof(DocInfo)
+mov r12, rcx                    // r12 = processResources
+mov r12, [r12 + 8h]             // r12 = processResources->docTable
+mov r12, [r12]                  // r12 = &processResources->docTable->m_entries[0]
+add r12, r8                     // r12 = &processResources->docTable->m_entries[docIndex]
 
-mov r8, rcx
-mov r8, [r8 + 10h]		// r8 = callback
+mov r8, rcx                     // r8 = processResources (save for later)
+mov r11, r12                    // r11 = docInfo (save for later)
 
-mov r11, r12			// Why is r12 copied here to r11 instead of
-				// being used directly?
+mov r10, 000007FAA29A30B2h      // r10 = &Lookup
 
-mov r10, rcx			// Save process resources - why?
-				// Think this is just a register spill
-				// during parameter staging. Process resources
-				// is used later to access the model set.
+mov r9, rcx                     // r9 = processResources (save for later)
+mov rcx, [r12]                  // rcx = docInfo.m_termScoreTable
 
-mov rcx, [r11 + Ch]		// rcx = docTable[docIndex].m_docId
-				// This is staging the first parameter
-				// to the second call. The problem is that
-				// this parameter gets spilled while staging
-				// the first parameter to the first call
-				// and then it never gets restored.
-				// Need some notion of ensuring the right register. ****************
+mov r12, rdx                    // r12 = shard (save for later)
+mov rdx, 4D2h                   // rdx = termHash1
 
-
-mov r11, 000007FEC88E3C1Ah
-mov r9, rcx			// Spill rcx so that we can
-mov rcx, [r12]			//   stage rcx = docTable[docIndex].m_termScoreTable
-
-mov r12, rdx			// Spill rdx while holds shard parameter
-				// (even though this parameter is never referenced).
-
-mov rdx, 4D2h			// stage rdx = termHash1
 push r8
 push r9
-push r10
-call r11			// rax = Lookup(docTable[docIndex].m_termScoreTable, termHash1)
-pop r10
+push r11
+call r10                        // rax = Lookup(docInfo.m_termScoreTable, termHash1)
+pop r11
 pop r9
 pop r8
 
+imul rax, 4h                    // rax *= sizeof(float) for index into model float array
+mov r9, [r9]                    // r9 = processResources->m_models
+mov r9, [r9]                    // r9 = processResources->m_models->m_termModel
+add r9, rax                     // r9 = &processResources->m_models->m_termModel[valueIndex]
 
+mov r8, [r8 + 10h]              // r8 = processResources->m_callback
+mov rcx, [r11 + Ch]             // rcx = docInfo.m_docId
 
-imul rax, 4h			// rax *= sizeof(float) for index into model
-mov r10, [r10]			// r10 = processResources->m_models
-mov r10, [r10]			// r10 = m_models->m_termModel
-add r10, rax			// r10 = m_models->m_termModel[rax]
+mov xmm1s, [r9]                 // xmm1s = *modelValuePointer
 
-mov xmm1s, [r10]		// xmm1s = floating point value from model
-				// This needs to be staged in xmm2s. ******************************
+call r8                         // Callback(docId, modelValue)
 
-push r9
-call r8				// rax = Callback(docId, termScore1)
-pop r9
 *****************************/
 
         private:

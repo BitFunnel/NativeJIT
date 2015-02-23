@@ -57,9 +57,26 @@ namespace NativeJIT
         class Child
         {
         public:
+            // Returns the number of registers needed to evaluate this child for
+            // the Sethi-Ullman algorithm.
             virtual unsigned LabelSubtree(bool isLeftChild) = 0;
+
+            // Generates the code to evaluate the expression inside the child.
+            virtual void Evaluate(ExpressionTree& tree) = 0;
+
+            // Emits the code to place the child's value into the appropriate
+            // register or stack location depending on the type and position
+            // of the child.
+            // The staging must not modify any other registers reserved for the
+            // function call by the calling convention, so the child must already
+            // be evaluated before it can be staged.
             virtual void EmitStaging(ExpressionTree& tree, SaveRestoreVolatilesHelper& volatiles) = 0;
+
+            // Releases any registers used during the evaluation of the child
+            // expression in Evaluate().
             virtual void Release() = 0;
+
+            // Prints the contents of the child to standard output for debugging.
             virtual void Print() = 0;
         };
 
@@ -93,6 +110,7 @@ namespace NativeJIT
             //
             // Overrides of Child methods.
             //
+            virtual void Evaluate(ExpressionTree& tree) override;
             virtual void EmitStaging(ExpressionTree& tree,
                                      SaveRestoreVolatilesHelper& volatiles) override;
             virtual void Print() override;
@@ -118,6 +136,7 @@ namespace NativeJIT
             //
             // Overrides of Child methods.
             //
+            virtual void Evaluate(ExpressionTree& tree) override;
             virtual void EmitStaging(ExpressionTree& tree,
                                      SaveRestoreVolatilesHelper& volatiles) override;
 
@@ -265,8 +284,14 @@ namespace NativeJIT
     template <typename R, unsigned PARAMETERCOUNT>
     ExpressionTree::Storage<R> CallNodeBase<R, PARAMETERCOUNT>::CodeGenValue(ExpressionTree& tree)
     {
-        // Evaluate the function pointer and stage each of the parameters in
-        // the correct register.
+        // Evaluate the function pointer and each parameter.
+        for (unsigned i = 0 ; i < c_childCount; ++i)
+        {
+            m_children[i]->Evaluate(tree);
+        }
+
+        // Stage each of the parameters in the correct register. At this point,
+        // there are no evaluations to compete for the target parameter registers.
         for (unsigned i = 0 ; i < c_childCount; ++i)
         {
             // TODO: What if there are not enough registers available for EmitStaging()?
@@ -391,10 +416,17 @@ namespace NativeJIT
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename F>
+    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::Evaluate(ExpressionTree& tree)
+    {
+        m_storage = m_expression.CodeGen(tree);
+    }
+
+
+    template <typename R, unsigned PARAMETERCOUNT>
+    template <typename F>
     void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::EmitStaging(ExpressionTree& tree,
                                                                         SaveRestoreVolatilesHelper& volatiles)
     {
-        m_storage = m_expression.CodeGen(tree);
         if (m_storage.GetStorageClass() != StorageClass::Direct)
         {
             m_storage.ConvertToValue(tree, false);
@@ -436,11 +468,17 @@ namespace NativeJIT
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename T>
+    void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::Evaluate(ExpressionTree& tree)
+    {
+        m_storage = m_expression.CodeGen(tree);
+    }
+
+
+    template <typename R, unsigned PARAMETERCOUNT>
+    template <typename T>
     void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::EmitStaging(ExpressionTree& tree,
                                                                          SaveRestoreVolatilesHelper& volatiles)
     {
-        m_storage = m_expression.CodeGen(tree);
-
         if (m_storage.GetStorageClass() != StorageClass::Direct || m_storage.GetDirectRegister().GetId() != m_destination.GetId())
         {
             // Need to move the expression into the correct register.
