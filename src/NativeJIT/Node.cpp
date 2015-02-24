@@ -55,4 +55,17 @@ namespace NativeJIT
     {
         return false;
     }
+
+
+    unsigned NodeBase::ComputeRegisterCount(unsigned leftTreeCount, unsigned rightTreeCount)
+    {
+        if (leftTreeCount != rightTreeCount)
+        {
+            return std::max(leftTreeCount, rightTreeCount);
+        }
+        else
+        {
+            return leftTreeCount + 1;
+        }
+    }
 }

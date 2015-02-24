@@ -22,7 +22,7 @@ namespace NativeJIT
         // TODO: Policy decision. Do we require members be public or do we
         // use the friend keyword?.
 
-        static const unsigned c_size = 1 << PACKED::c_bitCount;
+        static const unsigned c_size = 1 << PACKED::c_totalBitCount;
         float m_data[c_size];
     };
 

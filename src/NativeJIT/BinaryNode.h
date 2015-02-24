@@ -19,8 +19,6 @@ namespace NativeJIT
         virtual void Print() const override;
 
     private:
-        static unsigned ComputeRegisterCount(unsigned leftCount, unsigned rightCount);
-
         Node<L>& m_left;
         Node<R>& m_right;
     };
@@ -123,23 +121,5 @@ namespace NativeJIT
         std::cout << ", right = " << m_right.GetId();
         std::cout << ", ";
         PrintRegisterAndCacheInfo();
-    }
-
-
-    template <OpCode OP, typename L, typename R>
-    unsigned BinaryNode<OP, L, R>::ComputeRegisterCount(unsigned left, unsigned right)
-    {
-        if (left > right)
-        {
-            return left;
-        }
-        else if (right > left)
-        {
-            return right;
-        }
-        else
-        {
-            return left + 1;
-        }
     }
 }

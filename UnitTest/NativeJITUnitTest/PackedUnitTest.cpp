@@ -62,58 +62,51 @@ namespace NativeJIT
             {
                 AutoResetAllocator reset(m_allocator);
 
-                {
-                    typedef Packed<3, Packed<4, Packed<5>>> PackedType;
-                    size_t x = sizeof(PackedType);
-                    x += 0;
+                PackedType packed1 = MakePacked((1 << 3) - 1, 1, (1 << 5) - 1);
+                PackedType packed2 = MakePacked(1, (1 << 4) - 1, 1);
+                PackedType expected = MakePacked((1 << 3) - 1, (1 << 4) - 1, (1 << 5) - 1);
 
-                    Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
+                Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
 
-                    auto & a = expression.PackedMax(expression.GetP1(), expression.GetP2());
+                auto & a = expression.PackedMax(expression.GetP1(), expression.GetP2());;
+                auto function = expression.Compile(a);
 
-                    auto function = expression.Compile(a);
+                auto observed = function(packed1, packed2);
 
-                    auto left = Packed<>::Push<5>(5).Push<4>(6).Push<3>(7);
-                    auto right = Packed<>::Push<5>(2).Push<4>(9).Push<3>(1);
-
-                    auto expected = Packed<5>::Create(5).Push<4>(9).Push<3>(7);
-                    auto observed = function(left, right);
-
-                    TestAssert(observed.GetBits() == expected.GetBits());
-                }
+                TestEqual(expected.m_fields, observed.m_fields);
             }
 
 
             TestCase(PackedMin)
             {
-                AutoResetAllocator reset(m_allocator);
+                PackedType packed1 = MakePacked((1 << 3) - 1, 1, (1 << 5) - 1);
+                PackedType packed2 = MakePacked(1, (1 << 4) - 1, 1);
+                PackedType expected = MakePacked(1, 1, 1);
 
-                {
-                    typedef Packed<3, Packed<4, Packed<5>>> PackedType;
-                    size_t x = sizeof(PackedType);
-                    x += 0;
+                Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
 
-                    Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
+                auto & a = expression.PackedMin(expression.GetP1(), expression.GetP2());;
+                auto function = expression.Compile(a);
 
-                    auto & a = expression.PackedMin(expression.GetP1(), expression.GetP2());
+                auto observed = function(packed1, packed2);
 
-                    auto function = expression.Compile(a);
-
-                    auto left = Packed<>::Push<5>(5).Push<4>(6).Push<3>(7);
-                    auto right = Packed<>::Push<5>(2).Push<4>(9).Push<3>(1);
-
-                    auto expected = Packed<5>::Create(2).Push<4>(6).Push<3>(1);
-                    auto observed = function(left, right);
-
-                    TestAssert(observed.GetBits() == expected.GetBits());
-                }
+                TestEqual(expected.m_fields, observed.m_fields);
             }
 
 
         private:
+            typedef Packed<3, Packed<4, Packed<5>>> PackedType;
+
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;
             std::unique_ptr<FunctionBuffer> m_code;
+
+            PackedType MakePacked(unsigned __int8 threeBitValue,
+                                  unsigned __int8 fourBitValue,
+                                  unsigned __int8 fiveBitValue)
+            {
+                return Packed<>::Push<5>(fiveBitValue).Push<4>(fourBitValue).Push<3>(threeBitValue);
+            }
         };
     }
 }

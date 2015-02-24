@@ -111,8 +111,6 @@ namespace NativeJIT
         virtual void CodeGenFlags(ExpressionTree& tree) override;
 
     private:
-        static unsigned ComputeRegisterCount(unsigned left, unsigned right);
-
         Node<T>& m_left;
         Node<T>& m_right;
     };
@@ -427,24 +425,6 @@ namespace NativeJIT
                 // TODO: This conversion needs to deal with Group1(reg, imm) working with 64 bit values. Today it does 8 and 32.
                 CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
             }
-        }
-    }
-
-
-    template <typename T, JccType JCC>
-    unsigned RelationalOperatorNode<T, JCC>::ComputeRegisterCount(unsigned left, unsigned right)
-    {
-        if (left > right)
-        {
-            return left;
-        }
-        else if (right > left)
-        {
-            return right;
-        }
-        else
-        {
-            return left + 1;
         }
     }
 }

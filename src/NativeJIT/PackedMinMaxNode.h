@@ -8,7 +8,6 @@
 
 namespace NativeJIT
 {
-    // TODO: Implement distinct Min and Max operations. Currently class only does Max.
     // TODO: This class and Packed should probably move from NativeJIT to BitFunnel.Library.
 
     template <typename PACKED, bool ISMAX>
@@ -28,6 +27,28 @@ namespace NativeJIT
         Node<PACKED>& m_left;
         Node<PACKED>& m_right;
     };
+
+
+    namespace PackedMinMaxHelper
+    {
+        // A helper class to emit the code to implement min/max operation
+        // for the specified PACKED. It does its work by processing the outer
+        // portion of the PACKED and recursively passing the rest of it to
+        // the matching MinMaxEmitter.
+        template <bool ISMAX, typename REGTYPE, typename PACKED>
+        struct MinMaxEmitter
+        {
+            static void Emit(FunctionBuffer& code, REGTYPE left, REGTYPE right);
+        };
+
+
+        // Specialization for the void PACKED, i.e. the exit from recursion.
+        template <bool ISMAX, typename REGTYPE>
+        struct MinMaxEmitter<ISMAX, REGTYPE, void>
+        {
+            static void Emit(FunctionBuffer& code, REGTYPE left, REGTYPE right);
+        };
+    }
 
 
     //*************************************************************************
@@ -55,45 +76,72 @@ namespace NativeJIT
     {
         auto & code = tree.GetCodeGenerator();
 
-        // TODO: BUGBUG: If the following two lines of code that allocate
-        // RCX and load it are moved to just before topOfLoop, the code
-        // generated becomes incorrect because existing register values
-        // are bumped. Need to investigate why this happens. There may be a
-        // bug in the register allocator. The reason is that l and r are
-        // initialized by calls to GetDirectRegister() before RCX is dumped.
+        ExpressionTree::Storage<PACKED> sLeft;
+        ExpressionTree::Storage<PACKED> sRight;
 
-        // The bytes is RCX will how the number of bits in each field. The lowest
-        // order byte has the width of the leftmost field. RCX is used because the
-        // shift operations use CL as a parameter. RCX is shifted right by 8 bits
-        // each iteration so that CL has the width of the current field.
-        auto registerRCX = tree.Direct<unsigned __int64>(rcx);
-        code.EmitImmediate<OpCode::Mov>(rcx, PACKED::c_fieldSizes);
+        // Evaluate both input values in the order which uses the least number of
+        // registers.
+        if (m_left.GetRegisterCount() >= m_right.GetRegisterCount())
+        {
+            sLeft = m_left.CodeGen(tree);
+            sRight = m_right.CodeGen(tree);
+        }
+        else
+        {
+            sRight = m_right.CodeGen(tree);
+            sLeft = m_left.CodeGen(tree);
+        }
 
-        // Convert the left parameter into a value. We will be building the
-        // result in this register.
-        auto sLeft = m_left.CodeGen(tree);
+        // Convert the left and right parameters into direct registers. We will
+        // be building the result in the left register and destroy the right
+        // register in the process.
         sLeft.ConvertToValue(tree, true);
-        auto l = sLeft.GetDirectRegister();
-
-        // Convert the right parameter into a value. We will destroy this
-        // value as we construct the result in the left register.
-        auto sRight = m_right.CodeGen(tree);
         sRight.ConvertToValue(tree, true);
+
+        // TODO: This relies on the fact that register from the first line will
+        // not get bumped by the call in the second line. The framework must be
+        // able to provide a way to guarantee that f. ex. by using a shared
+        // pointer-like concept for locked registers.
+        auto l = sLeft.GetDirectRegister();
         auto r = sRight.GetDirectRegister();
 
-        // Shift bits of each argument all the way to the left.
-        code.EmitImmediate<OpCode::Sal>(l, static_cast<unsigned __int8>(64 - PACKED::c_bitCount));
-        code.EmitImmediate<OpCode::Sal>(r, static_cast<unsigned __int8>(64 - PACKED::c_bitCount));
+        // The algorithm works by comparing the left and right register field
+        // by field. In each step, the left register will contain the result
+        // for the already processed fields. Bits in both registers are rotated
+        // after each step so that the fields that are currently being compared
+        // are in the leftmost portion of the registers. Once the whole process
+        // is completed, the registers will have been rotated the full circle
+        // and the left register will contain the final result of the operation.
 
-        Label topOfLoop = code.AllocateLabel();
+        // Process the unused portion of the PACKED by clearing the unused bits.
+        code.EmitImmediate<OpCode::Sal>(l, static_cast<unsigned __int8>(64 - PACKED::c_totalBitCount));
+        code.EmitImmediate<OpCode::Sal>(r, static_cast<unsigned __int8>(64 - PACKED::c_totalBitCount));
+
+        // Start the recursion.
+        typedef decltype(l) RegisterType;
+        PackedMinMaxHelper::MinMaxEmitter<ISMAX, RegisterType, PACKED>::Emit(code, l, r);
+
+        return sLeft;
+    }
+
+
+    template <bool ISMAX, typename REGTYPE, typename PACKED>
+    void PackedMinMaxHelper::MinMaxEmitter<ISMAX, REGTYPE, PACKED>::Emit(
+        FunctionBuffer& code,
+        typename REGTYPE left,
+        typename REGTYPE right)
+    {
+        // The order of bits in Packed<A, Packed<B>> is actually BA, so it's
+        // necessary to first process the remainder of the PACKED.
+        MinMaxEmitter<ISMAX, REGTYPE, PACKED::Rest>::Emit(code, left, right);
+
         Label keepLeftDigit = code.AllocateLabel();
         Label bottomOfLoop = code.AllocateLabel();
 
-        // Loop over each field.
-        code.PlaceLabel(topOfLoop);
+        // Comparing left to right effectively compares the leftmost fields of
+        // the two values.
+        code.Emit<OpCode::Cmp>(left, right);
 
-        // Comparing l to r effectively compares the leftmost fields of the two values.
-        code.Emit<OpCode::Cmp>(l, r);
         if (ISMAX)
         {
             code.EmitConditionalJump<JccType::JAE>(keepLeftDigit);
@@ -106,38 +154,54 @@ namespace NativeJIT
         // Case: Want the keep the digit from the right parameter.
         //       Shift the high order bits from the right parameter into the low
         //       order bits of the left parameter.
-        code.Emit<OpCode::Shld>(l, r);
+        code.EmitImmediate<OpCode::Shld>(left, right, static_cast<unsigned __int8>(PACKED::c_localBitCount));
         code.Jmp(bottomOfLoop);
 
         // Case: Want to keep the digit from left parameter.
         //       Just rotate it around to the low order bits.
         code.PlaceLabel(keepLeftDigit);
-        code.Emit<OpCode::Rol>(l);
+        code.EmitImmediate<OpCode::Rol>(left, static_cast<unsigned __int8>(PACKED::c_localBitCount));
 
         // In either case, shift off the high order bits or the right parameter.
         code.PlaceLabel(bottomOfLoop);
-        code.Emit<OpCode::Sal>(r);
+        code.EmitImmediate<OpCode::Sal>(right, static_cast<unsigned __int8>(PACKED::c_localBitCount));
+    }
 
-        // If there are more digits, jump back to the top of the loop.
-        code.EmitImmediate<OpCode::Shr>(rcx, static_cast<unsigned __int8>(8));
-        code.EmitConditionalJump<JccType::JNZ>(topOfLoop);
 
-        return sLeft;
+    template <bool ISMAX, typename REGTYPE>
+    void PackedMinMaxHelper::MinMaxEmitter<ISMAX, REGTYPE, void>::Emit(
+        FunctionBuffer& /* code */,
+        typename REGTYPE /* left */,
+        typename REGTYPE /* right */)
+    {
+        // End of recursion, do nothing.
     }
 
 
     template <typename PACKED, bool ISMAX>
     unsigned PackedMinMaxNode<PACKED, ISMAX>::LabelSubtree(bool isLeftChild)
     {
-        // TODO: imlement.
-        return 0;
+        const unsigned leftCount = m_left.LabelSubtree(true);
+        const unsigned rightCount = m_right.LabelSubtree(false);
+
+        // The standard Sethi-Ullman register calculation for left and right
+        // mostly works here too, with the exception that we need at least
+        // two registers since we'll modify both values that were returned.
+        return (std::max)(ComputeRegisterCount(leftCount, rightCount),
+                          2u);
     }
 
 
     template <typename PACKED, bool ISMAX>
     void PackedMinMaxNode<PACKED, ISMAX>::Print() const
     {
-        // TODO: imlement.
-        std::cout << "PackedMinMaxNode" << std::endl;
+        std::cout << "PackedMinMaxNode id=" << GetId()
+                  << ", parents = " << GetParentCount()
+                  << ", isMax = " << std::boolalpha << ISMAX
+                  << ", left = " << m_left.GetId()
+                  << ", right = " << m_right.GetId()
+                  << ", ";
+
+        PrintRegisterAndCacheInfo();
     }
 }

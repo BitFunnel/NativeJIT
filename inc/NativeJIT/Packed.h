@@ -44,10 +44,11 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_fieldCount = 1 + REST::c_fieldCount;
-        static const unsigned c_bitCount = W + REST::c_bitCount;
+        static const unsigned c_localBitCount = W;
+        static const unsigned c_totalBitCount = c_localBitCount + REST::c_totalBitCount;
+        typedef REST Rest;
 
-        // TODO: c_fieldSizes is a NativeJIT concept and should be moved out of this class.
-        static const unsigned __int64 c_fieldSizes = (W << (REST::c_fieldCount * 8)) | REST::c_fieldSizes;
+        static_assert(c_totalBitCount <= 64, "Too many bits in the packed.");
 
         static Packed Create(unsigned __int64 value)
         {
@@ -56,10 +57,12 @@ namespace NativeJIT
             return result;
         }
 
+        // Note: the pushed X-bit value gets placed to the end of m_fields after
+        // the existing bits are moved to the left. Thus the final order of
+        // bits inside Packed<A, Packed<B, Packed<C>>> is CBA.
         template <unsigned X>
         Packed<X, Packed> Push(unsigned __int64 value)
         {
-            static_assert(X + REST::c_fieldCount <= 8, "Packed supports a maximum of 8 bit fields.");
             unsigned __int64 fields = (m_fields << X) | value;
             return Packed<X, Packed>::Create(fields);
         }
@@ -93,10 +96,11 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_fieldCount = 1;
-        static const unsigned c_bitCount = W;
+        static const unsigned c_totalBitCount = W;
+        static const unsigned c_localBitCount = W;
+        typedef void Rest;
 
-        // TODO: c_fieldSizes is a NativeJIT concept and should be moved out of this class.
-        static const unsigned __int64 c_fieldSizes = W;
+        static_assert(c_totalBitCount <= 64, "Too many bits in the packed.");
 
         static Packed Create(unsigned __int64 value)
         {
@@ -136,10 +140,9 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_fieldCount = 0;
-        static const unsigned c_bitCount = 0;
-
-        // TODO: c_fieldSizes is a NativeJIT concept and should be moved out of this class.
-        static const unsigned __int64 c_fieldSizes = 0;
+        static const unsigned c_totalBitCount = 0;
+        static const unsigned c_localBitCount = 0;
+        typedef void Rest;
 
         template <unsigned X>
         static Packed<X, void> Push(unsigned __int64 value)

@@ -42,6 +42,11 @@ namespace NativeJIT
     protected:
         unsigned m_parentCount;
 
+        // Calculates the number of registers needed by a node whose left
+        // and right subtree require a certain number of registers according
+        // to Sethi-Ullman algorithm.
+        static unsigned ComputeRegisterCount(unsigned leftTreeCount, unsigned rightTreeCount);
+
     private:
         unsigned m_id;
     };
