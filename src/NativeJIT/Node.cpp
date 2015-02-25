@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <algorithm>    // For std::max
+
 #include "ExpressionTree.h"
 #include "Node.h"
 #include "Temporary/Assert.h"

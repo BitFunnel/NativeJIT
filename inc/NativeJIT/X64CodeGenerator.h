@@ -109,8 +109,11 @@ namespace NativeJIT
         // X64 opcode emit methods.
         //
 
+        // Note: the name of this method was changed from Emit() to work around
+        // an internal compiler error in VisualStudio 2013 (VC12). The ICE was
+        // fixed in VisualStudio 2015.
         template <JccType JCC>
-        void Emit(Label l);
+        void EmitConditionalJump(Label l);
 
         // No operand (e.g nop, ret)
         template <OpCode OP>
@@ -614,7 +617,7 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <JccType JCC>
-    void X64CodeGenerator::Emit(Label label)
+    void X64CodeGenerator::EmitConditionalJump(Label label)
     {
         CodePrinter printer(*this);
 

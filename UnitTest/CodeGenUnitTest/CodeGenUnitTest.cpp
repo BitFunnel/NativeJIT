@@ -24,7 +24,7 @@ namespace NativeJIT
 
             Label l1 = buffer.AllocateLabel();
             buffer.PlaceLabel(l1);
-            buffer.Emit<JccType::JG>(l1);
+            buffer.EmitConditionalJump<JccType::JG>(l1);
         }
 
 
@@ -470,7 +470,7 @@ namespace NativeJIT
             //*********************************************************************
             //
             // 1. Use ML64 assember to generate expected opcodes:
-            //   "c:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\x86_amd64\ml64.exe" /nologo /Sn /FlTestAsm.lst TestAsm.asm
+            //   "c:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\ml64.exe" /nologo /Sn /FlTestAsm.lst TestAsm.asm
             // 2. Open TestAsm.lst in Visual Studio.
             // 3. Select .code section (do not include .data section).
             // 4. Copy/paste below.

@@ -96,11 +96,11 @@ namespace NativeJIT
         code.Emit<OpCode::Cmp>(l, r);
         if (ISMAX)
         {
-            code.Emit<JccType::JAE>(keepLeftDigit);
+            code.EmitConditionalJump<JccType::JAE>(keepLeftDigit);
         }
         else
         {
-            code.Emit<JccType::JB>(keepLeftDigit);
+            code.EmitConditionalJump<JccType::JB>(keepLeftDigit);
         }
 
         // Case: Want the keep the digit from the right parameter.
@@ -120,7 +120,7 @@ namespace NativeJIT
 
         // If there are more digits, jump back to the top of the loop.
         code.EmitImmediate<OpCode::Shr>(rcx, static_cast<unsigned __int8>(8));
-        code.Emit<JccType::JNZ>(topOfLoop);
+        code.EmitConditionalJump<JccType::JNZ>(topOfLoop);
 
         return sLeft;
     }

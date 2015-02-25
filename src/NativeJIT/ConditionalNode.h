@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>    // For std::max
+
 #include "CodeGenHelpers.h"
 #include "ExpressionTree.h"
 #include "NativeJIT/X64CodeGenerator.h"
@@ -192,7 +194,7 @@ namespace NativeJIT
 
         X64CodeGenerator& code = tree.GetCodeGenerator();
         Label l1 = code.AllocateLabel();
-        code.Emit<JCC>(l1);
+        code.EmitConditionalJump<JCC>(l1);
 
         auto falseValue = m_falseExpression.CodeGen(tree);
         falseValue.ConvertToValue(tree, true);
@@ -353,7 +355,7 @@ namespace NativeJIT
 
         // Evaluate the condition and react based on it.
         CodeGenFlags(tree);
-        code.Emit<JCC>(conditionIsTrue);
+        code.EmitConditionalJump<JCC>(conditionIsTrue);
 
         auto result = tree.Direct<bool>();
         code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), false);

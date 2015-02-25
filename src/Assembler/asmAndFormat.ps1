@@ -1,7 +1,7 @@
 # Assembles the input file and formats the output in the format used by ml64Output in CodeGenUnitTest.cpp.
 Param([string]$InputFile = "TestAsm.asm",
       [string]$OutputFile = "TestAsm.lst",
-      [string]$MlPath = "c:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\x86_amd64\ml64.exe",
+      [string]$MlPath = "c:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\ml64.exe",
       [int]$IndentLength = 16,
       [int]$QuotedLineLength = 99)
 
