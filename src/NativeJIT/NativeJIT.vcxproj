@@ -73,6 +73,7 @@
   <ItemGroup>
     <ClInclude Include="BinaryNode.h" />
     <ClInclude Include="CallNode.h" />
+    <ClInclude Include="CastNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
     <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />

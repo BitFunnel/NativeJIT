@@ -67,7 +67,7 @@ namespace NativeJIT
         Storage<T> Indirect(Register<sizeof(T), false> base, __int32 offset);
 
         template <typename T>
-        Storage<T> RIPRelative(unsigned __int32 offset);
+        Storage<T> RIPRelative(__int32 offset);
 
         template <typename T>
         Storage<T> Temporary();
@@ -276,6 +276,10 @@ namespace NativeJIT
 
         void Spill(ExpressionTree& tree);
 
+        // Prints the information about the storage's type, value, base register
+        // and offset to the output stream.
+        void Print(std::ostream& out) const;
+
     private:
         friend class ExpressionTree;
 
@@ -444,7 +448,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    ExpressionTree::Storage<T> ExpressionTree::RIPRelative(unsigned __int32 offset)
+    ExpressionTree::Storage<T> ExpressionTree::RIPRelative(__int32 offset)
     {
         // TODO: Use allocator.
         Data* data = new Data(*this, rip, offset);
@@ -733,6 +737,7 @@ namespace NativeJIT
     void ExpressionTree::Storage<T>::ConvertToValue(ExpressionTree& tree, bool forModification)
     {
         // TODO: Why do we store tree in m_data if it is passed as a parameter here?
+        // TODO: Target the whole target register with MovZX to prevent the partial register stall.
 
         if (m_data->GetRefCount() == 1)
         {
@@ -898,6 +903,41 @@ namespace NativeJIT
     {
         SetData(other.m_data);
     }
+
+
+    template <typename T>
+    void ExpressionTree::Storage<T>::Print(std::ostream& out) const
+    {
+        switch (GetStorageClass())
+        {
+        case StorageClass::Direct:
+            out << "register " << GetDirectRegister().GetName();
+            break;
+    
+        case StorageClass::Immediate:
+            out << "immediate value " << std::hex << GetImmediate() << "h" << std::dec;
+            break;
+
+        case StorageClass::Indirect:
+            out << "indirect [" << GetBaseRegister().GetName() << std::hex;
+
+            if (GetOffset() < 0)
+            {
+                out << " - " << -GetOffset() << "h";
+            }
+            else
+            {
+                out << " + " << GetOffset() << "h";
+            }
+            out << "]" << std::dec;
+            break;
+
+        default:
+            out << "[unknown storage type]";
+            break;
+        }
+    }
+
 
     //*************************************************************************
     //

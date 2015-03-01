@@ -2,6 +2,7 @@
 
 #include "BinaryNode.h"
 #include "CallNode.h"
+#include "CastNode.h"
 #include "ConditionalNode.h"
 #include "ExpressionTree.h"             // Base class.
 #include "FieldPointerNode.h"
@@ -35,6 +36,7 @@ namespace NativeJIT
         //
         // Unary operators
         //
+        template <typename TO, typename FROM> Node<TO>& Cast(Node<FROM>& value);
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
         template <typename T> NodeBase& Return(Node<T>& value);
@@ -64,6 +66,9 @@ namespace NativeJIT
         // Relational operators
         //
         template <typename T> FlagExpressionNode<JccType::JG>& GreaterThan(Node<T>& left, Node<T>& right);
+
+        template <JccType JCC, typename T>
+        FlagExpressionNode<JCC>& Compare(Node<T>& left, Node<T>& right);
 
 
         //
@@ -139,6 +144,13 @@ namespace NativeJIT
     //
     // Unary operators
     //
+    template <typename TO, typename FROM>
+    Node<TO>& ExpressionNodeFactory::Cast(Node<FROM>& source)
+    {
+        return * new (m_allocator.Allocate(sizeof(CastNode<TO, FROM>))) CastNode<TO, FROM>(*this, source);
+    }
+
+
     template <typename T>
     Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer)
     {
@@ -245,7 +257,16 @@ namespace NativeJIT
     FlagExpressionNode<JccType::JG>&
     ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
     {
-        typedef RelationalOperatorNode<T, JccType::JG> NodeType;
+        return Compare<JccType::JG>(left, right);
+    }
+
+
+    template <JccType JCC, typename T>
+    FlagExpressionNode<JCC>&
+    ExpressionNodeFactory::Compare(Node<T>& left, Node<T>& right)
+    {
+        typedef RelationalOperatorNode<T, JCC> NodeType;
+
         return * new (m_allocator.Allocate(sizeof(NodeType)))
                      NodeType(*this, left, right);
     }

@@ -152,7 +152,8 @@ namespace NativeJIT
 
         if (IsCached())
         {
-            std::cout << "cached in " << m_cache.GetDirectRegister().GetName();
+            std::cout << "cached in ";
+            m_cache.Print(std::cout);
         }
         else
         {

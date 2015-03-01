@@ -85,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitFunnelAcceptanceTest.cpp" />
+    <ClCompile Include="CastUnitTest.cpp" />
     <ClCompile Include="ConditionalUnitTest.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>

@@ -315,6 +315,8 @@ namespace NativeJIT
           m_left(left),
           m_right(right)
     {
+        m_left.IncrementParentCount();
+        m_right.IncrementParentCount();
     }
 
 

@@ -27,6 +27,8 @@ namespace NativeJIT
     }
 
 
+    // TODO: Figure out a way to make it less probable/impossible to forget to
+    // call this.
     void NodeBase::IncrementParentCount()
     {
         ++m_parentCount;
