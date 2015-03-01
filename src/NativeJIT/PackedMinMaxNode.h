@@ -67,7 +67,7 @@ namespace NativeJIT
         // shift operations use CL as a parameter. RCX is shifted right by 8 bits
         // each iteration so that CL has the width of the current field.
         auto registerRCX = tree.Direct<unsigned __int64>(rcx);
-        code.Emit<OpCode::Mov>(rcx, PACKED::c_fieldSizes);
+        code.EmitImmediate<OpCode::Mov>(rcx, PACKED::c_fieldSizes);
 
         // Convert the left parameter into a value. We will be building the
         // result in this register.
@@ -82,8 +82,8 @@ namespace NativeJIT
         auto r = sRight.GetDirectRegister();
 
         // Shift bits of each argument all the way to the left.
-        code.Emit<OpCode::Sal>(l, static_cast<unsigned __int8>(64 - PACKED::c_bitCount));
-        code.Emit<OpCode::Sal>(r, static_cast<unsigned __int8>(64 - PACKED::c_bitCount));
+        code.EmitImmediate<OpCode::Sal>(l, static_cast<unsigned __int8>(64 - PACKED::c_bitCount));
+        code.EmitImmediate<OpCode::Sal>(r, static_cast<unsigned __int8>(64 - PACKED::c_bitCount));
 
         Label topOfLoop = code.AllocateLabel();
         Label keepLeftDigit = code.AllocateLabel();
@@ -119,7 +119,7 @@ namespace NativeJIT
         code.Emit<OpCode::Sal>(r);
 
         // If there are more digits, jump back to the top of the loop.
-        code.Emit<OpCode::Shr>(rcx, static_cast<unsigned __int8>(8));
+        code.EmitImmediate<OpCode::Shr>(rcx, static_cast<unsigned __int8>(8));
         code.Emit<JccType::JNZ>(topOfLoop);
 
         return sLeft;

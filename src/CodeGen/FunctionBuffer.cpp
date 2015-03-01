@@ -147,7 +147,7 @@ namespace NativeJIT
         {
             if (r & 1)
             {
-                ProloguePushNonVolatile(i);
+                ProloguePushNonVolatile(Register<8, false>(i));
             }
             r = r >> 1;
         }
@@ -195,7 +195,7 @@ namespace NativeJIT
                 Emit<OpCode::Push>(Register<8, false>(code.m_opInfo));
                 break;
             case UWOP_ALLOC_SMALL:
-                Emit<OpCode::Sub>(rsp, (code.m_opInfo + 1) * 8);
+                EmitImmediate<OpCode::Sub>(rsp, (code.m_opInfo + 1) * 8);
                 break;
             case UWOP_SET_FPREG:
                 Emit<OpCode::Lea>(rbp, rsp, m_unwindInfo->m_frameOffset * 16);
@@ -231,7 +231,7 @@ namespace NativeJIT
                 Emit<OpCode::Pop>(Register<8, false>(code.m_opInfo));
                 break;
             case UWOP_ALLOC_SMALL:
-                Emit<OpCode::Add>(rsp, (code.m_opInfo + 1) * 8);
+                EmitImmediate<OpCode::Add>(rsp, (code.m_opInfo + 1) * 8);
                 break;
             case UWOP_SET_FPREG:
                 Emit<OpCode::Lea>(rsp, rbp, -m_unwindInfo->m_frameOffset * 16);

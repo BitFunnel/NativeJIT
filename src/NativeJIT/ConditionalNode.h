@@ -355,13 +355,13 @@ namespace NativeJIT
 //        code.Jcc(JccType::JZ, l1);
 
         auto result = tree.Direct<bool>();
-        code.Emit<OpCode::Mov>(result.GetDirectRegister(), 1);
+        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), 1);
 
         Label l2 = code.AllocateLabel();
         code.Jmp(l2);
         code.PlaceLabel(l1);
 
-        code.Emit<OpCode::Mov>(result.GetDirectRegister(), 1);
+        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), 1);
         code.PlaceLabel(l2);
 
         return result;

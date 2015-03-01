@@ -15,7 +15,7 @@ namespace NativeJIT
             switch (right.GetStorageClass())
             {
             case StorageClass::Immediate:
-                code.Emit<OP>(left, right.GetImmediate());
+                code.EmitImmediate<OP>(left, right.GetImmediate());
                 break;
             case StorageClass::Direct:
                 code.Emit<OP>(left, right.GetDirectRegister());

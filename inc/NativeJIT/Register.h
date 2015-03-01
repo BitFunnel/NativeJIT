@@ -26,7 +26,7 @@ namespace NativeJIT
         }
 
 
-        Register(unsigned id)
+        explicit Register(unsigned id)
             : m_id(id)
         {
             // TODO: Remove this magic number.

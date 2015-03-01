@@ -114,7 +114,7 @@ namespace NativeJIT
 
         if (m_offset + offset != 0)
         {
-            tree.GetCodeGenerator().Emit<OpCode::Add>(base.GetDirectRegister(), m_offset + offset);
+            tree.GetCodeGenerator().EmitImmediate<OpCode::Add>(base.GetDirectRegister(), m_offset + offset);
         }
 
         return base;

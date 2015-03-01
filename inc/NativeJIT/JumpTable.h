@@ -15,7 +15,7 @@ namespace NativeJIT
     {
     public:
         Label();
-        Label(unsigned id);
+        explicit Label(unsigned id);
 
         unsigned GetId() const;
 

@@ -156,13 +156,13 @@ namespace NativeJIT
         // TODO: Consider renaming these to something like MovHelper. Consider moving into
         // CodeGenHelpers.
         template <unsigned SIZE, typename T>
-        void Mov(Register<SIZE, false> dest, T value);
+        void MovImmediate(Register<SIZE, false> dest, T value);
 
         template <typename T>
-        void Mov(Register<8, true> dest, T value);
+        void MovImmediate(Register<8, true> dest, T value);
 
         template <typename T>
-        void Mov(Register<4, true> dest, T value);
+        void MovImmediate(Register<4, true> dest, T value);
 
 
         template <typename T>
@@ -525,14 +525,14 @@ namespace NativeJIT
 
 
     template <unsigned SIZE, typename T>
-    void ExpressionTree::Mov(Register<SIZE, false> dest, T value)
+    void ExpressionTree::MovImmediate(Register<SIZE, false> dest, T value)
     {
-        m_code.Emit<OpCode::Mov>(dest, value);
+        m_code.EmitImmediate<OpCode::Mov>(dest, value);
     }
 
 
     template <typename T>
-    void ExpressionTree::Mov(Register<8, true> dest, T value)
+    void ExpressionTree::MovImmediate(Register<8, true> dest, T value)
     {
         // TODO: Consider RIP-relative addressing to eliminate a register allocation.
         // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
@@ -540,14 +540,14 @@ namespace NativeJIT
         // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
         auto temp = Direct<unsigned __int64>();
         auto r = temp.GetDirectRegister();
-        m_code.Emit<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int64*>(&value)));
+        m_code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int64*>(&value)));
         m_code.Emit<OpCode::Mov>(dest, r);
     }
 
 
     // TODO: Coalesc with previous.
     template <typename T>
-    void ExpressionTree::Mov(Register<4, true> dest, T value)
+    void ExpressionTree::MovImmediate(Register<4, true> dest, T value)
     {
         // TODO: Consider RIP-relative addressing to eliminate a register allocation.
         // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
@@ -555,7 +555,7 @@ namespace NativeJIT
         // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
         auto temp = Direct<unsigned __int32>();
         auto r = temp.GetDirectRegister();
-        m_code.Emit<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int32*>(&value)));
+        m_code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int32*>(&value)));
         m_code.Emit<OpCode::Mov>(dest, r);
     }
 
@@ -760,7 +760,7 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = tree.Direct<T>();
-                    tree.Mov(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+                    tree.MovImmediate(dest.GetDirectRegister(), m_data->GetImmediate<T>());
 
                     // Problem here is that SetData occurs after Mov which allocates another register???
 
@@ -816,7 +816,7 @@ namespace NativeJIT
                 {
                     // Allocate a register and load this value into the register.
                     auto dest = tree.Direct<T>();
-                    tree.Mov(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+                    tree.MovImmediate(dest.GetDirectRegister(), m_data->GetImmediate<T>());
                     SetData(dest);
                 }
                 break;
