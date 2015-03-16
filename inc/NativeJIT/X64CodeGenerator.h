@@ -34,7 +34,7 @@ namespace NativeJIT
         JNO = 1,
         JB = 2,
         JAE = 3, JNB = 3, JNC = 3,
-        JE = 4, JZ =4,
+        JE = 4, JZ = 4,
         JNE = 5, JNZ = 5,
         JBE = 6, JNA = 6,
         JA = 7, JNBE = 7,
@@ -112,17 +112,17 @@ namespace NativeJIT
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<SIZE, ISFLOAT> dest);
 
-        // Two register operands (e.g. and, mov, or, sub)
-        template <OpCode OP, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-        void Emit(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+        // Two register operands with the same size (e.g. and, mov, or, sub)
+        template <OpCode OP, unsigned SIZE, bool ISFLOAT1, bool ISFLOAT2>
+        void Emit(Register<SIZE, ISFLOAT1> dest, Register<SIZE, ISFLOAT2> src);
 
         // Two operands - register destination and indirect source.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-        void Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset);
+        void Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset);
 
         // Two operands - indirect destination and register source.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-        void Emit(Register<8, false> dest, unsigned __int32 destOffset, Register<SIZE, ISFLOAT> src);
+        void Emit(Register<8, false> dest, __int32 destOffset, Register<SIZE, ISFLOAT> src);
 
         // Two operands - register destination and immediate source.
         // Note: Method is named EmitImmediate() to avoid clashes with other
@@ -164,33 +164,31 @@ namespace NativeJIT
         void MovImmediate(Register<8, false> dest,
                           T* value);
 
-        template <unsigned SIZE>
-        void Mov(Register<SIZE, false> dest,
-                 __int32 destOffset,
-                 Register<8, true> src);
-
         void Pop(Register<8, false> r);
         void Push(Register<8, false> r);
 
         void Ret();
 
-        void MovD(Register<4, true> dest, Register<4, false> src);
-        void MovD(Register<8, true> dest, Register<8, false> src);
+        template <unsigned SIZE>
+        void MovD(Register<SIZE, true> dest, Register<SIZE, false> src);
 
         template <unsigned SIZE>
         void Shld(Register<SIZE, false> dest, Register<SIZE, false> src);
 
-        template <unsigned __int8 OPCODE>
-        void SSE(Register<8, true> dest, Register<8, true> src);
+        // SSE instructions encoded as XX 0F OPCODE, where XX is either 0xF2
+        // or 0xF3 depending on the register size and REX.W is always 0. Used
+        // for instructions operating on scalars (f. ex. MovSS/SD, AddSS/SD).
 
-        template <unsigned __int8 OPCODE>
-        void SSE(Register<4, true> dest, Register<4, true> src);
+        template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+        void ScalarSSE(Register<SIZE1, true> dest, Register<SIZE2, true> src);
 
-        template <unsigned __int8 OPCODE>
-        void SSE(Register<8, true> dest, Register<8, false> src, __int32 srcOffset);
+        template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+        void ScalarSSE(Register<SIZE1, true> dest, Register<8, false> src, __int32 srcOffset);
 
-        template <unsigned __int8 OPCODE>
-        void SSE(Register<4, true> dest, Register<8, false> src, __int32 srcOffset);
+        template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+        void ScalarSSE(Register<8, false> dest, __int32 destOffset, Register<SIZE2, true> src);
+
+        // Group 1/2 instructions.
 
         template <unsigned SIZE>
         void Group1(unsigned __int8 baseOpCode,
@@ -258,6 +256,10 @@ namespace NativeJIT
             template <unsigned SIZE, bool ISFLOAT>
             static void Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest);
 
+            //
+            // RXX methods
+            //
+
             template <unsigned SIZE>
             static void Emit(X64CodeGenerator& code, Register<SIZE, false> dest, Register<SIZE, false> src);
 
@@ -289,6 +291,7 @@ namespace NativeJIT
             template <unsigned SIZE, typename T>
             static void EmitImmediate(X64CodeGenerator& code, Register<SIZE, true> dest, T value);
         };
+
 
         static const unsigned c_rxxRegisterCount = 16;
         static const unsigned c_xmmRegisterCount = 16;
@@ -353,8 +356,8 @@ namespace NativeJIT
     }
 
 
-    template <OpCode OP, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-    void X64CodeGenerator::Emit(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src)
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT1, bool ISFLOAT2>
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT1> dest, Register<SIZE, ISFLOAT2> src)
     {
         if (m_out != nullptr)
         {
@@ -371,7 +374,7 @@ namespace NativeJIT
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, unsigned __int32 srcOffset)
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset)
     {
         if (m_out != nullptr)
         {
@@ -380,9 +383,13 @@ namespace NativeJIT
             PrintBytes(start, CurrentPosition());
             *m_out << OpCodeName(OP) << ' ' << dest.GetName();
             *m_out << ", [" << src.GetName();
-            if (srcOffset != 0)
+            if (srcOffset > 0)
             {
                 *m_out << " + " << std::hex << srcOffset << "h";
+            }
+            else if (srcOffset < 0)
+            {
+                *m_out << " - " << std::hex << -static_cast<__int64>(srcOffset) << "h";
             }
             *m_out << "]"  << std::endl;
         }
@@ -394,7 +401,7 @@ namespace NativeJIT
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::Emit(Register<8, false> dest, unsigned __int32 destOffset, Register<SIZE, ISFLOAT> src)
+    void X64CodeGenerator::Emit(Register<8, false> dest, __int32 destOffset, Register<SIZE, ISFLOAT> src)
     {
         if (m_out != nullptr)
         {
@@ -402,9 +409,13 @@ namespace NativeJIT
             Helper<OP>::Emit(*this, dest, destOffset, src);
             PrintBytes(start, CurrentPosition());
             *m_out << OpCodeName(OP) << " [" << dest.GetName();
-            if (destOffset != 0)
+            if (destOffset > 0)
             {
                 *m_out << " + " << std::hex << destOffset << "h";
+            }
+            else if (destOffset < 0)
+            {
+                *m_out << " - " << std::hex << -static_cast<__int64>(destOffset) << "h";
             }
             *m_out << "], " << src.GetName() << std::endl;
         }
@@ -578,15 +589,13 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    void X64CodeGenerator::Mov(Register<SIZE, false> dest,
-                               __int32 destOffset,
-                               Register<8, true> src)
+    void X64CodeGenerator::MovD(Register<SIZE, true> dest, Register<SIZE, false> src)
     {
-        Emit8(0xf2);
-        EmitRexW<0>(src, dest);
+        Emit8(0x66);
+        EmitRexW<SIZE == 8 ? 1 : 0>(dest, src);
         Emit8(0x0f);
-        Emit8(0x11);
-        EmitModRMOffset(src, dest, destOffset);
+        Emit8(0x6e);
+        EmitModRM(dest, src);
     }
 
 
@@ -609,10 +618,11 @@ namespace NativeJIT
     //
     // SSE instructions
     //
-    template <unsigned __int8 OPCODE>
-    void X64CodeGenerator::SSE(Register<8, true> dest, Register<8, true> src)
+
+    template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::ScalarSSE(Register<SIZE1, true> dest, Register<SIZE2, true> src)
     {
-        Emit8(0xf2);
+        Emit8(SIZE1 == 8 ? 0xf2 : 0xf3);
         EmitRexW<0>(dest, src);
         Emit8(0x0f);
         Emit8(OPCODE);
@@ -620,24 +630,12 @@ namespace NativeJIT
     }
 
 
-    // TODO: coalesce with previous?
-    template <unsigned __int8 OPCODE>
-    void X64CodeGenerator::SSE(Register<4, true> dest, Register<4, true> src)
+    template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::ScalarSSE(Register<SIZE1, true> dest,
+                                     Register<8, false> src,
+                                     __int32 srcOffset)
     {
-        Emit8(0xf3);
-        EmitRexW<0>(dest, src);
-        Emit8(0x0f);
-        Emit8(OPCODE);
-        EmitModRM(dest, src);
-    }
-
-
-    template <unsigned __int8 OPCODE>
-    void X64CodeGenerator::SSE(Register<8, true> dest,
-                               Register<8, false> src,
-                               __int32 srcOffset)
-    {
-        Emit8(0xf2);
+        Emit8(SIZE1 == 8 ? 0xf2 : 0xf3);
         EmitRexW<0>(dest, src);
         Emit8(0x0f);
         Emit8(OPCODE);
@@ -645,17 +643,16 @@ namespace NativeJIT
     }
 
 
-    // TODO: coalesce with previous?
-    template <unsigned __int8 OPCODE>
-    void X64CodeGenerator::SSE(Register<4, true> dest,
-                               Register<8, false> src,
-                               __int32 srcOffset)
+    template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::ScalarSSE(Register<8, false> dest,
+                                     __int32 destOffset,
+                                     Register<SIZE2, true> src)
     {
-        Emit8(0xf3);
-        EmitRexW<0>(dest, src);
+        Emit8(SIZE1 == 8 ? 0xf2 : 0xf3);
+        EmitRexW<0>(src, dest);
         Emit8(0x0f);
         Emit8(OPCODE);
-        EmitModRMOffset(dest, src, srcOffset);
+        EmitModRMOffset(src, dest, destOffset);
     }
 
 
@@ -1065,32 +1062,12 @@ namespace NativeJIT
     template <>
     template <unsigned SIZE>
     void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
-                                                     Register<SIZE, true> dest,
-                                                     Register<SIZE, true> src)
-    {
-        code.SSE<0x10>(dest, src);
-    }
-
-
-    template <>
-    template <unsigned SIZE>
-    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
-                                                     Register<SIZE, true> dest,
-                                                     Register<8, false> src,
-                                                     __int32 srcOffset)
-    {
-        code.SSE<0x10>(dest, src, srcOffset);
-    }
-
-
-    template <>
-    template <unsigned SIZE>
-    void X64CodeGenerator::Helper<OpCode::Mov>::Emit(X64CodeGenerator& code,
                                                      Register<8, false> dest,
                                                      __int32 destOffset,
                                                      Register<SIZE, true> src)
     {
-        code.Mov(dest, destOffset, src);
+        // MovSS/SD.
+        code.ScalarSSE<0x11, SIZE, SIZE>(dest, destOffset, src);
     }
 
 
@@ -1236,7 +1213,7 @@ namespace NativeJIT
                                                           Register<SIZE, true> dest,    \
                                                           Register<SIZE, true> src)     \
     {                                                                                   \
-        code.SSE<opcode>(dest, src);                                                    \
+        code.ScalarSSE<opcode>(dest, src);                                              \
     }                                                                                   \
                                                                                         \
                                                                                         \
@@ -1247,12 +1224,13 @@ namespace NativeJIT
                                                           Register<8, false> src,       \
                                                           __int32 srcOffset)            \
     {                                                                                   \
-        code.SSE<opcode>(dest, src, srcOffset);                                         \
+        code.ScalarSSE<opcode, SIZE, SIZE>(dest, src, srcOffset);                       \
     }                                                                                   \
 
-    DEFINE_SSE(Add, 0x58);
-    DEFINE_SSE(IMul, 0x59);
-    DEFINE_SSE(Sub, 0x5c);
+    DEFINE_SSE(Add, 0x58);  // AddSS/AddSD.
+    DEFINE_SSE(IMul, 0x59); // MulSS/MulSD.
+    DEFINE_SSE(Mov, 0x10);  // MovSS/MovSD.
+    DEFINE_SSE(Sub, 0x5c);  // SubSS/SubSD.
 
 #undef DEFINE_SSE
 }

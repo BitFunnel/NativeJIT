@@ -119,13 +119,16 @@ namespace NativeJIT
             std::cout << "lea" << std::endl;
             buffer.Emit<OpCode::Lea>(rax, rsi, 0);
             buffer.Emit<OpCode::Lea>(rax, rsi, 0x12);
+            buffer.Emit<OpCode::Lea>(rax, rsi, -0x12);
             buffer.Emit<OpCode::Lea>(rax, rsi, 0x1234);
+            buffer.Emit<OpCode::Lea>(rax, rsi, -0x1234);
             buffer.Emit<OpCode::Lea>(rax, rsi, 0x12345678);
+            buffer.Emit<OpCode::Lea>(rax, rsi, -0x12345678);
             buffer.Emit<OpCode::Lea>(rbp, r12, 0);
             buffer.Emit<OpCode::Lea>(rbp, r12, 0x87);
-            buffer.Emit<OpCode::Lea>(rbp, r12, 0x87654321);
-            buffer.Emit<OpCode::Lea>(rsp, rbp, 0xFFFFFFE0);     // From function epilogue.
+            buffer.Emit<OpCode::Lea>(rbp, r12, -0x789ABCDE);
             buffer.Emit<OpCode::Lea>(rbp, rsp, 0x20);           // From function prologue.
+            buffer.Emit<OpCode::Lea>(rsp, rbp, -0x20);          // From function epilogue.
 
             // mov r, r
             std::cout << "mov r, r" << std::endl;
@@ -277,9 +280,6 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(xmm5, rcx);
             buffer.Emit<OpCode::Mov>(xmm12, rcx);
 
-            // TODO: Why does this even compile as mov xmm1, #imm?
-            // buffer.Emit<OpCode::Mov>(xmm1, eax);
-
             // MovD - float
             buffer.Emit<OpCode::Mov>(xmm1s, eax);
             buffer.Emit<OpCode::Mov>(xmm1s, ecx);
@@ -293,6 +293,24 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(xmm5s, ecx);
             buffer.Emit<OpCode::Mov>(xmm12s, ecx);
 
+            // MovSS - float
+            buffer.Emit<OpCode::Mov>(xmm1s, xmm2s);
+            buffer.Emit<OpCode::Mov>(xmm0s, xmm12s);
+            buffer.Emit<OpCode::Mov>(xmm5s, xmm12s);
+            buffer.Emit<OpCode::Mov>(xmm5s, xmm3s);
+            buffer.Emit<OpCode::Mov>(xmm13s, xmm5s);
+            buffer.Emit<OpCode::Mov>(xmm0s, xmm15s);
+
+            buffer.Emit<OpCode::Mov>(xmm0s, r12, 0);
+            buffer.Emit<OpCode::Mov>(xmm4s, rcx, 0x12);
+            buffer.Emit<OpCode::Mov>(xmm5s, rsi, 0x1234);
+            buffer.Emit<OpCode::Mov>(xmm12s, rdi, 0x12345678);
+
+            buffer.Emit<OpCode::Mov>(r12, 0, xmm0s);
+            buffer.Emit<OpCode::Mov>(rcx, 0x12, xmm4s);
+            buffer.Emit<OpCode::Mov>(rsi, 0x1234, xmm5s);
+            buffer.Emit<OpCode::Mov>(rdi, 0x12345678, xmm12s);
+
             // MovSD - double
             buffer.Emit<OpCode::Mov>(xmm1, xmm2);
             buffer.Emit<OpCode::Mov>(xmm0, xmm12);
@@ -301,12 +319,10 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(xmm13, xmm5);
             buffer.Emit<OpCode::Mov>(xmm0, xmm15);
 
-
             buffer.Emit<OpCode::Mov>(xmm0, r12, 0);
             buffer.Emit<OpCode::Mov>(xmm4, rcx, 0x12);
             buffer.Emit<OpCode::Mov>(xmm5, rsi, 0x1234);
             buffer.Emit<OpCode::Mov>(xmm12, rdi, 0x12345678);
-
 
             buffer.Emit<OpCode::Mov>(r12, 0, xmm0);
             buffer.Emit<OpCode::Mov>(rcx, 0x12, xmm4);
@@ -452,22 +468,28 @@ namespace NativeJIT
                 " 000000C8  49/ 81 E4            and r12, 12345678h                                                 \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
-                "                                ; lea                                                              \n"
-                " 000000DF  48/ 8D 06            lea rax, [rsi]                                                     \n"
-                " 000000E2  48/ 8D 46 12         lea rax, [rsi + 12h]                                               \n"
-                " 000000E6  48/ 8D 86            lea rax, [rsi + 1234h]                                             \n"
+                "                                ;                                                                  \n"
+                "                                ; Lea                                                              \n"
+                "                                ;                                                                  \n"
+                " 00000146  48/ 8D 06            lea rax, [rsi]                                                     \n"
+                " 00000149  48/ 8D 46 12         lea rax, [rsi + 12h]                                               \n"
+                " 0000014D  48/ 8D 46 EE         lea rax, [rsi - 12h]                                               \n"
+                " 00000151  48/ 8D 86            lea rax, [rsi + 1234h]                                             \n"
                 "           00001234                                                                                \n"
-                " 000000ED  48/ 8D 86            lea rax, [rsi + 12345678h]                                         \n"
+                " 00000158  48/ 8D 86            lea rax, [rsi - 1234h]                                             \n"
+                "           FFFFEDCC                                                                                \n"
+                " 0000015F  48/ 8D 86            lea rax, [rsi + 12345678h]                                         \n"
                 "           12345678                                                                                \n"
-                " 000000F4  49/ 8D 2C 24         lea rbp, [r12]                                                     \n"
-                " 000000F8  49/ 8D AC 24         lea rbp, [r12 + 87h]                                               \n"
+                " 00000166  48/ 8D 86            lea rax, [rsi - 12345678h]                                         \n"
+                "           EDCBA988                                                                                \n"
+                " 0000016D  49/ 8D 2C 24         lea rbp, [r12]                                                     \n"
+                " 00000171  49/ 8D AC 24         lea rbp, [r12 + 87h]                                               \n"
                 "           00000087                                                                                \n"
-                " 00000100  49/ 8D AC 24         lea rbp, [r12 + 87654321h]                                         \n"
-                "           87654321                                                                                \n"
-                " 00000108  48/ 8D 65 E0         lea rsp, [rbp + 0FFFFFFE0h]                                        \n"
-                " 0000010C  48/ 8D 6C 24         lea rbp, [rsp + 20h]                                               \n"
+                " 00000179  49/ 8D AC 24         lea rbp, [r12 - 789ABCDEh]                                         \n"
+                "           87654322                                                                                \n"
+                " 00000181  48/ 8D 6C 24         lea rbp, [rsp + 20h]                                               \n"
                 "           20                                                                                      \n"
-                "                                                                                                   \n"
+                " 00000186  48/ 8D 65 E0         lea rsp, [rbp - 20h]                                               \n"
                 "                                                                                                   \n"
                 "                                ; Mov                                                              \n"
                 " 00000111  8A C1                mov al, cl                                                         \n"
@@ -654,8 +676,33 @@ namespace NativeJIT
                 " 00000365  66| 0F 6E E9         movd xmm5, ecx                                                     \n"
                 " 00000369  66| 44/ 0F 6E E1     movd xmm12, ecx                                                    \n"
                 "                                                                                                   \n"
+                "                                ; movss                                                            \n"
+                " 000003F0  F3/ 0F 10 CA         movss xmm1, xmm2                                                   \n"
+                " 000003F4  F3/ 41/ 0F 10 C4     movss xmm0, xmm12                                                  \n"
+                " 000003F9  F3/ 41/ 0F 10 EC     movss xmm5, xmm12                                                  \n"
+                " 000003FE  F3/ 0F 10 EB         movss xmm5, xmm3                                                   \n"
+                " 00000402  F3/ 44/ 0F 10 ED     movss xmm13, xmm5                                                  \n"
+                " 00000407  F3/ 41/ 0F 10 C7     movss xmm0, xmm15                                                  \n"
                 "                                                                                                   \n"
-                "                                ; MovSd                                                            \n"
+                " 0000040C  F3/ 41/ 0F 10 04     movss xmm0, dword ptr [r12]                                        \n"
+                "           24                                                                                      \n"
+                " 00000412  F3/ 0F 10 61         movss xmm4, dword ptr [rcx + 12h]                                  \n"
+                "           12                                                                                      \n"
+                " 00000417  F3/ 0F 10 AE         movss xmm5, dword ptr [rsi + 1234h]                                \n"
+                "           00001234                                                                                \n"
+                " 0000041F  F3/ 44/ 0F 10 A7     movss xmm12, dword ptr [rdi + 12345678h]                           \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 00000428  F3/ 41/ 0F 11 04     movss dword ptr [r12], xmm0                                        \n"
+                "           24                                                                                      \n"
+                " 0000042E  F3/ 0F 11 61         movss dword ptr [rcx + 12h], xmm4                                  \n"
+                "           12                                                                                      \n"
+                " 00000433  F3/ 0F 11 AE         movss dword ptr [rsi + 1234h], xmm5                                \n"
+                "           00001234                                                                                \n"
+                " 0000043B  F3/ 44/ 0F 11 A7     movss dword ptr [rdi + 12345678h], xmm12                           \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                                ; movsd                                                            \n"
                 " 00000343  F2/ 0F 10 CA         movsd xmm1, xmm2                                                   \n"
                 " 00000347  F2/ 41/ 0F 10 C4     movsd xmm0, xmm12                                                  \n"
                 " 0000034C  F2/ 41/ 0F 10 EC     movsd xmm5, xmm12                                                  \n"
@@ -725,7 +772,8 @@ namespace NativeJIT
                 "                                                                                                   \n"
                 " 00000491  0F A5 F2             shld edx, esi, cl                                                  \n"
                 " 00000494  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
-                " 00000498  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n";
+                " 00000498  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n"
+                "";
 
             ML64Verifier v(ml64Output, start);
         }

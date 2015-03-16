@@ -158,11 +158,8 @@ namespace NativeJIT
         template <unsigned SIZE, typename T>
         void MovImmediate(Register<SIZE, false> dest, T value);
 
-        template <typename T>
-        void MovImmediate(Register<8, true> dest, T value);
-
-        template <typename T>
-        void MovImmediate(Register<4, true> dest, T value);
+        template <unsigned SIZE, typename T>
+        void MovImmediate(Register<SIZE, true> dest, T value);
 
 
         template <typename T>
@@ -531,31 +528,17 @@ namespace NativeJIT
     }
 
 
-    template <typename T>
-    void ExpressionTree::MovImmediate(Register<8, true> dest, T value)
+    template <unsigned SIZE, typename T>
+    void ExpressionTree::MovImmediate(Register<SIZE, true> dest, T value)
     {
-        // TODO: Consider RIP-relative addressing to eliminate a register allocation.
-        // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
-        // must be 4 byte.
-        // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
-        auto temp = Direct<unsigned __int64>();
-        auto r = temp.GetDirectRegister();
-        m_code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int64*>(&value)));
-        m_code.Emit<OpCode::Mov>(dest, r);
-    }
+        static_assert(sizeof(T) == SIZE, "The size of the immediate must match the register size.");
+        typedef std::conditional<SIZE == 4, unsigned __int32, unsigned __int64>::type TemporaryType;
 
-
-    // TODO: Coalesc with previous.
-    template <typename T>
-    void ExpressionTree::MovImmediate(Register<4, true> dest, T value)
-    {
         // TODO: Consider RIP-relative addressing to eliminate a register allocation.
-        // TODO: BUGBUG: This code is incorrect for float. In the case of float, temp
-        // must be 4 byte.
         // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
-        auto temp = Direct<unsigned __int32>();
+        auto temp = Direct<TemporaryType>();
         auto r = temp.GetDirectRegister();
-        m_code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<unsigned __int32*>(&value)));
+        m_code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<TemporaryType*>(&value)));
         m_code.Emit<OpCode::Mov>(dest, r);
     }
 

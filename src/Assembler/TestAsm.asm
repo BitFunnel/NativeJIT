@@ -137,21 +137,20 @@ cmp rdx, [rsi + 56h]
 ; adc, sbb, and, xor not supported.
 
 ;
-; Imul
-;
-
-;
 ; Lea
 ;
 lea rax, [rsi]
 lea rax, [rsi + 12h]
+lea rax, [rsi - 12h]
 lea rax, [rsi + 1234h]
+lea rax, [rsi - 1234h]
 lea rax, [rsi + 12345678h]
+lea rax, [rsi - 12345678h]
 lea rbp, [r12]
 lea rbp, [r12 + 87h]
-lea rbp, [r12 + 87654321h]
-lea rsp, [rbp + 0FFFFFFE0h]
+lea rbp, [r12 - 789ABCDEh]
 lea rbp, [rsp + 20h]
+lea rsp, [rbp - 20h]
 
 ;
 ; Mov
@@ -209,7 +208,7 @@ mov rsp, 1234567812345678h
 mov r12, 1234567812345678h
 
 
-; mov [r + offset], r with zero, byte, word, and double word offsets
+; mov [r + offset], r with zero, byte, word, and dword offsets
 mov [rax], cl
 mov [rcx + 12h], bl
 mov [rsi + 100h], r9b
@@ -246,10 +245,6 @@ push r12
 ;
 ret
 
-;
-; Shift
-;
-
 LL1:
     jz LL1
     jz near ptr LL1
@@ -257,6 +252,10 @@ LL1:
     jz near ptr LL1
 ;    jz far ptr LL1
 
+
+;
+; Imul
+;
 
 imul bx, cx
 imul ebx, ecx
@@ -322,6 +321,25 @@ movd xmm2, ecx
 movd xmm5, ecx
 movd xmm12, ecx
 
+; movss
+movss xmm1, xmm2
+movss xmm0, xmm12
+movss xmm5, xmm12
+movss xmm5, xmm3
+movss xmm13, xmm5
+movss xmm0, xmm15
+
+movss xmm0, dword ptr [r12]
+movss xmm4, dword ptr [rcx + 12h]
+movss xmm5, dword ptr [rsi + 1234h]
+movss xmm12, dword ptr [rdi + 12345678h]
+
+movss dword ptr [r12], xmm0
+movss dword ptr [rcx + 12h], xmm4
+movss dword ptr [rsi + 1234h], xmm5
+movss dword ptr [rdi + 12345678h], xmm12
+
+; movsd
 movsd xmm1, xmm2
 movsd xmm0, xmm12
 movsd xmm5, xmm12
@@ -363,6 +381,9 @@ addss xmm4, dword ptr [rcx + 12h]
 mulss xmm5, dword ptr [rsi + 1234h]
 subss xmm12, dword ptr [rdi + 12345678h]
 
+;
+; Shift/rotate
+;
 
 rol al, cl
 sal ebx, cl
@@ -375,7 +396,6 @@ shr r12d, 5
 shld edx, esi, cl
 shld r12, rbp, cl
 shld rbp, r12, cl
-
 
 main ENDP
 

@@ -20,6 +20,10 @@ namespace NativeJIT
     class Register : public RegisterBase
     {
     public:
+        static_assert((ISFLOAT == 0 && (SIZE == 1 || SIZE == 2 || SIZE == 4 || SIZE == 8))
+                      || (ISFLOAT == 1 && (SIZE == 4 || SIZE == 8)),
+                      "Invalid register definition.");
+
         Register()
             : m_id(0)
         {
