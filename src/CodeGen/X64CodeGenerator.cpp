@@ -42,20 +42,20 @@ namespace NativeJIT
                                        unsigned maxCallSites)
         : CodeBuffer(allocator, capacity, maxLabels, maxCallSites),
           // TODO: Handle stream correctly
-          m_out(&std::cout)
+          m_diagnosticsStream(&std::cout)
     {
     }
 
 
     void X64CodeGenerator::EnableDiagnostics(std::ostream& out)
     {
-        m_out = &out;
+        m_diagnosticsStream = &out;
     }
 
 
     void X64CodeGenerator::DisableDiagnostics()
     {
-        m_out = nullptr;
+        m_diagnosticsStream = nullptr;
     }
 
 
@@ -74,30 +74,32 @@ namespace NativeJIT
     // TODO: Remove this temporary overload of CodeBuffer::PlaceLabel.
     void X64CodeGenerator::PlaceLabel(Label l)
     {
+        CodePrinter printer(*this);
+
         CodeBuffer::PlaceLabel(l);
-        *m_out << "L" << l.GetId() << ":" << std::endl;
+        printer.PlaceLabel(l);
     }
 
 
     void X64CodeGenerator::Jmp(Label label)
     {
-        unsigned start = CurrentPosition();
+        CodePrinter printer(*this);
 
         Emit8(0xe9);
         EmitCallSite(label, 4);
 
-        if (m_out != nullptr)
-        {
-            PrintBytes(start, CurrentPosition());
-            *m_out << "jmp L" << label.GetId() << std::endl;
-        }
+        printer.PrintJump(label);
     }
 
 
     void X64CodeGenerator::Jmp(void* functionPtr)
     {
+        CodePrinter printer(*this);
+
         Emit8(0xe9);
         Emit64(reinterpret_cast<unsigned __int64>(functionPtr));
+
+        printer.PrintJump(functionPtr);
     }
 
 
@@ -156,40 +158,9 @@ namespace NativeJIT
     }
 
 
-    void X64CodeGenerator::Indent()
+    std::ostream* X64CodeGenerator::GetDiagnosticsStream() const
     {
-        *m_out << "    ";
-    }
-
-    const unsigned c_asmDataWidth = 36;
-
-    void X64CodeGenerator::PrintBytes(unsigned start, unsigned end)
-    {
-        // TODO: Support for printing '/' after REX prefixes?
-        // Alternative is unit test function can strip out white space and '/'.
-        unsigned __int8* startPtr = BufferStart() + start;
-        unsigned __int8* endPtr = BufferStart() + end;
-
-        *m_out << " ";
-        m_out->width(8);
-        m_out->fill('0');
-        *m_out << std::uppercase << std::hex << start << "  ";
-
-        unsigned column = 11;
-        while (startPtr < endPtr)
-        {
-            m_out->width(2);
-            m_out->fill('0');
-            *m_out << std::hex << static_cast<unsigned>(*startPtr++);
-            *m_out << " ";
-            column += 3;
-        }
-
-        while (column < c_asmDataWidth)
-        {
-            *m_out << ' ';
-            column++;
-        }
+        return m_diagnosticsStream;
     }
 
 
@@ -246,5 +217,99 @@ namespace NativeJIT
     void X64CodeGenerator::Helper<OpCode::Ret>::Emit(X64CodeGenerator& code)
     {
         code.Ret();
+    }
+
+
+    //*************************************************************************
+    //
+    // Helper code printing methods.
+    //
+    //*************************************************************************
+
+    X64CodeGenerator::CodePrinter::CodePrinter(X64CodeGenerator& code)
+        : m_code(code),
+          m_out(code.GetDiagnosticsStream())
+    {
+        NoteStartPosition();
+    }
+
+
+    void X64CodeGenerator::CodePrinter::NoteStartPosition()
+    {
+        m_startPosition = m_code.CurrentPosition();
+    }
+
+
+    void X64CodeGenerator::CodePrinter::PlaceLabel(Label label)
+    {
+        if (m_out != nullptr)
+        {
+            *m_out << "L" << label.GetId() << ":" << std::endl;
+        }
+    }
+
+
+    void X64CodeGenerator::CodePrinter::PrintJump(Label label)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << "jmp L" << label.GetId() << std::endl;
+        }
+    }
+
+
+    void X64CodeGenerator::CodePrinter::PrintJump(void* function)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << "jmp " << std::hex << function << 'h' << std::endl;
+        }
+    }
+
+
+    void X64CodeGenerator::CodePrinter::Print(OpCode op)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op) << std::endl;
+        }
+    }
+
+
+    const unsigned c_asmDataWidth = 36;
+
+    void X64CodeGenerator::CodePrinter::PrintBytes(unsigned start, unsigned end)
+    {
+        // TODO: Support for printing '/' after REX prefixes?
+        // Alternative is unit test function can strip out white space and '/'.
+        unsigned __int8* startPtr = m_code.BufferStart() + start;
+        unsigned __int8* endPtr = m_code.BufferStart() + end;
+
+        *m_out << " ";
+        m_out->width(8);
+        m_out->fill('0');
+        *m_out << std::uppercase << std::hex << start << "  ";
+
+        unsigned column = 11;
+        while (startPtr < endPtr)
+        {
+            m_out->width(2);
+            m_out->fill('0');
+            *m_out << std::hex << static_cast<unsigned>(*startPtr++);
+            *m_out << " ";
+            column += 3;
+        }
+
+        while (column < c_asmDataWidth)
+        {
+            *m_out << ' ';
+            column++;
+        }
     }
 }

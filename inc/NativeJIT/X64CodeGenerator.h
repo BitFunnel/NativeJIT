@@ -242,8 +242,7 @@ namespace NativeJIT
         void EmitModRMOffset(Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset);
 
 
-        void Indent();
-        void PrintBytes(unsigned start, unsigned end);
+        std::ostream* GetDiagnosticsStream() const;
 
 
         // Helper class used to provide partial specializations by OpCode for the Emit() methods.
@@ -293,11 +292,189 @@ namespace NativeJIT
         };
 
 
+        // CodePrinter is a helper class for formatting X64CodeGenerator opcodes
+        // and operands along with the resulting assembly encoding of the
+        // instruction into a diagnostics stream, if diagnostics output is enabled.
+        //
+        // The client is expected to 1. call NoteStartPosition() before emitting
+        // the instructions into the X64CodeGenerator and 2. call the relevant
+        // Print() method after emitting them.
+        // 
+        class CodePrinter : public NonCopyable
+        {
+        public:
+            // Calls NoteStartPosition() and stores the output diagnostics stream.
+            CodePrinter(X64CodeGenerator& code);
+
+            void NoteStartPosition();
+
+            void PlaceLabel(Label label);
+
+            // The Print() methods will display the last remembered starting
+            // point of the code buffer, all the encoded bytes from
+            // the starting point to the end of the buffer followed by the
+            // X64CodeGenerator opcodes and operands.
+
+            void PrintJump(void *function);
+            void PrintJump(Label label);
+
+            template <JccType JCC>
+            void Print(Label l);
+
+            void Print(OpCode op);
+
+            template <unsigned SIZE, bool ISFLOAT>
+            void Print(OpCode op, Register<SIZE, ISFLOAT> dest);
+
+            template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+            void Print(OpCode op, Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+
+            template <unsigned SIZE, bool ISFLOAT>
+            void Print(OpCode op, Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset);
+
+            template <unsigned SIZE, bool ISFLOAT>
+            void Print(OpCode op, Register<8, false> dest, __int32 destOffset, Register<SIZE, ISFLOAT> src);
+
+            template <unsigned SIZE, bool ISFLOAT, typename T>
+            void PrintImmediate(OpCode op, Register<SIZE, ISFLOAT> dest, T value);
+
+
+        private:
+            X64CodeGenerator& m_code;
+            unsigned m_startPosition;
+            std::ostream* m_out;
+
+            void PrintBytes(unsigned startPosition, unsigned endPosition);
+        };
+
         static const unsigned c_rxxRegisterCount = 16;
         static const unsigned c_xmmRegisterCount = 16;
 
-        std::ostream* m_out;
+        std::ostream* m_diagnosticsStream;
     };
+
+
+    //*************************************************************************
+    //
+    // Helper code printing methods.
+    //
+    //*************************************************************************
+
+    template <JccType JCC>
+    void X64CodeGenerator::CodePrinter::Print(Label label)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << JccName(JCC) << " L" << label.GetId() << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::CodePrinter::Print(OpCode op, Register<SIZE, ISFLOAT> dest)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op) << ' ' << dest.GetName() << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::CodePrinter::Print(OpCode op,
+                                              Register<SIZE1, ISFLOAT1> dest,
+                                              Register<SIZE2, ISFLOAT2> src)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op) << ' ' << dest.GetName() << ", " << src.GetName() << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::CodePrinter::Print(OpCode op,
+                                              Register<SIZE, ISFLOAT> dest,
+                                              Register<8, false> src,
+                                              __int32 srcOffset)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op) << ' ' << dest.GetName();
+            *m_out << ", [" << src.GetName();
+
+            if (srcOffset > 0)
+            {
+                *m_out << " + " << std::hex << srcOffset << "h";
+            }
+            else if (srcOffset < 0)
+            {
+                *m_out << " - " << std::hex << -static_cast<__int64>(srcOffset) << "h";
+            }
+
+            *m_out << "]"  << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::CodePrinter::Print(OpCode op,
+                                              Register<8, false> dest,
+                                              __int32 destOffset,
+                                              Register<SIZE, ISFLOAT> src)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op) << " [" << dest.GetName();
+
+            if (destOffset > 0)
+            {
+                *m_out << " + " << std::hex << destOffset << "h";
+            }
+            else if (destOffset < 0)
+            {
+                *m_out << " - " << std::hex << -static_cast<__int64>(destOffset) << "h";
+            }
+
+            *m_out << "], " << src.GetName() << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT, typename T>
+    void X64CodeGenerator::CodePrinter::PrintImmediate(OpCode op,
+                                                       Register<SIZE, ISFLOAT> dest,
+                                                       T value)
+    {
+        static_assert(!std::is_floating_point<T>::value,
+                      "Floating point values cannot be used as immediates.");
+
+        // Cast UInt8 to UInt64 to prevent it from being printed as char.
+        typedef std::conditional<std::is_same<T, unsigned __int8>::value,
+                                 unsigned __int64,
+                                 T>::type ValueType;
+
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op)
+                   << ' ' << dest.GetName()
+                   << ", " << std::hex << static_cast<ValueType>(value) << 'h'
+                   << std::endl;
+        }
+    }
+
 
 
     //*************************************************************************
@@ -308,140 +485,79 @@ namespace NativeJIT
     template <JccType JCC>
     void X64CodeGenerator::Emit(Label label)
     {
-        unsigned start = CurrentPosition();
+        CodePrinter printer(*this);
 
         Emit8(0xf);
         Emit8(0x80 + static_cast<unsigned __int8>(JCC));
         EmitCallSite(label, 4);
 
-        if (m_out != nullptr)
-        {
-            PrintBytes(start, CurrentPosition());
-            *m_out << JccName(JCC) << " L" << label.GetId() << std::endl;
-        }
+        printer.Print<JCC>(label);
     }
 
 
     template <OpCode OP>
     void X64CodeGenerator::Emit()
     {
-        if (m_out != nullptr)
-        {
-            unsigned start = CurrentPosition();
-            Helper<OP>::Emit(*this);
-            PrintBytes(start, CurrentPosition());
-            *m_out << OpCodeName(OP) << std::endl;
-        }
-        else
-        {
-            Helper<OP>::Emit(*this);
-        }
+        CodePrinter printer(*this);
+
+        Helper<OP>::Emit(*this);
+
+        printer.Print(OP);
     }
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest)
     {
-        if (m_out != nullptr)
-        {
-            unsigned start = CurrentPosition();
-            Helper<OP>::Emit(*this, dest);
-            PrintBytes(start, CurrentPosition());
-            *m_out << OpCodeName(OP) << ' ' << dest.GetName() << std::endl;
-        }
-        else
-        {
-            Helper<OP>::Emit(*this, dest);
-        }
+        CodePrinter printer(*this);
+
+        Helper<OP>::Emit(*this, dest);
+
+        printer.Print(OP, dest);
     }
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT1, bool ISFLOAT2>
     void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT1> dest, Register<SIZE, ISFLOAT2> src)
     {
-        if (m_out != nullptr)
-        {
-            unsigned start = CurrentPosition();
-            Helper<OP>::Emit(*this, dest, src);
-            PrintBytes(start, CurrentPosition());
-            *m_out << OpCodeName(OP) << ' ' << dest.GetName() << ", " << src.GetName() << std::endl;
-        }
-        else
-        {
-            Helper<OP>::Emit(*this, dest, src);
-        }
+        CodePrinter printer(*this);
+
+        Helper<OP>::Emit(*this, dest, src);
+
+        printer.Print(OP, dest, src);
     }
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset)
     {
-        if (m_out != nullptr)
-        {
-            unsigned start = CurrentPosition();
-            Helper<OP>::Emit(*this, dest, src, srcOffset);
-            PrintBytes(start, CurrentPosition());
-            *m_out << OpCodeName(OP) << ' ' << dest.GetName();
-            *m_out << ", [" << src.GetName();
-            if (srcOffset > 0)
-            {
-                *m_out << " + " << std::hex << srcOffset << "h";
-            }
-            else if (srcOffset < 0)
-            {
-                *m_out << " - " << std::hex << -static_cast<__int64>(srcOffset) << "h";
-            }
-            *m_out << "]"  << std::endl;
-        }
-        else
-        {
-            Helper<OP>::Emit(*this, dest, src, srcOffset);
-        }
+        CodePrinter printer(*this);
+
+        Helper<OP>::Emit(*this, dest, src, srcOffset);
+
+        printer.Print(OP, dest, src, srcOffset);
     }
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT>
     void X64CodeGenerator::Emit(Register<8, false> dest, __int32 destOffset, Register<SIZE, ISFLOAT> src)
     {
-        if (m_out != nullptr)
-        {
-            unsigned start = CurrentPosition();
-            Helper<OP>::Emit(*this, dest, destOffset, src);
-            PrintBytes(start, CurrentPosition());
-            *m_out << OpCodeName(OP) << " [" << dest.GetName();
-            if (destOffset > 0)
-            {
-                *m_out << " + " << std::hex << destOffset << "h";
-            }
-            else if (destOffset < 0)
-            {
-                *m_out << " - " << std::hex << -static_cast<__int64>(destOffset) << "h";
-            }
-            *m_out << "], " << src.GetName() << std::endl;
-        }
-        else
-        {
-            Helper<OP>::Emit(*this, dest, destOffset, src);
-        }
+        CodePrinter printer(*this);
+
+        Helper<OP>::Emit(*this, dest, destOffset, src);
+
+        printer.Print(OP, dest, destOffset, src);
     }
 
 
     template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
     void X64CodeGenerator::EmitImmediate(Register<SIZE, ISFLOAT> dest, T value)
     {
-        if (m_out != nullptr)
-        {
-            unsigned start = CurrentPosition();
-            Helper<OP>::EmitImmediate(*this, dest, value);
-            PrintBytes(start, CurrentPosition());
-            *m_out << OpCodeName(OP) << ' ' << dest.GetName();
-            // TODO: Hex may not be appropriate for float.
-            *m_out << ", " << std::hex << value << 'h' << std::endl;
-        }
-        else
-        {
-            Helper<OP>::EmitImmediate(*this, dest, value);
-        }
+        CodePrinter printer(*this);
+
+        Helper<OP>::EmitImmediate(*this, dest, value);
+
+        printer.PrintImmediate(OP, dest, value);
     }
 
 
