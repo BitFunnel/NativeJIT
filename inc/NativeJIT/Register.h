@@ -24,6 +24,12 @@ namespace NativeJIT
                       || (ISFLOAT == 1 && (SIZE == 4 || SIZE == 8)),
                       "Invalid register definition.");
 
+        // Templates that don't explicitly receive SIZE and ISFLOAT but rather
+        // have access to a Register need to have a way to access the size and
+        // type, so provide them here.
+        static const unsigned c_size = SIZE;
+        static const bool c_isFloat = ISFLOAT;
+
         Register()
             : m_id(0)
         {

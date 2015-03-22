@@ -208,9 +208,28 @@ namespace NativeJIT
     //*************************************************************************
     template <>
     template <>
-    void X64CodeGenerator::Helper<OpCode::Call>::Emit(X64CodeGenerator& code, Register<8, false> dest)
+    template <>
+    void X64CodeGenerator::Helper<OpCode::Call>::ArgTypes1<false>::Emit(X64CodeGenerator& code, Register<8, false> dest)
     {
         code.Call(dest);
+    }
+
+
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::Pop>::ArgTypes1<false>::Emit(X64CodeGenerator& code, Register<8, false> dest)
+    {
+        code.Pop(dest);
+    }
+
+
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::Push>::ArgTypes1<false>::Emit(X64CodeGenerator& code, Register<8, false> dest)
+    {
+        code.Push(dest);
     }
 
 
