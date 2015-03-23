@@ -191,18 +191,36 @@ namespace NativeJIT
         template <unsigned SIZE>
         void Shld(Register<SIZE, false> dest, Register<SIZE, false> src);
 
-        // SSE instructions encoded as XX 0F OPCODE, where XX is either 0xF2
-        // or 0xF3 depending on the register size and REX.W is always 0. Used
-        // for instructions operating on scalars (f. ex. MovSS/SD, AddSS/SD).
+        // Scalar SSE instructions are encoded as XX 0F OPCODE, where XX is
+        // either 0xF2 or 0xF3 depending on the register size. Used for
+        // instructions operating on scalars (f. ex. MovSS/SD, AddSS/SD) rather
+        // than packed (f. ex. MOVUPS/MOVUPD).
 
-        template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
-        void ScalarSSE(Register<SIZE1, true> dest, Register<SIZE2, true> src);
+        // Generic method for emitting 0xF2 or 0xF3 prefix depending on the
+        // register type and size.
+        template <unsigned RMSIZE, bool RMISFLOAT,
+                  unsigned REGSIZE, bool REGISFLOAT,
+                  unsigned RMREGSIZE, bool RMREGISFLOAT>
+        void EmitScalarSSEPrefix(Register<REGSIZE, REGISFLOAT> reg, Register<RMREGSIZE, RMREGISFLOAT> rm);
 
-        template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
-        void ScalarSSE(Register<SIZE1, true> dest, Register<8, false> src, __int32 srcOffset);
+        // Two direct registers.
+        template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void EmitScalarSSEPrefixDirect(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
 
-        template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
-        void ScalarSSE(Register<8, false> dest, __int32 destOffset, Register<SIZE2, true> src);
+        // Two registers, the one corresponding to R/M is indirect.
+        template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+        void EmitScalarSSEPrefixIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm);
+
+        // Variants for emitting scalar SSE instructions.
+
+        template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void ScalarSSE(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+
+        template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void ScalarSSE(Register<SIZE1, ISFLOAT1> dest, Register<8, false> src, __int32 srcOffset);
+
+        template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void ScalarSSE(Register<8, false> dest, __int32 destOffset, Register<SIZE2, ISFLOAT2> src);
 
         // Group 1/2 instructions.
 
@@ -239,17 +257,71 @@ namespace NativeJIT
                     unsigned __int8 shift,
                     Register<SIZE, false> dest);
 
-        template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-        void EmitRex(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+        // Methods for emitting the 0x66 operand size override prefix if
+        // size of either operand is 16-bit. Note: for indirect addressing, the
+        // size of the operand is the size of the memory being accessed, not the
+        // size of the indirect base register.
+        // Reference: http://wiki.osdev.org/X86-64_Instruction_Encoding#Operand-size_and_address-size_override_prefix
 
-        template <unsigned W, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-        void EmitRexW(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+        // Generic version. When used with indirect addressing, the first two
+        // template parameters describe the target memory size and type whereas
+        // the last two describe the base register. For regular addressing,
+        // these two pairs of template parameters have to be the same.
+        template <unsigned RMSIZE, bool RMISFLOAT,
+                  unsigned REGSIZE, bool REGISFLOAT,
+                  unsigned RMREGSIZE, bool RMREGISFLOAT>
+        void EmitOpSizeOverride(Register<REGSIZE, REGISFLOAT> reg,
+                                Register<RMREGSIZE, RMREGISFLOAT> rm);
 
+        // Single direct register.
         template <unsigned SIZE, bool ISFLOAT>
-        void EmitRex(Register<SIZE, ISFLOAT> dest);
+        void EmitOpSizeOverride(Register<SIZE, ISFLOAT> reg);
 
-        template <unsigned SIZE, bool ISFLOAT1, bool ISFLOAT2>
-        void EmitModRM(Register<SIZE, ISFLOAT1> dest, Register<SIZE, ISFLOAT2> src);
+        // Two direct registers.
+        template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void EmitOpSizeOverrideDirect(Register<SIZE1, ISFLOAT1> dest,
+                                      Register<SIZE2, ISFLOAT2> src);
+
+        // Single indirect register.
+        template <unsigned RMSIZE, bool RMISFLOAT>
+        void EmitOpSizeOverrideIndirect(Register<8, false> rm);
+
+        // Two registers, the one corresponding to R/M is indirect.
+        template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+        void EmitOpSizeOverrideIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm);
+
+        // Methods for emitting the REX byte. For indirect addressing, the
+        // size of the operand is the size of the memory being accessed, not the
+        // size of the indirect base register.
+        // Reference: http://wiki.osdev.org/X86-64_Instruction_Encoding#REX_prefix
+
+        // Generic version. See the comment for EmitOpSizeOverride() for more information.
+        template <unsigned RMSIZE, bool RMISFLOAT,
+                  unsigned REGSIZE, bool REGISFLOAT,
+                  unsigned RMREGSIZE, bool RMREGISFLOAT>
+        void EmitRex(Register<REGSIZE, REGISFLOAT> reg, Register<RMREGSIZE, RMREGISFLOAT> rm);
+
+        // Single direct register.
+        template <unsigned SIZE, bool ISFLOAT>
+        void EmitRex(Register<SIZE, ISFLOAT> reg);
+
+        // Two direct registers.
+        template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void EmitRexDirect(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+
+        // Single indirect register.
+        template <unsigned RMSIZE, bool RMISFLOAT>
+        void EmitRexIndirect(Register<8, false> rm);
+
+        // Two registers, the one corresponding to R/M is indirect.
+        template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+        void EmitRexIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm);
+
+        // Methods for emitting the ModR/M byte.
+        // Reference: http://wiki.osdev.org/X86-64_Instruction_Encoding#ModR.2FM
+
+        template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void EmitModRM(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
 
         template <unsigned SIZE>
         void EmitModRM(unsigned __int8 extensionOpCode, Register<SIZE, false> dest);
@@ -261,7 +333,8 @@ namespace NativeJIT
         std::ostream* GetDiagnosticsStream() const;
 
 
-        // Helper class used to provide partial specializations by OpCode for the Emit() methods.
+        // Helper class used to provide partial specializations by OpCode,
+        // ISFLOAT and SIZE for the Emit() methods.
         template <OpCode OP>
         struct Helper
         {
@@ -621,11 +694,8 @@ namespace NativeJIT
     void X64CodeGenerator::IMul(Register<SIZE, false> dest,
                                 Register<SIZE, false> src)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
-        EmitRex(dest, src);
+        EmitOpSizeOverrideDirect(dest, src);
+        EmitRexDirect(dest, src);
         Emit8(0x0f);
         Emit8(0xAF);
         EmitModRM(dest, src);
@@ -637,11 +707,8 @@ namespace NativeJIT
                                 Register<8, false> src,
                                 __int32 srcOffset)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
-        EmitRex(dest, src);
+        EmitOpSizeOverrideIndirect<SIZE, false>(dest, src);
+        EmitRexIndirect<SIZE, false>(dest, src);
         Emit8(0x0f);
         Emit8(0xAF);
         EmitModRMOffset(dest, src, srcOffset);
@@ -655,12 +722,8 @@ namespace NativeJIT
     {
         unsigned valueSize = Size(value);
 
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
-
-        EmitRex(dest, dest);
+        EmitOpSizeOverrideDirect(dest, dest);
+        EmitRexDirect(dest, dest);
 
         if (valueSize == 1)
         {
@@ -691,7 +754,7 @@ namespace NativeJIT
                                Register<8, false> src,
                                __int32 srcOffset)
     {
-        EmitRex(dest, src);
+        EmitRexIndirect<SIZE, false>(dest, src);
         Emit8(0x8d);
         EmitModRMOffset(dest, src, srcOffset);
     }
@@ -703,6 +766,8 @@ namespace NativeJIT
     {
         unsigned valueSize = Size(value);
 
+        EmitOpSizeOverride(dest);
+
         if (SIZE == 1)
         {
             Emit8(0xb0 | static_cast<unsigned __int8>(dest.GetId()));
@@ -713,17 +778,13 @@ namespace NativeJIT
         {
             EmitRex(dest);
             Emit8(0xc7);
-            EmitModRM(0xc0, dest);
+            EmitModRM(0, dest);
             Emit32(static_cast<unsigned __int32>(value));
         }
         else
         {
-            if (SIZE == 2)
-            {
-                Emit8(0x66);                // Size override prefix.
-            }
             EmitRex(dest);
-            Emit8(0xb8 + (static_cast<unsigned __int8>(dest.GetId()) & 0x7));       // TODO: Method to get lower three id bits.
+            Emit8(0xb8 + dest.GetId8());
             if (SIZE == 2)
             {
                 Assert(valueSize <= 2, "Expected two-byte value.");
@@ -755,7 +816,7 @@ namespace NativeJIT
     void X64CodeGenerator::MovD(Register<SIZE, true> dest, Register<SIZE, false> src)
     {
         Emit8(0x66);
-        EmitRexW<SIZE == 8 ? 1 : 0>(dest, src);
+        EmitRexDirect(dest, src);
         Emit8(0x0f);
         Emit8(0x6e);
         EmitModRM(dest, src);
@@ -767,11 +828,10 @@ namespace NativeJIT
     template <unsigned SIZE>
     void X64CodeGenerator::Shld(Register<SIZE, false> dest, Register<SIZE, false> src)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
-        EmitRex(src, dest);
+        // Note: operand encoding is MRC, so the order of arguments for the
+        // Emit*() methods is reversed.
+        EmitOpSizeOverrideDirect(src, dest);
+        EmitRexDirect(src, dest);
         Emit8(0x0f);
         Emit8(0xa5);
         EmitModRM(src, dest);
@@ -782,37 +842,74 @@ namespace NativeJIT
     // SSE instructions
     //
 
-    template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
-    void X64CodeGenerator::ScalarSSE(Register<SIZE1, true> dest, Register<SIZE2, true> src)
+    template <unsigned RMSIZE, bool RMISFLOAT,
+              unsigned REGSIZE, bool REGISFLOAT,
+              unsigned RMREGSIZE, bool RMREGISFLOAT>
+    void X64CodeGenerator::EmitScalarSSEPrefix(Register<REGSIZE, REGISFLOAT> /* reg */,
+                                               Register<RMREGSIZE, RMREGISFLOAT> /* rm */)
     {
-        Emit8(SIZE1 == 8 ? 0xf2 : 0xf3);
-        EmitRexW<0>(dest, src);
+        static_assert(RMISFLOAT || REGISFLOAT, "Invalid ScalarSSE reference.");
+        static_assert(RMSIZE >= 4 && REGSIZE >= 4, "Invalid integer register.");
+
+        if (RMISFLOAT)
+        {
+            Emit8(RMSIZE == 8 ? 0xf2 : 0xf3);
+        }
+        else
+        {
+            Emit8(REGSIZE == 8 ? 0xf2 : 0xf3);
+        }
+    }
+
+
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::EmitScalarSSEPrefixDirect(Register<SIZE1, ISFLOAT1> dest,
+                                                     Register<SIZE2, ISFLOAT2> src)
+    {
+        EmitScalarSSEPrefix<SIZE2, ISFLOAT2>(dest, src);
+    }
+
+
+    template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+    void X64CodeGenerator::EmitScalarSSEPrefixIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm)
+    {
+        EmitScalarSSEPrefix<RMSIZE, RMISFLOAT>(reg, rm);
+    }
+
+
+    template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::ScalarSSE(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src)
+    {
+        EmitScalarSSEPrefixDirect(dest, src);
+        EmitRexDirect(dest, src);
         Emit8(0x0f);
         Emit8(OPCODE);
         EmitModRM(dest, src);
     }
 
 
-    template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
-    void X64CodeGenerator::ScalarSSE(Register<SIZE1, true> dest,
+    template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::ScalarSSE(Register<SIZE1, ISFLOAT1> dest,
                                      Register<8, false> src,
                                      __int32 srcOffset)
     {
-        Emit8(SIZE1 == 8 ? 0xf2 : 0xf3);
-        EmitRexW<0>(dest, src);
+        EmitScalarSSEPrefixIndirect<SIZE2, ISFLOAT2>(dest, src);
+        EmitRexIndirect<SIZE2, ISFLOAT2>(dest, src);
         Emit8(0x0f);
         Emit8(OPCODE);
         EmitModRMOffset(dest, src, srcOffset);
     }
 
 
-    template <unsigned __int8 OPCODE, unsigned SIZE1, unsigned SIZE2>
+    template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
     void X64CodeGenerator::ScalarSSE(Register<8, false> dest,
                                      __int32 destOffset,
-                                     Register<SIZE2, true> src)
+                                     Register<SIZE2, ISFLOAT2> src)
     {
-        Emit8(SIZE1 == 8 ? 0xf2 : 0xf3);
-        EmitRexW<0>(src, dest);
+        // Note: operand encoding is MR, so the order of arguments for the
+        // Emit*() methods is reversed.
+        EmitScalarSSEPrefixIndirect<SIZE1, ISFLOAT1>(src, dest);
+        EmitRexIndirect<SIZE1, ISFLOAT1>(src, dest);
         Emit8(0x0f);
         Emit8(OPCODE);
         EmitModRMOffset(src, dest, destOffset);
@@ -828,11 +925,8 @@ namespace NativeJIT
                                   Register<SIZE, false> dest,
                                   Register<SIZE, false> src)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
-        EmitRex(dest, src);
+        EmitOpSizeOverrideDirect(dest, src);
+        EmitRexDirect(dest, src);
         if (SIZE == 1)
         {
             Emit8(baseOpCode + 0x2);
@@ -851,11 +945,8 @@ namespace NativeJIT
                                   Register<8, false> src,
                                   __int32 srcOffset)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
-        EmitRex(dest, src);
+        EmitOpSizeOverrideIndirect<SIZE, false>(dest, src);
+        EmitRexIndirect<SIZE, false>(dest, src);
         if (SIZE == 1)
         {
             Emit8(baseOpCode + 0x2);
@@ -890,6 +981,8 @@ namespace NativeJIT
     {
         unsigned valueSize = Size(value);
 
+        EmitOpSizeOverride(dest);
+
         if (dest.GetId() == 0 && SIZE == 1)
         {
             // Special case for AL.
@@ -899,10 +992,6 @@ namespace NativeJIT
         }
         else if (dest.GetId() == 0 && valueSize != 1)
         {
-            if (SIZE == 2)
-            {
-                Emit8(0x66);        // Size override prefix.
-            }
             EmitRex(dest);
             Emit8(baseOpCode + 0x05);
             if (SIZE == 2)
@@ -918,10 +1007,6 @@ namespace NativeJIT
         }
         else
         {
-            if (SIZE == 2)
-            {
-                Emit8(0x66);        // Size override prefix.
-            }
             // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
             EmitRex(dest);
 
@@ -971,10 +1056,7 @@ namespace NativeJIT
     void X64CodeGenerator::Group2(unsigned __int8 extensionOpCode,
                                   Register<SIZE, false> dest)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
+        EmitOpSizeOverride(dest);
         EmitRex(dest);
         if (SIZE == 1)
         {
@@ -994,10 +1076,7 @@ namespace NativeJIT
                                   unsigned __int8 shift,
                                   Register<SIZE, false> dest)
     {
-        if (SIZE == 2)
-        {
-            Emit8(0x66);                // Size override prefix.
-        }
+        EmitOpSizeOverride(dest);
         EmitRex(dest);
         if (SIZE == 1)
         {
@@ -1013,57 +1092,135 @@ namespace NativeJIT
 
 
     //
-    // X64 opcode encoding - REX and Mod/RM
+    // X64 opcode encoding - operand size override.
     //
 
-    // TODO: Can this be coalesced with previous function?
-    // TODO: Is W bit always determined by SIZE1? Is there any case where SIZE2 should specify the data size?
-    // Do we need a separate ptemplate arameter for the data size?
-    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-    void X64CodeGenerator::EmitRex(Register<SIZE1, ISFLOAT1> reg, Register<SIZE2, ISFLOAT2> rm)
+    template <unsigned RMSIZE, bool RMISFLOAT,
+              unsigned REGSIZE, bool REGISFLOAT,
+              unsigned RMREGSIZE, bool RMREGISFLOAT>
+    void X64CodeGenerator::EmitOpSizeOverride(Register<REGSIZE, REGISFLOAT> /* reg */,
+                                              Register<RMREGSIZE, RMREGISFLOAT> /* rm */)
     {
-        // WRXB
-        // TODO: add cases for W and X bits.
+        static_assert((RMSIZE == RMREGSIZE && RMISFLOAT == RMREGISFLOAT)
+                      || (RMREGSIZE == 8 && !RMREGISFLOAT),
+                      "Only direct addressing or indirect addresing with 64-bit "
+                      "general purpose base register can be used.");
 
-        unsigned regId = reg.GetId();
-        unsigned rmId = rm.GetId();
-
-        if (regId > 7 || rmId > 7 || (SIZE1 == 8/* && !ISFLOAT1*/))
+        // Emit operand size override prefix if necessary.
+        // Note: address size override prefix (0x67) is not considered since
+        // we don't support 32-bit indirects.
+        if (RMSIZE == 2 || REGSIZE == 2)
         {
-            Emit8(0x40 | ((SIZE1 == 8 /*&& !ISFLOAT1*/) ? 8 : 0) | ((regId > 7) ? 4 : 0) | ((rmId > 7) ? 1 : 0));
-        }
-    }
-
-
-    // This version of EmitRex is used by SSE and MovD instructions.
-    // MovD uses REX.W to specify the width of the RXX register.
-    // SSE operations need REX.W == 0. The size (single or double) comes from the opcode.
-    // What happens if REX.w == 1 for SSE instruction? I think that W is "don't care" and
-    // ml64.exe happens to set it to zero.
-    template <unsigned W, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
-    void X64CodeGenerator::EmitRexW(Register<SIZE1, ISFLOAT1> reg, Register<SIZE2, ISFLOAT2> rm)
-    {
-        unsigned regId = reg.GetId();
-        unsigned rmId = rm.GetId();
-
-        if (W != 0 || regId > 7 || rmId > 7)
-        {
-            Emit8(0x40 | (W << 3) | ((regId > 7) ? 4 : 0) | ((rmId > 7) ? 1 : 0));
+            Emit8(0x66);
         }
     }
 
 
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::EmitRex(Register<SIZE, ISFLOAT> dest)
+    void X64CodeGenerator::EmitOpSizeOverride(Register<SIZE, ISFLOAT> reg)
     {
-        EmitRex(Register<SIZE, ISFLOAT>(0), dest);
+        EmitOpSizeOverride<SIZE, ISFLOAT>(reg, reg);
     }
 
 
-    template <unsigned SIZE, bool ISFLOAT1, bool ISFLOAT2>
-    void X64CodeGenerator::EmitModRM(Register<SIZE, ISFLOAT1> dest, Register<SIZE, ISFLOAT2> src)
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::EmitOpSizeOverrideDirect(Register<SIZE1, ISFLOAT1> dest,
+                                                    Register<SIZE2, ISFLOAT2> src)
     {
-        Emit8(0xc0 | ((dest.GetId() & 7) << 3) | (src.GetId() & 7));
+        EmitOpSizeOverride<SIZE2, ISFLOAT2>(dest, src);
+    }
+
+
+    template <unsigned RMSIZE, bool RMISFLOAT>
+    void X64CodeGenerator::EmitOpSizeOverrideIndirect(Register<8, false> rm)
+    {
+        EmitOpSizeOverride<RMSIZE, RMISFLOAT>(Register<RMSIZE, RMISFLOAT>(), rm);
+    }
+
+
+    template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+    void X64CodeGenerator::EmitOpSizeOverrideIndirect(Register<REGSIZE, REGISFLOAT> reg,
+                                                      Register<8, false> rm)
+    {
+        EmitOpSizeOverride<RMSIZE, RMISFLOAT>(reg, rm);
+    }
+
+
+    //
+    // X64 opcode encoding - REX.
+    //
+
+    template <unsigned RMSIZE, bool RMISFLOAT,
+              unsigned REGSIZE, bool REGISFLOAT,
+              unsigned RMREGSIZE, bool RMREGISFLOAT>
+    void X64CodeGenerator::EmitRex(Register<REGSIZE, REGISFLOAT> reg,
+                                   Register<RMREGSIZE, RMREGISFLOAT> rm)
+    {
+        static_assert((RMSIZE == RMREGSIZE && RMISFLOAT == RMREGISFLOAT)
+                      || (RMREGSIZE == 8 && !RMREGISFLOAT),
+                      "Only direct addressing or indirect addresing with 64-bit "
+                      "general purpose base register can be used.");
+
+        // TODO: add cases for X bit.
+        //
+        // Note that the REX.W bit is never set when two floating point operands
+        // are used.
+        //
+        // In the indirect mode, the size and type of the R/M operand are
+        // determined by the size and type of the target memory area (given
+        // that the base register is always a general purpose register and size
+        // in our case always 8).
+        const bool w = (REGSIZE == 8 && !REGISFLOAT) || (RMSIZE == 8 && !RMISFLOAT);
+
+        if (w || reg.IsExtended() || rm.IsExtended())
+        {
+            // WRXB
+            Emit8(0x40
+                  | (w ? 8 : 0)
+                  | (reg.IsExtended() ? 4 : 0)
+                  | (rm.IsExtended() ? 1 : 0));
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::EmitRex(Register<SIZE, ISFLOAT> reg)
+    {
+        // Use eax for the other register since it will not affect any of the REX flags.
+        EmitRex<SIZE, ISFLOAT>(eax, reg);
+    }
+
+
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::EmitRexDirect(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src)
+    {
+        EmitRex<SIZE2, ISFLOAT2>(dest, src);
+    }
+
+
+    template <unsigned RMSIZE, bool RMISFLOAT>
+    void X64CodeGenerator::EmitRexIndirect(Register<8, false> rm)
+    {
+        // Use eax for the other register since it will not affect any of the REX flags.
+        EmitRex<RMSIZE, RMISFLOAT>(eax, rm);
+    }
+
+
+    template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+    void X64CodeGenerator::EmitRexIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm)
+    {
+        EmitRex<RMSIZE, RMISFLOAT>(reg, rm);
+    }
+
+
+    //
+    // X64 opcode encoding - ModR/M.
+    //
+
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::EmitModRM(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src)
+    {
+        Emit8(0xc0 | (dest.GetId8() << 3) | src.GetId8());
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
         // this function is only used for Register-Register encoding. Problem will 
         // crop up if caller passes the base register from an X64Indirect.
@@ -1073,7 +1230,7 @@ namespace NativeJIT
     template <unsigned SIZE>
     void X64CodeGenerator::EmitModRM(unsigned __int8 extensionOpCode, Register<SIZE, false> dest)
     {
-        Emit8(0xc0 | (extensionOpCode << 3) | (dest.GetId() & 7));
+        Emit8(0xc0 | (extensionOpCode << 3) | dest.GetId8());
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
         // this function is only used for Register-Register encoding. Problem will 
         // crop up if caller passes the base register from an X64Indirect.
@@ -1103,11 +1260,11 @@ namespace NativeJIT
         if (rm.IsRIP())
         {
             // RIP-relative addressing. Hard-code mod = 0 and rmField = 5.
-            unsigned __int8 mod = 0;
-            unsigned __int8 rmField = 5;
-            unsigned __int8 regField = reg.GetId() & 0x7;
+            const unsigned __int8 mod = 0;
+            const unsigned __int8 rmField = 5;
+            const unsigned __int8 regField = reg.GetId8();
 
-            Emit8( (mod << 6) | (regField << 3) | rmField );
+            Emit8((mod << 6) | (regField << 3) | rmField);
 
             Emit32(offset - CurrentPosition() - 4);
         }
@@ -1115,8 +1272,8 @@ namespace NativeJIT
         {
             // Normal, GPR-indirect addressing.
             unsigned __int8 mod = Mod(offset);
-            unsigned __int8 rmField = rm.GetId() & 0x7;
-            unsigned __int8 regField = reg.GetId() & 0x7;
+            const unsigned __int8 rmField = rm.GetId8();
+            const unsigned __int8 regField = reg.GetId8();
 
             if (rmField == 5 && mod == 0)
             {
@@ -1126,7 +1283,7 @@ namespace NativeJIT
                 mod = 1;
             }
 
-            Emit8( (mod << 6) | (regField << 3) | rmField );
+            Emit8((mod << 6) | (regField << 3) | rmField);
 
             if (rmField == 4)
             {
@@ -1244,7 +1401,7 @@ namespace NativeJIT
         Register<SIZE, true> src)
     {
         // MovSS/SD.
-        code.ScalarSSE<0x11, SIZE, SIZE>(dest, destOffset, src);
+        code.ScalarSSE<0x11, SIZE, true, SIZE, true>(dest, destOffset, src);
     }
 
 
@@ -1402,7 +1559,7 @@ namespace NativeJIT
         Register<8, false> src,                                                         \
         __int32 srcOffset)                                                              \
     {                                                                                   \
-        code.ScalarSSE<opcode, SIZE, SIZE>(dest, src, srcOffset);                       \
+        code.ScalarSSE<opcode, SIZE, true, SIZE, true>(dest, src, srcOffset);           \
     }                                                                                   \
 
     DEFINE_SCALAR_SSE(Add, 0x58);  // AddSS/AddSD.
@@ -1410,7 +1567,7 @@ namespace NativeJIT
     DEFINE_SCALAR_SSE(Mov, 0x10);  // MovSS/MovSD.
     DEFINE_SCALAR_SSE(Sub, 0x5c);  // SubSS/SubSD.
 
-#undef DEFINE_SSE
+#undef DEFINE_SCALAR_SSE
 }
 
 #pragma warning(pop)

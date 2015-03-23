@@ -57,9 +57,25 @@ namespace NativeJIT
         }
 
 
+        // Returns the lower three bits of the ID. Equivalent to GetId() for
+        // non-extended registers.
+        unsigned __int8 GetId8() const
+        {
+            return m_id & 7;
+        }
+
+
         unsigned GetMask() const
         {
             return 1 << m_id;
+        }
+
+
+        // Returns whether the register belongs to the set of extended registers
+        // in the long mode (i.e. r8, xmm8 etc).
+        bool IsExtended() const
+        {
+            return m_id > 7;
         }
 
 

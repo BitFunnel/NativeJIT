@@ -166,32 +166,38 @@ namespace NativeJIT
 
     void X64CodeGenerator::Call(Register<8, false> r)
     {
-        if (r.GetId() > 7)
+        // EmitRex() would set REX.W, but this instruction defaults to
+        // 64-bit operands in 64-bit mode and doesn't need it.
+        if (r.IsExtended())
         {
             Emit8(0x41);
         }
         Emit8(0xff);
-        Emit8(0xD0 | r.GetId() & 0x7);
+        Emit8(0xD0 | r.GetId8());
     }
 
 
     void X64CodeGenerator::Pop(Register<8, false> r)
     {
-        if (r.GetId() > 7)
+        // EmitRex() would set REX.W, but this instruction defaults to
+        // 64-bit operands in 64-bit mode and doesn't need it.
+        if (r.IsExtended())
         {
-            Emit8(0x41);  // TODO: Should be able to use EmitREX() here except it sets W.
+            Emit8(0x41);
         }
-        Emit8(0x58 + (r.GetId() & 7));
+        Emit8(0x58 + r.GetId8());
     }
 
 
     void X64CodeGenerator::Push(Register<8, false> r)
     {
-        if (r.GetId() > 7)
+        // EmitRex() would set REX.W, but this instruction defaults to
+        // 64-bit operands in 64-bit mode and doesn't need it.
+        if (r.IsExtended())
         {
-            Emit8(0x41);  // TODO: Should be able to use EmitREX() here except it sets W.
+            Emit8(0x41);
         }
-        Emit8(0x50 + (r.GetId() & 7));
+        Emit8(0x50 + r.GetId8());
     }
 
 
