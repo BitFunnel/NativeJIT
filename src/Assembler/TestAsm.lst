@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/19/15 12:53:45
+Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/25/15 00:06:34
 TestAsm.asm						     Page 1 - 1
 
 
@@ -475,22 +475,119 @@ TestAsm.asm						     Page 1 - 1
 	   12345678
 
 				;
+				; MovZX
+				;
+
+				; 1 byte to 2, 4 and 8.
+ 000004E5  66| 0F B6 DB		movzx bx, bl
+ 000004E9  66| 41/ 0F B6 DC	movzx bx, r12b
+ 000004EE  66| 44/ 0F B6 CA	movzx r9w, dl
+
+ 000004F3  0F B6 DB		movzx ebx, bl
+ 000004F6  41/ 0F B6 DC		movzx ebx, r12b
+ 000004FA  44/ 0F B6 CA		movzx r9d, dl
+
+ 000004FE  48/ 0F B6 DB		movzx rbx, bl
+ 00000502  49/ 0F B6 DC		movzx rbx, r12b
+ 00000506  4C/ 0F B6 CA		movzx r9, dl
+
+				; 2 bytes to 4 and 8
+ 0000050A  0F B7 DB		movzx ebx, bx
+ 0000050D  41/ 0F B7 DC		movzx ebx, r12w
+ 00000511  44/ 0F B7 CA		movzx r9d, dx
+
+ 00000515  48/ 0F B7 DB		movzx rbx, bx
+ 00000519  49/ 0F B7 DC		movzx rbx, r12w
+ 0000051D  4C/ 0F B7 CA		movzx r9, dx
+
+				;
+				; CvtSI2SD/CvtSI2SS
+				;
+
+ 00000521  F3/ 0F 2A C8		cvtsi2ss xmm1, eax
+ 00000525  F3/ 48/ 0F 2A C8	cvtsi2ss xmm1, rax
+ 0000052A  F3/ 4C/ 0F 2A CB	cvtsi2ss xmm9, rbx
+ 0000052F  F3/ 49/ 0F 2A C8	cvtsi2ss xmm1, r8
+ 00000534  F3/ 0F 2A 49		cvtsi2ss xmm1, dword ptr [rcx + 12h]
+	   12
+ 00000539  F3/ 41/ 0F 2A 49	cvtsi2ss xmm1, dword ptr [r9 + 34h]
+	   34
+ 0000053F  F3/ 48/ 0F 2A 49	cvtsi2ss xmm1, qword ptr [rcx + 56h]
+	   56
+
+ 00000545  F2/ 0F 2A C8		cvtsi2sd xmm1, eax
+ 00000549  F2/ 48/ 0F 2A C8	cvtsi2sd xmm1, rax
+ 0000054E  F2/ 4C/ 0F 2A CB	cvtsi2sd xmm9, rbx
+ 00000553  F2/ 49/ 0F 2A C8	cvtsi2sd xmm1, r8
+ 00000558  F2/ 0F 2A 49		cvtsi2sd xmm1, dword ptr [rcx + 12h]
+	   12
+ 0000055D  F2/ 41/ 0F 2A 49	cvtsi2sd xmm1, dword ptr [r9 + 34h]
+	   34
+ 00000563  F2/ 48/ 0F 2A 49	cvtsi2sd xmm1, qword ptr [rcx + 56h]
+	   56
+
+				;
+				; CvtTSD2SI/CvtTSS2SI
+				;
+
+ 00000569  F3/ 0F 2C C1		cvttss2si eax, xmm1
+ 0000056D  F3/ 48/ 0F 2C C1	cvttss2si rax, xmm1
+ 00000572  F3/ 49/ 0F 2C D9	cvttss2si rbx, xmm9
+ 00000577  F3/ 4C/ 0F 2C C1	cvttss2si r8, xmm1
+ 0000057C  F3/ 0F 2C 59		cvttss2si ebx, dword ptr [rcx + 12h]
+	   12
+ 00000581  F3/ 41/ 0F 2C 59	cvttss2si ebx, dword ptr [r9 + 34h]
+	   34
+ 00000587  F3/ 48/ 0F 2C 59	cvttss2si rbx, dword ptr [rcx + 56h]
+	   56
+
+ 0000058D  F2/ 0F 2C C1		cvttsd2si eax, xmm1
+ 00000591  F2/ 48/ 0F 2C C1	cvttsd2si rax, xmm1
+ 00000596  F2/ 49/ 0F 2C D9	cvttsd2si rbx, xmm9
+ 0000059B  F2/ 4C/ 0F 2C C1	cvttsd2si r8, xmm1
+ 000005A0  F2/ 0F 2C 59		cvttsd2si ebx, mmword ptr [rcx + 12h]
+	   12
+ 000005A5  F2/ 41/ 0F 2C 59	cvttsd2si ebx, mmword ptr [r9 + 34h]
+	   34
+ 000005AB  F2/ 48/ 0F 2C 59	cvttsd2si rbx, mmword ptr [rcx + 56h]
+	   56
+
+				;
+				; Conversion, float - cvtss2sd and cvtsd2ss
+				;
+
+ 000005B1  F3/ 0F 5A C9		cvtss2sd xmm1, xmm1
+ 000005B5  F3/ 41/ 0F 5A D1	cvtss2sd xmm2, xmm9
+ 000005BA  F3/ 0F 5A 51		cvtss2sd xmm2, dword ptr [rcx + 20h]
+	   20
+ 000005BF  F3/ 41/ 0F 5A 91	cvtss2sd xmm2, dword ptr [r9 + 200h]
+	   00000200
+
+ 000005C8  F2/ 0F 5A C9		cvtsd2ss xmm1, xmm1
+ 000005CC  F2/ 41/ 0F 5A D1	cvtsd2ss xmm2, xmm9
+ 000005D1  F2/ 0F 5A 51		cvtsd2ss xmm2, qword ptr [rcx + 20h]
+	   20
+ 000005D6  F2/ 41/ 0F 5A 91	cvtsd2ss xmm2, qword ptr [r9 + 200h]
+	   00000200
+
+
+				;
 				; Shift/rotate
 				;
 
- 000004E5  D2 C0		rol al, cl
- 000004E7  D3 E3		sal ebx, cl
- 000004E9  49/ D3 EC		shr r12, cl
+ 000005DF  D2 C0		rol al, cl
+ 000005E1  D3 E3		sal ebx, cl
+ 000005E3  49/ D3 EC		shr r12, cl
 
- 000004EC  48/ C1 C0 03		rol rax, 3
- 000004F0  C0 E3 04		sal bl, 4
- 000004F3  41/ C1 EC 05		shr r12d, 5
+ 000005E6  48/ C1 C0 03		rol rax, 3
+ 000005EA  C0 E3 04		sal bl, 4
+ 000005ED  41/ C1 EC 05		shr r12d, 5
 
- 000004F7  0F A5 F2		shld edx, esi, cl
- 000004FA  49/ 0F A5 EC		shld r12, rbp, cl
- 000004FE  4C/ 0F A5 E5		shld rbp, r12, cl
+ 000005F1  0F A5 F2		shld edx, esi, cl
+ 000005F4  49/ 0F A5 EC		shld r12, rbp, cl
+ 000005F8  4C/ 0F A5 E5		shld rbp, r12, cl
 
- 00000502			main ENDP
+ 000005FC			main ENDP
 
 				END
 

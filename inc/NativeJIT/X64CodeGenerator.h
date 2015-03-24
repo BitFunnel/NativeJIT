@@ -45,7 +45,9 @@ namespace NativeJIT
         JL = 0xc, JNGE = 0xc,
         JNL = 0xd, JGE = 0xd,
         JLE = 0xe, JNG = 0xe,
-        JNLE = 0xf, JG = 0xf
+        JNLE = 0xf, JG = 0xf,
+        // The following value must be the last one.
+        JccCount
     };
 
 
@@ -56,9 +58,13 @@ namespace NativeJIT
         And,
         Call,
         Cmp,
+        CvtFP2FP,
+        CvtFP2SI,
+        CvtSI2FP,
         IMul,       // TODO: Consider calling this Mul. These opcodes are not X64 opcodes.
         Lea,
         Mov,
+        MovZX,
         Nop,
         Or,
         Pop,
@@ -69,6 +75,8 @@ namespace NativeJIT
         Shld,
         Shr,
         Sub,
+        // The following value must be the last one.
+        OpCodeCount
     };
 
 
@@ -187,6 +195,12 @@ namespace NativeJIT
 
         template <unsigned SIZE>
         void MovD(Register<SIZE, true> dest, Register<SIZE, false> src);
+
+        template <unsigned SIZE1, unsigned SIZE2>
+        void MovZX(Register<SIZE1, false> dest, Register<SIZE2, false> src);
+
+        template <unsigned SIZE1, unsigned SIZE2>
+        void MovZX(Register<SIZE1, false> dest, Register<8, false> src, __int32 srcOffset);
 
         template <unsigned SIZE>
         void Shld(Register<SIZE, false> dest, Register<SIZE, false> src);
@@ -823,6 +837,47 @@ namespace NativeJIT
     }
 
 
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::MovZX(Register<SIZE1, false> dest, Register<SIZE2, false> src)
+    {
+        static_assert(SIZE2 == 1 || SIZE2 == 2, "Invalid source size.");
+        static_assert(SIZE1 > SIZE2, "Target size must be larger than the source size.");
+
+        const bool twoByteSource = SIZE2 == 2;
+
+        // Size override is not necessary for 16-bit source since an opcode that
+        // defaults to 16 bits is used in that scenario.
+        // 
+        if (!twoByteSource)
+        {
+            EmitOpSizeOverrideDirect(dest, src);
+        }
+        EmitRexDirect(dest, src);
+        Emit8(0x0f);
+        Emit8(twoByteSource ? 0xb7 : 0xb6);
+        EmitModRM(dest, src);
+    }
+
+
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::MovZX(Register<SIZE1, false> dest, Register<8, false> src, __int32 srcOffset)
+    {
+        static_assert(SIZE2 == 1 || SIZE2 == 2, "Invalid source size.");
+        static_assert(SIZE1 > SIZE2, "Target size must be larger than the source size.");
+
+        const bool twoByteSource = SIZE2 == 2;
+
+        if (!twoByteSource)
+        {
+            EmitOpSizeOverrideIndirect<SIZE2, false>(dest, src);
+        }
+        EmitRexIndirect<SIZE2, false>(dest, src);
+        Emit8(0x0f);
+        Emit8(twoByteSource ? 0xb7 : 0xb6);
+        EmitModRM(dest, src);
+    }
+
+
     // TODO: Consider coalescing with Group2. Pattern is very similar.
     // TODO: Support for SHRD.
     template <unsigned SIZE>
@@ -841,6 +896,7 @@ namespace NativeJIT
     //
     // SSE instructions
     //
+
 
     template <unsigned RMSIZE, bool RMISFLOAT,
               unsigned REGSIZE, bool REGISFLOAT,
@@ -1447,6 +1503,35 @@ namespace NativeJIT
 
 
     //
+    // MovZX
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE1, false> dest,
+        Register<SIZE2, false> src)
+    {
+        code.MovZX(dest, src);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE1, false> dest,
+        Register<8, false> src,
+        __int32 srcOffset)
+    {
+        code.MovZX<SIZE1, SIZE2>(dest, src, srcOffset);
+    }
+
+
+    //
     // Shld
     //
     template <>
@@ -1537,6 +1622,7 @@ namespace NativeJIT
 #undef DEFINE_GROUP2
 
 
+// SSE, both arguments of the same type and size.
 #define DEFINE_SCALAR_SSE(name, opcode) \
     template <>                                                                         \
     template <>                                                                         \
@@ -1566,6 +1652,43 @@ namespace NativeJIT
     DEFINE_SCALAR_SSE(IMul, 0x59); // MulSS/MulSD.
     DEFINE_SCALAR_SSE(Mov, 0x10);  // MovSS/MovSD.
     DEFINE_SCALAR_SSE(Sub, 0x5c);  // SubSS/SubSD.
+
+#undef DEFINE_SCALAR_SSE
+
+
+// SSE, arguments of different type or size.
+#define DEFINE_SCALAR_SSE(name, opcode, type1, type2, validityCondition)                \
+    template <>                                                                         \
+    template <>                                                                         \
+    template <unsigned SIZE1, unsigned SIZE2>                                           \
+    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes2<type1, type2>::Emit(     \
+        X64CodeGenerator& code,                                                         \
+        Register<SIZE1, type1> dest,                                                    \
+        Register<SIZE2, type2> src)                                                     \
+    {                                                                                   \
+        static_assert(validityCondition,                                                \
+                      "Invalid " #name " instruction, must be " #validityCondition);    \
+        code.ScalarSSE<opcode, SIZE1, type1, SIZE2, type2>(dest, src);                  \
+    }                                                                                   \
+                                                                                        \
+                                                                                        \
+    template <>                                                                         \
+    template <>                                                                         \
+    template <unsigned SIZE1, unsigned SIZE2>                                           \
+    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes2<type1, type2>::Emit(     \
+        X64CodeGenerator& code,                                                         \
+        Register<SIZE1, type1> dest,                                                    \
+        Register<8, false> src,                                                         \
+        __int32 srcOffset)                                                              \
+    {                                                                                   \
+        static_assert(validityCondition,                                                \
+                      "Invalid " #name " instruction, must be " #validityCondition);    \
+        code.ScalarSSE<opcode, SIZE1, type1, SIZE2, type2>(dest, src, srcOffset);       \
+    }                                                                                   \
+
+    DEFINE_SCALAR_SSE(CvtSI2FP, 0x2A, true, false, true == true);   // CvtSI2SD/CvtSI2SS (convert signed int to floating point).
+    DEFINE_SCALAR_SSE(CvtFP2SI, 0x2C, false, true, true == true);   // CvtTSD2SI/CvtTSS2SI (convert floating point to signed int with truncation).
+    DEFINE_SCALAR_SSE(CvtFP2FP, 0x5A, true, true, SIZE1 != SIZE2);  // CvtSS2SD/CvtSD2SS (convert float to double and vice versa).
 
 #undef DEFINE_SCALAR_SSE
 }

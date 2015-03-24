@@ -110,9 +110,13 @@ namespace NativeJIT
             "and",
             "call",
             "cmp",
+            "cvtfp2fp",
+            "cvtfp2si",
+            "cvtsi2fp",
             "imul",
             "lea",
             "mov",
+            "movzx",
             "nop",
             "or",
             "pop",
@@ -125,7 +129,9 @@ namespace NativeJIT
             "sub",
         };
 
-        Assert(static_cast<unsigned>(op)  < sizeof(names)/sizeof(char const*), "Invalid OpCode");
+        static_assert(static_cast<unsigned>(OpCode::OpCodeCount) == _countof(names),
+                      "Mismatched number of opcode names.");
+        Assert(static_cast<unsigned>(op)  < _countof(names), "Invalid OpCode");
 
         return names[static_cast<unsigned>(op)];
     }
@@ -152,7 +158,9 @@ namespace NativeJIT
             "jnle"
         };
 
-        Assert(static_cast<unsigned>(jcc)  < sizeof(names)/sizeof(char const*), "Invalid JCC");
+        static_assert(static_cast<unsigned>(JccType::JccCount) == _countof(names),
+                      "Mismatched number of JCC names.");
+        Assert(static_cast<unsigned>(jcc)  < _countof(names), "Invalid JCC");
 
         return names[static_cast<unsigned>(jcc)];
     }

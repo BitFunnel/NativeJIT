@@ -382,6 +382,87 @@ mulss xmm5, dword ptr [rsi + 1234h]
 subss xmm12, dword ptr [rdi + 12345678h]
 
 ;
+; MovZX
+;
+
+; 1 byte to 2, 4 and 8.
+movzx bx, bl
+movzx bx, r12b
+movzx r9w, dl
+
+movzx ebx, bl
+movzx ebx, r12b
+movzx r9d, dl
+
+movzx rbx, bl
+movzx rbx, r12b
+movzx r9, dl
+
+; 2 bytes to 4 and 8
+movzx ebx, bx
+movzx ebx, r12w
+movzx r9d, dx
+
+movzx rbx, bx
+movzx rbx, r12w
+movzx r9, dx
+
+;
+; CvtSI2SD/CvtSI2SS
+;
+
+cvtsi2ss xmm1, eax
+cvtsi2ss xmm1, rax
+cvtsi2ss xmm9, rbx
+cvtsi2ss xmm1, r8
+cvtsi2ss xmm1, dword ptr [rcx + 12h]
+cvtsi2ss xmm1, dword ptr [r9 + 34h]
+cvtsi2ss xmm1, qword ptr [rcx + 56h]
+
+cvtsi2sd xmm1, eax
+cvtsi2sd xmm1, rax
+cvtsi2sd xmm9, rbx
+cvtsi2sd xmm1, r8
+cvtsi2sd xmm1, dword ptr [rcx + 12h]
+cvtsi2sd xmm1, dword ptr [r9 + 34h]
+cvtsi2sd xmm1, qword ptr [rcx + 56h]
+
+;
+; CvtTSD2SI/CvtTSS2SI
+;
+
+cvttss2si eax, xmm1
+cvttss2si rax, xmm1
+cvttss2si rbx, xmm9
+cvttss2si r8, xmm1
+cvttss2si ebx, dword ptr [rcx + 12h]
+cvttss2si ebx, dword ptr [r9 + 34h]
+cvttss2si rbx, dword ptr [rcx + 56h]
+
+cvttsd2si eax, xmm1
+cvttsd2si rax, xmm1
+cvttsd2si rbx, xmm9
+cvttsd2si r8, xmm1
+cvttsd2si ebx, mmword ptr [rcx + 12h]
+cvttsd2si ebx, mmword ptr [r9 + 34h]
+cvttsd2si rbx, mmword ptr [rcx + 56h]
+
+;
+; Conversion, float - cvtss2sd and cvtsd2ss
+;
+
+cvtss2sd xmm1, xmm1
+cvtss2sd xmm2, xmm9
+cvtss2sd xmm2, dword ptr [rcx + 20h]
+cvtss2sd xmm2, dword ptr [r9 + 200h]
+
+cvtsd2ss xmm1, xmm1
+cvtsd2ss xmm2, xmm9
+cvtsd2ss xmm2, qword ptr [rcx + 20h]
+cvtsd2ss xmm2, qword ptr [r9 + 200h]
+
+
+;
 ; Shift/rotate
 ;
 

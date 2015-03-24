@@ -342,7 +342,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::IMul>(xmm5, rsi, 0x1234);
             buffer.Emit<OpCode::Sub>(xmm12, rdi, 0x12345678);
 
-            // General SSE operations - double.
+            // General SSE operations - float.
             buffer.Emit<OpCode::Add>(xmm1s, xmm2s);
             buffer.Emit<OpCode::Add>(xmm0s, xmm12s);
             buffer.Emit<OpCode::IMul>(xmm5s, xmm12s);
@@ -354,6 +354,72 @@ namespace NativeJIT
             buffer.Emit<OpCode::Add>(xmm4s, rcx, 0x12);
             buffer.Emit<OpCode::IMul>(xmm5s, rsi, 0x1234);
             buffer.Emit<OpCode::Sub>(xmm12s, rdi, 0x12345678);
+
+            // Conversion, integer - movzx.
+            buffer.Emit<OpCode::MovZX>(bx, bl);
+            buffer.Emit<OpCode::MovZX>(bx, r12b);
+            buffer.Emit<OpCode::MovZX>(r9w, dl);
+
+            buffer.Emit<OpCode::MovZX>(ebx, bl);
+            buffer.Emit<OpCode::MovZX>(ebx, r12b);
+            buffer.Emit<OpCode::MovZX>(r9d, dl);
+
+            buffer.Emit<OpCode::MovZX>(rbx, bl);
+            buffer.Emit<OpCode::MovZX>(rbx, r12b);
+            buffer.Emit<OpCode::MovZX>(r9, dl);
+
+            buffer.Emit<OpCode::MovZX>(ebx, bx);
+            buffer.Emit<OpCode::MovZX>(ebx, r12w);
+            buffer.Emit<OpCode::MovZX>(r9d, dx);
+
+            buffer.Emit<OpCode::MovZX>(rbx, bx);
+            buffer.Emit<OpCode::MovZX>(rbx, r12w);
+            buffer.Emit<OpCode::MovZX>(r9, dx);
+
+            // Conversion, signed integer to floating point cvtsi2ss/cvtsi2sd.
+            buffer.Emit<OpCode::CvtSI2FP>(xmm1s, eax);
+            buffer.Emit<OpCode::CvtSI2FP>(xmm1s, rax);
+            buffer.Emit<OpCode::CvtSI2FP>(xmm9s, rbx);
+            buffer.Emit<OpCode::CvtSI2FP>(xmm1s, r8);
+            buffer.Emit<OpCode::CvtSI2FP, 4, true, 4, false>(xmm1s, rcx, 0x12);
+            buffer.Emit<OpCode::CvtSI2FP, 4, true, 4, false>(xmm1s, r9, 0x34);
+            buffer.Emit<OpCode::CvtSI2FP, 4, true, 8, false>(xmm1s, rcx, 0x56);
+
+            buffer.Emit<OpCode::CvtSI2FP>(xmm1, eax);
+            buffer.Emit<OpCode::CvtSI2FP>(xmm1, rax);
+            buffer.Emit<OpCode::CvtSI2FP>(xmm9, rbx);
+            buffer.Emit<OpCode::CvtSI2FP>(xmm1, r8);
+            buffer.Emit<OpCode::CvtSI2FP, 8, true, 4, false>(xmm1, rcx, 0x12);
+            buffer.Emit<OpCode::CvtSI2FP, 8, true, 4, false>(xmm1, r9, 0x34);
+            buffer.Emit<OpCode::CvtSI2FP, 8, true, 8, false>(xmm1, rcx, 0x56);
+
+            // Conversion, floating to signed integer - cvttss2si/cvttsd2si.
+            buffer.Emit<OpCode::CvtFP2SI>(eax, xmm1s);
+            buffer.Emit<OpCode::CvtFP2SI>(rax, xmm1s);
+            buffer.Emit<OpCode::CvtFP2SI>(rbx, xmm9s);
+            buffer.Emit<OpCode::CvtFP2SI>(r8, xmm1s);
+            buffer.Emit<OpCode::CvtFP2SI, 4, false, 4, true>(ebx, rcx, 0x12);
+            buffer.Emit<OpCode::CvtFP2SI, 4, false, 4, true>(ebx, r9, 0x34);
+            buffer.Emit<OpCode::CvtFP2SI, 8, false, 4, true>(rbx, rcx, 0x56);
+
+            buffer.Emit<OpCode::CvtFP2SI>(eax, xmm1);
+            buffer.Emit<OpCode::CvtFP2SI>(rax, xmm1);
+            buffer.Emit<OpCode::CvtFP2SI>(rbx, xmm9);
+            buffer.Emit<OpCode::CvtFP2SI>(r8, xmm1);
+            buffer.Emit<OpCode::CvtFP2SI, 4, false, 8, true>(ebx, rcx, 0x12);
+            buffer.Emit<OpCode::CvtFP2SI, 4, false, 8, true>(ebx, r9, 0x34);
+            buffer.Emit<OpCode::CvtFP2SI, 8, false, 8, true>(rbx, rcx, 0x56);
+
+            // Conversion, float to/from double - cvtss2sd and cvtsd2ss.
+            buffer.Emit<OpCode::CvtFP2FP>(xmm1, xmm1s);
+            buffer.Emit<OpCode::CvtFP2FP>(xmm2, xmm9s);
+            buffer.Emit<OpCode::CvtFP2FP, 8, true, 4, true>(xmm2, rcx, 0x20);
+            buffer.Emit<OpCode::CvtFP2FP, 8, true, 4, true>(xmm2, r9, 0x200);
+
+            buffer.Emit<OpCode::CvtFP2FP>(xmm1s, xmm1);
+            buffer.Emit<OpCode::CvtFP2FP>(xmm2s, xmm9);
+            buffer.Emit<OpCode::CvtFP2FP, 4, true, 8, true>(xmm2s, rcx, 0x20);
+            buffer.Emit<OpCode::CvtFP2FP, 4, true, 8, true>(xmm2s, r9, 0x200);
 
             // Shift
             buffer.Emit<OpCode::Rol>(al);
@@ -761,6 +827,105 @@ namespace NativeJIT
                 " 00000429  F3/ 44/ 0F 5C A7     subss xmm12, dword ptr [rdi + 12345678h]                           \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; MovZX                                                            \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                "                                ; 1 byte to 2, 4 and 8.                                            \n"
+                " 000004E5  66| 0F B6 DB         movzx bx, bl                                                       \n"
+                " 000004E9  66| 41/ 0F B6 DC     movzx bx, r12b                                                     \n"
+                " 000004EE  66| 44/ 0F B6 CA     movzx r9w, dl                                                      \n"
+                "                                                                                                   \n"
+                " 000004F3  0F B6 DB             movzx ebx, bl                                                      \n"
+                " 000004F6  41/ 0F B6 DC         movzx ebx, r12b                                                    \n"
+                " 000004FA  44/ 0F B6 CA         movzx r9d, dl                                                      \n"
+                "                                                                                                   \n"
+                " 000004FE  48/ 0F B6 DB         movzx rbx, bl                                                      \n"
+                " 00000502  49/ 0F B6 DC         movzx rbx, r12b                                                    \n"
+                " 00000506  4C/ 0F B6 CA         movzx r9, dl                                                       \n"
+                "                                                                                                   \n"
+                "                                ; 2 bytes to 4 and 8                                               \n"
+                " 0000050A  0F B7 DB             movzx ebx, bx                                                      \n"
+                " 0000050D  41/ 0F B7 DC         movzx ebx, r12w                                                    \n"
+                " 00000511  44/ 0F B7 CA         movzx r9d, dx                                                      \n"
+                "                                                                                                   \n"
+                " 00000515  48/ 0F B7 DB         movzx rbx, bx                                                      \n"
+                " 00000519  49/ 0F B7 DC         movzx rbx, r12w                                                    \n"
+                " 0000051D  4C/ 0F B7 CA         movzx r9, dx                                                       \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; CvtSI2SD/CvtSI2SS                                                \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                " 00000521  F3/ 0F 2A C8         cvtsi2ss xmm1, eax                                                 \n"
+                " 00000525  F3/ 48/ 0F 2A C8     cvtsi2ss xmm1, rax                                                 \n"
+                " 0000052A  F3/ 4C/ 0F 2A CB     cvtsi2ss xmm9, rbx                                                 \n"
+                " 0000052F  F3/ 49/ 0F 2A C8     cvtsi2ss xmm1, r8                                                  \n"
+                " 00000534  F3/ 0F 2A 49         cvtsi2ss xmm1, dword ptr [rcx + 12h]                               \n"
+                "           12                                                                                      \n"
+                " 00000539  F3/ 41/ 0F 2A 49     cvtsi2ss xmm1, dword ptr [r9 + 34h]                                \n"
+                "           34                                                                                      \n"
+                " 0000053F  F3/ 48/ 0F 2A 49     cvtsi2ss xmm1, qword ptr [rcx + 56h]                               \n"
+                "           56                                                                                      \n"
+                "                                                                                                   \n"
+                " 00000545  F2/ 0F 2A C8         cvtsi2sd xmm1, eax                                                 \n"
+                " 00000549  F2/ 48/ 0F 2A C8     cvtsi2sd xmm1, rax                                                 \n"
+                " 0000054E  F2/ 4C/ 0F 2A CB     cvtsi2sd xmm9, rbx                                                 \n"
+                " 00000553  F2/ 49/ 0F 2A C8     cvtsi2sd xmm1, r8                                                  \n"
+                " 00000558  F2/ 0F 2A 49         cvtsi2sd xmm1, dword ptr [rcx + 12h]                               \n"
+                "           12                                                                                      \n"
+                " 0000055D  F2/ 41/ 0F 2A 49     cvtsi2sd xmm1, dword ptr [r9 + 34h]                                \n"
+                "           34                                                                                      \n"
+                " 00000563  F2/ 48/ 0F 2A 49     cvtsi2sd xmm1, qword ptr [rcx + 56h]                               \n"
+                "           56                                                                                      \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; CvtTSD2SI/CvtTSS2SI                                              \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                " 00000569  F3/ 0F 2C C1         cvttss2si eax, xmm1                                                \n"
+                " 0000056D  F3/ 48/ 0F 2C C1     cvttss2si rax, xmm1                                                \n"
+                " 00000572  F3/ 49/ 0F 2C D9     cvttss2si rbx, xmm9                                                \n"
+                " 00000577  F3/ 4C/ 0F 2C C1     cvttss2si r8, xmm1                                                 \n"
+                " 0000057C  F3/ 0F 2C 59         cvttss2si ebx, dword ptr [rcx + 12h]                               \n"
+                "           12                                                                                      \n"
+                " 00000581  F3/ 41/ 0F 2C 59     cvttss2si ebx, dword ptr [r9 + 34h]                                \n"
+                "           34                                                                                      \n"
+                " 00000587  F3/ 48/ 0F 2C 59     cvttss2si rbx, dword ptr [rcx + 56h]                               \n"
+                "           56                                                                                      \n"
+                "                                                                                                   \n"
+                " 0000058D  F2/ 0F 2C C1         cvttsd2si eax, xmm1                                                \n"
+                " 00000591  F2/ 48/ 0F 2C C1     cvttsd2si rax, xmm1                                                \n"
+                " 00000596  F2/ 49/ 0F 2C D9     cvttsd2si rbx, xmm9                                                \n"
+                " 0000059B  F2/ 4C/ 0F 2C C1     cvttsd2si r8, xmm1                                                 \n"
+                " 000005A0  F2/ 0F 2C 59         cvttsd2si ebx, mmword ptr [rcx + 12h]                              \n"
+                "           12                                                                                      \n"
+                " 000005A5  F2/ 41/ 0F 2C 59     cvttsd2si ebx, mmword ptr [r9 + 34h]                               \n"
+                "           34                                                                                      \n"
+                " 000005AB  F2/ 48/ 0F 2C 59     cvttsd2si rbx, mmword ptr [rcx + 56h]                              \n"
+                "           56                                                                                      \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; Conversion, float - cvtss2sd and cvtsd2ss                        \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                " 000005B1  F3/ 0F 5A C9         cvtss2sd xmm1, xmm1                                                \n"
+                " 000005B5  F3/ 41/ 0F 5A D1     cvtss2sd xmm2, xmm9                                                \n"
+                " 000005BA  F3/ 0F 5A 51         cvtss2sd xmm2, dword ptr [rcx + 20h]                               \n"
+                "           20                                                                                      \n"
+                " 000005BF  F3/ 41/ 0F 5A 91     cvtss2sd xmm2, dword ptr [r9 + 200h]                               \n"
+                "           00000200                                                                                \n"
+                "                                                                                                   \n"
+                " 000005C8  F2/ 0F 5A C9         cvtsd2ss xmm1, xmm1                                                \n"
+                " 000005CC  F2/ 41/ 0F 5A D1     cvtsd2ss xmm2, xmm9                                                \n"
+                " 000005D1  F2/ 0F 5A 51         cvtsd2ss xmm2, qword ptr [rcx + 20h]                               \n"
+                "           20                                                                                      \n"
+                " 000005D6  F2/ 41/ 0F 5A 91     cvtsd2ss xmm2, qword ptr [r9 + 200h]                               \n"
+                "           00000200                                                                                \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; Shift/rotate                                                     \n"
+                "                                ;                                                                  \n"
                 "                                                                                                   \n"
                 " 0000047F  D2 C0                rol al, cl                                                         \n"
                 " 00000481  D3 E3                sal ebx, cl                                                        \n"
