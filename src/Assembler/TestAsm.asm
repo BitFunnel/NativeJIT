@@ -117,6 +117,7 @@ or rax, 12345678h
 
 ; direct-immediate general purpose register case
 and bl, 34h
+and r13b, 34h
 and cx, 56h
 and dx, 5678h
 and ebp, 12h
@@ -183,6 +184,7 @@ mov rbp, [rsi + 1234h]
 mov r10, [rdi + 12345678h]
 
 ; mov r, imm - register 0 case
+mov al, 0
 mov al, 34h
 mov ax, 56h
 mov ax, 5678h
@@ -192,9 +194,13 @@ mov eax, 12345678h
 mov rax, 12h
 mov rax, 1234h
 mov rax, 12345678h
+mov rax, 80000000h
+mov rax, -1
 
 ; mov r, imm - general purpose register case
+mov bl, 0
 mov bl, 34h
+mov r13b, 34h
 mov cx, 56h
 mov dx, 5678h
 mov ebp, 12h
@@ -203,6 +209,7 @@ mov ebp, 12345678h
 mov r12, 12h
 mov r12, 1234h
 mov r12, 12345678h
+mov r12, 80000000h
 mov rbx, 1234567812345678h
 mov rsp, 1234567812345678h
 mov r12, 1234567812345678h
@@ -279,8 +286,8 @@ imul rdi, [rcx + 12h]
 imul rbp, [rsi + 1234h]
 imul r10, [rdi + 12345678h]
 
-;;imul bl, 34h
 imul cx, 56h
+imul cx, 80h
 imul dx, 5678h
 imul ebp, 12h
 imul ebp, 1234h
@@ -288,6 +295,7 @@ imul ebp, 12345678h
 imul r12, 12h
 imul r12, 1234h
 imul r12, 12345678h
+imul r12, -1
 
 call rax
 call rsp
@@ -389,23 +397,33 @@ subss xmm12, dword ptr [rdi + 12345678h]
 movzx bx, bl
 movzx bx, r12b
 movzx r9w, dl
+movzx bx, byte ptr [rcx + 12h]
+movzx bx, byte ptr [r9 + 34h]
 
 movzx ebx, bl
 movzx ebx, r12b
 movzx r9d, dl
+movzx ebx, byte ptr [rcx + 12h]
+movzx ebx, byte ptr [r9 + 34h]
 
 movzx rbx, bl
 movzx rbx, r12b
 movzx r9, dl
+movzx rbx, byte ptr [rcx + 12h]
+movzx rbx, byte ptr [r9 + 34h]
 
 ; 2 bytes to 4 and 8
 movzx ebx, bx
 movzx ebx, r12w
 movzx r9d, dx
+movzx ebx, word ptr [rcx + 12h]
+movzx ebx, word ptr [r9 + 34h]
 
 movzx rbx, bx
 movzx rbx, r12w
 movzx r9, dx
+movzx rbx, word ptr [rcx + 12h]
+movzx rbx, word ptr [r9 + 34h]
 
 ;
 ; CvtSI2SD/CvtSI2SS

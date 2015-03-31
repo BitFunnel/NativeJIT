@@ -170,7 +170,6 @@ namespace NativeJIT
                   Register<8, false> src,
                   __int32 srcOffset);
 
-        // TODO: Would like some sort of compiletime error when T is quadword or floating point
         template <unsigned SIZE, typename T>
         void IMulImmediate(Register<SIZE, false> dest,
                            T value);
@@ -343,9 +342,7 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         void EmitModRMOffset(Register<SIZE, ISFLOAT> dest, Register<8, false> src, __int32 srcOffset);
 
-
         std::ostream* GetDiagnosticsStream() const;
-
 
         // Helper class used to provide partial specializations by OpCode,
         // ISFLOAT and SIZE for the Emit() methods.
@@ -729,18 +726,25 @@ namespace NativeJIT
     }
 
 
-    // Illegal for SIZE == 1?
     template <unsigned SIZE, typename T>
     void X64CodeGenerator::IMulImmediate(Register<SIZE, false> dest,
                                          T value)
     {
+        static_assert(SIZE != 1, "8-bit target not supported.");
+        static_assert(sizeof(T) <= SIZE, "Invalid size of the immediate.");
+        static_assert(std::is_integral<T>::value, "IMul works only with integral values.");
+
         unsigned valueSize = Size(value);
 
         EmitOpSizeOverrideDirect(dest, dest);
         EmitRexDirect(dest, dest);
 
-        if (valueSize == 1)
+        if (valueSize <= 1
+            && (static_cast<__int16>(value) < 0
+                || static_cast<unsigned __int8>(value) < 0x80))
         {
+            // Use the sign-extend flavor of the opcode only if the value is
+            // signed and negative or if the bit #7 is not set otherwise.
             Emit8(0x6b);
             EmitModRM(dest, dest);
             Emit8(static_cast<unsigned __int8>(value));
@@ -751,13 +755,17 @@ namespace NativeJIT
             EmitModRM(dest, dest);
             if (SIZE == 2)
             {
-                Assert(valueSize <= 2, "Expected two-byte value.");
                 Emit16(static_cast<unsigned __int16>(value));
+            }
+            else if (valueSize <= 4)
+            {
+                Emit32(static_cast<unsigned __int32>(value));
             }
             else
             {
-                Assert(valueSize <= 4, "Expected four-byte value.");
-                Emit32(static_cast<unsigned __int32>(value));
+                // TODO: Disable the template for quadwords to force the callers
+                // to use direct register or RIP-relative indirect for 64-bit values.
+                Assert(false, "Unsupported immediate value.");
             }
         }
     }
@@ -778,35 +786,36 @@ namespace NativeJIT
     void X64CodeGenerator::MovImmediate(Register<SIZE, false> dest,
                                         T value)
     {
-        unsigned valueSize = Size(value);
+        static_assert(sizeof(T) <= SIZE, "Invalid size of the immediate.");
 
         EmitOpSizeOverride(dest);
+        EmitRex(dest);
 
         if (SIZE == 1)
         {
-            Emit8(0xb0 | static_cast<unsigned __int8>(dest.GetId()));
-            Assert(valueSize == 1, "Expected one-byte value.");
+            Emit8(0xb0 | dest.GetId8());
             Emit8(static_cast<unsigned __int8>(value));
         }
-        else if (SIZE == 8 && valueSize <= 4)
+        else if (SIZE == 8
+                 && Size(value) <= 4
+                 && (static_cast<__int64>(value) < 0
+                     || static_cast<unsigned __int32>(value) < 0x80000000))
         {
-            EmitRex(dest);
+            // Use the sign-extend flavor of the opcode only if the value is
+            // signed and negative or if the bit #31 is not set otherwise.
             Emit8(0xc7);
             EmitModRM(0, dest);
             Emit32(static_cast<unsigned __int32>(value));
         }
         else
         {
-            EmitRex(dest);
             Emit8(0xb8 + dest.GetId8());
             if (SIZE == 2)
             {
-                Assert(valueSize <= 2, "Expected two-byte value.");
                 Emit16(static_cast<unsigned __int16>(value));
             }
             else if (SIZE == 4)
             {
-                Assert(valueSize <= 4, "Expected four-byte value.");
                 Emit32(static_cast<unsigned __int32>(value));
             }
             else
@@ -874,7 +883,7 @@ namespace NativeJIT
         EmitRexIndirect<SIZE2, false>(dest, src);
         Emit8(0x0f);
         Emit8(twoByteSource ? 0xb7 : 0xb6);
-        EmitModRM(dest, src);
+        EmitModRMOffset(dest, src, srcOffset);
     }
 
 
@@ -1028,21 +1037,27 @@ namespace NativeJIT
     }
 
 
-    // TODO: Would like some sort of compiletime error when T is quadword or floating point
     template <unsigned SIZE, typename T>
     void X64CodeGenerator::Group1(unsigned __int8 baseOpCode,
                                   unsigned __int8 extensionOpCode,
                                   Register<SIZE, false> dest,
                                   T value)
     {
+        static_assert(std::is_integral<T>::value, "Group1 opcodes work only with integral values.");
+        static_assert(sizeof(T) <= SIZE, "Invalid size of the immediate.");
+
         unsigned valueSize = Size(value);
 
         EmitOpSizeOverride(dest);
 
+        // TODO: Fix issues with sign extension similarly to MovImmediate and
+        // IMulImmediate. Also, check what to do when "instr r/m64, imm32" is
+        // emitted with a immediate larger than 2^31 since there's only the
+        // sign extending version of the instruction (VC moves to register and
+        // then does the operation).
         if (dest.GetId() == 0 && SIZE == 1)
         {
             // Special case for AL.
-            Assert(valueSize == 1, "AL requires one-byte value.");
             Emit8(baseOpCode + 0x04);
             Emit8(static_cast<unsigned __int8>(value));
         }
@@ -1052,12 +1067,10 @@ namespace NativeJIT
             Emit8(baseOpCode + 0x05);
             if (SIZE == 2)
             {
-                Assert(valueSize <= 2, "AX requires two-byte value.");
                 Emit16(static_cast<unsigned __int16>(value));
             }
             else
             {
-                Assert(valueSize <= 4, "EAX requires four-byte value.");
                 Emit32(static_cast<unsigned __int32>(value));
             }
         }
@@ -1095,10 +1108,9 @@ namespace NativeJIT
             }
             else
             {
-                // Can't do 8-byte immdediate values.
-                // More accurately, can't do cases where valueSize is 3,5,6, or 7.
-                // TODO: Template should be disabled for this size to avoid runtime error.
-                throw 0;
+                // TODO: Disable the template for quadwords to force the callers
+                // to use direct register or RIP-relative indirect for 64-bit values.
+                Assert(false, "Unsupported immediate value.");
             }
         }
     }

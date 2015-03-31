@@ -348,21 +348,22 @@ namespace NativeJIT
     {
         X64CodeGenerator& code = tree.GetCodeGenerator();
 
-        CodeGenFlags(tree);
+        Label conditionIsTrue = code.AllocateLabel();
+        Label testCompleted = code.AllocateLabel();
 
-        Label l1 = code.AllocateLabel();
-        code.Emit<JCC>(l1);
-//        code.Jcc(JccType::JZ, l1);
+        // Evaluate the condition and react based on it.
+        CodeGenFlags(tree);
+        code.Emit<JCC>(conditionIsTrue);
 
         auto result = tree.Direct<bool>();
-        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), 1);
+        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), false);
+        code.Jmp(testCompleted);
 
-        Label l2 = code.AllocateLabel();
-        code.Jmp(l2);
-        code.PlaceLabel(l1);
+        code.PlaceLabel(conditionIsTrue);
+        result.ConvertToValue(tree, true);
+        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), true);
 
-        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), 1);
-        code.PlaceLabel(l2);
+        code.PlaceLabel(testCompleted);
 
         return result;
     }

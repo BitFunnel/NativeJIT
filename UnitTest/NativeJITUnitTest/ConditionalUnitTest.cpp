@@ -31,6 +31,22 @@ namespace NativeJIT
             // Conditionals
             //
 
+            TestCase(GreaterThan)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<bool, unsigned __int64, unsigned __int64> expression(m_allocator, *m_code);
+
+                    auto & test = expression.GreaterThan(expression.GetP1(), expression.GetP2());
+                    auto greaterThan = expression.Compile(test);
+
+                    TestEqual(false, greaterThan(3, 4));
+                    TestEqual(true, greaterThan(4, 3));
+                }
+            }
+
+
             TestCase(Conditional)
             {
                 AutoResetAllocator reset(m_allocator);

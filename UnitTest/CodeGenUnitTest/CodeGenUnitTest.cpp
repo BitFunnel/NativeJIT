@@ -90,9 +90,9 @@ namespace NativeJIT
 
             // direct-immediate register 0 case
             std::cout << "direct-immediate register 0 case" << std::endl;
-            buffer.EmitImmediate<OpCode::Or>(al, 0x34);
-            buffer.EmitImmediate<OpCode::Or>(ax, 0x56);
-            buffer.EmitImmediate<OpCode::Or>(ax, 0x5678);
+            buffer.EmitImmediate<OpCode::Or>(al, static_cast<unsigned __int8>(0x34));
+            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<unsigned __int16>(0x56));
+            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<unsigned __int16>(0x5678));
             buffer.EmitImmediate<OpCode::Or>(eax, 0x12);
             buffer.EmitImmediate<OpCode::Or>(eax, 0x1234);
             buffer.EmitImmediate<OpCode::Or>(eax, 0x12345678);
@@ -103,9 +103,10 @@ namespace NativeJIT
 
             // direct-immediate general purpose register case
             std::cout << "direct-immediate general purpose register case" << std::endl;
-            buffer.EmitImmediate<OpCode::And>(bl, 0x34);
-            buffer.EmitImmediate<OpCode::And>(cx, 0x56);
-            buffer.EmitImmediate<OpCode::And>(dx, 0x5678);
+            buffer.EmitImmediate<OpCode::And>(bl, static_cast<unsigned __int8>(0x34));
+            buffer.EmitImmediate<OpCode::And>(r13b, static_cast<unsigned __int8>(0x34));
+            buffer.EmitImmediate<OpCode::And>(cx, static_cast<unsigned __int16>(0x56));
+            buffer.EmitImmediate<OpCode::And>(dx, static_cast<unsigned __int16>(0x5678));
             buffer.EmitImmediate<OpCode::And>(ebp, 0x12);
             buffer.EmitImmediate<OpCode::And>(ebp, 0x1234);
             buffer.EmitImmediate<OpCode::And>(ebp, 0x12345678);
@@ -165,27 +166,33 @@ namespace NativeJIT
 
             // mov r, imm
             std::cout << "mov r, imm" << std::endl;
-            buffer.EmitImmediate<OpCode::Mov>(al, 0x34);
-            buffer.EmitImmediate<OpCode::Mov>(ax, 0x56);
-            buffer.EmitImmediate<OpCode::Mov>(ax, 0x5678);
+            buffer.EmitImmediate<OpCode::Mov>(al, static_cast<unsigned __int8>(0));
+            buffer.EmitImmediate<OpCode::Mov>(al, static_cast<unsigned __int8>(0x34));
+            buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<unsigned __int16>(0x56));
+            buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<unsigned __int16>(0x5678));
             buffer.EmitImmediate<OpCode::Mov>(eax, 0x12);
             buffer.EmitImmediate<OpCode::Mov>(eax, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(eax, 0x12345678);
             buffer.EmitImmediate<OpCode::Mov>(rax, 0x12);
             buffer.EmitImmediate<OpCode::Mov>(rax, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(rax, 0x12345678);
+            buffer.EmitImmediate<OpCode::Mov>(rax, 0x80000000);
+            buffer.EmitImmediate<OpCode::Mov>(rax, -1);
 
 
             std::cout << "direct-immediate general purpose register case" << std::endl;
-            buffer.EmitImmediate<OpCode::Mov>(bl, 0x34);
-            buffer.EmitImmediate<OpCode::Mov>(cx, 0x56);
-            buffer.EmitImmediate<OpCode::Mov>(dx, 0x5678);
+            buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<unsigned __int8>(0));
+            buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<unsigned __int8>(0x34));
+            buffer.EmitImmediate<OpCode::Mov>(r13b, static_cast<unsigned __int8>(0x34));
+            buffer.EmitImmediate<OpCode::Mov>(cx, static_cast<unsigned __int16>(0x56));
+            buffer.EmitImmediate<OpCode::Mov>(dx, static_cast<unsigned __int16>(0x5678));
             buffer.EmitImmediate<OpCode::Mov>(ebp, 0x12);
             buffer.EmitImmediate<OpCode::Mov>(ebp, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(ebp, 0x12345678);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x12);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x12345678);
+            buffer.EmitImmediate<OpCode::Mov>(r12, 0x80000000);
             buffer.EmitImmediate<OpCode::Mov>(rbx, 0x1234567812345678);
             buffer.EmitImmediate<OpCode::Mov>(rsp, 0x1234567812345678);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234567812345678);
@@ -251,14 +258,16 @@ namespace NativeJIT
             buffer.Emit<OpCode::IMul>(rbp, rsi, 0x1234);
             buffer.Emit<OpCode::IMul>(r10, rdi, 0x12345678);
 
-            buffer.EmitImmediate<OpCode::IMul>(cx, 0x56);
-            buffer.EmitImmediate<OpCode::IMul>(dx, 0x5678);
+            buffer.EmitImmediate<OpCode::IMul>(cx, static_cast<unsigned __int8>(0x56));
+            buffer.EmitImmediate<OpCode::IMul>(cx, static_cast<unsigned __int8>(0x80));
+            buffer.EmitImmediate<OpCode::IMul>(dx, static_cast<unsigned __int16>(0x5678));
             buffer.EmitImmediate<OpCode::IMul>(ebp, 0x12);
             buffer.EmitImmediate<OpCode::IMul>(ebp, 0x1234);
             buffer.EmitImmediate<OpCode::IMul>(ebp, 0x12345678);
             buffer.EmitImmediate<OpCode::IMul>(r12, 0x12);
             buffer.EmitImmediate<OpCode::IMul>(r12, 0x1234);
             buffer.EmitImmediate<OpCode::IMul>(r12, 0x12345678);
+            buffer.EmitImmediate<OpCode::IMul>(r12, -1);
 
             // Call
             buffer.Emit<OpCode::Call>(rax);
@@ -359,22 +368,32 @@ namespace NativeJIT
             buffer.Emit<OpCode::MovZX>(bx, bl);
             buffer.Emit<OpCode::MovZX>(bx, r12b);
             buffer.Emit<OpCode::MovZX>(r9w, dl);
+            buffer.Emit<OpCode::MovZX, 2, false, 1, false>(bx, rcx, 0x12);
+            buffer.Emit<OpCode::MovZX, 2, false, 1, false>(bx, r9, 0x34);
 
             buffer.Emit<OpCode::MovZX>(ebx, bl);
             buffer.Emit<OpCode::MovZX>(ebx, r12b);
             buffer.Emit<OpCode::MovZX>(r9d, dl);
+            buffer.Emit<OpCode::MovZX, 4, false, 1, false>(ebx, rcx, 0x12);
+            buffer.Emit<OpCode::MovZX, 4, false, 1, false>(ebx, r9, 0x34);
 
             buffer.Emit<OpCode::MovZX>(rbx, bl);
             buffer.Emit<OpCode::MovZX>(rbx, r12b);
             buffer.Emit<OpCode::MovZX>(r9, dl);
+            buffer.Emit<OpCode::MovZX, 8, false, 1, false>(rbx, rcx, 0x12);
+            buffer.Emit<OpCode::MovZX, 8, false, 1, false>(rbx, r9, 0x34);
 
             buffer.Emit<OpCode::MovZX>(ebx, bx);
             buffer.Emit<OpCode::MovZX>(ebx, r12w);
             buffer.Emit<OpCode::MovZX>(r9d, dx);
+            buffer.Emit<OpCode::MovZX, 4, false, 2, false>(ebx, rcx, 0x12);
+            buffer.Emit<OpCode::MovZX, 4, false, 2, false>(ebx, r9, 0x34);
 
             buffer.Emit<OpCode::MovZX>(rbx, bx);
             buffer.Emit<OpCode::MovZX>(rbx, r12w);
             buffer.Emit<OpCode::MovZX>(r9, dx);
+            buffer.Emit<OpCode::MovZX, 8, false, 2, false>(rbx, rcx, 0x12);
+            buffer.Emit<OpCode::MovZX, 8, false, 2, false>(rbx, r9, 0x34);
 
             // Conversion, signed integer to floating point cvtsi2ss/cvtsi2sd.
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, eax);
@@ -455,6 +474,9 @@ namespace NativeJIT
             // 2. Copy/paste from cmd window. This converts tabs to spaces correctly.
             //
             //*********************************************************************
+            // TODO: Have a build step use the script to automatically produce
+            // a .cpp file containing the ml64Output variable as a dependency
+            // on TestAsm.asm.
             char const * ml64Output = 
                 "                                ; Another special case                                             \n"
                 " 00000000  4D/ 03 6D 00         add r13, [r13]                                                     \n"
@@ -523,6 +545,7 @@ namespace NativeJIT
                 "                                                                                                   \n"
                 "                                ; direct-immediate general purpose register case                   \n"
                 " 000000A2  80 E3 34             and bl, 34h                                                        \n"
+                " 0000010C  41/ 80 E5 34         and r13b, 34h                                                      \n"
                 " 000000A5  66| 83 E1 56         and cx, 56h                                                        \n"
                 " 000000A9  66| 81 E2 5678       and dx, 5678h                                                      \n"
                 " 000000AE  83 E5 12             and ebp, 12h                                                       \n"
@@ -594,6 +617,7 @@ namespace NativeJIT
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
                 "                               ; Mov r, imm - register 0 case                                      \n"
+                " 000001EC  B0 00                mov al, 0                                                          \n"
                 " 00000173  B0 34                mov al, 34h                                                        \n"
                 " 00000175  66| B8 0056          mov ax, 56h                                                        \n"
                 " 00000179  66| B8 5678          mov ax, 5678h                                                      \n"
@@ -606,9 +630,15 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 0000019A  48/ C7 C0            mov rax, 12345678h                                                 \n"
                 "           12345678                                                                                \n"
+                " 0000021A  48/ B8               mov rax, 80000000h                                                 \n"
+                "           0000000080000000                                                                        \n"
+                " 0000022A  48/ C7 C0            mov rax, -1                                                        \n"
+                "           FFFFFFFF                                                                                \n"
                 "                                                                                                   \n"
                 "                                ; Mov r, imm - general purpose register case                       \n"
+                " 00000226  B3 00                mov bl, 0                                                          \n"
                 " 000001A1  B3 34                mov bl, 34h                                                        \n"
+                " 00000226  41/ B5 34            mov r13b, 34h                                                      \n"
                 " 000001A3  66| B9 0056          mov cx, 56h                                                        \n"
                 " 000001A7  66| BA 5678          mov dx, 5678h                                                      \n"
                 " 000001AB  BD 00000012          mov ebp, 12h                                                       \n"
@@ -620,6 +650,8 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 000001C8  49/ C7 C4            mov r12, 12345678h                                                 \n"
                 "           12345678                                                                                \n"
+                " 00000255  49/ BC               mov r12, 80000000h                                                 \n"
+                "           0000000080000000                                                                        \n"
                 " 000001CF  48/ BB               mov rbx, 1234567812345678h                                         \n"
                 "           1234567812345678                                                                        \n"
                 " 000001D9  48/ BC               mov rsp, 1234567812345678h                                         \n"
@@ -700,6 +732,7 @@ namespace NativeJIT
                 "                                                                                                   \n"
                 "                                                                                                   \n"
                 " 000002B7  66| 6B C9 56         imul cx, 56h                                                       \n"
+                " 0000035A  66| 69 C9 0080       imul cx, 80h                                                       \n"
                 " 000002BB  66| 69 D2 5678       imul dx, 5678h                                                     \n"
                 " 000002C0  6B ED 12             imul ebp, 12h                                                      \n"
                 " 000002C3  69 ED 00001234       imul ebp, 1234h                                                    \n"
@@ -709,6 +742,7 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 000002DA  4D/ 69 E4            imul r12, 12345678h                                                \n"
                 "           12345678                                                                                \n"
+                " 00000385  4D/ 6B E4 FF         imul r12, -1                                                       \n"
                 "                                                                                                   \n"
                 "                                ; Call                                                             \n"
                 " 000002E9  FF D0                call rax                                                           \n"
@@ -835,23 +869,41 @@ namespace NativeJIT
                 " 000004E5  66| 0F B6 DB         movzx bx, bl                                                       \n"
                 " 000004E9  66| 41/ 0F B6 DC     movzx bx, r12b                                                     \n"
                 " 000004EE  66| 44/ 0F B6 CA     movzx r9w, dl                                                      \n"
+                " 000004F3  66| 0F B6 59         movzx bx, byte ptr [rcx + 12h]                                     \n"
+                "           12                                                                                      \n"
+                " 000004F8  66| 41/ 0F B6 59     movzx bx, byte ptr [r9 + 34h]                                      \n"
+                "           34                                                                                      \n"
                 "                                                                                                   \n"
-                " 000004F3  0F B6 DB             movzx ebx, bl                                                      \n"
-                " 000004F6  41/ 0F B6 DC         movzx ebx, r12b                                                    \n"
-                " 000004FA  44/ 0F B6 CA         movzx r9d, dl                                                      \n"
+                " 000004FE  0F B6 DB             movzx ebx, bl                                                      \n"
+                " 00000501  41/ 0F B6 DC         movzx ebx, r12b                                                    \n"
+                " 00000505  44/ 0F B6 CA         movzx r9d, dl                                                      \n"
+                " 00000509  0F B6 59 12          movzx ebx, byte ptr [rcx + 12h]                                    \n"
+                " 0000050D  41/ 0F B6 59         movzx ebx, byte ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
                 "                                                                                                   \n"
-                " 000004FE  48/ 0F B6 DB         movzx rbx, bl                                                      \n"
-                " 00000502  49/ 0F B6 DC         movzx rbx, r12b                                                    \n"
-                " 00000506  4C/ 0F B6 CA         movzx r9, dl                                                       \n"
+                " 00000512  48/ 0F B6 DB         movzx rbx, bl                                                      \n"
+                " 00000516  49/ 0F B6 DC         movzx rbx, r12b                                                    \n"
+                " 0000051A  4C/ 0F B6 CA         movzx r9, dl                                                       \n"
+                " 0000051E  48/ 0F B6 59         movzx rbx, byte ptr [rcx + 12h]                                    \n"
+                "           12                                                                                      \n"
+                " 00000523  49/ 0F B6 59         movzx rbx, byte ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
                 "                                                                                                   \n"
                 "                                ; 2 bytes to 4 and 8                                               \n"
-                " 0000050A  0F B7 DB             movzx ebx, bx                                                      \n"
-                " 0000050D  41/ 0F B7 DC         movzx ebx, r12w                                                    \n"
-                " 00000511  44/ 0F B7 CA         movzx r9d, dx                                                      \n"
+                " 00000528  0F B7 DB             movzx ebx, bx                                                      \n"
+                " 0000052B  41/ 0F B7 DC         movzx ebx, r12w                                                    \n"
+                " 0000052F  44/ 0F B7 CA         movzx r9d, dx                                                      \n"
+                " 00000533  0F B7 59 12          movzx ebx, word ptr [rcx + 12h]                                    \n"
+                " 00000537  41/ 0F B7 59         movzx ebx, word ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
                 "                                                                                                   \n"
-                " 00000515  48/ 0F B7 DB         movzx rbx, bx                                                      \n"
-                " 00000519  49/ 0F B7 DC         movzx rbx, r12w                                                    \n"
-                " 0000051D  4C/ 0F B7 CA         movzx r9, dx                                                       \n"
+                " 0000053C  48/ 0F B7 DB         movzx rbx, bx                                                      \n"
+                " 00000540  49/ 0F B7 DC         movzx rbx, r12w                                                    \n"
+                " 00000544  4C/ 0F B7 CA         movzx r9, dx                                                       \n"
+                " 00000548  48/ 0F B7 59         movzx rbx, word ptr [rcx + 12h]                                    \n"
+                "           12                                                                                      \n"
+                " 0000054D  49/ 0F B7 59         movzx rbx, word ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"
                 "                                ; CvtSI2SD/CvtSI2SS                                                \n"

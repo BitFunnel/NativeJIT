@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/25/15 00:06:34
+Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/31/15 00:57:27
 TestAsm.asm						     Page 1 - 1
 
 
@@ -143,171 +143,181 @@ TestAsm.asm						     Page 1 - 1
 
 				; direct-immediate general purpose register case
  00000109  80 E3 34		and bl, 34h
- 0000010C  66| 83 E1 56		and cx, 56h
- 00000110  66| 81 E2 5678	and dx, 5678h
- 00000115  83 E5 12		and ebp, 12h
- 00000118  81 E5 00001234	and ebp, 1234h
- 0000011E  81 E5 12345678	and ebp, 12345678h
- 00000124  49/ 83 E4 12		and r12, 12h
- 00000128  49/ 81 E4		and r12, 1234h
+ 0000010C  41/ 80 E5 34		and r13b, 34h
+ 00000110  66| 83 E1 56		and cx, 56h
+ 00000114  66| 81 E2 5678	and dx, 5678h
+ 00000119  83 E5 12		and ebp, 12h
+ 0000011C  81 E5 00001234	and ebp, 1234h
+ 00000122  81 E5 12345678	and ebp, 12345678h
+ 00000128  49/ 83 E4 12		and r12, 12h
+ 0000012C  49/ 81 E4		and r12, 1234h
 	   00001234
- 0000012F  49/ 81 E4		and r12, 12345678h
+ 00000133  49/ 81 E4		and r12, 12345678h
 	   12345678
 
 
 				;
 				; One example of each Group1 opcode.
 				;
- 00000136  48/ 03 56 56		add rdx, [rsi + 56h]
- 0000013A  48/ 3B 56 56		cmp rdx, [rsi + 56h]
- 0000013E  48/ 0B 56 56		or rdx, [rsi + 56h]
- 00000142  48/ 3B 56 56		cmp rdx, [rsi + 56h]
+ 0000013A  48/ 03 56 56		add rdx, [rsi + 56h]
+ 0000013E  48/ 3B 56 56		cmp rdx, [rsi + 56h]
+ 00000142  48/ 0B 56 56		or rdx, [rsi + 56h]
+ 00000146  48/ 3B 56 56		cmp rdx, [rsi + 56h]
 				; adc, sbb, and, xor not supported.
 
 				;
 				; Lea
 				;
- 00000146  48/ 8D 06		lea rax, [rsi]
- 00000149  48/ 8D 46 12		lea rax, [rsi + 12h]
- 0000014D  48/ 8D 46 EE		lea rax, [rsi - 12h]
- 00000151  48/ 8D 86		lea rax, [rsi + 1234h]
+ 0000014A  48/ 8D 06		lea rax, [rsi]
+ 0000014D  48/ 8D 46 12		lea rax, [rsi + 12h]
+ 00000151  48/ 8D 46 EE		lea rax, [rsi - 12h]
+ 00000155  48/ 8D 86		lea rax, [rsi + 1234h]
 	   00001234
- 00000158  48/ 8D 86		lea rax, [rsi - 1234h]
+ 0000015C  48/ 8D 86		lea rax, [rsi - 1234h]
 	   FFFFEDCC
- 0000015F  48/ 8D 86		lea rax, [rsi + 12345678h]
+ 00000163  48/ 8D 86		lea rax, [rsi + 12345678h]
 	   12345678
- 00000166  48/ 8D 86		lea rax, [rsi - 12345678h]
+ 0000016A  48/ 8D 86		lea rax, [rsi - 12345678h]
 	   EDCBA988
- 0000016D  49/ 8D 2C 24		lea rbp, [r12]
- 00000171  49/ 8D AC 24		lea rbp, [r12 + 87h]
+ 00000171  49/ 8D 2C 24		lea rbp, [r12]
+ 00000175  49/ 8D AC 24		lea rbp, [r12 + 87h]
 	   00000087
- 00000179  49/ 8D AC 24		lea rbp, [r12 - 789ABCDEh]
+ 0000017D  49/ 8D AC 24		lea rbp, [r12 - 789ABCDEh]
 	   87654322
- 00000181  48/ 8D 6C 24		lea rbp, [rsp + 20h]
+ 00000185  48/ 8D 6C 24		lea rbp, [rsp + 20h]
 	   20
- 00000186  48/ 8D 65 E0		lea rsp, [rbp - 20h]
+ 0000018A  48/ 8D 65 E0		lea rsp, [rbp - 20h]
 
 				;
 				; Mov
 				;
- 0000018A  8A C1		mov al, cl
- 0000018C  66| 8B DA		mov bx, dx
- 0000018F  8B F0		mov esi, eax
- 00000191  48/ 8B C3		mov rax, rbx
- 00000194  4D/ 8B C1		mov r8, r9
- 00000197  49/ 8B E4		mov rsp, r12
+ 0000018E  8A C1		mov al, cl
+ 00000190  66| 8B DA		mov bx, dx
+ 00000193  8B F0		mov esi, eax
+ 00000195  48/ 8B C3		mov rax, rbx
+ 00000198  4D/ 8B C1		mov r8, r9
+ 0000019B  49/ 8B E4		mov rsp, r12
 
- 0000019A  8A 08		mov cl, [rax]
- 0000019C  8A 59 12		mov bl, [rcx + 12h]
- 0000019F  44/ 8A 8E		mov r9b, [rsi + 100h]
+ 0000019E  8A 08		mov cl, [rax]
+ 000001A0  8A 59 12		mov bl, [rcx + 12h]
+ 000001A3  44/ 8A 8E		mov r9b, [rsi + 100h]
 	   00000100
- 000001A6  44/ 8A BF		mov r15b, [rdi + 12345678h]
+ 000001AA  44/ 8A BF		mov r15b, [rdi + 12345678h]
 	   12345678
 
- 000001AD  8A 12		mov dl, [rdx]
- 000001AF  66| 8B 49 12		mov cx, [rcx + 12h]
- 000001B3  66| 44/ 8B 8E	mov r9w, [rsi + 1234h]
+ 000001B1  8A 12		mov dl, [rdx]
+ 000001B3  66| 8B 49 12		mov cx, [rcx + 12h]
+ 000001B7  66| 44/ 8B 8E	mov r9w, [rsi + 1234h]
 	   00001234
- 000001BB  66| 44/ 8B 9F	mov r11w, [rdi + 12345678h]
+ 000001BF  66| 44/ 8B 9F	mov r11w, [rdi + 12345678h]
 	   12345678
 
- 000001C3  41/ 8B 21		mov esp, [r9]
- 000001C6  8B 51 12		mov edx, [rcx + 12h]
- 000001C9  8B B6 00001234	mov esi, [rsi + 1234h]
- 000001CF  44/ 8B 9F		mov r11d, [rdi + 12345678h]
+ 000001C7  41/ 8B 21		mov esp, [r9]
+ 000001CA  8B 51 12		mov edx, [rcx + 12h]
+ 000001CD  8B B6 00001234	mov esi, [rsi + 1234h]
+ 000001D3  44/ 8B 9F		mov r11d, [rdi + 12345678h]
 	   12345678
 
- 000001D6  49/ 8B 1C 24		mov rbx, [r12]
- 000001DA  48/ 8B 79 12		mov rdi, [rcx + 12h]
- 000001DE  48/ 8B AE		mov rbp, [rsi + 1234h]
+ 000001DA  49/ 8B 1C 24		mov rbx, [r12]
+ 000001DE  48/ 8B 79 12		mov rdi, [rcx + 12h]
+ 000001E2  48/ 8B AE		mov rbp, [rsi + 1234h]
 	   00001234
- 000001E5  4C/ 8B 97		mov r10, [rdi + 12345678h]
+ 000001E9  4C/ 8B 97		mov r10, [rdi + 12345678h]
 	   12345678
 
 				; mov r, imm - register 0 case
- 000001EC  B0 34		mov al, 34h
- 000001EE  66| B8 0056		mov ax, 56h
- 000001F2  66| B8 5678		mov ax, 5678h
- 000001F6  B8 00000012		mov eax, 12h
- 000001FB  B8 00001234		mov eax, 1234h
- 00000200  B8 12345678		mov eax, 12345678h
- 00000205  48/ C7 C0		mov rax, 12h
+ 000001F0  B0 00		mov al, 0
+ 000001F2  B0 34		mov al, 34h
+ 000001F4  66| B8 0056		mov ax, 56h
+ 000001F8  66| B8 5678		mov ax, 5678h
+ 000001FC  B8 00000012		mov eax, 12h
+ 00000201  B8 00001234		mov eax, 1234h
+ 00000206  B8 12345678		mov eax, 12345678h
+ 0000020B  48/ C7 C0		mov rax, 12h
 	   00000012
- 0000020C  48/ C7 C0		mov rax, 1234h
+ 00000212  48/ C7 C0		mov rax, 1234h
 	   00001234
- 00000213  48/ C7 C0		mov rax, 12345678h
+ 00000219  48/ C7 C0		mov rax, 12345678h
 	   12345678
+ 00000220  48/ B8		mov rax, 80000000h
+	   0000000080000000
+ 0000022A  48/ C7 C0		mov rax, -1
+	   FFFFFFFF
 
 				; mov r, imm - general purpose register case
- 0000021A  B3 34		mov bl, 34h
- 0000021C  66| B9 0056		mov cx, 56h
- 00000220  66| BA 5678		mov dx, 5678h
- 00000224  BD 00000012		mov ebp, 12h
- 00000229  BD 00001234		mov ebp, 1234h
- 0000022E  BD 12345678		mov ebp, 12345678h
- 00000233  49/ C7 C4		mov r12, 12h
+ 00000231  B3 00		mov bl, 0
+ 00000233  B3 34		mov bl, 34h
+ 00000235  41/ B5 34		mov r13b, 34h
+ 00000238  66| B9 0056		mov cx, 56h
+ 0000023C  66| BA 5678		mov dx, 5678h
+ 00000240  BD 00000012		mov ebp, 12h
+ 00000245  BD 00001234		mov ebp, 1234h
+ 0000024A  BD 12345678		mov ebp, 12345678h
+ 0000024F  49/ C7 C4		mov r12, 12h
 	   00000012
- 0000023A  49/ C7 C4		mov r12, 1234h
+ 00000256  49/ C7 C4		mov r12, 1234h
 	   00001234
- 00000241  49/ C7 C4		mov r12, 12345678h
+ 0000025D  49/ C7 C4		mov r12, 12345678h
 	   12345678
- 00000248  48/ BB		mov rbx, 1234567812345678h
+ 00000264  49/ BC		mov r12, 80000000h
+	   0000000080000000
+ 0000026E  48/ BB		mov rbx, 1234567812345678h
 	   1234567812345678
- 00000252  48/ BC		mov rsp, 1234567812345678h
+ 00000278  48/ BC		mov rsp, 1234567812345678h
 	   1234567812345678
- 0000025C  49/ BC		mov r12, 1234567812345678h
+ 00000282  49/ BC		mov r12, 1234567812345678h
 	   1234567812345678
 
 
 				; mov [r + offset], r with zero, byte, word, and dword offsets
- 00000266  88 08		mov [rax], cl
- 00000268  88 59 12		mov [rcx + 12h], bl
- 0000026B  44/ 88 8E		mov [rsi + 100h], r9b
+ 0000028C  88 08		mov [rax], cl
+ 0000028E  88 59 12		mov [rcx + 12h], bl
+ 00000291  44/ 88 8E		mov [rsi + 100h], r9b
 	   00000100
- 00000272  44/ 88 BF		mov [rdi + 12345678h], r15b
+ 00000298  44/ 88 BF		mov [rdi + 12345678h], r15b
 	   12345678
 
- 00000279  88 12		mov [rdx], dl
- 0000027B  66| 89 49 12		mov [rcx + 12h], cx
- 0000027F  66| 44/ 89 8E	mov [rsi + 1234h], r9w
+ 0000029F  88 12		mov [rdx], dl
+ 000002A1  66| 89 49 12		mov [rcx + 12h], cx
+ 000002A5  66| 44/ 89 8E	mov [rsi + 1234h], r9w
 	   00001234
- 00000287  66| 44/ 89 9F	mov [rdi + 12345678h], r11w
+ 000002AD  66| 44/ 89 9F	mov [rdi + 12345678h], r11w
 	   12345678
 
- 0000028F  41/ 89 21		mov [r9], esp
- 00000292  89 51 12		mov [rcx + 12h], edx
- 00000295  89 B6 00001234	mov [rsi + 1234h], esi
- 0000029B  44/ 89 9F		mov [rdi + 12345678h], r11d
+ 000002B5  41/ 89 21		mov [r9], esp
+ 000002B8  89 51 12		mov [rcx + 12h], edx
+ 000002BB  89 B6 00001234	mov [rsi + 1234h], esi
+ 000002C1  44/ 89 9F		mov [rdi + 12345678h], r11d
 	   12345678
 
- 000002A2  49/ 89 1C 24		mov [r12], rbx
- 000002A6  48/ 89 79 12		mov [rcx + 12h], rdi
- 000002AA  48/ 89 AE		mov [rsi + 1234h], rbp
+ 000002C8  49/ 89 1C 24		mov [r12], rbx
+ 000002CC  48/ 89 79 12		mov [rcx + 12h], rdi
+ 000002D0  48/ 89 AE		mov [rsi + 1234h], rbp
 	   00001234
- 000002B1  4C/ 89 97		mov [rdi + 12345678h], r10
+ 000002D7  4C/ 89 97		mov [rdi + 12345678h], r10
 	   12345678
 
 
 				;
 				; Push/Pop
 				;
- 000002B8  58			pop rax
- 000002B9  5D			pop rbp
- 000002BA  41/ 5C		pop r12
- 000002BC  53			push rbx
- 000002BD  55			push rbp
- 000002BE  41/ 54		push r12
+ 000002DE  58			pop rax
+ 000002DF  5D			pop rbp
+ 000002E0  41/ 5C		pop r12
+ 000002E2  53			push rbx
+ 000002E3  55			push rbp
+ 000002E4  41/ 54		push r12
 
 				;
 				; Ret
 				;
- 000002C0  C3			ret
+ 000002E6  C3			ret
 
- 000002C1			LL1:
- 000002C1  74 FE		    jz LL1
- 000002C3  0F 84 FFFFFFF8	    jz near ptr LL1
- 000002C9  74 F6		    jz LL1
- 000002CB  0F 84 FFFFFFF0	    jz near ptr LL1
+ 000002E7			LL1:
+ 000002E7  74 FE		    jz LL1
+ 000002E9  0F 84 FFFFFFF8	    jz near ptr LL1
+ 000002EF  74 F6		    jz LL1
+ 000002F1  0F 84 FFFFFFF0	    jz near ptr LL1
 				;    jz far ptr LL1
 
 
@@ -315,163 +325,164 @@ TestAsm.asm						     Page 1 - 1
 				; Imul
 				;
 
- 000002D1  66| 0F AF D9		imul bx, cx
- 000002D5  0F AF D9		imul ebx, ecx
- 000002D8  48/ 0F AF D9		imul rbx, rcx
+ 000002F7  66| 0F AF D9		imul bx, cx
+ 000002FB  0F AF D9		imul ebx, ecx
+ 000002FE  48/ 0F AF D9		imul rbx, rcx
 
- 000002DC  48/ 0F AF C3		imul rax, rbx;
- 000002E0  4D/ 0F AF C1		imul r8, r9;
- 000002E4  66| 0F AF C3		imul ax, bx;
+ 00000302  48/ 0F AF C3		imul rax, rbx;
+ 00000306  4D/ 0F AF C1		imul r8, r9;
+ 0000030A  66| 0F AF C3		imul ax, bx;
 
- 000002E8  66| 0F AF 49		imul cx, [rcx + 12h]
+ 0000030E  66| 0F AF 49		imul cx, [rcx + 12h]
 	   12
- 000002ED  66| 44/ 0F AF 8E	imul r9w, [rsi + 1234h]
+ 00000313  66| 44/ 0F AF 8E	imul r9w, [rsi + 1234h]
 	   00001234
- 000002F6  66| 44/ 0F AF 9F	imul r11w, [rdi + 12345678h]
+ 0000031C  66| 44/ 0F AF 9F	imul r11w, [rdi + 12345678h]
 	   12345678
 
- 000002FF  41/ 0F AF 21		imul esp, [r9]
- 00000303  0F AF 51 12		imul edx, [rcx + 12h]
- 00000307  0F AF B6		imul esi, [rsi + 1234h]
+ 00000325  41/ 0F AF 21		imul esp, [r9]
+ 00000329  0F AF 51 12		imul edx, [rcx + 12h]
+ 0000032D  0F AF B6		imul esi, [rsi + 1234h]
 	   00001234
- 0000030E  44/ 0F AF 9F		imul r11d, [rdi + 12345678h]
+ 00000334  44/ 0F AF 9F		imul r11d, [rdi + 12345678h]
 	   12345678
 
- 00000316  49/ 0F AF 1C 24	imul rbx, [r12]
- 0000031B  48/ 0F AF 79		imul rdi, [rcx + 12h]
+ 0000033C  49/ 0F AF 1C 24	imul rbx, [r12]
+ 00000341  48/ 0F AF 79		imul rdi, [rcx + 12h]
 	   12
- 00000320  48/ 0F AF AE		imul rbp, [rsi + 1234h]
+ 00000346  48/ 0F AF AE		imul rbp, [rsi + 1234h]
 	   00001234
- 00000328  4C/ 0F AF 97		imul r10, [rdi + 12345678h]
+ 0000034E  4C/ 0F AF 97		imul r10, [rdi + 12345678h]
 	   12345678
 
-				;;imul bl, 34h
- 00000330  66| 6B C9 56		imul cx, 56h
- 00000334  66| 69 D2 5678	imul dx, 5678h
- 00000339  6B ED 12		imul ebp, 12h
- 0000033C  69 ED 00001234	imul ebp, 1234h
- 00000342  69 ED 12345678	imul ebp, 12345678h
- 00000348  4D/ 6B E4 12		imul r12, 12h
- 0000034C  4D/ 69 E4		imul r12, 1234h
+ 00000356  66| 6B C9 56		imul cx, 56h
+ 0000035A  66| 69 C9 0080	imul cx, 80h
+ 0000035F  66| 69 D2 5678	imul dx, 5678h
+ 00000364  6B ED 12		imul ebp, 12h
+ 00000367  69 ED 00001234	imul ebp, 1234h
+ 0000036D  69 ED 12345678	imul ebp, 12345678h
+ 00000373  4D/ 6B E4 12		imul r12, 12h
+ 00000377  4D/ 69 E4		imul r12, 1234h
 	   00001234
- 00000353  4D/ 69 E4		imul r12, 12345678h
+ 0000037E  4D/ 69 E4		imul r12, 12345678h
 	   12345678
+ 00000385  4D/ 6B E4 FF		imul r12, -1
 
- 0000035A  FF D0		call rax
- 0000035C  FF D4		call rsp
- 0000035E  FF D5		call rbp
- 00000360  41/ FF D4		call r12
- 00000363  41/ FF D5		call r13
+ 00000389  FF D0		call rax
+ 0000038B  FF D4		call rsp
+ 0000038D  FF D5		call rbp
+ 0000038F  41/ FF D4		call r12
+ 00000392  41/ FF D5		call r13
 
- 00000366  48/ B8		mov rax, 07fffffffffffffffh
+ 00000395  48/ B8		mov rax, 07fffffffffffffffh
 	   7FFFFFFFFFFFFFFF
 
- 00000370  66| 48/ 0F 6E C8	movd xmm1, rax
- 00000375  66| 48/ 0F 6E C9	movd xmm1, rcx
- 0000037A  66| 49/ 0F 6E C8	movd xmm1, r8
- 0000037F  66| 48/ 0F 6E CD	movd xmm1, rbp
- 00000384  66| 49/ 0F 6E CC	movd xmm1, r12
+ 0000039F  66| 48/ 0F 6E C8	movd xmm1, rax
+ 000003A4  66| 48/ 0F 6E C9	movd xmm1, rcx
+ 000003A9  66| 49/ 0F 6E C8	movd xmm1, r8
+ 000003AE  66| 48/ 0F 6E CD	movd xmm1, rbp
+ 000003B3  66| 49/ 0F 6E CC	movd xmm1, r12
 
- 00000389  66| 48/ 0F 6E C1	movd xmm0, rcx
- 0000038E  66| 48/ 0F 6E C9	movd xmm1, rcx
- 00000393  66| 48/ 0F 6E D1	movd xmm2, rcx
- 00000398  66| 48/ 0F 6E E9	movd xmm5, rcx
- 0000039D  66| 4C/ 0F 6E E1	movd xmm12, rcx
+ 000003B8  66| 48/ 0F 6E C1	movd xmm0, rcx
+ 000003BD  66| 48/ 0F 6E C9	movd xmm1, rcx
+ 000003C2  66| 48/ 0F 6E D1	movd xmm2, rcx
+ 000003C7  66| 48/ 0F 6E E9	movd xmm5, rcx
+ 000003CC  66| 4C/ 0F 6E E1	movd xmm12, rcx
 
- 000003A2  66| 0F 6E C8		movd xmm1, eax
- 000003A6  66| 0F 6E C9		movd xmm1, ecx
- 000003AA  66| 41/ 0F 6E C8	movd xmm1, r8d
- 000003AF  66| 0F 6E CD		movd xmm1, ebp
- 000003B3  66| 41/ 0F 6E CC	movd xmm1, r12d
+ 000003D1  66| 0F 6E C8		movd xmm1, eax
+ 000003D5  66| 0F 6E C9		movd xmm1, ecx
+ 000003D9  66| 41/ 0F 6E C8	movd xmm1, r8d
+ 000003DE  66| 0F 6E CD		movd xmm1, ebp
+ 000003E2  66| 41/ 0F 6E CC	movd xmm1, r12d
 
- 000003B8  66| 0F 6E C1		movd xmm0, ecx
- 000003BC  66| 0F 6E C9		movd xmm1, ecx
- 000003C0  66| 0F 6E D1		movd xmm2, ecx
- 000003C4  66| 0F 6E E9		movd xmm5, ecx
- 000003C8  66| 44/ 0F 6E E1	movd xmm12, ecx
+ 000003E7  66| 0F 6E C1		movd xmm0, ecx
+ 000003EB  66| 0F 6E C9		movd xmm1, ecx
+ 000003EF  66| 0F 6E D1		movd xmm2, ecx
+ 000003F3  66| 0F 6E E9		movd xmm5, ecx
+ 000003F7  66| 44/ 0F 6E E1	movd xmm12, ecx
 
 				; movss
- 000003CD  F3/ 0F 10 CA		movss xmm1, xmm2
- 000003D1  F3/ 41/ 0F 10 C4	movss xmm0, xmm12
- 000003D6  F3/ 41/ 0F 10 EC	movss xmm5, xmm12
- 000003DB  F3/ 0F 10 EB		movss xmm5, xmm3
- 000003DF  F3/ 44/ 0F 10 ED	movss xmm13, xmm5
- 000003E4  F3/ 41/ 0F 10 C7	movss xmm0, xmm15
+ 000003FC  F3/ 0F 10 CA		movss xmm1, xmm2
+ 00000400  F3/ 41/ 0F 10 C4	movss xmm0, xmm12
+ 00000405  F3/ 41/ 0F 10 EC	movss xmm5, xmm12
+ 0000040A  F3/ 0F 10 EB		movss xmm5, xmm3
+ 0000040E  F3/ 44/ 0F 10 ED	movss xmm13, xmm5
+ 00000413  F3/ 41/ 0F 10 C7	movss xmm0, xmm15
 
- 000003E9  F3/ 41/ 0F 10 04	movss xmm0, dword ptr [r12]
+ 00000418  F3/ 41/ 0F 10 04	movss xmm0, dword ptr [r12]
 	   24
- 000003EF  F3/ 0F 10 61		movss xmm4, dword ptr [rcx + 12h]
+ 0000041E  F3/ 0F 10 61		movss xmm4, dword ptr [rcx + 12h]
 	   12
- 000003F4  F3/ 0F 10 AE		movss xmm5, dword ptr [rsi + 1234h]
+ 00000423  F3/ 0F 10 AE		movss xmm5, dword ptr [rsi + 1234h]
 	   00001234
- 000003FC  F3/ 44/ 0F 10 A7	movss xmm12, dword ptr [rdi + 12345678h]
+ 0000042B  F3/ 44/ 0F 10 A7	movss xmm12, dword ptr [rdi + 12345678h]
 	   12345678
 
- 00000405  F3/ 41/ 0F 11 04	movss dword ptr [r12], xmm0
+ 00000434  F3/ 41/ 0F 11 04	movss dword ptr [r12], xmm0
 	   24
- 0000040B  F3/ 0F 11 61		movss dword ptr [rcx + 12h], xmm4
+ 0000043A  F3/ 0F 11 61		movss dword ptr [rcx + 12h], xmm4
 	   12
- 00000410  F3/ 0F 11 AE		movss dword ptr [rsi + 1234h], xmm5
+ 0000043F  F3/ 0F 11 AE		movss dword ptr [rsi + 1234h], xmm5
 	   00001234
- 00000418  F3/ 44/ 0F 11 A7	movss dword ptr [rdi + 12345678h], xmm12
+ 00000447  F3/ 44/ 0F 11 A7	movss dword ptr [rdi + 12345678h], xmm12
 	   12345678
 
 				; movsd
- 00000421  F2/ 0F 10 CA		movsd xmm1, xmm2
- 00000425  F2/ 41/ 0F 10 C4	movsd xmm0, xmm12
- 0000042A  F2/ 41/ 0F 10 EC	movsd xmm5, xmm12
- 0000042F  F2/ 0F 10 EB		movsd xmm5, xmm3
- 00000433  F2/ 44/ 0F 10 ED	movsd xmm13, xmm5
- 00000438  F2/ 41/ 0F 10 C7	movsd xmm0, xmm15
+ 00000450  F2/ 0F 10 CA		movsd xmm1, xmm2
+ 00000454  F2/ 41/ 0F 10 C4	movsd xmm0, xmm12
+ 00000459  F2/ 41/ 0F 10 EC	movsd xmm5, xmm12
+ 0000045E  F2/ 0F 10 EB		movsd xmm5, xmm3
+ 00000462  F2/ 44/ 0F 10 ED	movsd xmm13, xmm5
+ 00000467  F2/ 41/ 0F 10 C7	movsd xmm0, xmm15
 
- 0000043D  F2/ 41/ 0F 10 04	movsd xmm0, mmword ptr [r12]
+ 0000046C  F2/ 41/ 0F 10 04	movsd xmm0, mmword ptr [r12]
 	   24
- 00000443  F2/ 0F 10 61		movsd xmm4, mmword ptr [rcx + 12h]
+ 00000472  F2/ 0F 10 61		movsd xmm4, mmword ptr [rcx + 12h]
 	   12
- 00000448  F2/ 0F 10 AE		movsd xmm5, mmword ptr [rsi + 1234h]
+ 00000477  F2/ 0F 10 AE		movsd xmm5, mmword ptr [rsi + 1234h]
 	   00001234
- 00000450  F2/ 44/ 0F 10 A7	movsd xmm12, mmword ptr [rdi + 12345678h]
+ 0000047F  F2/ 44/ 0F 10 A7	movsd xmm12, mmword ptr [rdi + 12345678h]
 	   12345678
 
- 00000459  F2/ 41/ 0F 11 04	movsd mmword ptr [r12], xmm0
+ 00000488  F2/ 41/ 0F 11 04	movsd mmword ptr [r12], xmm0
 	   24
- 0000045F  F2/ 0F 11 61		movsd mmword ptr [rcx + 12h], xmm4
+ 0000048E  F2/ 0F 11 61		movsd mmword ptr [rcx + 12h], xmm4
 	   12
- 00000464  F2/ 0F 11 AE		movsd mmword ptr [rsi + 1234h], xmm5
+ 00000493  F2/ 0F 11 AE		movsd mmword ptr [rsi + 1234h], xmm5
 	   00001234
- 0000046C  F2/ 44/ 0F 11 A7	movsd mmword ptr [rdi + 12345678h], xmm12
+ 0000049B  F2/ 44/ 0F 11 A7	movsd mmword ptr [rdi + 12345678h], xmm12
 	   12345678
 
- 00000475  F2/ 0F 58 CA		addsd xmm1, xmm2
- 00000479  F2/ 41/ 0F 58 C4	addsd xmm0, xmm12
- 0000047E  F2/ 41/ 0F 59 EC	mulsd xmm5, xmm12
- 00000483  F2/ 0F 59 EB		mulsd xmm5, xmm3
- 00000487  F2/ 44/ 0F 5C ED	subsd xmm13, xmm5
- 0000048C  F2/ 41/ 0F 5C C7	subsd xmm0, xmm15
+ 000004A4  F2/ 0F 58 CA		addsd xmm1, xmm2
+ 000004A8  F2/ 41/ 0F 58 C4	addsd xmm0, xmm12
+ 000004AD  F2/ 41/ 0F 59 EC	mulsd xmm5, xmm12
+ 000004B2  F2/ 0F 59 EB		mulsd xmm5, xmm3
+ 000004B6  F2/ 44/ 0F 5C ED	subsd xmm13, xmm5
+ 000004BB  F2/ 41/ 0F 5C C7	subsd xmm0, xmm15
 
- 00000491  F2/ 41/ 0F 58 04	addsd xmm0, mmword ptr [r12]
+ 000004C0  F2/ 41/ 0F 58 04	addsd xmm0, mmword ptr [r12]
 	   24
- 00000497  F2/ 0F 58 61		addsd xmm4, mmword ptr [rcx + 12h]
+ 000004C6  F2/ 0F 58 61		addsd xmm4, mmword ptr [rcx + 12h]
 	   12
- 0000049C  F2/ 0F 59 AE		mulsd xmm5, mmword ptr [rsi + 1234h]
+ 000004CB  F2/ 0F 59 AE		mulsd xmm5, mmword ptr [rsi + 1234h]
 	   00001234
- 000004A4  F2/ 44/ 0F 5C A7	subsd xmm12, mmword ptr [rdi + 12345678h]
+ 000004D3  F2/ 44/ 0F 5C A7	subsd xmm12, mmword ptr [rdi + 12345678h]
 	   12345678
 
- 000004AD  F3/ 0F 58 CA		addss xmm1, xmm2
- 000004B1  F3/ 41/ 0F 58 C4	addss xmm0, xmm12
- 000004B6  F3/ 41/ 0F 59 EC	mulss xmm5, xmm12
- 000004BB  F3/ 0F 59 EB		mulss xmm5, xmm3
- 000004BF  F3/ 44/ 0F 5C ED	subss xmm13, xmm5
- 000004C4  F3/ 41/ 0F 5C C7	subss xmm0, xmm15
+ 000004DC  F3/ 0F 58 CA		addss xmm1, xmm2
+ 000004E0  F3/ 41/ 0F 58 C4	addss xmm0, xmm12
+ 000004E5  F3/ 41/ 0F 59 EC	mulss xmm5, xmm12
+ 000004EA  F3/ 0F 59 EB		mulss xmm5, xmm3
+ 000004EE  F3/ 44/ 0F 5C ED	subss xmm13, xmm5
+ 000004F3  F3/ 41/ 0F 5C C7	subss xmm0, xmm15
 
- 000004C9  F3/ 41/ 0F 58 04	addss xmm0, dword ptr [r12]
+ 000004F8  F3/ 41/ 0F 58 04	addss xmm0, dword ptr [r12]
 	   24
- 000004CF  F3/ 0F 58 61		addss xmm4, dword ptr [rcx + 12h]
+ 000004FE  F3/ 0F 58 61		addss xmm4, dword ptr [rcx + 12h]
 	   12
- 000004D4  F3/ 0F 59 AE		mulss xmm5, dword ptr [rsi + 1234h]
+ 00000503  F3/ 0F 59 AE		mulss xmm5, dword ptr [rsi + 1234h]
 	   00001234
- 000004DC  F3/ 44/ 0F 5C A7	subss xmm12, dword ptr [rdi + 12345678h]
+ 0000050B  F3/ 44/ 0F 5C A7	subss xmm12, dword ptr [rdi + 12345678h]
 	   12345678
 
 				;
@@ -479,95 +490,113 @@ TestAsm.asm						     Page 1 - 1
 				;
 
 				; 1 byte to 2, 4 and 8.
- 000004E5  66| 0F B6 DB		movzx bx, bl
- 000004E9  66| 41/ 0F B6 DC	movzx bx, r12b
- 000004EE  66| 44/ 0F B6 CA	movzx r9w, dl
+ 00000514  66| 0F B6 DB		movzx bx, bl
+ 00000518  66| 41/ 0F B6 DC	movzx bx, r12b
+ 0000051D  66| 44/ 0F B6 CA	movzx r9w, dl
+ 00000522  66| 0F B6 59		movzx bx, byte ptr [rcx + 12h]
+	   12
+ 00000527  66| 41/ 0F B6 59	movzx bx, byte ptr [r9 + 34h]
+	   34
 
- 000004F3  0F B6 DB		movzx ebx, bl
- 000004F6  41/ 0F B6 DC		movzx ebx, r12b
- 000004FA  44/ 0F B6 CA		movzx r9d, dl
+ 0000052D  0F B6 DB		movzx ebx, bl
+ 00000530  41/ 0F B6 DC		movzx ebx, r12b
+ 00000534  44/ 0F B6 CA		movzx r9d, dl
+ 00000538  0F B6 59 12		movzx ebx, byte ptr [rcx + 12h]
+ 0000053C  41/ 0F B6 59		movzx ebx, byte ptr [r9 + 34h]
+	   34
 
- 000004FE  48/ 0F B6 DB		movzx rbx, bl
- 00000502  49/ 0F B6 DC		movzx rbx, r12b
- 00000506  4C/ 0F B6 CA		movzx r9, dl
+ 00000541  48/ 0F B6 DB		movzx rbx, bl
+ 00000545  49/ 0F B6 DC		movzx rbx, r12b
+ 00000549  4C/ 0F B6 CA		movzx r9, dl
+ 0000054D  48/ 0F B6 59		movzx rbx, byte ptr [rcx + 12h]
+	   12
+ 00000552  49/ 0F B6 59		movzx rbx, byte ptr [r9 + 34h]
+	   34
 
 				; 2 bytes to 4 and 8
- 0000050A  0F B7 DB		movzx ebx, bx
- 0000050D  41/ 0F B7 DC		movzx ebx, r12w
- 00000511  44/ 0F B7 CA		movzx r9d, dx
+ 00000557  0F B7 DB		movzx ebx, bx
+ 0000055A  41/ 0F B7 DC		movzx ebx, r12w
+ 0000055E  44/ 0F B7 CA		movzx r9d, dx
+ 00000562  0F B7 59 12		movzx ebx, word ptr [rcx + 12h]
+ 00000566  41/ 0F B7 59		movzx ebx, word ptr [r9 + 34h]
+	   34
 
- 00000515  48/ 0F B7 DB		movzx rbx, bx
- 00000519  49/ 0F B7 DC		movzx rbx, r12w
- 0000051D  4C/ 0F B7 CA		movzx r9, dx
+ 0000056B  48/ 0F B7 DB		movzx rbx, bx
+ 0000056F  49/ 0F B7 DC		movzx rbx, r12w
+ 00000573  4C/ 0F B7 CA		movzx r9, dx
+ 00000577  48/ 0F B7 59		movzx rbx, word ptr [rcx + 12h]
+	   12
+ 0000057C  49/ 0F B7 59		movzx rbx, word ptr [r9 + 34h]
+	   34
 
 				;
 				; CvtSI2SD/CvtSI2SS
 				;
 
- 00000521  F3/ 0F 2A C8		cvtsi2ss xmm1, eax
- 00000525  F3/ 48/ 0F 2A C8	cvtsi2ss xmm1, rax
- 0000052A  F3/ 4C/ 0F 2A CB	cvtsi2ss xmm9, rbx
- 0000052F  F3/ 49/ 0F 2A C8	cvtsi2ss xmm1, r8
- 00000534  F3/ 0F 2A 49		cvtsi2ss xmm1, dword ptr [rcx + 12h]
+ 00000581  F3/ 0F 2A C8		cvtsi2ss xmm1, eax
+ 00000585  F3/ 48/ 0F 2A C8	cvtsi2ss xmm1, rax
+ 0000058A  F3/ 4C/ 0F 2A CB	cvtsi2ss xmm9, rbx
+ 0000058F  F3/ 49/ 0F 2A C8	cvtsi2ss xmm1, r8
+ 00000594  F3/ 0F 2A 49		cvtsi2ss xmm1, dword ptr [rcx + 12h]
 	   12
- 00000539  F3/ 41/ 0F 2A 49	cvtsi2ss xmm1, dword ptr [r9 + 34h]
+ 00000599  F3/ 41/ 0F 2A 49	cvtsi2ss xmm1, dword ptr [r9 + 34h]
 	   34
- 0000053F  F3/ 48/ 0F 2A 49	cvtsi2ss xmm1, qword ptr [rcx + 56h]
+ 0000059F  F3/ 48/ 0F 2A 49	cvtsi2ss xmm1, qword ptr [rcx + 56h]
 	   56
 
- 00000545  F2/ 0F 2A C8		cvtsi2sd xmm1, eax
- 00000549  F2/ 48/ 0F 2A C8	cvtsi2sd xmm1, rax
- 0000054E  F2/ 4C/ 0F 2A CB	cvtsi2sd xmm9, rbx
- 00000553  F2/ 49/ 0F 2A C8	cvtsi2sd xmm1, r8
- 00000558  F2/ 0F 2A 49		cvtsi2sd xmm1, dword ptr [rcx + 12h]
+ 000005A5  F2/ 0F 2A C8		cvtsi2sd xmm1, eax
+ 000005A9  F2/ 48/ 0F 2A C8	cvtsi2sd xmm1, rax
+ 000005AE  F2/ 4C/ 0F 2A CB	cvtsi2sd xmm9, rbx
+ 000005B3  F2/ 49/ 0F 2A C8	cvtsi2sd xmm1, r8
+ 000005B8  F2/ 0F 2A 49		cvtsi2sd xmm1, dword ptr [rcx + 12h]
 	   12
- 0000055D  F2/ 41/ 0F 2A 49	cvtsi2sd xmm1, dword ptr [r9 + 34h]
+ 000005BD  F2/ 41/ 0F 2A 49	cvtsi2sd xmm1, dword ptr [r9 + 34h]
 	   34
- 00000563  F2/ 48/ 0F 2A 49	cvtsi2sd xmm1, qword ptr [rcx + 56h]
+ 000005C3  F2/ 48/ 0F 2A 49	cvtsi2sd xmm1, qword ptr [rcx + 56h]
 	   56
 
 				;
 				; CvtTSD2SI/CvtTSS2SI
 				;
 
- 00000569  F3/ 0F 2C C1		cvttss2si eax, xmm1
- 0000056D  F3/ 48/ 0F 2C C1	cvttss2si rax, xmm1
- 00000572  F3/ 49/ 0F 2C D9	cvttss2si rbx, xmm9
- 00000577  F3/ 4C/ 0F 2C C1	cvttss2si r8, xmm1
- 0000057C  F3/ 0F 2C 59		cvttss2si ebx, dword ptr [rcx + 12h]
+ 000005C9  F3/ 0F 2C C1		cvttss2si eax, xmm1
+ 000005CD  F3/ 48/ 0F 2C C1	cvttss2si rax, xmm1
+ 000005D2  F3/ 49/ 0F 2C D9	cvttss2si rbx, xmm9
+ 000005D7  F3/ 4C/ 0F 2C C1	cvttss2si r8, xmm1
+ 000005DC  F3/ 0F 2C 59		cvttss2si ebx, dword ptr [rcx + 12h]
 	   12
- 00000581  F3/ 41/ 0F 2C 59	cvttss2si ebx, dword ptr [r9 + 34h]
+ 000005E1  F3/ 41/ 0F 2C 59	cvttss2si ebx, dword ptr [r9 + 34h]
 	   34
- 00000587  F3/ 48/ 0F 2C 59	cvttss2si rbx, dword ptr [rcx + 56h]
+ 000005E7  F3/ 48/ 0F 2C 59	cvttss2si rbx, dword ptr [rcx + 56h]
 	   56
 
- 0000058D  F2/ 0F 2C C1		cvttsd2si eax, xmm1
- 00000591  F2/ 48/ 0F 2C C1	cvttsd2si rax, xmm1
- 00000596  F2/ 49/ 0F 2C D9	cvttsd2si rbx, xmm9
- 0000059B  F2/ 4C/ 0F 2C C1	cvttsd2si r8, xmm1
- 000005A0  F2/ 0F 2C 59		cvttsd2si ebx, mmword ptr [rcx + 12h]
+ 000005ED  F2/ 0F 2C C1		cvttsd2si eax, xmm1
+ 000005F1  F2/ 48/ 0F 2C C1	cvttsd2si rax, xmm1
+ 000005F6  F2/ 49/ 0F 2C D9	cvttsd2si rbx, xmm9
+ 000005FB  F2/ 4C/ 0F 2C C1	cvttsd2si r8, xmm1
+ 00000600  F2/ 0F 2C 59		cvttsd2si ebx, mmword ptr [rcx + 12h]
 	   12
- 000005A5  F2/ 41/ 0F 2C 59	cvttsd2si ebx, mmword ptr [r9 + 34h]
+ 00000605  F2/ 41/ 0F 2C 59	cvttsd2si ebx, mmword ptr [r9 + 34h]
 	   34
- 000005AB  F2/ 48/ 0F 2C 59	cvttsd2si rbx, mmword ptr [rcx + 56h]
+ 0000060B  F2/ 48/ 0F 2C 59	cvttsd2si rbx, mmword ptr [rcx + 56h]
 	   56
 
 				;
 				; Conversion, float - cvtss2sd and cvtsd2ss
 				;
 
- 000005B1  F3/ 0F 5A C9		cvtss2sd xmm1, xmm1
- 000005B5  F3/ 41/ 0F 5A D1	cvtss2sd xmm2, xmm9
- 000005BA  F3/ 0F 5A 51		cvtss2sd xmm2, dword ptr [rcx + 20h]
+ 00000611  F3/ 0F 5A C9		cvtss2sd xmm1, xmm1
+ 00000615  F3/ 41/ 0F 5A D1	cvtss2sd xmm2, xmm9
+ 0000061A  F3/ 0F 5A 51		cvtss2sd xmm2, dword ptr [rcx + 20h]
 	   20
- 000005BF  F3/ 41/ 0F 5A 91	cvtss2sd xmm2, dword ptr [r9 + 200h]
+ 0000061F  F3/ 41/ 0F 5A 91	cvtss2sd xmm2, dword ptr [r9 + 200h]
 	   00000200
 
- 000005C8  F2/ 0F 5A C9		cvtsd2ss xmm1, xmm1
- 000005CC  F2/ 41/ 0F 5A D1	cvtsd2ss xmm2, xmm9
- 000005D1  F2/ 0F 5A 51		cvtsd2ss xmm2, qword ptr [rcx + 20h]
+ 00000628  F2/ 0F 5A C9		cvtsd2ss xmm1, xmm1
+ 0000062C  F2/ 41/ 0F 5A D1	cvtsd2ss xmm2, xmm9
+ 00000631  F2/ 0F 5A 51		cvtsd2ss xmm2, qword ptr [rcx + 20h]
 	   20
- 000005D6  F2/ 41/ 0F 5A 91	cvtsd2ss xmm2, qword ptr [r9 + 200h]
+ 00000636  F2/ 41/ 0F 5A 91	cvtsd2ss xmm2, qword ptr [r9 + 200h]
 	   00000200
 
 
@@ -575,19 +604,19 @@ TestAsm.asm						     Page 1 - 1
 				; Shift/rotate
 				;
 
- 000005DF  D2 C0		rol al, cl
- 000005E1  D3 E3		sal ebx, cl
- 000005E3  49/ D3 EC		shr r12, cl
+ 0000063F  D2 C0		rol al, cl
+ 00000641  D3 E3		sal ebx, cl
+ 00000643  49/ D3 EC		shr r12, cl
 
- 000005E6  48/ C1 C0 03		rol rax, 3
- 000005EA  C0 E3 04		sal bl, 4
- 000005ED  41/ C1 EC 05		shr r12d, 5
+ 00000646  48/ C1 C0 03		rol rax, 3
+ 0000064A  C0 E3 04		sal bl, 4
+ 0000064D  41/ C1 EC 05		shr r12d, 5
 
- 000005F1  0F A5 F2		shld edx, esi, cl
- 000005F4  49/ 0F A5 EC		shld r12, rbp, cl
- 000005F8  4C/ 0F A5 E5		shld rbp, r12, cl
+ 00000651  0F A5 F2		shld edx, esi, cl
+ 00000654  49/ 0F A5 EC		shld r12, rbp, cl
+ 00000658  4C/ 0F A5 E5		shld rbp, r12, cl
 
- 000005FC			main ENDP
+ 0000065C			main ENDP
 
 				END
 
