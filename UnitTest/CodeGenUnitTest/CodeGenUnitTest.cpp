@@ -440,6 +440,17 @@ namespace NativeJIT
             buffer.Emit<OpCode::CvtFP2FP, 4, true, 8, true>(xmm2s, rcx, 0x20);
             buffer.Emit<OpCode::CvtFP2FP, 4, true, 8, true>(xmm2s, r9, 0x200);
 
+            // Floating point comparison - comiss and comisd.
+            buffer.Emit<OpCode::Cmp>(xmm1s, xmm1s);
+            buffer.Emit<OpCode::Cmp>(xmm2s, xmm9s);
+            buffer.Emit<OpCode::Cmp>(xmm2s, rcx, 0x20);
+            buffer.Emit<OpCode::Cmp>(xmm2s, r9, 0x200);
+
+            buffer.Emit<OpCode::Cmp>(xmm1, xmm1);
+            buffer.Emit<OpCode::Cmp>(xmm2, xmm9);
+            buffer.Emit<OpCode::Cmp>(xmm2, rcx, 0x20);
+            buffer.Emit<OpCode::Cmp>(xmm2, r9, 0x200);
+
             // Shift
             buffer.Emit<OpCode::Rol>(al);
             buffer.Emit<OpCode::Sal>(ebx);
@@ -973,6 +984,23 @@ namespace NativeJIT
                 " 000005D1  F2/ 0F 5A 51         cvtsd2ss xmm2, qword ptr [rcx + 20h]                               \n"
                 "           20                                                                                      \n"
                 " 000005D6  F2/ 41/ 0F 5A 91     cvtsd2ss xmm2, qword ptr [r9 + 200h]                               \n"
+                "           00000200                                                                                \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; Floating point comparison, comiss and comisd.                    \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                " 00000610  0F 2F C9             comiss xmm1, xmm1                                                  \n"
+                " 00000613  41/ 0F 2F D1         comiss xmm2, xmm9                                                  \n"
+                " 00000617  0F 2F 51 20          comiss xmm2, dword ptr [rcx + 20h]                                 \n"
+                " 0000061B  41/ 0F 2F 91         comiss xmm2, dword ptr [r9 + 200h]                                 \n"
+                "           00000200                                                                                \n"
+                "                                                                                                   \n"
+                " 00000623  66| 0F 2F C9         comisd xmm1, xmm1                                                  \n"
+                " 00000627  66| 41/ 0F 2F D1     comisd xmm2, xmm9                                                  \n"
+                " 0000062C  66| 0F 2F 51         comisd xmm2, qword ptr [rcx + 20h]                                 \n"
+                "           20                                                                                      \n"
+                " 00000631  66| 41/ 0F 2F 91     comisd xmm2, qword ptr [r9 + 200h]                                 \n"
                 "           00000200                                                                                \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"

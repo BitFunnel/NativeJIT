@@ -479,6 +479,19 @@ cvtsd2ss xmm2, xmm9
 cvtsd2ss xmm2, qword ptr [rcx + 20h]
 cvtsd2ss xmm2, qword ptr [r9 + 200h]
 
+;
+; Floating point comparison, comiss and comisd.
+;
+
+comiss xmm1, xmm1
+comiss xmm2, xmm9
+comiss xmm2, dword ptr [rcx + 20h]
+comiss xmm2, dword ptr [r9 + 200h]
+
+comisd xmm1, xmm1
+comisd xmm2, xmm9
+comisd xmm2, qword ptr [rcx + 20h]
+comisd xmm2, qword ptr [r9 + 200h]
 
 ;
 ; Shift/rotate

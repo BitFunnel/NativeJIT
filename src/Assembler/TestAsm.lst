@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/31/15 00:57:27
+Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/31/15 01:04:31
 TestAsm.asm						     Page 1 - 1
 
 
@@ -599,24 +599,40 @@ TestAsm.asm						     Page 1 - 1
  00000636  F2/ 41/ 0F 5A 91	cvtsd2ss xmm2, qword ptr [r9 + 200h]
 	   00000200
 
+				;
+				; Floating point comparison, comiss and comisd.
+				;
+
+ 0000063F  0F 2F C9		comiss xmm1, xmm1
+ 00000642  41/ 0F 2F D1		comiss xmm2, xmm9
+ 00000646  0F 2F 51 20		comiss xmm2, dword ptr [rcx + 20h]
+ 0000064A  41/ 0F 2F 91		comiss xmm2, dword ptr [r9 + 200h]
+	   00000200
+
+ 00000652  66| 0F 2F C9		comisd xmm1, xmm1
+ 00000656  66| 41/ 0F 2F D1	comisd xmm2, xmm9
+ 0000065B  66| 0F 2F 51		comisd xmm2, qword ptr [rcx + 20h]
+	   20
+ 00000660  66| 41/ 0F 2F 91	comisd xmm2, qword ptr [r9 + 200h]
+	   00000200
 
 				;
 				; Shift/rotate
 				;
 
- 0000063F  D2 C0		rol al, cl
- 00000641  D3 E3		sal ebx, cl
- 00000643  49/ D3 EC		shr r12, cl
+ 00000669  D2 C0		rol al, cl
+ 0000066B  D3 E3		sal ebx, cl
+ 0000066D  49/ D3 EC		shr r12, cl
 
- 00000646  48/ C1 C0 03		rol rax, 3
- 0000064A  C0 E3 04		sal bl, 4
- 0000064D  41/ C1 EC 05		shr r12d, 5
+ 00000670  48/ C1 C0 03		rol rax, 3
+ 00000674  C0 E3 04		sal bl, 4
+ 00000677  41/ C1 EC 05		shr r12d, 5
 
- 00000651  0F A5 F2		shld edx, esi, cl
- 00000654  49/ 0F A5 EC		shld r12, rbp, cl
- 00000658  4C/ 0F A5 E5		shld rbp, r12, cl
+ 0000067B  0F A5 F2		shld edx, esi, cl
+ 0000067E  49/ 0F A5 EC		shld r12, rbp, cl
+ 00000682  4C/ 0F A5 E5		shld rbp, r12, cl
 
- 0000065C			main ENDP
+ 00000686			main ENDP
 
 				END
 

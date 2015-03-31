@@ -235,6 +235,39 @@ namespace NativeJIT
         template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
         void ScalarSSE(Register<8, false> dest, __int32 destOffset, Register<SIZE2, ISFLOAT2> src);
 
+        // SSEx66 methods emit SSE instructions that are encoded as
+        // [0x66] 0F OPCODE, where 0x66 prefix is present only if the source is
+        // a double. Used mostly but not exclusively for instructions operating
+        // on packed (f. ex. MovAPS/PD, XorPS/PD). Note that this is not the
+        // exclusive use of this prefix as there are instructions which use the
+        // 0x66 prefix to specify whether the arguments are MMX or XMM registers.
+
+        // Generic method for emitting the 0x66 prefix depending on the register
+        // type and size.
+        template <unsigned RMSIZE, bool RMISFLOAT,
+                  unsigned REGSIZE, bool REGISFLOAT,
+                  unsigned RMREGSIZE, bool RMREGISFLOAT>
+        void EmitSSEx66Prefix(Register<REGSIZE, REGISFLOAT> reg, Register<RMREGSIZE, RMREGISFLOAT> rm);
+
+        // Two direct registers.
+        template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void EmitSSEx66PrefixDirect(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+
+        // Two registers, the one corresponding to R/M is indirect.
+        template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+        void EmitSSEx66PrefixIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm);
+
+        // Variants for emitting the SSEx66 instructions.
+
+        template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void SSEx66(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
+
+        template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void SSEx66(Register<SIZE1, ISFLOAT1> dest, Register<8, false> src, __int32 srcOffset);
+
+        template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+        void SSEx66(Register<8, false> dest, __int32 destOffset, Register<SIZE2, ISFLOAT2> src);
+
         // Group 1/2 instructions.
 
         template <unsigned SIZE>
@@ -903,9 +936,8 @@ namespace NativeJIT
 
 
     //
-    // SSE instructions
+    // Scalar SSE instructions
     //
-
 
     template <unsigned RMSIZE, bool RMISFLOAT,
               unsigned REGSIZE, bool REGISFLOAT,
@@ -913,9 +945,10 @@ namespace NativeJIT
     void X64CodeGenerator::EmitScalarSSEPrefix(Register<REGSIZE, REGISFLOAT> /* reg */,
                                                Register<RMREGSIZE, RMREGISFLOAT> /* rm */)
     {
-        static_assert(RMISFLOAT || REGISFLOAT, "Invalid ScalarSSE reference.");
-        static_assert(RMSIZE >= 4 && REGSIZE >= 4, "Invalid integer register.");
+        static_assert(RMISFLOAT || REGISFLOAT, "Invalid ScalarSSE usage.");
+        static_assert(RMSIZE >= 4 && REGSIZE >= 4, "Invalid ScalarSSE integer register."); // Floats would error out before this point.
 
+        // Use the source register to decide on the prefix, but only if it's a float.
         if (RMISFLOAT)
         {
             Emit8(RMSIZE == 8 ? 0xf2 : 0xf3);
@@ -974,6 +1007,83 @@ namespace NativeJIT
         // Note: operand encoding is MR, so the order of arguments for the
         // Emit*() methods is reversed.
         EmitScalarSSEPrefixIndirect<SIZE1, ISFLOAT1>(src, dest);
+        EmitRexIndirect<SIZE1, ISFLOAT1>(src, dest);
+        Emit8(0x0f);
+        Emit8(OPCODE);
+        EmitModRMOffset(src, dest, destOffset);
+    }
+
+
+    //
+    // SSEx66 instructions
+    //
+
+    template <unsigned RMSIZE, bool RMISFLOAT,
+              unsigned REGSIZE, bool REGISFLOAT,
+              unsigned RMREGSIZE, bool RMREGISFLOAT>
+    void X64CodeGenerator::EmitSSEx66Prefix(Register<REGSIZE, REGISFLOAT> /* reg */,
+                                            Register<RMREGSIZE, RMREGISFLOAT> /* rm */)
+    {
+        static_assert(RMISFLOAT || REGISFLOAT, "Invalid SSEx66 usage.");
+        static_assert(RMSIZE >= 4 && REGSIZE >= 4, "Invalid ScalarSSE integer register."); // Floats would error out before this point.
+
+        // Use the source size to decide on the prefix if it's a float.
+        // Otherwise, the target is a float so check its size.
+        if ((RMISFLOAT && RMSIZE == 8)
+            || (!RMISFLOAT && REGSIZE == 8))
+        {
+            Emit8(0x66);
+        }
+    }
+
+
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::EmitSSEx66PrefixDirect(Register<SIZE1, ISFLOAT1> dest,
+                                                  Register<SIZE2, ISFLOAT2> src)
+    {
+        EmitSSEx66Prefix<SIZE2, ISFLOAT2>(dest, src);
+    }
+
+
+    template <unsigned RMSIZE, bool RMISFLOAT, unsigned REGSIZE, bool REGISFLOAT>
+    void X64CodeGenerator::EmitSSEx66PrefixIndirect(Register<REGSIZE, REGISFLOAT> reg, Register<8, false> rm)
+    {
+        EmitSSEx66Prefix<RMSIZE, RMISFLOAT>(reg, rm);
+    }
+
+
+    template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::SSEx66(Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src)
+    {
+        EmitSSEx66PrefixDirect(dest, src);
+        EmitRexDirect(dest, src);
+        Emit8(0x0f);
+        Emit8(OPCODE);
+        EmitModRM(dest, src);
+    }
+
+
+    template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::SSEx66(Register<SIZE1, ISFLOAT1> dest,
+                                  Register<8, false> src,
+                                  __int32 srcOffset)
+    {
+        EmitSSEx66PrefixIndirect<SIZE2, ISFLOAT2>(dest, src);
+        EmitRexIndirect<SIZE2, ISFLOAT2>(dest, src);
+        Emit8(0x0f);
+        Emit8(OPCODE);
+        EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
+    template <unsigned __int8 OPCODE, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+    void X64CodeGenerator::SSEx66(Register<8, false> dest,
+                                  __int32 destOffset,
+                                  Register<SIZE2, ISFLOAT2> src)
+    {
+        // Note: operand encoding is MR, so the order of arguments for the
+        // Emit*() methods is reversed.
+        EmitSSEx66PrefixIndirect<SIZE1, ISFLOAT1>(src, dest);
         EmitRexIndirect<SIZE1, ISFLOAT1>(src, dest);
         Emit8(0x0f);
         Emit8(OPCODE);
@@ -1634,8 +1744,8 @@ namespace NativeJIT
 #undef DEFINE_GROUP2
 
 
-// SSE, both arguments of the same type and size.
-#define DEFINE_SCALAR_SSE(name, opcode) \
+// SSE instruction, both arguments of the same type and size.
+#define DEFINE_SSE_ARGS1(name, emitMethod, opcode) \
     template <>                                                                         \
     template <>                                                                         \
     template <unsigned SIZE>                                                            \
@@ -1644,7 +1754,7 @@ namespace NativeJIT
         Register<SIZE, true> dest,                                                      \
         Register<SIZE, true> src)                                                       \
     {                                                                                   \
-        code.ScalarSSE<opcode>(dest, src);                                              \
+        code.##emitMethod##<opcode>(dest, src);                                         \
     }                                                                                   \
                                                                                         \
                                                                                         \
@@ -1657,19 +1767,20 @@ namespace NativeJIT
         Register<8, false> src,                                                         \
         __int32 srcOffset)                                                              \
     {                                                                                   \
-        code.ScalarSSE<opcode, SIZE, true, SIZE, true>(dest, src, srcOffset);           \
+        code.##emitMethod##<opcode, SIZE, true, SIZE, true>(dest, src, srcOffset);      \
     }                                                                                   \
 
-    DEFINE_SCALAR_SSE(Add, 0x58);  // AddSS/AddSD.
-    DEFINE_SCALAR_SSE(IMul, 0x59); // MulSS/MulSD.
-    DEFINE_SCALAR_SSE(Mov, 0x10);  // MovSS/MovSD.
-    DEFINE_SCALAR_SSE(Sub, 0x5c);  // SubSS/SubSD.
+    DEFINE_SSE_ARGS1(Add,  ScalarSSE, 0x58);  // AddSS/AddSD.
+    DEFINE_SSE_ARGS1(Cmp,  SSEx66,    0x2f);  // ComISS/ComISD.
+    DEFINE_SSE_ARGS1(IMul, ScalarSSE, 0x59);  // MulSS/MulSD.
+    DEFINE_SSE_ARGS1(Mov,  ScalarSSE, 0x10);  // MovSS/MovSD.
+    DEFINE_SSE_ARGS1(Sub,  ScalarSSE, 0x5c);  // SubSS/SubSD.
 
-#undef DEFINE_SCALAR_SSE
+#undef DEFINE_SSE_ARGS1
 
 
-// SSE, arguments of different type or size.
-#define DEFINE_SCALAR_SSE(name, opcode, type1, type2, validityCondition)                \
+// SSE instruction, arguments of different type or size.
+#define DEFINE_SSE_ARGS2(name, emitMethod, opcode, type1, type2, validityCondition) \
     template <>                                                                         \
     template <>                                                                         \
     template <unsigned SIZE1, unsigned SIZE2>                                           \
@@ -1680,7 +1791,7 @@ namespace NativeJIT
     {                                                                                   \
         static_assert(validityCondition,                                                \
                       "Invalid " #name " instruction, must be " #validityCondition);    \
-        code.ScalarSSE<opcode, SIZE1, type1, SIZE2, type2>(dest, src);                  \
+        code.##emitMethod##<opcode, SIZE1, type1, SIZE2, type2>(dest, src);             \
     }                                                                                   \
                                                                                         \
                                                                                         \
@@ -1695,14 +1806,14 @@ namespace NativeJIT
     {                                                                                   \
         static_assert(validityCondition,                                                \
                       "Invalid " #name " instruction, must be " #validityCondition);    \
-        code.ScalarSSE<opcode, SIZE1, type1, SIZE2, type2>(dest, src, srcOffset);       \
+        code.##emitMethod##<opcode, SIZE1, type1, SIZE2, type2>(dest, src, srcOffset);  \
     }                                                                                   \
 
-    DEFINE_SCALAR_SSE(CvtSI2FP, 0x2A, true, false, true == true);   // CvtSI2SD/CvtSI2SS (convert signed int to floating point).
-    DEFINE_SCALAR_SSE(CvtFP2SI, 0x2C, false, true, true == true);   // CvtTSD2SI/CvtTSS2SI (convert floating point to signed int with truncation).
-    DEFINE_SCALAR_SSE(CvtFP2FP, 0x5A, true, true, SIZE1 != SIZE2);  // CvtSS2SD/CvtSD2SS (convert float to double and vice versa).
+    DEFINE_SSE_ARGS2(CvtSI2FP, ScalarSSE, 0x2A, true,  false, SIZE2 >= 4);       // CvtSI2SD/CvtSI2SS (convert signed int to floating point).
+    DEFINE_SSE_ARGS2(CvtFP2SI, ScalarSSE, 0x2C, false, true,  SIZE1 >= 4);       // CvtTSD2SI/CvtTSS2SI (convert floating point to signed int with truncation).
+    DEFINE_SSE_ARGS2(CvtFP2FP, ScalarSSE, 0x5A, true,  true,  SIZE1 != SIZE2);   // CvtSS2SD/CvtSD2SS (convert float to double and vice versa).
 
-#undef DEFINE_SCALAR_SSE
+#undef DEFINE_SCALAR_SSE2
 }
 
 #pragma warning(pop)
