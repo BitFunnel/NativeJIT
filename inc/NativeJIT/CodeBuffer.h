@@ -26,7 +26,7 @@ namespace NativeJIT
                    unsigned maxCallSites);
 
         // Frees the buffer.
-        ~CodeBuffer();
+        virtual ~CodeBuffer();
 
         // Allocating and resolving jump labels.
         //   Use AllocateLabel() at any time to allocated a label representing a jump target.

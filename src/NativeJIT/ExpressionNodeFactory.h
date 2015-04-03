@@ -230,8 +230,12 @@ namespace NativeJIT
         //}
         //else
         {
-            auto & size = Immediate<INDEX>(sizeof(T));
-            auto & offset = Mul(index, size);
+            // Cast the size of T and index to UInt64 to make sure that the
+            // calculated offset will not overflow. This will also make it
+            // possible to use OpCode::Add on the result regardless of
+            // sizeof(INDEX) since both T* and UInt64 use the same register size.
+            auto & size = Immediate<unsigned __int64>(sizeof(T));
+            auto & offset = Mul(Cast<unsigned __int64>(index), size);
             return Binary<OpCode::Add>(array, offset);
         }
     }

@@ -17,6 +17,9 @@ namespace NativeJIT
     // From MSDN: http://msdn.microsoft.com/en-us/library/ssa62fwe.aspx
     // Page title is "Unwind Data Definitions in C"
     //
+    // Unwind information explanation: http://uninformed.org/index.cgi?v=4&a=1&p=13
+    // Stack frame annotation explanation: http://uninformed.org/index.cgi?v=4&a=1&p=17
+    //
     //*************************************************************************
     // TODO: Convert to enum class.
     typedef enum {

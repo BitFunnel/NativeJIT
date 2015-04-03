@@ -20,12 +20,12 @@ namespace NativeJIT
     // eventually be deleted.
     //
     //*************************************************************************
-    namespace PackedUnitTest
+    namespace BitFunnelAcceptance
     {
-        TestClass(FunctionTest)
+        TestClass(AcceptanceUnitTest)
         {
         public:
-            FunctionTest()
+            AcceptanceUnitTest()
                 : m_allocator(5000),
                   m_executionBuffer(5000)
             {
@@ -43,9 +43,7 @@ namespace NativeJIT
             typedef unsigned __int64 DocId;
             typedef unsigned __int32 Shard;
 
-            // TODO: The following line will not compile if DocIndex is a 32-bit unsigned.
-            //         auto & docInfo = expression.Add(docTableEntries, docIndex);
-            typedef unsigned __int64 DocIndex;
+            typedef unsigned __int32 DocIndex;
 
             // TODO: Currently it is not possible to call a function that returns void.
             // The templates won't compile because of a sizeof(void).
