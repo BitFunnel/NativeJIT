@@ -36,20 +36,20 @@ namespace NativeJIT
         Label AllocateLabel();
 
         // Binds a label to a memory address.
-        void PlaceLabel(Label label, const unsigned char* address);
+        void PlaceLabel(Label label, const unsigned __int8* address);
 
         // Records a position in memory containing call site (offset set portion of a JCC/JMP/CALL instruction)
         // that will need to be patch once all labels have been placed.
-        void AddCallSite(Label label, unsigned char* site, unsigned size);
+        void AddCallSite(Label label, unsigned __int8* site, unsigned size);
 
         // Patches each call site with the correct offset derived from its resolved label.
         void PatchCallSites();
 
         bool LabelIsDefined(Label label) const;
-        const unsigned char* AddressOfLabel(Label label) const;
+        const unsigned __int8* AddressOfLabel(Label label) const;
 
     private:
-        std::vector<const unsigned char*> m_labels;     // Storage for jump labels.
+        std::vector<const unsigned __int8*> m_labels;   // Storage for jump labels.
         std::vector<CallSite> m_callSites;              // Call sites to be patched.
     };
 
@@ -60,7 +60,7 @@ namespace NativeJIT
     {
     public:
         CallSite();
-        CallSite(Label label, unsigned size, unsigned char* site);
+        CallSite(Label label, unsigned size, unsigned __int8* site);
 
         Label GetLabel() const;
 
@@ -68,11 +68,11 @@ namespace NativeJIT
         // Also fix and throw new Foo in X64CodeGenerator.
         // Also, some files in X64CodeGenerator missing #includes for <ostream>, possibly other standard libaries.
         unsigned Size() const;
-        unsigned char* Site() const;
+        unsigned __int8* Site() const;
 
     private:
-        Label m_label;          // The jump label used to find the jump target address for this site.
-        unsigned m_size;        // The number of bytes to be patched at this site.
-        unsigned char* m_site;  // The address to be patched.
+        Label m_label;              // The jump label used to find the jump target address for this site.
+        unsigned m_size;            // The number of bytes to be patched at this site.
+        unsigned __int8* m_site;    // The address to be patched.
     };
 }

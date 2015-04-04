@@ -101,7 +101,7 @@ namespace NativeJIT
             auto & code = tree.GetCodeGenerator();
             code.AdvanceToAlignment<T>();
             m_offset = code.CurrentPosition();
-            code.EmitFloatingPoint(m_value);
+            code.EmitValueBytes(m_value);
         }
 
     private:

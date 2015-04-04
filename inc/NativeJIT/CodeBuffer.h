@@ -1,9 +1,6 @@
 #pragma once
 
-#include <memory>                   // std::unique_ptr embedded.
-
 #include "NativeJIT/JumpTable.h"    // Label parameter and return value.
-                                    // Also template parameter to std::unique_ptr.
 #include "Temporary/NonCopyable.h"  // Base class.
 
 
@@ -35,8 +32,14 @@ namespace NativeJIT
         //   sites with jump targets. Note that all allocated labels must be placed before 
         //   calling Finalize().
         Label AllocateLabel();
-        //Label AllocateGlobalLabel();
         void PlaceLabel(Label label);
+
+        // TODO: Review whether __forceinline should be added to all Emit*()
+        // methods. The following WARNING comment came from CodeBuffer.h within
+        // the X64CodeGenerator package. There, CodeBuffer::Emit*() methods were
+        // declared and defined in the header file and had __forceinline attribute.
+        // WARNING: __forceinline is essential to system performance. Please see
+        // note on constant folding in X64CodeGenerator.h.
 
         // Writes a byte to the current position in the buffer.
         void Emit8(unsigned __int8 x);
@@ -50,9 +53,9 @@ namespace NativeJIT
         // WARNING: Non portable. Assumes little endian machine architecture.
         void Emit64(unsigned __int64 x);
 
-        void EmitFloatingPoint(float x);
-
-        void EmitFloatingPoint(double x);
+        // WARNING: Non portable. Assumes little endian machine architecture.
+        template <typename T>
+        void EmitValueBytes(T x);
 
         // Return the size of the buffer, in bytes.
         // TODO: Rename GetCapacity()?
@@ -73,7 +76,7 @@ namespace NativeJIT
 
         // Advances the current write position by byteCount and returns a pointer to the write position
         // before advancing.
-        unsigned char* Advance(int byteCount);
+        unsigned __int8* Advance(int byteCount);
 
         template <typename T>
         void AdvanceToAlignment();
@@ -94,7 +97,12 @@ namespace NativeJIT
         unsigned __int8* m_bufferEnd;
         unsigned __int8* m_current;
 
-        std::unique_ptr<JumpTable> m_localJumpTable;    // Jumps within a single CodeBuffer.
+        JumpTable m_localJumpTable;    // Jumps within a single CodeBuffer.
+
+        // Writes the bits of the argument to the current position in the buffer.
+        // WARNING: Non portable. Assumes little endian machine architecture.
+        template <typename T>
+        __forceinline void EmitBytes(T x);
     };
 
 
