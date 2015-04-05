@@ -42,18 +42,17 @@ namespace NativeJIT
             throw std::runtime_error("CodeBuffer: out of memory.");
         }
 
-
         // Set protection on the guard page.
         DWORD oldProtection;
         if (!VirtualProtect(m_buffer + m_bufferSize, systemInfo.dwPageSize, 
                             PAGE_NOACCESS, &oldProtection))
         {
+            // TODO: Fix memory leaks by f. ex. using unique_ptr with custom deleter
+            // for m_buffer.
             throw std::runtime_error("CodeBuffer: failed to set protection on guard page.");
         }
 
-
-        //m_bufferEnd = m_bufferStart + size;
-        //m_current = m_bufferStart;
+        DebugInitialize();
     }
 
 
@@ -88,10 +87,6 @@ namespace NativeJIT
     // Frees a block.
     void ExecutionBuffer::Deallocate(void* /*block*/)
     {
-        //Assert(static_cast<char*>(block) > m_buffer.get() &&
-        //       static_cast<char*>(block) < m_buffer.get() + m_bytesAllocated,
-        //       "Attempting to deallocate memory not owned by this allocator.");
-
         // Intentional NOP
     }
 
@@ -114,6 +109,9 @@ namespace NativeJIT
 
     void ExecutionBuffer::DebugInitialize()
     {
+#ifdef _DEBUG
+        // Fill the buffer with break code (i.e. INT 3 software breakpoint).
         memset(m_buffer, 0xcc, m_bufferSize);
+#endif
     }
 }

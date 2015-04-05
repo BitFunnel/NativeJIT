@@ -2,15 +2,14 @@
 
 #include <vector>
 
+#include "Temporary/StlAllocator.h"
+
 
 namespace NativeJIT
 {
     class CallSite;
 
 
-    //// TODO: Signed or unsigned? X64CodeGenerator version uses signed to
-    //// distinguish between local and global labels.
-    //typedef unsigned Label;
     class Label
     {
     public:
@@ -28,7 +27,8 @@ namespace NativeJIT
     class JumpTable
     {
     public:
-        JumpTable(int maxLabels, int maxCallSites);
+        // Allocator is used to allocate memory for labels and call sites.
+        JumpTable(Allocators::IAllocator& allocator);
 
         void Clear();
 
@@ -49,8 +49,12 @@ namespace NativeJIT
         const unsigned __int8* AddressOfLabel(Label label) const;
 
     private:
-        std::vector<const unsigned __int8*> m_labels;   // Storage for jump labels.
-        std::vector<CallSite> m_callSites;              // Call sites to be patched.
+        template <typename T>
+        using AllocatorVector = std::vector<T, Allocators::StlAllocator<T>>;
+
+        Allocators::StlAllocator<void*> m_stlAllocator;     // STL adapter for IAllocator.
+        AllocatorVector<const unsigned __int8*> m_labels;   // Storage for jump labels.
+        AllocatorVector<CallSite> m_callSites;              // Call sites to be patched.
     };
 
 
@@ -64,9 +68,6 @@ namespace NativeJIT
 
         Label GetLabel() const;
 
-        // TODO: X64CodeGenerator version had return type as Label. This is a bug and should be fixed in X64CodeGenerator.
-        // Also fix and throw new Foo in X64CodeGenerator.
-        // Also, some files in X64CodeGenerator missing #includes for <ostream>, possibly other standard libaries.
         unsigned Size() const;
         unsigned __int8* Site() const;
 

@@ -8,9 +8,7 @@
 namespace NativeJIT
 {
     template <typename T, ImmediateCategory IMMCATEGORY = ImmediateCategoryOf<T>::value>
-    class ImmediateNode : public Node<T>
-    {
-    };
+    class ImmediateNode;
 
 
     //*************************************************************************
@@ -121,7 +119,7 @@ namespace NativeJIT
             // method intentionally has a limited number of input types. Basic
             // types will be unchanged, but f. ex. function pointers will be
             // emitted as unsigned __int64.
-            code.EmitValueBytes(Casting::ForcedCast<typename CanonicalRegisterStorageType<T>::Type>(m_value));
+            code.EmitBytes(Casting::ForcedCast<typename CanonicalRegisterStorageType<T>::Type>(m_value));
         }
 
     private:

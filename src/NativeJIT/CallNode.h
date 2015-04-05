@@ -1,9 +1,10 @@
 #pragma once
 
-#include <iostream>     // Accessed by template definition for Print().
+#include <iostream>                 // Accessed by template definition for Print().
 
 #include "CodeGenHelpers.h"
-#include "Node.h"       // Base class.
+#include "Node.h"                   // Base class.
+#include "Temporary/StlAllocator.h" // Used as allocator for vector.
 
 // https://software.intel.com/en-us/articles/introduction-to-x64-assembly
 
@@ -15,15 +16,15 @@ namespace NativeJIT
     class SaveRestoreVolatilesHelper
     {
     protected:
-        SaveRestoreVolatilesHelper();
+        SaveRestoreVolatilesHelper(Allocators::IAllocator& allocator);
 
     public:
         // These methods need to be public for access by
         //     CallNodeBase::FunctionChild
         //     CallNodeBase::ParameterChild
 
-        void SaveVolatiles(ExpressionTree& tree, unsigned parameterCount);
-        void RestoreVolatiles(ExpressionTree& tree, unsigned parameterCount);
+        void SaveVolatiles(ExpressionTree& tree);
+        void RestoreVolatiles(ExpressionTree& tree);
 
         template <unsigned SIZE, bool ISFLOAT>
         void RecordCallRegister(Register<SIZE, ISFLOAT> r, bool isSoleOwner);
@@ -39,9 +40,11 @@ namespace NativeJIT
         unsigned m_rxxCallExclusiveRegisterMask;
         unsigned m_xmmCallExclusiveRegisterMask;
 
-        // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
-        static const unsigned c_rxxVolatiles = 0xf07; // 1111 0000 0111
-        static const unsigned c_xmmVolatiles = 0x3f;  // 0011 1111 (XMM0-XMM5)
+        template <typename T>
+        using AllocatorVector = std::vector<T, Allocators::StlAllocator<T>>;
+
+        // Temporary storage used to preserve volatile registers.
+        AllocatorVector<Storage<void*>> m_preservationStorage;
     };
 
 
@@ -288,9 +291,11 @@ namespace NativeJIT
     //*************************************************************************
     template <typename R, unsigned PARAMETERCOUNT>
     CallNodeBase<R, PARAMETERCOUNT>::CallNodeBase(ExpressionTree& tree)
-        : Node(tree)
+        : Node(tree),
+          SaveRestoreVolatilesHelper(tree.GetAllocator())
     {
         static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        tree.ReportFunctionCallNode(PARAMETERCOUNT);
     }
 
 
@@ -330,9 +335,9 @@ namespace NativeJIT
             RecordCallRegister(resultRegister, true);
         }
 
-        SaveVolatiles(tree, PARAMETERCOUNT);
+        SaveVolatiles(tree);
         m_functionBase->EmitCall(tree);
-        RestoreVolatiles(tree, PARAMETERCOUNT);
+        RestoreVolatiles(tree);
 
         // Free up registers used for function pointer and parameters.
         for (Child* child : m_children)
@@ -354,7 +359,6 @@ namespace NativeJIT
 
         for (unsigned i = 0 ; i < c_childCount; ++i)
         {
-            // TODO: REVIEW: Pass true or false for isLeftChild?
             // TODO: Need to account for the fact the extra registers may be used
             // when the specific parameter home is different than the one returned
             // duing code generation.

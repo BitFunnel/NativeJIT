@@ -5,10 +5,11 @@
 #include <vector>
 
 #include "NativeJIT/BitOperations.h"
-#include "NativeJIT/JumpTable.h"      // ExpressionTree embeds Label.
+#include "NativeJIT/FunctionSpecification.h"    // c_maxStackSize definition.
+#include "NativeJIT/JumpTable.h"                // ExpressionTree embeds Label.
 #include "NativeJIT/Register.h"
 #include "Temporary/NonCopyable.h"
-#include "Temporary/Assert.h"         // TODO: Delete this.
+#include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"
 #include "TypePredicates.h"
 
@@ -90,6 +91,7 @@ namespace NativeJIT
         unsigned AddNode(NodeBase& node);
         void AddParameter(NodeBase& parameter);
         void AddRIPRelative(RIPRelativeImmediate& node);
+        void ReportFunctionCallNode(unsigned parameterCount);
         void Compile();
 
         //
@@ -120,7 +122,12 @@ namespace NativeJIT
         template <unsigned SIZE>
         void ReleaseRegister(Register<SIZE, true> r);
 
-        void ReleaseTemporary(__int32 offset);
+        // Given an offset off BaseRegister, checks whether the register
+        // belongs to a valid offset describing an already allocated slot and,
+        // if so, releases the corresponding temporary slot. Some valid offsets
+        // off the base register that don't refer to temporaries include offsets
+        // referring to compiled function's parameters.
+        void ReleaseIfTemporary(__int32 offset);
 
         // Returns whether a register is pinned.
         template <unsigned SIZE, bool ISFLOAT>
@@ -141,8 +148,8 @@ namespace NativeJIT
 
         void const * GetUntypedEntryPoint() const;
 
+        // TODO: Make private.
         Allocators::IAllocator& m_allocator;
-        FunctionBuffer & m_code;
 
     private:
         // Keeps track of used and free registers and the Data* associated with
@@ -203,6 +210,11 @@ namespace NativeJIT
             unsigned GetUsedMask() const;
             unsigned GetFreeMask() const;
 
+            // Returns a register mask specifying which registers were touched
+            // at any point of time, regardless of whether they were later
+            // released or not.
+            unsigned GetLifetimeUsedMask() const;
+
             // Returns the ID of an allocated register that is not pinned and
             // can be spilled. Throws if there are no such registers available.
             unsigned GetAllocatedSpillable() const;
@@ -213,7 +225,12 @@ namespace NativeJIT
             void AssertValidData(unsigned id) const;
             void AssertValidData(unsigned id, Data* data) const;
 
+            // The mask tracking registers which are currently allocated.
             unsigned m_usageMask;
+
+            // The mask tracking registers which were touched at any point of
+            // time, regardless of whether they were later released or not.
+            unsigned m_lifetimeUsageMask;
 
             // See the class description for more details.
             std::array<Data*, SIZE> m_data;
@@ -242,6 +259,14 @@ namespace NativeJIT
         template <unsigned SIZE>
         bool IsAnySharedBaseRegister(Register<SIZE, true> r) const;
 
+        // Converts a valid temporary slot index into an offset off base register.
+        __int32 TemporarySlotToOffset(unsigned temporarySlot);
+
+        // If the temporary offset off base register describes a valid allocated
+        // temporary slot, returns true and fills in the temporary slot out
+        // parameter. Returns false otherwise.
+        bool TemporaryOffsetToSlot(__int32 temporaryOffset, unsigned& temporarySlot);
+
         void Pass0();
         void Pass1();
         void Pass2();
@@ -257,6 +282,8 @@ namespace NativeJIT
         template <typename T>
         using FreeListForType = typename FreeListForRegister<RegisterStorage<T>::c_isFloat>;
 
+        FunctionBuffer & m_code;
+
         std::vector<NodeBase*> m_topologicalSort;
         std::vector<NodeBase*> m_parameters;
         std::vector<RIPRelativeImmediate*> m_ripRelatives;
@@ -269,13 +296,22 @@ namespace NativeJIT
         FreeList<RegisterBase::c_maxIntegerRegisterID + 1> m_rxxFreeList;
         FreeList<RegisterBase::c_maxFloatRegisterID + 1> m_xmmFreeList;
 
-        // Note: using void* since there are no floating point reserved registers.
-        std::vector<Storage<void*>> m_reservedRegistersStorages;
+        std::vector<Storage<void*>> m_reservedRxxRegisterStorages;
+        std::vector<Storage<double>> m_reservedXmmRegisterStorages;
         std::vector<ReferenceCounter> m_reservedRegistersPins;
 
-        // TODO: Use StlAllocator for the vector.
+        // Use at most 80% stack space for temporaries.
+        static const unsigned c_maxTemporaries = FunctionSpecification::c_maxStackSize
+                                                 / sizeof(void*)
+                                                 * 4
+                                                 / 5;
         unsigned m_temporaryCount;
+        // TODO: Use StlAllocator for the vector.
         std::vector<__int32> m_temporaries;
+
+        // Maximum number of parameters used in function calls done by the tree.
+        // Negative value signifies no function calls made.
+        int m_maxFunctionCallParameters;
 
         PointerRegister m_basePointer;
 
@@ -655,25 +691,26 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Temporary()
     {
-        // TODO: Ensure that the highest temporary doesn't exceed the allocated
-        // stack space (preferrably as part of TFS 17238).
-
         static_assert(sizeof(T) <= sizeof(void*),
                       "The size of the variable is too large.");
 
-        __int32 temp;
+        __int32 slot;
 
         if (m_temporaries.size() > 0)
         {
-            temp = m_temporaries.back();
+            slot = m_temporaries.back();
             m_temporaries.pop_back();
         }
         else
         {
-            temp = m_temporaryCount++;
+            Assert(m_temporaryCount < c_maxTemporaries,
+                   "Not enough space for temporary #%u",
+                   m_temporaryCount + 1);
+
+            slot = m_temporaryCount++;
         }
 
-        __int32 offset = temp * sizeof(void*);
+        const __int32 offset = TemporarySlotToOffset(slot);
 
         return Storage<T>::ForSharedBaseRegister(*this, GetBasePointer(), offset);
     }
@@ -1277,7 +1314,7 @@ namespace NativeJIT
                         else if (m_data->GetTree().IsBasePointer(base))
                         {
                             std::cout << "Release temporary " << m_data->GetOffset() << std::endl;
-                            m_data->GetTree().ReleaseTemporary(m_data->GetOffset());
+                            m_data->GetTree().ReleaseIfTemporary(m_data->GetOffset());
                         }
                         else if (base.IsStackPointer())
                         {
@@ -1377,6 +1414,7 @@ namespace NativeJIT
     template <unsigned SIZE>
     ExpressionTree::FreeList<SIZE>::FreeList()
         : m_usageMask(0),
+          m_lifetimeUsageMask(0),
           m_data(),
           m_pinCount()
     {
@@ -1455,8 +1493,10 @@ namespace NativeJIT
         Assert(!IsPinned(id), "Register %u must be unpined when free", id);
         Assert(m_data[id] == nullptr, "Data for register %u must be null", id);
 
-        BitOp::SetBit(&m_usageMask, id);
         m_allocatedRegisters.push_back(static_cast<unsigned __int8>(id));
+
+        BitOp::SetBit(&m_usageMask, id);
+        BitOp::SetBit(&m_lifetimeUsageMask, id);
     }
 
 
@@ -1470,14 +1510,14 @@ namespace NativeJIT
         Assert(m_data[id]->GetRefCount() == 0, "Reference count for register %u must be zero", id);
         AssertValidData(id);
 
-        m_data[id] = nullptr; 
-        BitOp::ClearBit(&m_usageMask, id);
-
         auto it = std::find(m_allocatedRegisters.begin(),
                             m_allocatedRegisters.end(),
                             static_cast<unsigned __int8>(id));
         Assert(it != m_allocatedRegisters.end(), "Couldn't find allocation record for %u", id);
         m_allocatedRegisters.erase(it);
+
+        m_data[id] = nullptr; 
+        BitOp::ClearBit(&m_usageMask, id);
     }
 
 
@@ -1516,6 +1556,13 @@ namespace NativeJIT
     unsigned ExpressionTree::FreeList<SIZE>::GetUsedMask() const
     {
         return m_usageMask;
+    }
+
+
+    template <unsigned SIZE>
+    unsigned ExpressionTree::FreeList<SIZE>::GetLifetimeUsedMask() const
+    {
+        return m_lifetimeUsageMask;
     }
 
 

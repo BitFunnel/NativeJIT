@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include <iostream>         // TODO: Remove - temporary for debugging.
+#include <iostream>
 
 #include "Temporary/Assert.h"
 #include "NativeJIT/X64CodeGenerator.h"
@@ -36,12 +36,11 @@ namespace NativeJIT
     // X64CodeGenerator public methods
     //
     //*************************************************************************
-    X64CodeGenerator::X64CodeGenerator(Allocators::IAllocator& allocator,
+    X64CodeGenerator::X64CodeGenerator(Allocators::IAllocator& codeAllocator,
                                        unsigned capacity,
-                                       unsigned maxLabels,
-                                       unsigned maxCallSites)
-        : CodeBuffer(allocator, capacity, maxLabels, maxCallSites),
-          // TODO: Handle stream correctly
+                                       Allocators::IAllocator& generalAllocator)
+        : CodeBuffer(codeAllocator, capacity, generalAllocator),
+          // TODO: Set to nullptr by default
           m_diagnosticsStream(&std::cout)
     {
     }
@@ -59,19 +58,6 @@ namespace NativeJIT
     }
 
 
-    unsigned X64CodeGenerator::GetRXXCount() const
-    {
-        return c_rxxRegisterCount;
-    }
-
-
-    unsigned X64CodeGenerator::GetXMMCount() const
-    {
-        return c_xmmRegisterCount;
-    }
-
-
-    // TODO: Remove this temporary overload of CodeBuffer::PlaceLabel.
     void X64CodeGenerator::PlaceLabel(Label l)
     {
         CodePrinter printer(*this);

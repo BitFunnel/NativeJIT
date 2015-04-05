@@ -19,7 +19,7 @@ namespace NativeJIT
                                    unsigned generalAllocatorCapacity)
         : m_codeAllocator(codeAllocatorCapacity),
           m_generalAllocator(generalAllocatorCapacity),
-          m_code(m_codeAllocator, codeAllocatorCapacity, 10, 10, 11, 0, false),
+          m_code(m_codeAllocator, codeAllocatorCapacity, m_generalAllocator),
           m_testCaseAllocator(generalAllocatorCapacity)
     {
     }

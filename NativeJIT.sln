@@ -27,9 +27,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{C355777F-6688-4F80-A3A5-730D4CA7DA5C}"
 	ProjectSection(SolutionItems) = preProject
 		inc\NativeJIT\BitOperations.h = inc\NativeJIT\BitOperations.h
+		inc\NativeJIT\CallingConvention.h = inc\NativeJIT\CallingConvention.h
 		inc\NativeJIT\CodeBuffer.h = inc\NativeJIT\CodeBuffer.h
 		inc\NativeJIT\ExecutionBuffer.h = inc\NativeJIT\ExecutionBuffer.h
 		inc\NativeJIT\FunctionBuffer.h = inc\NativeJIT\FunctionBuffer.h
+		inc\NativeJIT\FunctionSpecification.h = inc\NativeJIT\FunctionSpecification.h
 		inc\NativeJIT\JumpTable.h = inc\NativeJIT\JumpTable.h
 		inc\NativeJIT\Model.h = inc\NativeJIT\Model.h
 		inc\NativeJIT\Packed.h = inc\NativeJIT\Packed.h
@@ -44,6 +46,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Temporary", "Temporary", "{
 		inc\Temporary\Assert.h = inc\Temporary\Assert.h
 		inc\Temporary\IAllocator.h = inc\Temporary\IAllocator.h
 		inc\Temporary\NonCopyable.h = inc\Temporary\NonCopyable.h
+		inc\Temporary\StlAllocator.h = inc\Temporary\StlAllocator.h
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Assembler", "src\Assembler\Assembler.vcxproj", "{37A0B831-E996-431F-B1C4-1469B9250FB4}"

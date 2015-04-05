@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "NativeJIT/Register.h"
 #include "UnwindCode.h"
 
 
@@ -15,51 +16,30 @@ namespace NativeJIT
     }
 
 
-    UnwindCode::UnwindCode(unsigned __int8 offset,
-                           unsigned __int8 op,
-                           unsigned __int8 info) 
-        : m_codeOffset(offset), m_unwindOp(op), m_opInfo(info) 
+    UnwindCode::UnwindCode(unsigned __int16 frameOffset) 
+        : m_frameOffset(frameOffset)
     {
     }
 
 
-    void UnwindCode::Print(std::ostream& out) const
+    UnwindCode::UnwindCode(unsigned __int8 codeOffset,
+                           UnwindCodeOp op,
+                           unsigned __int8 info) 
     {
-        static const char* g_registerNames[] = 
-        {
-            "RAX",
-            "RCX",
-            "RDX",
-            "RBX",
-            "RSP",
-            "RBP",
-            "RSI",
-            "RDI",
-            "R8",
-            "R9",
-            "R10",
-            "R11",
-            "R12",
-            "R13",
-            "R14",
-            "R15"
-        };
+        // Note: cannot use initializer list as VC++ doesn't support it (error
+        // C2797 "List initialization inside member initializer list or
+        // non-static data member initializer is not implemented."
+        m_operation.m_codeOffset = codeOffset;
+        m_operation.m_unwindOp = static_cast<unsigned __int8>(op);
+        m_operation.m_opInfo = info;
+    }
 
-        out << "offset(0x" << std::hex << (unsigned int)m_codeOffset << ") ";
-        switch (m_unwindOp)
+    namespace UnwindUtils
+    {
+        DWORD64 MakeFunctionTableIdentifier(void* objectAddress)
         {
-        case UWOP_PUSH_NONVOL:
-            out << "Push NonVolatile: " << g_registerNames[m_opInfo] << "\n";
-            break;
-        case UWOP_ALLOC_SMALL:
-            out << "Alloc Small: " << std::dec << (unsigned int)m_opInfo << " ";
-            out << "(0x" << std::hex << ((unsigned int)m_opInfo  + 1) * 8 << " bytes)\n";
-            break;
-        case UWOP_SET_FPREG:
-            out << "Set Frame Register\n";
-            break;
-        default:
-            out << "Other: unwindOp(" << (unsigned int)m_unwindOp << ") opInfo(" << (unsigned int)m_opInfo << ")\n";
+            // The lowest 3 bits must be set.
+            return reinterpret_cast<DWORD64>(objectAddress) | 3;
         }
     }
 }

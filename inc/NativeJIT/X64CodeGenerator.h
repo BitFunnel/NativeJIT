@@ -83,20 +83,17 @@ namespace NativeJIT
     class X64CodeGenerator : public CodeBuffer
     {
     public:
-        X64CodeGenerator(Allocators::IAllocator& allocator,
+        // Sets up a code buffer with specified capacity. See the CodeBuffer
+        // constructor for more details on allocators.
+        X64CodeGenerator(Allocators::IAllocator& codeAllocator,
                          unsigned capacity,
-                         unsigned maxLabels,
-                         unsigned maxCallSites);
+                         Allocators::IAllocator& generalAllocator);
 
         void EnableDiagnostics(std::ostream& out);
         void DisableDiagnostics();
 
-        unsigned GetRXXCount() const;
-        unsigned GetXMMCount() const;
-
-        // TODO: Remove this temporary override of CodeBuffer::PlaceLabel().
-        // This version is used to print debugging information.
-        void PlaceLabel(Label l);
+        // This override allows for printing of debugging information.
+        virtual void PlaceLabel(Label l) override;
 
         void Jmp(Label l);
         void Jmp(void* functionPtr);
@@ -497,9 +494,6 @@ namespace NativeJIT
 
             void PrintBytes(unsigned startPosition, unsigned endPosition);
         };
-
-        static const unsigned c_rxxRegisterCount = 16;
-        static const unsigned c_xmmRegisterCount = 16;
 
         std::ostream* m_diagnosticsStream;
     };

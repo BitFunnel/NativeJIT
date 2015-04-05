@@ -1,94 +1,81 @@
 #pragma once
 
-#include <ostream>                          // ostream& paramter.
-#include <vector>                           // std::vector embedded.
 #include <Windows.h>                        // RUNTIME_FUNCTION embedded.
-
 
 #include "NativeJIT/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
 
 
-namespace Allocators
-{
-    class IAllocator;
-}
-
-
 namespace NativeJIT
 {
-    struct UnwindInfo;
-    struct UnwindCode;
+    class FunctionSpecification;
 
-    // TODO: Add methods to copy data in.
-    // TODO: Add methods to extract data. EntryPoint and Size. Is prologue sent over the wire?
-    //       Perhaps unwind data should be sent as well and verified.
-    // TODO: Verify that generating and executing function buffers use same parameters.
-    // (or at least that numbers of slots, labels, and call sites are compatible.
     class FunctionBuffer : public X64CodeGenerator
     {
     public:
-        FunctionBuffer(Allocators::IAllocator& allocator,
+        // Sets up a code buffer with specified capacity and registers a
+        // callback to facilitate stack unwinding on exception. See the
+        // CodeBuffer constructor for more details on allocators.
+        FunctionBuffer(Allocators::IAllocator& codeAllocator,
                        unsigned capacity,
-                       unsigned maxLabels,
-                       unsigned maxCallSites,
-                       unsigned slotCount,
-                       unsigned registerSaveMask,
-                       bool isLeaf);
+                       Allocators::IAllocator& generalAllocator);
 
-        unsigned char const * GetEntryPoint() const;
+        // Deregisters the stack unwinding callback.
+        ~FunctionBuffer();
 
-        void EmitPrologue();
-        void EmitEpilogue();
+        // Returns the entry point to the function, i.e. untyped function
+        // pointer.
+        void const * GetEntryPoint() const;
 
-        void Reset();
+        // The following functions return the information about the contents
+        // of the buffer. The offsets are relative to the beginning of the
+        // buffer. The start and end offset describe the [start, end) range
+        // containing the function's code (including prolog and epilog). The
+        // unwind info offset specifies where UnwinInfo is located.
+        // These calls are valid only after the function body has been generated.
+        unsigned GetFunctionCodeStartOffset() const;
+        unsigned GetFunctionCodeEndOffset() const;
+        unsigned GetUnwindInfoStartOffset() const;
 
+        // Called by clients to mark that generation of function's body has
+        // begun. If function specification is known even before the function
+        // body is generated, the exact space needed for unwind information and
+        // function prolog is reserved in front of the function body. Otherwise,
+        // the maximum allowed space is reserved. In both cases, no data is
+        // written for unwind info and prolog at this point.
+        void BeginFunctionBodyGeneration(FunctionSpecification const & spec);
+        void BeginFunctionBodyGeneration();
+
+        // Called by clients to mark that generation of function's body has
+        // completed. At this point, unwind info and prolog are filled in
+        // the space previously reserved by BeginFunctionBodyGeneration().
+        // Then, epilog is written after the function body and all call sites
+        // patched with the actual values.
+        void EndFunctionBodyGeneration(FunctionSpecification const & spec);
+
+        // Resets the buffer to the same state it had after its construction.
+        virtual void Reset() override;
 
     private:
-        void EmitUnwindInfo(unsigned char slotCount,
-                            unsigned registerSaveMask,
-                            bool isLeaf);
-
-        void CreatePrologue();
-        void CreateEpilogue();
-
-        void RegisterUnwindInfo();
-
-        // Creates an UnwindInfo structure in the code buffer.
-        void AllocateUnwindInfo(unsigned unwindCodeCount);
-
-        void ProloguePushNonVolatile(Register<8, false> r);
-        void PrologueStackAllocate(unsigned __int8 slots);
-        void PrologueSetFrameRegister(unsigned __int8 offset);
-
-        void EmitUnwindCode(const UnwindCode& code);
-
-        // Debugging function to help track down problems in unwind info.
-        // This function exists, mainly to document all of the requirements that must
-        // be satisfied in order to get X64 stack unwinding to work.
-        bool UnwindInfoIsValid(std::ostream& out, RUNTIME_FUNCTION& runtimeFunction);
-
-        void FillWithBreakCode(unsigned start, unsigned length);
-
-        std::vector<unsigned __int8> m_prologueCode; 
-        std::vector<unsigned __int8> m_epilogueCode; 
-        unsigned char const * m_entryPoint;
-
-        // Structures used to register stack unwind information with Windows.
-        UnwindInfo* m_unwindInfo;
-        UnwindCode* m_unwindCodePtr;
+        // Structure used to register stack unwind information with Windows.
         RUNTIME_FUNCTION m_runtimeFunction;
 
-        // Buffer offset of first instruction in the prologue.
-        size_t m_prologueStart;
+        // Temporary values used during compilation of the function. Offsets
+        // are relative to buffer start. When using BeginFunctionBodyGeneration()
+        // without parameters, the length values represent the reserved (maximum
+        // available) length for the respective section.
+        unsigned m_unwindInfoStartOffset;
+        unsigned m_unwindInfoByteLength;
+        unsigned m_prologStartOffset;
+        unsigned m_prologLength;
+        bool m_isCodeGenerationCompleted;
 
-        // Buffer offset of the first byte after the unwind info.
-        unsigned m_codeGenStart;
+        // The callback function for RtlInstallFunctionTableCallback. Context
+        // is a poiner to a FunctionBuffer.
+        static RUNTIME_FUNCTION*
+        WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context);
 
-        // Total amount of stack used for return address, saved registers,
-        // locals, etc.
-        size_t m_slotsAllocated;
-
-        // Offset of first stack local relative to frame pointer RBP.
-        size_t m_stackLocalsBase;
+        // A helper method used to implement the two public flavors of the method.
+        void BeginFunctionBodyGeneration(unsigned reservedUnwindInfoLength,
+                                         unsigned reservedPrologLength);
     };
 }

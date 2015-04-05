@@ -6,7 +6,9 @@
 #include "ExecutionPreconditionTest.h"
 #include "ExpressionTree.h"
 #include "ImmediateNode.h"
+#include "NativeJIT/CallingConvention.h"
 #include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/FunctionSpecification.h"
 #include "ParameterNode.h"
 
 
@@ -21,30 +23,42 @@ namespace NativeJIT
         : m_allocator(allocator),
           m_code(code),
           m_temporaryCount(0),
+          m_maxFunctionCallParameters(-1),
           m_basePointer(rbp)
           // m_startOfEpilogue intentionally left uninitialized, see Compile().
     {
-        m_reservedRegistersStorages.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
-        m_reservedRegistersPins.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
+        m_reservedRxxRegisterStorages.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
+        m_reservedXmmRegisterStorages.reserve(RegisterBase::c_maxFloatRegisterID + 1);
+        m_reservedRegistersPins.reserve(RegisterBase::c_maxIntegerRegisterID
+                                        + RegisterBase::c_maxFloatRegisterID
+                                        + 2);
 
         for (unsigned i = 0 ; i <= RegisterBase::c_maxIntegerRegisterID; ++i)
         {
             const PointerRegister reg(i);
 
-            if (IsAnySharedBaseRegister(reg))
+            if (IsAnySharedBaseRegister(reg)
+                || !BitOp::TestBit(CallingConvention::c_rxxWritableRegistersMask, i))
             {
                 auto s = Direct<void*>(reg);
 
-                m_reservedRegistersStorages.push_back(s);
+                m_reservedRxxRegisterStorages.push_back(s);
                 m_reservedRegistersPins.push_back(s.GetPin());
             }
         }
 
         for (unsigned i = 0 ; i <= RegisterBase::c_maxFloatRegisterID; ++i)
         {
-            Assert(!IsAnySharedBaseRegister(Register<8, true>(i)),
-                   "Unexpected reserved FP register %u",
-                   i);
+            Register<8, true> reg(i);
+
+            if (IsAnySharedBaseRegister(reg)
+                || !BitOp::TestBit(CallingConvention::c_xmmWritableRegistersMask, i))
+            {
+                auto s = Direct<double>(reg);
+
+                m_reservedXmmRegisterStorages.push_back(s);
+                m_reservedRegistersPins.push_back(s.GetPin());
+            }
         }
     }
 
@@ -61,9 +75,14 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::ReleaseTemporary(__int32 offset)
+    void ExpressionTree::ReleaseIfTemporary(__int32 offset)
     {
-        m_temporaries.push_back(offset / sizeof(void*));
+        unsigned slot;
+
+        if (TemporaryOffsetToSlot(offset, slot))
+        {
+            m_temporaries.push_back(slot);
+        }
     }
 
 
@@ -121,6 +140,15 @@ namespace NativeJIT
     }
 
 
+    void ExpressionTree::ReportFunctionCallNode(unsigned parameterCount)
+    {
+        if (static_cast<int>(parameterCount) > m_maxFunctionCallParameters)
+        {
+            m_maxFunctionCallParameters = parameterCount;
+        }
+    }
+
+
     void ExpressionTree::Compile()
     {
         // Note: the call to Reset() clears all allocated labels, so start of
@@ -132,21 +160,31 @@ namespace NativeJIT
         Pass0();
 
         // Generate code.
-        m_code.EmitPrologue();
+        m_code.BeginFunctionBodyGeneration();
 
         Pass1();
         Pass2();
         Print();
         Pass3();
 
-        m_code.PlaceLabel(m_startOfEpilogue);
-        m_code.EmitEpilogue();
+        const FunctionSpecification spec(m_allocator,
+                                         m_maxFunctionCallParameters,
+                                         m_temporaryCount,
+                                         m_rxxFreeList.GetLifetimeUsedMask()
+                                            & CallingConvention::c_rxxNonvolatileRegistersMask
+                                            & CallingConvention::c_rxxWritableRegistersMask,
+                                         m_xmmFreeList.GetLifetimeUsedMask()
+                                            & CallingConvention::c_xmmNonvolatileRegistersMask
+                                            & CallingConvention::c_xmmWritableRegistersMask,
+                                         FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
 
-        m_code.PatchCallSites();
+        m_code.PlaceLabel(m_startOfEpilogue);
+        m_code.EndFunctionBodyGeneration(spec);
 
         // Release the reserved registers.
         m_reservedRegistersPins.clear();
-        m_reservedRegistersStorages.clear();
+        m_reservedXmmRegisterStorages.clear();
+        m_reservedRxxRegisterStorages.clear();
         Print();
 
         Assert(GetRXXUsageMask() == 0,
@@ -159,9 +197,44 @@ namespace NativeJIT
     }
 
 
-    void  const * ExpressionTree::GetUntypedEntryPoint() const
+    void const * ExpressionTree::GetUntypedEntryPoint() const
     {
         return m_code.GetEntryPoint();
+    }
+
+
+    __int32 ExpressionTree::TemporarySlotToOffset(unsigned temporarySlot)
+    {
+        Assert(temporarySlot < m_temporaryCount,
+               "Invalid temporary slot %u (total slots %u)",
+               temporarySlot,
+               m_temporaryCount);
+
+        // Expression tree asks for BaseRegisterType::SetRbpToOriginalRsp. That
+        // means that [rbp] holds return address, [rbp + 8] home for function's
+        // first argument etc, whereas [rbp - 8] holds the first temporary etc.
+        return -static_cast<__int32>(temporarySlot + 1)
+               * sizeof(void*);
+    }
+
+
+    bool ExpressionTree::TemporaryOffsetToSlot(__int32 temporaryOffset, unsigned& temporarySlot)
+    {
+        bool isTemporary = false;
+
+        if (temporaryOffset < 0
+            && -temporaryOffset % sizeof(void*) == 0)
+        {
+            const unsigned slot = -temporaryOffset / sizeof(void*) - 1;
+
+            if (slot < m_temporaryCount)
+            {
+                temporarySlot = slot;
+                isTemporary = true;
+            }
+        }
+
+        return isTemporary;
     }
 
 

@@ -15,12 +15,18 @@ namespace NativeJIT
     class CodeBuffer : public NonCopyable
     {
     public:
-        // Allocates a buffer from the allocator.
-        // Configures the JumpTable for the specified number of labels and call sites.
-        CodeBuffer(Allocators::IAllocator& allocator,
+        // Allocates a buffer from the code allocator. If the code inside
+        // the buffer is to be executed (and not just f. ex. transferred over the
+        // network), the allocator must return memory that is executable (see
+        // ExecutionBuffer class for an example).
+        //
+        // The general allocator is used for allocating housekeeping data such
+        // as labels, call sites etc. This allocator can be the same as the
+        // codeBufferAllocator only when it's not allocating the executable
+        // memory.
+        CodeBuffer(Allocators::IAllocator& codeAllocator,
                    unsigned capacity,
-                   unsigned maxLabels,
-                   unsigned maxCallSites);
+                   Allocators::IAllocator& generalAllocator);
 
         // Frees the buffer.
         virtual ~CodeBuffer();
@@ -32,14 +38,7 @@ namespace NativeJIT
         //   sites with jump targets. Note that all allocated labels must be placed before 
         //   calling Finalize().
         Label AllocateLabel();
-        void PlaceLabel(Label label);
-
-        // TODO: Review whether __forceinline should be added to all Emit*()
-        // methods. The following WARNING comment came from CodeBuffer.h within
-        // the X64CodeGenerator package. There, CodeBuffer::Emit*() methods were
-        // declared and defined in the header file and had __forceinline attribute.
-        // WARNING: __forceinline is essential to system performance. Please see
-        // note on constant folding in X64CodeGenerator.h.
+        virtual void PlaceLabel(Label label);
 
         // Writes a byte to the current position in the buffer.
         void Emit8(unsigned __int8 x);
@@ -53,26 +52,36 @@ namespace NativeJIT
         // WARNING: Non portable. Assumes little endian machine architecture.
         void Emit64(unsigned __int64 x);
 
+        // Copies the provided data to the current position in the buffer.
+        void EmitBytes(unsigned __int8 const *data, unsigned length);
+
+        // Writes the bits of the argument to the current position in the buffer.
         // WARNING: Non portable. Assumes little endian machine architecture.
         template <typename T>
-        void EmitValueBytes(T x);
+        void EmitBytes(T x);
+
+        // Replaces the contents of the buffer starting at startPosition and
+        // length bytes long with specified data. The portion of the buffer that
+        // will be changed with this call must already have been filled in
+        // (i.e. CurrentPosition() <= startPosition + length). Besides the buffer
+        // contents, no other CodeBuffer properties get modified. 
+        void ReplaceBytes(unsigned startPosition, unsigned __int8 const *data, unsigned length);
 
         // Return the size of the buffer, in bytes.
         // TODO: Rename GetCapacity()?
         unsigned BufferSize() const;
 
         // Returns the address of the start of the buffer.
-        // WARNING: Do not use this function to get the address of your generated code.
-        // The buffer may contain unwind information before the code starts, and Finalize()
-        // must be called before executing the code. 
-        // Use X64FunctionGenerator:EntryPoint() instead.
-        // TODO: Make protected. Currently available as a public function to enable unit tests.
+        // WARNING: Depending on how this class is used, this may not be the
+        // entry point to a function that's being built inside the buffer.
+        // F. ex. FunctionBuffer provides the GetEntryPoint() method to retrieve
+        // the function pointer.
         unsigned __int8* BufferStart() const;
 
         // Return the offset of the current write position in the buffer.
         unsigned CurrentPosition() const;
 
-        void Reset(unsigned position);
+        virtual void Reset();
 
         // Advances the current write position by byteCount and returns a pointer to the write position
         // before advancing.
@@ -90,7 +99,7 @@ namespace NativeJIT
         void EmitCallSite(Label label, unsigned size);
 
     private:
-        Allocators::IAllocator& m_allocator;
+        Allocators::IAllocator& m_codeAllocator;
         unsigned m_capacity;
 
         unsigned __int8* m_bufferStart;
@@ -99,11 +108,9 @@ namespace NativeJIT
 
         JumpTable m_localJumpTable;    // Jumps within a single CodeBuffer.
 
-        // http://stackoverflow.com/questions/8897791/how-to-define-forceinline-inline
-        // Writes the bits of the argument to the current position in the buffer.
-        // WARNING: Non portable. Assumes little endian machine architecture.
-        template <typename T>
-        __forceinline void EmitBytes(T x);
+        // Verifies that the specified length can be written to the buffer.
+        // Throws if buffer overflow would occur.
+        void VerifyNoBufferOverflow(unsigned length);
     };
 
 
@@ -112,6 +119,19 @@ namespace NativeJIT
     // Template definitions for CodeBuffer.
     //
     //*************************************************************************
+    template <typename T>
+    void CodeBuffer::EmitBytes(T x)
+    {
+        static_assert(std::is_trivially_copyable<T>::value, "Invalid variable type.");
+        const size_t varSize = sizeof(T);
+
+        VerifyNoBufferOverflow(varSize);
+
+        *reinterpret_cast<T*>(m_current) = x;
+        m_current += varSize;
+    }
+
+
     template <typename T>
     void CodeBuffer::AdvanceToAlignment()
     {

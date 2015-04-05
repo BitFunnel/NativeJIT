@@ -2,6 +2,7 @@
 
 #include "CallNode.h"
 #include "NativeJIT/BitOperations.h"
+#include "NativeJIT/CallingConvention.h"
 #include "NativeJIT/FunctionBuffer.h"
 
 
@@ -12,10 +13,13 @@ namespace NativeJIT
     // SaveRestoreVolatilesHelper
     //
     //*************************************************************************
-    SaveRestoreVolatilesHelper::SaveRestoreVolatilesHelper()
+    SaveRestoreVolatilesHelper::SaveRestoreVolatilesHelper(Allocators::IAllocator& allocator)
         : m_rxxCallExclusiveRegisterMask(0),
-          m_xmmCallExclusiveRegisterMask(0)
+          m_xmmCallExclusiveRegisterMask(0),
+          m_preservationStorage(Allocators::StlAllocator<void*>(allocator))
     {
+        m_preservationStorage.reserve(RegisterBase::c_maxIntegerRegisterID + 1
+                                      + RegisterBase::c_maxIntegerRegisterID + 1);
     }
 
 
@@ -24,7 +28,8 @@ namespace NativeJIT
     {
         // Save all used volatiles, except those used in and *fully* owned by
         // the call itself.
-        return c_rxxVolatiles
+        return CallingConvention::c_rxxVolatileRegistersMask
+               & CallingConvention::c_rxxWritableRegistersMask
                & tree.GetRXXUsageMask()
                & ~m_rxxCallExclusiveRegisterMask;
     }
@@ -35,14 +40,14 @@ namespace NativeJIT
     {
         // Save all used volatiles, except those used in and *fully* owned by
         // the call itself.
-        return c_xmmVolatiles
+        return CallingConvention::c_xmmVolatileRegistersMask
+               & CallingConvention::c_xmmWritableRegistersMask
                & tree.GetXMMUsageMask()
                & ~m_xmmCallExclusiveRegisterMask;
     }
 
 
-    void SaveRestoreVolatilesHelper::SaveVolatiles(ExpressionTree& tree,
-                                                   unsigned parameterCount)
+    void SaveRestoreVolatilesHelper::SaveVolatiles(ExpressionTree& tree)
     {
         auto & code = tree.GetCodeGenerator();
 
@@ -51,7 +56,13 @@ namespace NativeJIT
         unsigned r = 0;
         while (BitOp::GetLowestBitSet(rxxVolatiles, &r))
         {
-            code.Emit<OpCode::Push>(Register<8, false>(r));
+            m_preservationStorage.push_back(tree.Temporary<void*>());
+            auto const & s = m_preservationStorage.back();
+
+            code.Emit<OpCode::Mov>(s.GetBaseRegister(),
+                                   s.GetOffset(),
+                                   Register<8, false>(r));
+
             BitOp::ClearBit(&rxxVolatiles, r);
         }
 
@@ -59,52 +70,45 @@ namespace NativeJIT
 
         while (BitOp::GetLowestBitSet(xmmVolatiles, &r))
         {
-            // Simulate a push for FP register until the TODO below is resolved.
-            code.EmitImmediate<OpCode::Sub>(rsp, 8);
-            code.Emit<OpCode::Mov>(rsp, 0, Register<8, true>(r));
-            BitOp::ClearBit(&xmmVolatiles, r);
-        }
+            // TODO: This preserves only the lower 64 bits of the XMM register.
+            // That is currently fine as NativeJIT only uses floats and doubles
+            // which don't overlap with the upper 64-bits. Also, the full 128
+            // bits of XMM nonvolatiles are preserved in the function prolog
+            // by FunctionBuffer. To be fully correct, this should preserve
+            // all 128 bits (f. ex. allow Temporary() to return 16-byte
+            // aligned 16-byte space and use movaps to save the whole register).
+            // RestoreVolatiles() needs to be modified accordingly as well.
+            m_preservationStorage.push_back(tree.Temporary<void*>());
+            auto const & s = m_preservationStorage.back();
 
-        // Allocate backing storage for parameter homes.
-        //
-        // TODO: This should not be done here, X64 calling convention assumes
-        // that RSP is changed only in the prolog of a function to allocate
-        // space for maximum parameters used in any CALLs it makes and for
-        // temporaries. Besides that, it should not be touched (except by the
-        // implicit PUSH/POP of the return address by CALL).
-        // The code above may leave the stack non 16-bytes aligned.
-        // Also review/adjust the related code in RestoreVolatiles().
-        // This will be addressed as part of TFS 17238.
-        if (parameterCount > 0)
-        {
-            code.EmitImmediate<OpCode::Sub>(
-                rsp,
-                static_cast<unsigned __int8>(sizeof(void*) * parameterCount));
+            code.Emit<OpCode::Mov>(s.GetBaseRegister(),
+                                   s.GetOffset(),
+                                   Register<8, true>(r));
+
+
+            BitOp::ClearBit(&xmmVolatiles, r);
         }
     }
 
 
-    void SaveRestoreVolatilesHelper::RestoreVolatiles(ExpressionTree& tree,
-                                                      unsigned parameterCount)
+    void SaveRestoreVolatilesHelper::RestoreVolatiles(ExpressionTree& tree)
     {
         auto & code = tree.GetCodeGenerator();
 
         // Do everything in the reverse order, including popping XMM registers first.
-        if (parameterCount > 0)
-        {
-            code.EmitImmediate<OpCode::Add>(
-                rsp,
-                static_cast<unsigned __int8>(8 * parameterCount));
-        }
-
         unsigned xmmVolatiles = GetRegistersToPreserve<true>(tree);
 
         unsigned r = 0;
         while (BitOp::GetHighestBitSet(xmmVolatiles, &r))
         {
-            // Simulate a pop for FP register.
-            code.Emit<OpCode::Mov>(Register<8, true>(r), rsp, 0);
-            code.EmitImmediate<OpCode::Add>(rsp, 8);
+            Assert(!m_preservationStorage.empty(), "Logic error");
+            auto const & s = m_preservationStorage.back();
+
+            code.Emit<OpCode::Mov>(Register<8, true>(r),
+                                   s.GetBaseRegister(),
+                                   s.GetOffset());
+
+            m_preservationStorage.pop_back();
             BitOp::ClearBit(&xmmVolatiles, r);
         }
 
@@ -112,7 +116,14 @@ namespace NativeJIT
 
         while (BitOp::GetHighestBitSet(rxxVolatiles, &r))
         {
-            code.Emit<OpCode::Pop>(Register<8, false>(r));
+            Assert(!m_preservationStorage.empty(), "Logic error");
+            auto const & s = m_preservationStorage.back();
+
+            code.Emit<OpCode::Mov>(Register<8, false>(r),
+                                   s.GetBaseRegister(),
+                                   s.GetOffset());
+
+            m_preservationStorage.pop_back();
             BitOp::ClearBit(&rxxVolatiles, r);
         }
     }

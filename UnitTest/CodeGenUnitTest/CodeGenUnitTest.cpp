@@ -6,8 +6,9 @@
 
 #include "ML64Verifier.h"
 #include "NativeJIT/ExecutionBuffer.h"
-#include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/X64CodeGenerator.h"
 #include "SuiteCpp/UnitTest.h"
+#include "Temporary/Allocator.h"
 
 
 namespace NativeJIT
@@ -19,8 +20,9 @@ namespace NativeJIT
 
         TestCase(JCC)
         {
-            ExecutionBuffer allocator(1000);
-            FunctionBuffer buffer(allocator, 200, 10, 10, 3, 0, false);
+            ExecutionBuffer codeAllocator(200);
+            Allocator allocator(2000);
+            X64CodeGenerator buffer(codeAllocator, 200, allocator);
 
             Label l1 = buffer.AllocateLabel();
             buffer.PlaceLabel(l1);
@@ -30,8 +32,9 @@ namespace NativeJIT
 
         TestCase(OpCodes)
         {
-            ExecutionBuffer allocator(5000);
-            FunctionBuffer buffer(allocator, 2000, 10, 10, 3, 0, false);
+            ExecutionBuffer codeAllocator(2000);
+            Allocator allocator(2000);
+            X64CodeGenerator buffer(codeAllocator, 2000, allocator);
 
             unsigned __int8 const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 

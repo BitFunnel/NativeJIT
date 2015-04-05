@@ -361,7 +361,7 @@ namespace NativeJIT
                 // value between _AddressOfReturnAddress() as returned here
                 // and _AddressOfReturnAddress() as returned by the caller of the
                 // jitted function (that value would be passed as an argument).
-                auto bufferStart = static_cast<unsigned __int8 const *>(_AddressOfReturnAddress());
+                auto const bufferStart = static_cast<unsigned __int8 *>(_AddressOfReturnAddress());
                 auto bufferLimit = bufferStart + 96;
 
                 auto intPtr = reinterpret_cast<unsigned char*>(&intRef);

@@ -5,17 +5,25 @@
 
 namespace NativeJIT
 {
-    JumpTable::JumpTable(int maxLabels, int maxCallSites)
+    const unsigned c_labelsReserveCount = 64;
+    const unsigned c_callSitesReserveCount = 64;
+
+    JumpTable::JumpTable(Allocators::IAllocator& allocator)
+        : m_stlAllocator(allocator),
+          m_labels(m_stlAllocator),
+          m_callSites(m_stlAllocator)
     {
-        m_labels.reserve(maxLabels);
-        m_callSites.reserve(maxCallSites);
+        m_labels.reserve(c_labelsReserveCount);
+        m_callSites.reserve(c_callSitesReserveCount);
     }
+
 
     void JumpTable::Clear()
     {
         m_labels.clear();
         m_callSites.clear();
     }
+
 
     Label JumpTable::AllocateLabel()
     {
@@ -25,6 +33,7 @@ namespace NativeJIT
 
         return label;
     }
+
 
     void JumpTable::PlaceLabel(Label label, const unsigned __int8* address)
     {

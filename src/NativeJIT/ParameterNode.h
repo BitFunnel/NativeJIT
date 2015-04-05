@@ -45,7 +45,7 @@ namespace NativeJIT
 
         // Integer parameters are passed in RCX, RDX, R8, and R9.
         // TODO: Use constants to encode registers.
-        static const unsigned idMap[] = {1, 2, 8, 9};
+        const unsigned __int8 idMap[] = {1, 2, 8, 9};
 
         r = Register<SIZE, false>(idMap[id]);
     }

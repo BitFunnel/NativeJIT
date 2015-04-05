@@ -80,6 +80,7 @@
     <ClCompile Include="CodeBuffer.cpp" />
     <ClCompile Include="ExecutionBuffer.cpp" />
     <ClCompile Include="FunctionBuffer.cpp" />
+    <ClCompile Include="FunctionSpecification.cpp" />
     <ClCompile Include="JumpTable.cpp" />
     <ClCompile Include="Register.cpp" />
     <ClCompile Include="stdafx.cpp">
