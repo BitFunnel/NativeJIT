@@ -395,6 +395,12 @@ namespace NativeJIT
             buffer.Emit<OpCode::MovZX, 8, false, 2, false>(rbx, rcx, 0x12);
             buffer.Emit<OpCode::MovZX, 8, false, 2, false>(rbx, r9, 0x34);
 
+            buffer.Emit<OpCode::MovZX>(rbx, ebx);
+            buffer.Emit<OpCode::MovZX>(rbx, r12d);
+            buffer.Emit<OpCode::MovZX>(r9, edx);
+            buffer.Emit<OpCode::MovZX, 8, false, 4, false>(rbx, rcx, 0x12);
+            buffer.Emit<OpCode::MovZX, 8, false, 4, false>(rbx, r9, 0x34);
+
             // Conversion, signed integer to floating point cvtsi2ss/cvtsi2sd.
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, eax);
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, rax);
@@ -921,6 +927,13 @@ namespace NativeJIT
                 "           12                                                                                      \n"
                 " 0000054D  49/ 0F B7 59         movzx rbx, word ptr [r9 + 34h]                                     \n"
                 "           34                                                                                      \n"
+                "                                                                                                   \n"
+                "                                ; 4 bytes to 8, implemented in terms of mov                        \n"
+                " 00000581  8B DB                mov ebx, ebx                                                       \n"
+                " 00000583  41/ 8B DC            mov ebx, r12d                                                      \n"
+                " 00000586  44/ 8B CA            mov r9d, edx                                                       \n"
+                " 00000589  8B 59 12             mov ebx, dword ptr [rcx + 12h]                                     \n"
+                " 0000058C  41/ 8B 59 34         mov ebx, dword ptr [r9 + 34h]                                      \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"
                 "                                ; CvtSI2SD/CvtSI2SS                                                \n"

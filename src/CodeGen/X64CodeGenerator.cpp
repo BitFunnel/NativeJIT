@@ -253,6 +253,50 @@ namespace NativeJIT
     }
 
 
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit(
+        X64CodeGenerator& code,
+        Register<4, false> dest,
+        Register<4, false> src)
+    {
+        Helper<OpCode::Mov>::ArgTypes1<false>::Emit<4>(code, dest, src);
+    }
+
+    // Full specialization of MovZX opcode for "movzx dest64, src32" which is
+    // implemented in terms of "mov dest32, src32".
+
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit(
+        X64CodeGenerator& code,
+        Register<8, false> dest,
+        Register<4, false> src)
+    {
+        const Register<4, false> dest4(dest);
+
+        Helper<OpCode::Mov>::ArgTypes1<false>::Emit<4>(code, dest4, src);
+    }
+
+
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit<8, 4>(
+        X64CodeGenerator& code,
+        Register<8, false> dest,
+        Register<8, false> src,
+        __int32 srcOffset)
+    {
+        const Register<4, false> dest4(dest);
+
+        Helper<OpCode::Mov>::ArgTypes1<false>::Emit<4>(code, dest4, src, srcOffset);
+    }
+
+
+
     //*************************************************************************
     //
     // Helper code printing methods.

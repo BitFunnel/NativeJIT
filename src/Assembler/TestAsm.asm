@@ -425,6 +425,13 @@ movzx r9, dx
 movzx rbx, word ptr [rcx + 12h]
 movzx rbx, word ptr [r9 + 34h]
 
+; 4 bytes to 8, implemented in terms of mov
+mov ebx, ebx
+mov ebx, r12d
+mov r9d, edx
+mov ebx, dword ptr [rcx + 12h]
+mov ebx, dword ptr [r9 + 34h]
+
 ;
 ; CvtSI2SD/CvtSI2SS
 ;

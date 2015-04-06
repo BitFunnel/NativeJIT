@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   03/31/15 02:57:02
+Microsoft (R) Macro Assembler (x64) Version 11.00.61030.0   04/06/15 00:52:36
 TestAsm.asm						     Page 1 - 1
 
 
@@ -528,6 +528,13 @@ TestAsm.asm						     Page 1 - 1
 	   12
  0000057C  49/ 0F B7 59		movzx rbx, word ptr [r9 + 34h]
 	   34
+
+				; 4 bytes to 8, implemented in terms of mov
+ 00000581  8B DB		mov ebx, ebx
+ 00000583  41/ 8B DC		mov ebx, r12d
+ 00000586  44/ 8B CA		mov r9d, edx
+ 00000589  8B 59 12		mov ebx, dword ptr [rcx + 12h]
+ 0000058C  41/ 8B 59 34		mov ebx, dword ptr [r9 + 34h]
 
 				;
 				; CvtSI2SD/CvtSI2SS

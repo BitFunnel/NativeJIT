@@ -1705,6 +1705,17 @@ namespace NativeJIT
         code.MovZX(dest, src);
     }
 
+    // There is no "movzx dest64, src32" instruction, MovZX opcode for this
+    // combination is implemented in terms of "mov dest32, src32" using full
+    // template specialization.
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit<8, 4>(
+        X64CodeGenerator& code,
+        Register<8, false> dest,
+        Register<4, false> src);
+
 
     template <>
     template <>
@@ -1717,6 +1728,16 @@ namespace NativeJIT
     {
         code.MovZX<SIZE1, SIZE2>(dest, src, srcOffset);
     }
+
+
+    template <>
+    template <>
+    template <>
+    void X64CodeGenerator::Helper<OpCode::MovZX>::ArgTypes2<false, false>::Emit<8, 4>(
+        X64CodeGenerator& code,
+        Register<8, false> dest,
+        Register<8, false> src,
+        __int32 srcOffset);
 
 
     //
