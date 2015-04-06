@@ -116,6 +116,7 @@ namespace NativeJIT
             "imul",
             "lea",
             "mov",
+            "movsx",
             "movzx",
             "nop",
             "or",

@@ -401,6 +401,43 @@ namespace NativeJIT
             buffer.Emit<OpCode::MovZX, 8, false, 4, false>(rbx, rcx, 0x12);
             buffer.Emit<OpCode::MovZX, 8, false, 4, false>(rbx, r9, 0x34);
 
+            // Conversion, integer with sign extension - movsx.
+            buffer.Emit<OpCode::MovSX>(bx, bl);
+            buffer.Emit<OpCode::MovSX>(bx, r12b);
+            buffer.Emit<OpCode::MovSX>(r9w, dl);
+            buffer.Emit<OpCode::MovSX, 2, false, 1, false>(bx, rcx, 0x12);
+            buffer.Emit<OpCode::MovSX, 2, false, 1, false>(bx, r9, 0x34);
+
+            buffer.Emit<OpCode::MovSX>(ebx, bl);
+            buffer.Emit<OpCode::MovSX>(ebx, r12b);
+            buffer.Emit<OpCode::MovSX>(r9d, dl);
+            buffer.Emit<OpCode::MovSX, 4, false, 1, false>(ebx, rcx, 0x12);
+            buffer.Emit<OpCode::MovSX, 4, false, 1, false>(ebx, r9, 0x34);
+
+            buffer.Emit<OpCode::MovSX>(rbx, bl);
+            buffer.Emit<OpCode::MovSX>(rbx, r12b);
+            buffer.Emit<OpCode::MovSX>(r9, dl);
+            buffer.Emit<OpCode::MovSX, 8, false, 1, false>(rbx, rcx, 0x12);
+            buffer.Emit<OpCode::MovSX, 8, false, 1, false>(rbx, r9, 0x34);
+
+            buffer.Emit<OpCode::MovSX>(ebx, bx);
+            buffer.Emit<OpCode::MovSX>(ebx, r12w);
+            buffer.Emit<OpCode::MovSX>(r9d, dx);
+            buffer.Emit<OpCode::MovSX, 4, false, 2, false>(ebx, rcx, 0x12);
+            buffer.Emit<OpCode::MovSX, 4, false, 2, false>(ebx, r9, 0x34);
+
+            buffer.Emit<OpCode::MovSX>(rbx, bx);
+            buffer.Emit<OpCode::MovSX>(rbx, r12w);
+            buffer.Emit<OpCode::MovSX>(r9, dx);
+            buffer.Emit<OpCode::MovSX, 8, false, 2, false>(rbx, rcx, 0x12);
+            buffer.Emit<OpCode::MovSX, 8, false, 2, false>(rbx, r9, 0x34);
+
+            buffer.Emit<OpCode::MovSX>(rbx, ebx);
+            buffer.Emit<OpCode::MovSX>(rbx, r12d);
+            buffer.Emit<OpCode::MovSX>(r9, edx);
+            buffer.Emit<OpCode::MovSX, 8, false, 4, false>(rbx, rcx, 0x12);
+            buffer.Emit<OpCode::MovSX, 8, false, 4, false>(rbx, r9, 0x34);
+
             // Conversion, signed integer to floating point cvtsi2ss/cvtsi2sd.
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, eax);
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, rax);
@@ -934,6 +971,57 @@ namespace NativeJIT
                 " 00000586  44/ 8B CA            mov r9d, edx                                                       \n"
                 " 00000589  8B 59 12             mov ebx, dword ptr [rcx + 12h]                                     \n"
                 " 0000058C  41/ 8B 59 34         mov ebx, dword ptr [r9 + 34h]                                      \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; MovSX                                                            \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                "                                ; 1 byte to 2, 4 and 8.                                            \n"
+                " 00000590  66| 0F BE DB         movsx bx, bl                                                       \n"
+                " 00000594  66| 41/ 0F BE DC     movsx bx, r12b                                                     \n"
+                " 00000599  66| 44/ 0F BE CA     movsx r9w, dl                                                      \n"
+                " 0000059E  66| 0F BE 59         movsx bx, byte ptr [rcx + 12h]                                     \n"
+                "           12                                                                                      \n"
+                " 000005A3  66| 41/ 0F BE 59     movsx bx, byte ptr [r9 + 34h]                                      \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                " 000005A9  0F BE DB             movsx ebx, bl                                                      \n"
+                " 000005AC  41/ 0F BE DC         movsx ebx, r12b                                                    \n"
+                " 000005B0  44/ 0F BE CA         movsx r9d, dl                                                      \n"
+                " 000005B4  0F BE 59 12          movsx ebx, byte ptr [rcx + 12h]                                    \n"
+                " 000005B8  41/ 0F BE 59         movsx ebx, byte ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                " 000005BD  48/ 0F BE DB         movsx rbx, bl                                                      \n"
+                " 000005C1  49/ 0F BE DC         movsx rbx, r12b                                                    \n"
+                " 000005C5  4C/ 0F BE CA         movsx r9, dl                                                       \n"
+                " 000005C9  48/ 0F BE 59         movsx rbx, byte ptr [rcx + 12h]                                    \n"
+                "           12                                                                                      \n"
+                " 000005CE  49/ 0F BE 59         movsx rbx, byte ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                "                                ; 2 bytes to 4 and 8                                               \n"
+                " 000005D3  0F BF DB             movsx ebx, bx                                                      \n"
+                " 000005D6  41/ 0F BF DC         movsx ebx, r12w                                                    \n"
+                " 000005DA  44/ 0F BF CA         movsx r9d, dx                                                      \n"
+                " 000005DE  0F BF 59 12          movsx ebx, word ptr [rcx + 12h]                                    \n"
+                " 000005E2  41/ 0F BF 59         movsx ebx, word ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                " 000005E7  48/ 0F BF DB         movsx rbx, bx                                                      \n"
+                " 000005EB  49/ 0F BF DC         movsx rbx, r12w                                                    \n"
+                " 000005EF  4C/ 0F BF CA         movsx r9, dx                                                       \n"
+                " 000005F3  48/ 0F BF 59         movsx rbx, word ptr [rcx + 12h]                                    \n"
+                "           12                                                                                      \n"
+                " 000005F8  49/ 0F BF 59         movsx rbx, word ptr [r9 + 34h]                                     \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                "                                ; 4 bytes to 8                                                     \n"
+                " 000005FD  48/ 63 DB            movsxd rbx, ebx                                                    \n"
+                " 00000600  49/ 63 DC            movsxd rbx, r12d                                                   \n"
+                " 00000603  4C/ 63 CA            movsxd r9, edx                                                     \n"
+                " 00000606  48/ 63 59 12         movsxd rbx, dword ptr [rcx + 12h]                                  \n"
+                " 0000060A  49/ 63 59 34         movsxd rbx, dword ptr [r9 + 34h]                                   \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"
                 "                                ; CvtSI2SD/CvtSI2SS                                                \n"

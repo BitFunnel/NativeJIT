@@ -64,6 +64,7 @@ namespace NativeJIT
         IMul,       // TODO: Consider calling this Mul. These opcodes are not X64 opcodes.
         Lea,
         Mov,
+        MovSX,
         MovZX,
         Nop,
         Or,
@@ -201,6 +202,12 @@ namespace NativeJIT
 
         template <unsigned SIZE>
         void MovD(Register<SIZE, true> dest, Register<SIZE, false> src);
+
+        template <unsigned SIZE1, unsigned SIZE2>
+        void MovSX(Register<SIZE1, false> dest, Register<SIZE2, false> src);
+
+        template <unsigned SIZE1, unsigned SIZE2>
+        void MovSX(Register<SIZE1, false> dest, Register<8, false> src, __int32 srcOffset);
 
         template <unsigned SIZE1, unsigned SIZE2>
         void MovZX(Register<SIZE1, false> dest, Register<SIZE2, false> src);
@@ -972,6 +979,70 @@ namespace NativeJIT
     }
 
 
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::MovSX(Register<SIZE1, false> dest, Register<SIZE2, false> src)
+    {
+        static_assert(SIZE2 < 8, "Invalid source size.");
+        static_assert(SIZE1 > SIZE2, "Target size must be larger than the source size.");
+
+        if (SIZE2 == 1)
+        {
+            EmitOpSizeOverrideDirect(dest, src);
+            EmitRexDirect(dest, src);
+            Emit8(0x0f);
+            Emit8(0xbe);
+        }
+        else if (SIZE2 == 2)
+        {
+            // No size override since 16-bit is default operand size; different opcode.
+            EmitRexDirect(dest, src);
+            Emit8(0x0f);
+            Emit8(0xbf);
+        }
+        else // if (SIZE2 == 4)
+        {
+            // No size override since neither operand can be 16-bit.
+            // No prefix, different opcode.
+            EmitRexDirect(dest, src);
+            Emit8(0x63);
+        }
+
+        EmitModRM(dest, src);
+    }
+
+
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::MovSX(Register<SIZE1, false> dest, Register<8, false> src, __int32 srcOffset)
+    {
+        static_assert(SIZE2 < 8, "Invalid source size.");
+        static_assert(SIZE1 > SIZE2, "Target size must be larger than the source size.");
+
+        if (SIZE2 == 1)
+        {
+            EmitOpSizeOverrideIndirect<SIZE2, false>(dest, src);
+            EmitRexIndirect<SIZE2, false>(dest, src);
+            Emit8(0x0f);
+            Emit8(0xbe);
+        }
+        else if (SIZE2 == 2)
+        {
+            // No size override since 16-bit is default operand size; different opcode.
+            EmitRexIndirect<SIZE2, false>(dest, src);
+            Emit8(0x0f);
+            Emit8(0xbf);
+        }
+        else // if (SIZE2 == 4)
+        {
+            // No size override since neither operand can be 16-bit.
+            // No prefix, different opcode.
+            EmitRexIndirect<SIZE2, false>(dest, src);
+            Emit8(0x63);
+        }
+
+        EmitModRMOffset(dest, src, srcOffset);
+    }
+
+
     template <unsigned SIZE>
     void X64CodeGenerator::Shld(Register<SIZE, false> dest, Register<SIZE, false> src, unsigned __int8 bitCount)
     {
@@ -1687,6 +1758,35 @@ namespace NativeJIT
         T value)
     {
         code.IMulImmediate(dest, value);
+    }
+
+
+    //
+    // MovSX
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::Helper<OpCode::MovSX>::ArgTypes2<false, false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE1, false> dest,
+        Register<SIZE2, false> src)
+    {
+        code.MovSX(dest, src);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE1, unsigned SIZE2>
+    void X64CodeGenerator::Helper<OpCode::MovSX>::ArgTypes2<false, false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE1, false> dest,
+        Register<8, false> src,
+        __int32 srcOffset)
+    {
+        code.MovSX<SIZE1, SIZE2>(dest, src, srcOffset);
     }
 
 

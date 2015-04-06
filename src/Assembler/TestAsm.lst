@@ -537,90 +537,141 @@ TestAsm.asm						     Page 1 - 1
  0000058C  41/ 8B 59 34		mov ebx, dword ptr [r9 + 34h]
 
 				;
+				; MovSX
+				;
+
+				; 1 byte to 2, 4 and 8.
+ 00000590  66| 0F BE DB		movsx bx, bl
+ 00000594  66| 41/ 0F BE DC	movsx bx, r12b
+ 00000599  66| 44/ 0F BE CA	movsx r9w, dl
+ 0000059E  66| 0F BE 59		movsx bx, byte ptr [rcx + 12h]
+	   12
+ 000005A3  66| 41/ 0F BE 59	movsx bx, byte ptr [r9 + 34h]
+	   34
+
+ 000005A9  0F BE DB		movsx ebx, bl
+ 000005AC  41/ 0F BE DC		movsx ebx, r12b
+ 000005B0  44/ 0F BE CA		movsx r9d, dl
+ 000005B4  0F BE 59 12		movsx ebx, byte ptr [rcx + 12h]
+ 000005B8  41/ 0F BE 59		movsx ebx, byte ptr [r9 + 34h]
+	   34
+
+ 000005BD  48/ 0F BE DB		movsx rbx, bl
+ 000005C1  49/ 0F BE DC		movsx rbx, r12b
+ 000005C5  4C/ 0F BE CA		movsx r9, dl
+ 000005C9  48/ 0F BE 59		movsx rbx, byte ptr [rcx + 12h]
+	   12
+ 000005CE  49/ 0F BE 59		movsx rbx, byte ptr [r9 + 34h]
+	   34
+
+				; 2 bytes to 4 and 8
+ 000005D3  0F BF DB		movsx ebx, bx
+ 000005D6  41/ 0F BF DC		movsx ebx, r12w
+ 000005DA  44/ 0F BF CA		movsx r9d, dx
+ 000005DE  0F BF 59 12		movsx ebx, word ptr [rcx + 12h]
+ 000005E2  41/ 0F BF 59		movsx ebx, word ptr [r9 + 34h]
+	   34
+
+ 000005E7  48/ 0F BF DB		movsx rbx, bx
+ 000005EB  49/ 0F BF DC		movsx rbx, r12w
+ 000005EF  4C/ 0F BF CA		movsx r9, dx
+ 000005F3  48/ 0F BF 59		movsx rbx, word ptr [rcx + 12h]
+	   12
+ 000005F8  49/ 0F BF 59		movsx rbx, word ptr [r9 + 34h]
+	   34
+
+				; 4 bytes to 8
+ 000005FD  48/ 63 DB		movsxd rbx, ebx
+ 00000600  49/ 63 DC		movsxd rbx, r12d
+ 00000603  4C/ 63 CA		movsxd r9, edx
+ 00000606  48/ 63 59 12		movsxd rbx, dword ptr [rcx + 12h]
+ 0000060A  49/ 63 59 34		movsxd rbx, dword ptr [r9 + 34h]
+
+				;
 				; CvtSI2SD/CvtSI2SS
 				;
 
- 00000581  F3/ 0F 2A C8		cvtsi2ss xmm1, eax
- 00000585  F3/ 48/ 0F 2A C8	cvtsi2ss xmm1, rax
- 0000058A  F3/ 4C/ 0F 2A CB	cvtsi2ss xmm9, rbx
- 0000058F  F3/ 49/ 0F 2A C8	cvtsi2ss xmm1, r8
- 00000594  F3/ 0F 2A 49		cvtsi2ss xmm1, dword ptr [rcx + 12h]
+ 00000590  F3/ 0F 2A C8		cvtsi2ss xmm1, eax
+ 00000594  F3/ 48/ 0F 2A C8	cvtsi2ss xmm1, rax
+ 00000599  F3/ 4C/ 0F 2A CB	cvtsi2ss xmm9, rbx
+ 0000059E  F3/ 49/ 0F 2A C8	cvtsi2ss xmm1, r8
+ 000005A3  F3/ 0F 2A 49		cvtsi2ss xmm1, dword ptr [rcx + 12h]
 	   12
- 00000599  F3/ 41/ 0F 2A 49	cvtsi2ss xmm1, dword ptr [r9 + 34h]
+ 000005A8  F3/ 41/ 0F 2A 49	cvtsi2ss xmm1, dword ptr [r9 + 34h]
 	   34
- 0000059F  F3/ 48/ 0F 2A 49	cvtsi2ss xmm1, qword ptr [rcx + 56h]
+ 000005AE  F3/ 48/ 0F 2A 49	cvtsi2ss xmm1, qword ptr [rcx + 56h]
 	   56
 
- 000005A5  F2/ 0F 2A C8		cvtsi2sd xmm1, eax
- 000005A9  F2/ 48/ 0F 2A C8	cvtsi2sd xmm1, rax
- 000005AE  F2/ 4C/ 0F 2A CB	cvtsi2sd xmm9, rbx
- 000005B3  F2/ 49/ 0F 2A C8	cvtsi2sd xmm1, r8
- 000005B8  F2/ 0F 2A 49		cvtsi2sd xmm1, dword ptr [rcx + 12h]
+ 000005B4  F2/ 0F 2A C8		cvtsi2sd xmm1, eax
+ 000005B8  F2/ 48/ 0F 2A C8	cvtsi2sd xmm1, rax
+ 000005BD  F2/ 4C/ 0F 2A CB	cvtsi2sd xmm9, rbx
+ 000005C2  F2/ 49/ 0F 2A C8	cvtsi2sd xmm1, r8
+ 000005C7  F2/ 0F 2A 49		cvtsi2sd xmm1, dword ptr [rcx + 12h]
 	   12
- 000005BD  F2/ 41/ 0F 2A 49	cvtsi2sd xmm1, dword ptr [r9 + 34h]
+ 000005CC  F2/ 41/ 0F 2A 49	cvtsi2sd xmm1, dword ptr [r9 + 34h]
 	   34
- 000005C3  F2/ 48/ 0F 2A 49	cvtsi2sd xmm1, qword ptr [rcx + 56h]
+ 000005D2  F2/ 48/ 0F 2A 49	cvtsi2sd xmm1, qword ptr [rcx + 56h]
 	   56
 
 				;
 				; CvtTSD2SI/CvtTSS2SI
 				;
 
- 000005C9  F3/ 0F 2C C1		cvttss2si eax, xmm1
- 000005CD  F3/ 48/ 0F 2C C1	cvttss2si rax, xmm1
- 000005D2  F3/ 49/ 0F 2C D9	cvttss2si rbx, xmm9
- 000005D7  F3/ 4C/ 0F 2C C1	cvttss2si r8, xmm1
- 000005DC  F3/ 0F 2C 59		cvttss2si ebx, dword ptr [rcx + 12h]
+ 000005D8  F3/ 0F 2C C1		cvttss2si eax, xmm1
+ 000005DC  F3/ 48/ 0F 2C C1	cvttss2si rax, xmm1
+ 000005E1  F3/ 49/ 0F 2C D9	cvttss2si rbx, xmm9
+ 000005E6  F3/ 4C/ 0F 2C C1	cvttss2si r8, xmm1
+ 000005EB  F3/ 0F 2C 59		cvttss2si ebx, dword ptr [rcx + 12h]
 	   12
- 000005E1  F3/ 41/ 0F 2C 59	cvttss2si ebx, dword ptr [r9 + 34h]
+ 000005F0  F3/ 41/ 0F 2C 59	cvttss2si ebx, dword ptr [r9 + 34h]
 	   34
- 000005E7  F3/ 48/ 0F 2C 59	cvttss2si rbx, dword ptr [rcx + 56h]
+ 000005F6  F3/ 48/ 0F 2C 59	cvttss2si rbx, dword ptr [rcx + 56h]
 	   56
 
- 000005ED  F2/ 0F 2C C1		cvttsd2si eax, xmm1
- 000005F1  F2/ 48/ 0F 2C C1	cvttsd2si rax, xmm1
- 000005F6  F2/ 49/ 0F 2C D9	cvttsd2si rbx, xmm9
- 000005FB  F2/ 4C/ 0F 2C C1	cvttsd2si r8, xmm1
- 00000600  F2/ 0F 2C 59		cvttsd2si ebx, mmword ptr [rcx + 12h]
+ 000005FC  F2/ 0F 2C C1		cvttsd2si eax, xmm1
+ 00000600  F2/ 48/ 0F 2C C1	cvttsd2si rax, xmm1
+ 00000605  F2/ 49/ 0F 2C D9	cvttsd2si rbx, xmm9
+ 0000060A  F2/ 4C/ 0F 2C C1	cvttsd2si r8, xmm1
+ 0000060F  F2/ 0F 2C 59		cvttsd2si ebx, mmword ptr [rcx + 12h]
 	   12
- 00000605  F2/ 41/ 0F 2C 59	cvttsd2si ebx, mmword ptr [r9 + 34h]
+ 00000614  F2/ 41/ 0F 2C 59	cvttsd2si ebx, mmword ptr [r9 + 34h]
 	   34
- 0000060B  F2/ 48/ 0F 2C 59	cvttsd2si rbx, mmword ptr [rcx + 56h]
+ 0000061A  F2/ 48/ 0F 2C 59	cvttsd2si rbx, mmword ptr [rcx + 56h]
 	   56
 
 				;
 				; Conversion, float - cvtss2sd and cvtsd2ss
 				;
 
- 00000611  F3/ 0F 5A C9		cvtss2sd xmm1, xmm1
- 00000615  F3/ 41/ 0F 5A D1	cvtss2sd xmm2, xmm9
- 0000061A  F3/ 0F 5A 51		cvtss2sd xmm2, dword ptr [rcx + 20h]
+ 00000620  F3/ 0F 5A C9		cvtss2sd xmm1, xmm1
+ 00000624  F3/ 41/ 0F 5A D1	cvtss2sd xmm2, xmm9
+ 00000629  F3/ 0F 5A 51		cvtss2sd xmm2, dword ptr [rcx + 20h]
 	   20
- 0000061F  F3/ 41/ 0F 5A 91	cvtss2sd xmm2, dword ptr [r9 + 200h]
+ 0000062E  F3/ 41/ 0F 5A 91	cvtss2sd xmm2, dword ptr [r9 + 200h]
 	   00000200
 
- 00000628  F2/ 0F 5A C9		cvtsd2ss xmm1, xmm1
- 0000062C  F2/ 41/ 0F 5A D1	cvtsd2ss xmm2, xmm9
- 00000631  F2/ 0F 5A 51		cvtsd2ss xmm2, qword ptr [rcx + 20h]
+ 00000637  F2/ 0F 5A C9		cvtsd2ss xmm1, xmm1
+ 0000063B  F2/ 41/ 0F 5A D1	cvtsd2ss xmm2, xmm9
+ 00000640  F2/ 0F 5A 51		cvtsd2ss xmm2, qword ptr [rcx + 20h]
 	   20
- 00000636  F2/ 41/ 0F 5A 91	cvtsd2ss xmm2, qword ptr [r9 + 200h]
+ 00000645  F2/ 41/ 0F 5A 91	cvtsd2ss xmm2, qword ptr [r9 + 200h]
 	   00000200
 
 				;
 				; Floating point comparison, comiss and comisd.
 				;
 
- 0000063F  0F 2F C9		comiss xmm1, xmm1
- 00000642  41/ 0F 2F D1		comiss xmm2, xmm9
- 00000646  0F 2F 51 20		comiss xmm2, dword ptr [rcx + 20h]
- 0000064A  41/ 0F 2F 91		comiss xmm2, dword ptr [r9 + 200h]
+ 0000064E  0F 2F C9		comiss xmm1, xmm1
+ 00000651  41/ 0F 2F D1		comiss xmm2, xmm9
+ 00000655  0F 2F 51 20		comiss xmm2, dword ptr [rcx + 20h]
+ 00000659  41/ 0F 2F 91		comiss xmm2, dword ptr [r9 + 200h]
 	   00000200
 
- 00000652  66| 0F 2F C9		comisd xmm1, xmm1
- 00000656  66| 41/ 0F 2F D1	comisd xmm2, xmm9
- 0000065B  66| 0F 2F 51		comisd xmm2, qword ptr [rcx + 20h]
+ 00000661  66| 0F 2F C9		comisd xmm1, xmm1
+ 00000665  66| 41/ 0F 2F D1	comisd xmm2, xmm9
+ 0000066A  66| 0F 2F 51		comisd xmm2, qword ptr [rcx + 20h]
 	   20
- 00000660  66| 41/ 0F 2F 91	comisd xmm2, qword ptr [r9 + 200h]
+ 0000066F  66| 41/ 0F 2F 91	comisd xmm2, qword ptr [r9 + 200h]
 	   00000200
 
 				;

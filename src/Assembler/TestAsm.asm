@@ -433,6 +433,49 @@ mov ebx, dword ptr [rcx + 12h]
 mov ebx, dword ptr [r9 + 34h]
 
 ;
+; MovSX
+;
+
+; 1 byte to 2, 4 and 8.
+movsx bx, bl
+movsx bx, r12b
+movsx r9w, dl
+movsx bx, byte ptr [rcx + 12h]
+movsx bx, byte ptr [r9 + 34h]
+
+movsx ebx, bl
+movsx ebx, r12b
+movsx r9d, dl
+movsx ebx, byte ptr [rcx + 12h]
+movsx ebx, byte ptr [r9 + 34h]
+
+movsx rbx, bl
+movsx rbx, r12b
+movsx r9, dl
+movsx rbx, byte ptr [rcx + 12h]
+movsx rbx, byte ptr [r9 + 34h]
+
+; 2 bytes to 4 and 8
+movsx ebx, bx
+movsx ebx, r12w
+movsx r9d, dx
+movsx ebx, word ptr [rcx + 12h]
+movsx ebx, word ptr [r9 + 34h]
+
+movsx rbx, bx
+movsx rbx, r12w
+movsx r9, dx
+movsx rbx, word ptr [rcx + 12h]
+movsx rbx, word ptr [r9 + 34h]
+
+; 4 bytes to 8
+movsxd rbx, ebx
+movsxd rbx, r12d
+movsxd r9, edx
+movsxd rbx, dword ptr [rcx + 12h]
+movsxd rbx, dword ptr [r9 + 34h]
+
+;
 ; CvtSI2SD/CvtSI2SS
 ;
 
