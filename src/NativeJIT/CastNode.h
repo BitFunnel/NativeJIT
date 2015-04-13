@@ -520,13 +520,12 @@ namespace NativeJIT
                 auto & isSourceWithoutOverflow
                     = tree.Compare<JccType::JB>(from, twoToThePowerOf63Float);
 
-                // TODO: Reverse the order of Add operands once 64-bit immediates are fixed.
                 // The node with a reduced float and the int which gets increased
                 // by the same value after the conversion.
                 auto & reducedFloat = tree.Sub(from, twoToThePowerOf63Float);
                 auto & adjustedConvertedInt
-                    = tree.Add(tree.Immediate(static_cast<TO>(twoToThePowerOf63)),
-                               TwoStepCast<TO, __int64, FROM>(tree, reducedFloat));
+                    = tree.Add(TwoStepCast<TO, __int64, FROM>(tree, reducedFloat),
+                               tree.Immediate(static_cast<TO>(twoToThePowerOf63)));
 
                 result = &tree.Conditional(isSourceWithoutOverflow,
                                            TwoStepCast<TO, __int64, FROM>(tree, from),

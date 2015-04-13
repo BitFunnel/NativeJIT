@@ -242,8 +242,8 @@ namespace NativeJIT
     class ExpressionTree::Storage
     {
     public:
-        typedef Register<sizeof(T), IsFloatingPointType<T>::value/*, IsSigned<T>::value*/> DirectRegister;
-        typedef Register<sizeof(T*), false/*, false*/> BaseRegister;
+        typedef Register<sizeof(T), IsFloatingPointType<T>::value> DirectRegister;
+        typedef Register<sizeof(T*), false> BaseRegister;
         typedef Register<8, IsFloatingPointType<T>::value> FullRegister;
 
         Storage();
@@ -579,7 +579,7 @@ namespace NativeJIT
           m_offset(offset),
           m_refCount(0)
     {
-        if (!base.IsRIP())
+        if (!base.IsRIP() && !tree.IsBasePointer(base))
         {
             auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
             freeList.SetData(m_registerId, this);
@@ -763,11 +763,13 @@ namespace NativeJIT
                     BaseRegister base = BaseRegister(m_data->GetRegisterId());
 #pragma warning(push)
 #pragma warning(disable:4127)
-                    if (IsFloatingPointType<T>::value || tree.IsBasePointer(base))
+                    if (IsFloatingPointType<T>::value || base.IsRIP() || tree.IsBasePointer(base))
 #pragma warning(pop)
                     {
-                        // We need to allocate a new register for the value for one of two reasons:
+                        // We need to allocate a new register for the value for
+                        // one of the following reasons:
                         //   The value is float and therefore cannot be stored in base.
+                        //   Base is the special-purpose RIP register.
                         //   Base is the reserved base pointer register in the tree.
                         auto dest = tree.Direct<T>();
                         tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(),

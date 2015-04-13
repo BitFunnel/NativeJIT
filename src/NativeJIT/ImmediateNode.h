@@ -7,6 +7,18 @@
 
 namespace NativeJIT
 {
+    template <typename T>
+    struct RequiresRIPRelativeImmediate
+    {
+        // Floating point instructions don't allow for immediate values,
+        // so RIP-relative indirect must be used. Also, many instructions taking
+        // an integer immediate (such as Add, Cmp etc) do not have a form which
+        // takes a 64-bit immediate and need a RIP-relative indirect.
+        static const bool c_value = std::is_floating_point<T>::value
+            || (std::is_integral<T>::value && sizeof(T) == 8);
+    };
+
+
     template <typename T, typename ENABLE = void>
     class ImmediateNode : public Node<T>
     {
@@ -57,7 +69,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    class ImmediateNode<T, typename std::enable_if<std::is_floating_point<T>::value>::type> : public Node<T>, public RIPRelativeImmediate
+    class ImmediateNode<T, typename std::enable_if<RequiresRIPRelativeImmediate<T>::c_value>::type>
+        : public Node<T>,
+          public RIPRelativeImmediate
     {
     public:
         ImmediateNode(ExpressionTree& tree, T value)

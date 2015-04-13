@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ExpressionTree.h"                 // ExpressionTree::Storage<T> parameter.
+#include "ImmediateNode.h"                  // RequiresRIPRelativeImmediate<T> trait.
 #include "NativeJIT/X64CodeGenerator.h"     // Emit<OP> referenced by template definition.
 #include "Temporary/Assert.h"               // Assert() referenced by template definition.
 
@@ -40,7 +41,7 @@ namespace NativeJIT
             const RegTypes regTypes = std::is_same<SrcRegType, DESTREGTYPE>::value
                                       ? RegTypes::ExactlySame
                                       : RegTypes::Different;
-            const ImmediateType immediateType = SrcRegType::c_isFloat
+            const ImmediateType immediateType = RequiresRIPRelativeImmediate<SRC>::c_value
                                                 ? ImmediateType::NotAllowed
                                                 : ImmediateType::Allowed;
 

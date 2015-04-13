@@ -100,7 +100,6 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Or>(rax, 0x1234);
             buffer.EmitImmediate<OpCode::Or>(rax, 0x12345678);
 
-
             // direct-immediate general purpose register case
             std::cout << "direct-immediate general purpose register case" << std::endl;
             buffer.EmitImmediate<OpCode::And>(bl, static_cast<unsigned __int8>(0x34));
@@ -113,6 +112,28 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::And>(r12, 0x12);
             buffer.EmitImmediate<OpCode::And>(r12, 0x1234);
             buffer.EmitImmediate<OpCode::And>(r12, 0x12345678);
+
+            // Direct-immediate, different opcodes depending on whether sign
+            // extension is acceptable.
+
+            // The immediates that will be sign extended. The first two lines would
+            // correctly fail to compile in NativeJIT. They would produce the value
+            // of FFFFFFFF80000000h unexpectedly since sign extension is
+            // unconditionally used for 32-bit immediates targeting 64-bit registers.
+            // buffer.EmitImmediate<OpCode::Or>(rax, 0x80000000);
+            // buffer.EmitImmediate<OpCode::Or>(rcx, 0x80000000);
+            buffer.EmitImmediate<OpCode::Or>(rax, -0x7fffffff);
+            buffer.EmitImmediate<OpCode::Or>(rcx, -0x7fffffff);
+            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<__int8>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<unsigned __int8>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<__int8>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<__int8>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<__int8>(-0x7f));
+
+            // The immediates that will not be sign extended.
+            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<unsigned __int8>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<unsigned __int8>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<unsigned __int8>(0x80));
 
             // call
 
@@ -616,6 +637,33 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 000000C8  49/ 81 E4            and r12, 12345678h                                                 \n"
                 "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                                ; Direct-immediate, different opcodes depending on                 \n"
+                "                                ; whether sign extension is acceptable.                            \n"
+                "                                ;                                                                  \n"
+                "                                ; The immediates that will be sign extended.                       \n"
+                "                                ; The first two lines would correctly fail to compile              \n"
+                "                                ; in NativeJIT. They would produce the value of                    \n"
+                "                                ; FFFFFFFF80000000h unexpectedly since sign extension              \n"
+                "                                ; is unconditionally used for 32-bit immediates targeting          \n"
+                "                                ; 64-bit registers.                                                \n"
+                "                                ; or rax, 80000000h                                                \n"
+                "                                ; or rcx, 80000000h                                                \n"
+                " 0000013A  48/ 0D               or rax, -7fffffffh                                                 \n"
+                "           80000001                                                                                \n"
+                " 00000140  48/ 81 C9            or rcx, -7fffffffh                                                 \n"
+                "           80000001                                                                                \n"
+                " 00000147  80 C9 81             or cl, -7fh                                                        \n"
+                " 0000014A  80 C9 80             or cl, 80h                                                         \n"
+                " 0000014D  66| 83 C9 81         or cx, -7fh                                                        \n"
+                " 00000151  83 C9 81             or ecx, -7fh                                                       \n"
+                " 00000154  48/ 83 C9 81         or rcx, -7fh                                                       \n"
+                "                                                                                                   \n"
+                "                                ; The immediates that will not be sign extended.                   \n"
+                " 00000158  66| 81 C9 0080       or cx, 80h                                                         \n"
+                " 0000015D  81 C9 00000080       or ecx, 80h                                                        \n"
+                " 00000163  48/ 81 C9            or rcx, 80h                                                        \n"
+                "           00000080                                                                                \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"
                 "                                ; Lea                                                              \n"

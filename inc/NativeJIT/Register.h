@@ -97,7 +97,32 @@ namespace NativeJIT
 
         bool IsRIP() const
         {
-            return m_id == c_RIP;
+            // Note: the left side of the condition is there only to make the
+            // test explicit, there is no FP register with ID of c_RIP.
+            return !ISFLOAT && m_id == c_RIP;
+        }
+
+
+        // Returns whether the registers are exactly the same (size, type and ID).
+        // This will return false for comparison between f. ex. rax and eax.
+        template <unsigned SIZE2, bool ISFLOAT2>
+        bool operator==(Register<SIZE2, ISFLOAT2> other)
+        {
+            return SIZE2 == SIZE
+                   && ISFLOAT2 == ISFLOAT
+                   && other.GetId() == GetId();
+        }
+
+
+        // Returns whether the two registers have the same type and ID.
+        // This will return true for comparison between f. ex. rax and eax but
+        // false for comparison between rax and xmm0 (even though they have the
+        // same register ID).
+        template <unsigned SIZE2, bool ISFLOAT2>
+        bool IsSameHardwareRegister(Register<SIZE2, ISFLOAT2> other)
+        {
+            return ISFLOAT2 == ISFLOAT
+                && other.GetId() == GetId();
         }
 
 

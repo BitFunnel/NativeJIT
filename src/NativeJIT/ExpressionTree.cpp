@@ -20,7 +20,7 @@ namespace NativeJIT
         : m_allocator(allocator),
           m_code(code),
           m_temporaryCount(0),
-          m_basePointer(Register<sizeof(void*), false>(4))     // TODO: Magic number RBP
+          m_basePointer(rbp)
     {
 
         // TODO: Free up correct registers (e.g. not RSP, RBP. Also reserve RAX?)

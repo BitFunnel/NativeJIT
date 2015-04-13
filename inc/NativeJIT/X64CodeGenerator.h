@@ -1,10 +1,8 @@
 #pragma once
 
-// TODO: No way to do an operation on sign-extended data. Need to load data first, then sign-extend.
-
-
 // http://wiki.osdev.org/X86-64_Instruction_Encoding
 // http://ref.x86asm.net/coder64.html
+// http://felixcloutier.com/x86/
 
 #include <ostream>
 
@@ -304,7 +302,6 @@ namespace NativeJIT
                     __int32 destOffset,
                     Register<SIZE, false> src);
 
-        // TODO: Would like some sort of compiletime error when T is quadword or floating point
         template <unsigned SIZE, typename T>
         void Group1(unsigned __int8 baseOpCode,
                     unsigned __int8 extensionOpCode,
@@ -824,6 +821,7 @@ namespace NativeJIT
     {
         static_assert(SIZE != 1, "8-bit target not supported.");
         static_assert(sizeof(T) <= SIZE, "Invalid size of the immediate.");
+        static_assert(sizeof(T) < 8, "64-bit immediates are not supported by IMul.");
         static_assert(std::is_integral<T>::value, "IMul works only with integral values.");
 
         unsigned valueSize = Size(value);
@@ -845,19 +843,14 @@ namespace NativeJIT
         {
             Emit8(0x69);
             EmitModRM(dest, dest);
+
             if (SIZE == 2)
             {
                 Emit16(static_cast<unsigned __int16>(value));
             }
-            else if (valueSize <= 4)
+            else // if (valueSize <= 4)
             {
                 Emit32(static_cast<unsigned __int32>(value));
-            }
-            else
-            {
-                // TODO: Disable the template for quadwords to force the callers
-                // to use direct register or RIP-relative indirect for 64-bit values.
-                Assert(false, "Unsupported immediate value.");
             }
         }
     }
@@ -1292,16 +1285,15 @@ namespace NativeJIT
     {
         static_assert(std::is_integral<T>::value, "Group1 opcodes work only with integral values.");
         static_assert(sizeof(T) <= SIZE, "Invalid size of the immediate.");
+        static_assert(sizeof(T) < 8, "Group1 instructions don't support 64-bit immediates.");
+        static_assert(!(SIZE == 8 && sizeof(T) == 4 && std::is_unsigned<T>::value),
+                      "Cannot safely use 32-bit unsigned immediate with 64-bit register, "
+                      "sign extension would have been used.");
 
         unsigned valueSize = Size(value);
 
         EmitOpSizeOverride(dest);
 
-        // TODO: Fix issues with sign extension similarly to MovImmediate and
-        // IMulImmediate. Also, check what to do when "instr r/m64, imm32" is
-        // emitted with a immediate larger than 2^31 since there's only the
-        // sign extending version of the instruction (VC moves to register and
-        // then does the operation).
         if (dest.GetId() == 0 && SIZE == 1)
         {
             // Special case for AL.
@@ -1312,25 +1304,37 @@ namespace NativeJIT
         {
             EmitRex(dest);
             Emit8(baseOpCode + 0x05);
+
             if (SIZE == 2)
             {
                 Emit16(static_cast<unsigned __int16>(value));
             }
             else
             {
+                // Note: in case of 64-bit register (RAX) and 32-bit immediate,
+                // the opcode used above will sign-extend the immediate. This is
+                // OK since the earlier static assert verifies that if a 32-bit
+                // immediate is used in such case, its type must be signed.
+                // Any sign-extension will thus be intended in this case.
                 Emit32(static_cast<unsigned __int32>(value));
             }
         }
         else
         {
-            // TODO: BUGBUG: This code does not handle 8-bit registers correctly. e.g. AND BH, 5
             EmitRex(dest);
 
-            if (valueSize <= 1)
+            // For an immediate fitting in 1-byte, use the sign-extend flavor of
+            // the opcode only if it's irrelevant (target is also 1 byte) or if
+            // it is OK to do so (the value is signed and negative or the bit
+            // #7 is clear).
+            if (valueSize <= 1
+                && (SIZE == 1
+                    || (static_cast<__int16>(value) < 0
+                        || static_cast<unsigned __int8>(value) < 0x80)))
             {
                 if (SIZE == 1)
                 {
-                    Emit8(0x80 /*+ 3*/);
+                    Emit8(0x80);
                 }
                 else
                 {
@@ -1339,9 +1343,9 @@ namespace NativeJIT
                 EmitModRM(extensionOpCode, dest);
                 Emit8(static_cast<unsigned __int8>(value));
             }
-            else if (valueSize == 2 || valueSize == 4)
+            else // if (valueSize <= 4)
             {
-                Emit8(0x80 + 1);
+                Emit8(0x81);
                 EmitModRM(extensionOpCode, dest);
 
                 if (SIZE == 2)
@@ -1350,14 +1354,11 @@ namespace NativeJIT
                 }
                 else
                 {
+                    // This will sign-extend the immediate if 64-bit register
+                    // is used. See the comment inside the topmost else branch
+                    // for RAX for details on why is that OK.
                     Emit32(static_cast<unsigned __int32>(value));
                 }
-            }
-            else
-            {
-                // TODO: Disable the template for quadwords to force the callers
-                // to use direct register or RIP-relative indirect for 64-bit values.
-                Assert(false, "Unsupported immediate value.");
             }
         }
     }

@@ -135,7 +135,34 @@ add rdx, [rsi + 56h]
 cmp rdx, [rsi + 56h]
 or rdx, [rsi + 56h]
 cmp rdx, [rsi + 56h]
+
 ; adc, sbb, and, xor not supported.
+; Direct-immediate, different opcodes depending on
+; whether sign extension is acceptable.
+;
+; The immediates that will be sign extended.
+; The first two lines would correctly fail to compile
+; in NativeJIT. They would produce the value of
+; FFFFFFFF80000000h unexpectedly since sign extension
+; is unconditionally used for 32-bit immediates targeting
+; 64-bit registers.
+; or rax, 80000000h
+; or rcx, 80000000h
+or rax, -7fffffffh
+or rcx, -7fffffffh
+or cl, -7fh
+or cl, 80h
+or cx, -7fh
+or ecx, -7fh
+or rcx, -7fh
+
+; The immediates that will not be sign extended.
+or cx, 80h
+or ecx, 80h
+or rcx, 80h
+
+; TODO: test one group1 instruction with all the different branches that
+; produce different opcode/extension opcode.
 
 ;
 ; Lea
