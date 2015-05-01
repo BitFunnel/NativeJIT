@@ -25,15 +25,18 @@ namespace NativeJIT
         //
         // Non-pure virtual methods.
         //
+
         virtual void CompileAsRoot(ExpressionTree& tree);
+
+        // See Node<T>::CodeGenBase() for more information.
         virtual __int32 GetOffset() const;
-        virtual bool IsFieldPointer() const;
 
         //
         // Pure virtual methods.
         //
 
         virtual void CodeGenCache(ExpressionTree& tree) = 0;
+        virtual ExpressionTree::Storage<void*> CodeGenBase(ExpressionTree& tree) = 0;
         virtual bool IsCached() const = 0;
         virtual unsigned LabelSubtree(bool isLeftChild) = 0;
         virtual void Print() const = 0;
@@ -67,6 +70,17 @@ namespace NativeJIT
         unsigned GetRegisterCount() const;
 
         ExpressionTree::Storage<T> CodeGen(ExpressionTree& tree);
+
+        // Generates the code to evaluate the node when T is a X* used
+        // as a base pointer. The returned Storage points to some unknown type,
+        // but once the GetOffset() value is added, it will turn into a
+        // Storage<X*>. Optimizations of chained base pointer accesses within
+        // the same object are possible by overriding this method, such as in
+        // FieldPointerNode. The default implementation calls CodeGen() and
+        // returns 0 for GetOffset(), which provides the correct behavior in
+        // all cases, but less optimal in cases when optimizations are possible.
+        virtual ExpressionTree::Storage<void*> CodeGenBase(ExpressionTree& tree);
+
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
 
         //
@@ -221,5 +235,12 @@ namespace NativeJIT
         {
             return CodeGenValue(tree);
         }
+    }
+
+
+    template <typename T>
+    ExpressionTree::Storage<void*> Node<T>::CodeGenBase(ExpressionTree& tree)
+    {
+        return ExpressionTree::Storage<void*>(CodeGen(tree));
     }
 }

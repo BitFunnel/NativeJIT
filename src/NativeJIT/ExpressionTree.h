@@ -249,9 +249,12 @@ namespace NativeJIT
         Storage();
 
         template <typename U>
-        Storage(Storage<U> other);
+        explicit Storage(const Storage<U>& other);
 
-        Storage(ExpressionTree& tree, Storage<T*>& base, __int32 offset);
+        // Takes ownership of a base storage, adds the offset to it and
+        // dereferences it to produce a Storage<T>. Equivalent to
+        // *static_cast<T*>(base + byteOffset).
+        Storage(ExpressionTree& tree, Storage<void*>&& base, __int32 byteOffset);
 
         Storage(Storage const & other);
 
@@ -626,7 +629,7 @@ namespace NativeJIT
 
     template <typename T>
     template <typename U>
-    ExpressionTree::Storage<T>::Storage(Storage<U> other)
+    ExpressionTree::Storage<T>::Storage(const Storage<U>& other)
         : m_data(nullptr)
     {
         SetData(other.m_data);
@@ -634,14 +637,16 @@ namespace NativeJIT
 
 
     template <typename T>
-    ExpressionTree::Storage<T>::Storage(ExpressionTree& tree, Storage<T*>& base, __int32 offset)
+    ExpressionTree::Storage<T>::Storage(ExpressionTree& tree,
+                                        Storage<void*>&& base,
+                                        __int32 byteOffset)
         : m_data(nullptr)
     {
         // Load the base pointer into a register.
         base.ConvertToValue(tree, true);
 
         // Dereference it.
-        base.m_data->ConvertToIndirect(offset);
+        base.m_data->ConvertToIndirect(byteOffset);
 
         // Transfer ownership of datablock to this Storage.
         SetData(base.m_data);

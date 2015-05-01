@@ -61,10 +61,11 @@ namespace NativeJIT
             // FieldPointer
             //
 
+#pragma pack(push, 1)
             class InnerClass
             {
             public:
-                unsigned __int64 m_a;
+                unsigned __int32 m_a;
                 unsigned __int64 m_b;
             };
 
@@ -72,11 +73,12 @@ namespace NativeJIT
             class OuterClass
             {
             public:
-                long long m_p;
+                unsigned __int16 m_p;
                 InnerClass* m_innerPointer;
                 InnerClass m_innerEmbedded;
                 long long m_q;
             };
+#pragma pack(pop)
 
 
             TestCase(FieldPointerPrimitive)
@@ -108,19 +110,26 @@ namespace NativeJIT
                 AutoResetAllocator reset(m_allocator);
 
                 {
-                    Function<unsigned __int64, OuterClass*> expression(m_allocator, *m_code);
+                    Function<unsigned __int64, OuterClass**> expression(m_allocator, *m_code);
 
-                    auto & a = expression.GetP1();
-                    auto & b = expression.FieldPointer(a, &OuterClass::m_innerEmbedded);
-                    auto & c = expression.FieldPointer(b, &InnerClass::m_b);
-                    auto & d = expression.Deref(c);
-                    auto function = expression.Compile(d);
+                    const unsigned pointersIndex = 4;
+
+                    auto & outerPtrs = expression.GetP1();
+                    auto & outerPtr = expression.Deref(outerPtrs, pointersIndex);
+                    auto & inner = expression.FieldPointer(outerPtr, &OuterClass::m_innerEmbedded);
+                    auto & innerBPtr = expression.FieldPointer(inner, &InnerClass::m_b);
+                    auto & innerB = expression.Deref(innerBPtr);
+                    auto function = expression.Compile(innerB);
 
                     OuterClass outerClass;
-                    outerClass.m_innerEmbedded.m_b = 1234ull;
-                    OuterClass* p1 = &outerClass;
+                    outerClass.m_innerEmbedded.m_b = 2345ull;
 
-                    auto expected = p1->m_innerEmbedded.m_b;
+                    OuterClass* p1Ptrs[pointersIndex + 1] = { nullptr };
+                    p1Ptrs[pointersIndex] = &outerClass;
+
+                    OuterClass** p1 = &p1Ptrs[0];
+
+                    auto expected = p1[pointersIndex]->m_innerEmbedded.m_b;
                     auto observed = function(p1);
 
                     TestAssert(observed == expected);

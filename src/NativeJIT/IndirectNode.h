@@ -5,28 +5,25 @@
 
 namespace NativeJIT
 {
+    // IndirectNode implements the *(base + index) operation when index is known
+    // at compile time.
     template <typename T>
     class IndirectNode : public Node<T>
     {
     public:
-        typedef typename Node<T*>::RegisterType BaseRegisterType;
-
-        IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 offset);
-
-        ExpressionTree::Storage<T*> CodeGenBase(ExpressionTree& tree);
+        IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 index);
 
         //
         // Overrides of Node methods.
         //
 
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
-        virtual __int32 GetOffset() const override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
     private:
         Node<T*>& m_base;
-        __int32 m_offset;
+        __int32 m_index;
     };
 
 
@@ -36,48 +33,26 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <typename T>
-    IndirectNode<T>::IndirectNode(ExpressionTree& tree,
-                                  Node<T*>& base,
-                                  __int32 offset)
+    IndirectNode<T>::IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 index)
         : Node(tree),
           m_base(base),
-          m_offset(offset)
+          m_index(index)
     {
         m_base.IncrementParentCount();
     }
 
 
     template <typename T>
-    typename ExpressionTree::Storage<T*> IndirectNode<T>::CodeGenBase(ExpressionTree& tree)
-    {
-        if (m_base.IsFieldPointer())
-        {
-            auto & base = reinterpret_cast<FieldPointerBase<T>&>(m_base);
-            return base.CodeGenBase(tree);
-        }
-        else
-        {
-            return m_base.CodeGenValue(tree);
-        }
-    }
-
-
-    template <typename T>
     typename ExpressionTree::Storage<T> IndirectNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        auto base = CodeGenBase(tree);
-        __int32 offset = m_base.GetOffset();
+        // The base's offset makes the storage represent a T*. The local offset
+        // skips the required number T's, so it still represents a T*.
+        const __int32 localOffset = sizeof(T) * m_index;
 
-        ExpressionTree::Storage<T> value(tree, base, m_offset + offset);
-
-        return value;
-    }
-
-
-    template <typename T>
-    __int32 IndirectNode<T>::GetOffset() const
-    {
-        return m_offset;
+        // Dereference the T*.
+        return ExpressionTree::Storage<T>(tree,
+                                          m_base.CodeGenBase(tree),
+                                          m_base.GetOffset() + localOffset);
     }
 
 
@@ -95,7 +70,7 @@ namespace NativeJIT
     {
         std::cout << "IndirectNode id=" << GetId();
         std::cout << ", parents = " << GetParentCount();
-        std::cout << ", offset = " << m_offset;
+        std::cout << ", index = " << m_index;
         std::cout << ", ";
         PrintRegisterAndCacheInfo();
     }

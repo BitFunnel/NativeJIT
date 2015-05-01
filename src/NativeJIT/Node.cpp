@@ -53,12 +53,6 @@ namespace NativeJIT
     }
 
 
-    bool NodeBase::IsFieldPointer() const
-    {
-        return false;
-    }
-
-
     unsigned NodeBase::ComputeRegisterCount(unsigned leftTreeCount, unsigned rightTreeCount)
     {
         if (leftTreeCount != rightTreeCount)

@@ -38,6 +38,7 @@ namespace NativeJIT
         //
         template <typename TO, typename FROM> Node<TO>& Cast(Node<FROM>& value);
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
+        template <typename T> Node<T>& Deref(Node<T*>& pointer, __int32 index);
         template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
         template <typename T> NodeBase& Return(Node<T>& value);
 
@@ -154,7 +155,14 @@ namespace NativeJIT
     template <typename T>
     Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer)
     {
-        return * new (m_allocator.Allocate(sizeof(IndirectNode<T>))) IndirectNode<T>(*this, pointer, 0);
+        return Deref(pointer, 0);
+    }
+
+
+    template <typename T>
+    Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer, __int32 index)
+    {
+        return * new (m_allocator.Allocate(sizeof(IndirectNode<T>))) IndirectNode<T>(*this, pointer, index);
     }
 
 
