@@ -81,8 +81,6 @@ namespace NativeJIT
             class DocTable
             {
             public:
-                // TODO: Figure out how to support this form.
-                // DocInfo m_entries[100];
                 DocInfo* m_entries;
             };
 

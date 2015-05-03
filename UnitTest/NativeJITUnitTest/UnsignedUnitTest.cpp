@@ -166,7 +166,7 @@ namespace NativeJIT
             // Array indexing
             //
 
-            TestCase(ArrayOfInt)
+            TestCase(ArrayOfIntAsPointer)
             {
                 AutoResetAllocator reset(m_allocator);
 
@@ -188,6 +188,36 @@ namespace NativeJIT
                     auto observed = function(p1);
 
                     TestAssert(observed == expected);
+                }
+            }
+
+
+            TestCase(ArrayOfInt)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    struct S
+                    {
+                        unsigned __int64 m_array[10];
+                    };
+
+                    Function<unsigned __int64, S*> e(m_allocator, *m_code);
+
+                    auto & arrayPtr = e.FieldPointer(e.GetP1(), &S::m_array);
+                    auto & left = e.Add(arrayPtr, e.Immediate(1));
+                    auto & right = e.Add(arrayPtr, e.Immediate(2));
+                    auto & sum = e.Add(e.Deref(left), e.Deref(right));
+                    auto function = e.Compile(sum);
+
+                    struct S s;
+                    s.m_array[1] = 456;
+                    s.m_array[2] = 123000;
+
+                    auto expected = s.m_array[1] + s.m_array[2];
+                    auto observed = function(&s);
+
+                    TestEqual(expected, observed);
                 }
             }
 

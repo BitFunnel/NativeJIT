@@ -50,9 +50,8 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
 
-        // TODO: Implement following version of Add for arrays.
-        //template <typename T, size_t SIZE, typename INDEX>
-        //Node<T*> Add(Node<*(T[SIZE])>& array, Node<INDEX>& index);
+        template <typename T, size_t SIZE, typename INDEX>
+        Node<T*>& Add(Node<T(*)[SIZE]>& array, Node<INDEX>& index);
 
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 
@@ -249,16 +248,21 @@ namespace NativeJIT
     }
 
 
+    template <typename T, size_t SIZE, typename INDEX>
+    Node<T*>& ExpressionNodeFactory::Add(Node<T(*)[SIZE]>& array, Node<INDEX>& index)
+    {
+        return Add(Cast<T*>(array), index);
+    }
+
+
     //
     // Model related
     //
     template <typename PACKED>
     Node<float>& ExpressionNodeFactory::ApplyModel(Node<Model<PACKED>*>& model, Node<PACKED>& packed)
     {
-        // TODO: Replace below code once new form of array + index add is implemented.
-        auto & array = reinterpret_cast<Node<float*>&>(FieldPointer(model, &Model<PACKED>::m_data));
-        auto & index = reinterpret_cast<Node<unsigned __int64>&>(packed);       // TODO: Should this be unsigned __int64?
-        return Deref(Add(array, index));
+        auto & array = FieldPointer(model, &Model<PACKED>::m_data);
+        return Deref(Add(array, packed));
     }
 
 
