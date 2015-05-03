@@ -22,7 +22,7 @@ namespace NativeJIT
         struct Emitter
         {
             template <OpCode OP, typename DESTREGTYPE, typename SRC>
-            static void Emit(X64CodeGenerator& code, DESTREGTYPE dest, ExpressionTree::Storage<SRC> src);
+            static void Emit(X64CodeGenerator& code, DESTREGTYPE dest, const ExpressionTree::Storage<SRC>& src);
         };
 
 
@@ -33,7 +33,7 @@ namespace NativeJIT
         // or not). If the immediate flavor of the storage is not allowed and
         // the client passes a storage of an immediate type, an assert is triggered.
         template <OpCode OP, typename DESTREGTYPE, typename SRC>
-        void Emit(X64CodeGenerator& code, DESTREGTYPE dest, ExpressionTree::Storage<SRC> src)
+        void Emit(X64CodeGenerator& code, DESTREGTYPE dest, const ExpressionTree::Storage<SRC>& src)
         {
             typedef ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
 
@@ -55,7 +55,7 @@ namespace NativeJIT
         template <OpCode OP, typename DESTREGTYPE, typename SRC>
         void Emitter<RegTypes::ExactlySame, ImmediateType::Allowed>::Emit(
             X64CodeGenerator& code, DESTREGTYPE dest,
-            ExpressionTree::Storage<SRC> src)
+            const ExpressionTree::Storage<SRC>& src)
         {
             switch (src.GetStorageClass())
             {
@@ -80,7 +80,7 @@ namespace NativeJIT
         template <OpCode OP, typename DESTREGTYPE, typename SRC>
         void Emitter<RegTypes::ExactlySame, ImmediateType::NotAllowed>::Emit(
             X64CodeGenerator& code, DESTREGTYPE dest,
-            ExpressionTree::Storage<SRC> src)
+            const ExpressionTree::Storage<SRC>& src)
         {
             switch (src.GetStorageClass())
             {
@@ -102,7 +102,7 @@ namespace NativeJIT
         template <OpCode OP, typename DESTREGTYPE, typename SRC>
         void Emitter<RegTypes::Different, ImmediateType::Allowed>::Emit(
             X64CodeGenerator& code, DESTREGTYPE dest,
-            ExpressionTree::Storage<SRC> src)
+            const ExpressionTree::Storage<SRC>& src)
         {
             typedef ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
 
@@ -132,7 +132,7 @@ namespace NativeJIT
         template <OpCode OP, typename DESTREGTYPE, typename SRC>
         void Emitter<RegTypes::Different, ImmediateType::NotAllowed>::Emit(
             X64CodeGenerator& code, DESTREGTYPE dest,
-            ExpressionTree::Storage<SRC> src)
+            const ExpressionTree::Storage<SRC>& src)
         {
             typedef ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
 
@@ -150,6 +150,27 @@ namespace NativeJIT
             default:
                 Assert(false, "Invalid storage class.");
             }
+        }
+
+
+        // Places the constant float value into the target floating point
+        // register. Allocates and releases a temporary integer register in
+        // the process. This should be used only by the code which cannot
+        // use the ImmediateNode because it doesn't know the floating point
+        // value until the code generation time.
+        template <unsigned SIZE, typename T>
+        void MovThroughTemporary(ExpressionTree& tree, Register<SIZE, true> dest, T value)
+        {
+            static_assert(std::is_floating_point<T>::value, "The immediate must be a float.");
+            static_assert(sizeof(T) == SIZE, "The size of the immediate must match the register size.");
+            typedef std::conditional<SIZE == 4, unsigned __int32, unsigned __int64>::type TemporaryType;
+
+            auto & code = tree.GetCodeGenerator();
+            auto temp = tree.Direct<TemporaryType>();
+            auto r = temp.GetDirectRegister();
+
+            code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<TemporaryType*>(&value)));
+            code.Emit<OpCode::Mov>(dest, r);
         }
     }
 }

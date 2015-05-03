@@ -95,15 +95,12 @@ namespace NativeJIT
         // Convert the left and right parameters into direct registers. We will
         // be building the result in the left register and destroy the right
         // register in the process.
-        sLeft.ConvertToValue(tree, true);
-        sRight.ConvertToValue(tree, true);
-
         // TODO: This relies on the fact that register from the first line will
         // not get bumped by the call in the second line. The framework must be
         // able to provide a way to guarantee that f. ex. by using a shared
         // pointer-like concept for locked registers.
-        auto l = sLeft.GetDirectRegister();
-        auto r = sRight.GetDirectRegister();
+        auto l = sLeft.ConvertToDirect(true);
+        auto r = sRight.ConvertToDirect(true);
 
         // The algorithm works by comparing the left and right register field
         // by field. In each step, the left register will contain the result

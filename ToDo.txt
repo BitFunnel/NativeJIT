@@ -90,9 +90,7 @@ IsTrue should become the cast node.
 IndirectNode<T>::CodeGenValue() needs to convert base into value without releasing the base register.
   In other words the base.GetDirectRegister() needs to transferred to value's base register.
 Implement ExpressionTree::ReleaseTemporary()
-Storage<T>::.ConvertToValue should return DirectRegister.
 Storage<T>::Spill doesn't need to take ExpressionTree param.
-Storage<T>::ConvertToValue doesn't need to take ExpressionTree param.
 Circular include (mutual dependency) between Storage.h and X64CodeGenerator.h.
 Convert  to template <typename L, typename R> void X64CodeGenerator::Op<L, R>(RegisterType left, Storage<R> right)
 

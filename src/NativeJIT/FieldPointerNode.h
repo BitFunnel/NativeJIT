@@ -60,7 +60,7 @@ namespace NativeJIT
     typename ExpressionTree::Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
         auto base = CodeGenBase(tree);
-        base.ConvertToValue(tree, true);
+        base.ConvertToDirect(true);
 
         if (GetOffset() != 0)
         {

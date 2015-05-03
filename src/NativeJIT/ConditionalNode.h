@@ -195,8 +195,7 @@ namespace NativeJIT
         code.EmitConditionalJump<JCC>(l1);
 
         auto falseValue = m_falseExpression.CodeGen(tree);
-        falseValue.ConvertToValue(tree, true);
-        auto rFalse = falseValue.GetDirectRegister();
+        auto rFalse = falseValue.ConvertToDirect(true);
 
         Label l2 = code.AllocateLabel();
         code.Jmp(l2);
@@ -204,11 +203,9 @@ namespace NativeJIT
         code.PlaceLabel(l1);
 
         auto trueValue = m_trueExpression.CodeGen(tree);
-        trueValue.ConvertToValue(tree, false);
-        auto rTrue = trueValue.GetDirectRegister();
+        auto rTrue = trueValue.ConvertToDirect(false);
 
-        // TODO: Use Register::operator==()
-        if (rTrue.GetId() != rFalse.GetId())
+        if (!rTrue.IsSameHardwareRegister(rFalse))
         {
             // TODO: Do we always need to move the value?
             // In the case of caching, r2 may not be equal to r.
@@ -294,8 +291,7 @@ namespace NativeJIT
         else
         {
             auto value = m_value.CodeGenValue(tree);
-            value.ConvertToValue(tree, false);
-            auto r = value.GetDirectRegister();
+            auto r = value.ConvertToDirect(false);
 
             code.Emit<OpCode::Or>(r, r);
         }
@@ -362,8 +358,7 @@ namespace NativeJIT
         code.Jmp(testCompleted);
 
         code.PlaceLabel(conditionIsTrue);
-        result.ConvertToValue(tree, true);
-        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), true);
+        code.EmitImmediate<OpCode::Mov>(result.ConvertToDirect(true), true);
 
         code.PlaceLabel(testCompleted);
 
@@ -396,10 +391,9 @@ namespace NativeJIT
                 // Evaluate left first. Once evaluation completes, left will use one register,
                 // leaving at least a-1 registers for right.
                 auto sLeft = m_left.CodeGen(tree);
-                sLeft.ConvertToValue(tree, true);
+                sLeft.ConvertToDirect(true);
                 auto sRight = m_right.CodeGen(tree);
 
-                // TODO: This conversion needs to deal with Group1(reg, imm) working with 64 bit values. Today it does 8 and 32.
                 CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
             }
             else if (l < r && l < a)
@@ -408,10 +402,8 @@ namespace NativeJIT
                 // leaving at least a-1 registers for left.
                 auto sRight = m_right.CodeGen(tree);
                 auto sLeft = m_left.CodeGen(tree);
-                sLeft.ConvertToValue(tree, true);
 
-                // TODO: This conversion needs to deal with Group1(reg, imm) working with 64 bit values. Today it does 8 and 32.
-                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
             }
             else
             {
@@ -422,10 +414,8 @@ namespace NativeJIT
                 sRight.Spill(tree);
 
                 auto sLeft = m_left.CodeGen(tree);
-                sLeft.ConvertToValue(tree, true);
 
-                // TODO: This conversion needs to deal with Group1(reg, imm) working with 64 bit values. Today it does 8 and 32.
-                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
+                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
             }
         }
     }

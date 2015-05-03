@@ -762,6 +762,8 @@ namespace NativeJIT
     template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
     void X64CodeGenerator::EmitImmediate(Register<SIZE, ISFLOAT> dest, T value)
     {
+        static_assert(!std::is_floating_point<T>::value, "Floating point values cannot be used as immediates.");
+
         CodePrinter printer(*this);
 
         Helper<OP>::ArgTypes1<ISFLOAT>::EmitImmediate<SIZE, T>(*this, dest, value);
@@ -773,6 +775,8 @@ namespace NativeJIT
     template <OpCode OP, unsigned SIZE, bool ISFLOAT, typename T>
     void X64CodeGenerator::EmitImmediate(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src, T value)
     {
+        static_assert(!std::is_floating_point<T>::value, "Floating point values cannot be used as immediates.");
+
         CodePrinter printer(*this);
 
         Helper<OP>::ArgTypes1<ISFLOAT>::EmitImmediate<SIZE, T>(*this, dest, src, value);
@@ -871,6 +875,7 @@ namespace NativeJIT
     void X64CodeGenerator::MovImmediate(Register<SIZE, false> dest,
                                         T value)
     {
+        static_assert(!std::is_floating_point<T>::value, "Invalid type of the immediate.");
         static_assert(sizeof(T) <= SIZE, "Invalid size of the immediate.");
 
         EmitOpSizeOverride(dest);

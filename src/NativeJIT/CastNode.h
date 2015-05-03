@@ -207,21 +207,7 @@ namespace NativeJIT
         auto & code = tree.GetCodeGenerator();
         auto source = m_from.CodeGen(tree);
 
-        using namespace Casting;
-        ExpressionTree::Storage<TO> value;
-
-        // Use the compiler to perform the cast if possible.
-        if (Traits::c_castType != Cast::NoOp
-            && source.GetStorageClass() == StorageClass::Immediate)
-        {
-            value = tree.Immediate(Casting::ForcedCast<TO, FROM>(source.GetImmediate()));
-        }
-        else
-        {
-            value = Casting::DirectCastGenerator<Traits::c_castType>::Generate<TO, FROM>(tree, source);
-        }
-
-        return value;
+        return Casting::DirectCastGenerator<Traits::c_castType>::Generate<TO, FROM>(tree, source);
     }
 
 
@@ -350,7 +336,14 @@ namespace NativeJIT
             auto & code = tree.GetCodeGenerator();
             ToStorage result;
 
-            if (source.GetStorageClass() == StorageClass::Indirect)
+            switch (source.GetStorageClass())
+            {
+            case StorageClass::Immediate:
+                // Use the compiler to perform the cast.
+                result = tree.Immediate(Casting::ForcedCast<TO, FROM>(source.GetImmediate()));
+                break;
+
+            case StorageClass::Indirect:
             {
                 using namespace CodeGenHelpers;
 
@@ -364,11 +357,13 @@ namespace NativeJIT
                     ::Emit<opCode>(tree.GetCodeGenerator(),
                                    targetRegister,
                                    source);
+                break;
             }
-            else
+
+            case StorageClass::Direct:
             {
                 // May be able to reuse the register if it's fully owned by the storage.
-                source.ConvertToValue(tree, true);
+                source.ConvertToDirect(true);
                 result = ToStorage(source);
 
                 // Always target the full register to prevent a partial register stall.
@@ -376,6 +371,12 @@ namespace NativeJIT
                 ToStorage::FullRegister fullSourceRegister(sourceRegister);
 
                 code.Emit<opCode>(fullSourceRegister, sourceRegister);
+                break;
+            }
+
+            default:
+                Assert(false, "Invalid storage class.");
+                break;
             }
 
             return result;
@@ -390,16 +391,30 @@ namespace NativeJIT
         {
             static_assert(Traits<TO, FROM>::c_isDirectCast, "Invalid direct cast.");
 
+            auto & code = tree.GetCodeGenerator();
             auto target = tree.Direct<TO>();
 
-            // TODO: Implement xorps/xorpd and add a "xor target, target" call to
-            // clear the target FP register before changing its lower 32/64 bits.
-            // Doing that will prevent a partial register stall.
-            using namespace CodeGenHelpers;
-            Emitter<RegTypes::Different, ImmediateType::NotAllowed>
-                ::Emit<OpCode::CvtSI2FP>(tree.GetCodeGenerator(),
-                                         target.GetDirectRegister(),
-                                         source);
+            if (source.GetStorageClass() == StorageClass::Immediate)
+            {
+                // The conversion instruction doesn't have the flavor which
+                // converts from an immediate. Use the compiler to get the
+                // target floating point value and place it directly into
+                // the target register through a temporary.
+                CodeGenHelpers::MovThroughTemporary(tree,
+                                                    target.GetDirectRegister(),
+                                                    static_cast<TO>(source.GetImmediate()));
+            }
+            else
+            {
+                // TODO: Implement xorps/xorpd and add a "xor target, target" call to
+                // clear the target FP register before changing its lower 32/64 bits.
+                // Doing that will prevent a partial register stall.
+                using namespace CodeGenHelpers;
+                Emitter<RegTypes::Different, ImmediateType::NotAllowed>
+                    ::Emit<OpCode::CvtSI2FP>(tree.GetCodeGenerator(),
+                                             target.GetDirectRegister(),
+                                             source);
+            }
 
             return target;
         }

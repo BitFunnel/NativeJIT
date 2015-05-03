@@ -39,8 +39,7 @@ namespace NativeJIT
                 auto storage = indirectNode.CodeGenValue(e);
                 auto baseRegister = storage.GetBaseRegister();
 
-                storage.ConvertToValue(e, false);
-                TestAssert(storage.GetDirectRegister().IsSameHardwareRegister(baseRegister));
+                TestAssert(storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
             }
 
 
@@ -56,8 +55,7 @@ namespace NativeJIT
                 auto storage = e.RIPRelative<int>(16);
                 TestAssert(storage.GetBaseRegister().IsRIP());
 
-                storage.ConvertToValue(e, false);
-                TestAssert(!storage.GetDirectRegister().IsRIP());
+                TestAssert(!storage.ConvertToDirect(false).IsRIP());
             }
 
 
@@ -69,8 +67,7 @@ namespace NativeJIT
                 auto storage = e.Temporary<int>();
                 auto baseRegister = storage.GetBaseRegister();
 
-                storage.ConvertToValue(e, false);
-                TestAssert(!storage.GetDirectRegister().IsSameHardwareRegister(baseRegister));
+                TestAssert(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
             }
 
 
@@ -89,8 +86,7 @@ namespace NativeJIT
                 auto storage = indirectNode.CodeGenValue(e);
                 auto baseRegister = storage.GetBaseRegister();
 
-                storage.ConvertToValue(e, false);
-                TestAssert(!storage.GetDirectRegister().IsSameHardwareRegister(baseRegister));
+                TestAssert(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
             }
 
 

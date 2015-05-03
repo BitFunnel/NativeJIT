@@ -278,8 +278,8 @@ unsigned fooMain;
 ////
 ////        //auto y = x;
 ////
-////        x.ConvertToValue(tree, false);
-////        x.ConvertToValue(tree, true);
+////        x.ConvertToDirect(false);
+////        x.ConvertToDirect(true);
 ////    }
 //
 //

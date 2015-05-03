@@ -429,7 +429,7 @@ namespace NativeJIT
     {
         if (m_storage.GetStorageClass() != StorageClass::Direct)
         {
-            m_storage.ConvertToValue(tree, false);
+            m_storage.ConvertToDirect(false);
         }
         volatiles.RecordParameterRegister(m_storage.GetDirectRegister());
     }

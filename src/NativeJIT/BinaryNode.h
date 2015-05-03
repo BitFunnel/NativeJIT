@@ -54,7 +54,7 @@ namespace NativeJIT
             // Evaluate left first. Once evaluation completes, left will use one register,
             // leaving at least a-one register for right.
             auto sLeft = m_left.CodeGen(tree);
-            sLeft.ConvertToValue(tree, true);
+            sLeft.ConvertToDirect(true);
             auto sRight = m_right.CodeGen(tree);
 
             CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
@@ -66,9 +66,8 @@ namespace NativeJIT
             // leaving at least one register for left.
             auto sRight = m_right.CodeGen(tree);
             auto sLeft = m_left.CodeGen(tree);
-            sLeft.ConvertToValue(tree, true);
 
-            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
             return sLeft;
         }
         else
@@ -90,9 +89,7 @@ namespace NativeJIT
             sRight.Spill(tree);
 
             auto sLeft = m_left.CodeGen(tree);
-            sLeft.ConvertToValue(tree, true);
-
-            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
 
             return sLeft;
         }

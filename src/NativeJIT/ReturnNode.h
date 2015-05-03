@@ -52,8 +52,7 @@ namespace NativeJIT
     void ReturnNode<T>::CompileAsRoot(ExpressionTree& tree)
     {
         ExpressionTree::Storage<T> s = CodeGen(tree);
-        s.ConvertToValue(tree, false);
-        auto r = s.GetDirectRegister();
+        auto r = s.ConvertToDirect(false);
 
         // Move result into register 0.
         if (r.GetId() != 0)

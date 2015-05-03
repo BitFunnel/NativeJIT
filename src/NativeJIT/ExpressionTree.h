@@ -146,25 +146,8 @@ namespace NativeJIT
         template <unsigned SIZE>
         unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
 
-
-        //
-        // Mov() helper methods to get around limitation that X64 does not support op xmm, imm.
-        // RIP-relative addressing for floating point immediates should simplify these methods.
-        // May still need some sort of indirection because mov rxx, imm is still supported and is
-        // called by code templated by ISFLOAT.
-        //
-        // TODO: Consider renaming these to something like MovHelper. Consider moving into
-        // CodeGenHelpers.
-        template <unsigned SIZE, typename T>
-        void MovImmediate(Register<SIZE, false> dest, T value);
-
-        template <unsigned SIZE, typename T>
-        void MovImmediate(Register<SIZE, true> dest, T value);
-
-
         template <typename T>
         class FreeListHelper;
-
 
         std::vector<NodeBase*> m_topologicalSort;
         std::vector<ParameterBase*> m_parameters;
@@ -193,6 +176,7 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r, __int32 offset);
 
+        // Note: attempt to create an immediate storage will not compile for floats.
         template <typename T>
         Data(ExpressionTree& tree, T value);
 
@@ -206,6 +190,7 @@ namespace NativeJIT
 
         __int32 GetOffset() const;
 
+        // Note: attempt to GetImmediate() will not compile for floats.
         template <typename T>
         T GetImmediate() const;
 
@@ -272,10 +257,10 @@ namespace NativeJIT
         BaseRegister GetBaseRegister() const;
         __int32 GetOffset() const;
 
+        // Note: attempt to GetImmediate() will not compile for floats.
         T GetImmediate() const;
 
-
-        void ConvertToValue(ExpressionTree& tree, bool forModification);
+        DirectRegister ConvertToDirect(bool forModification);
 
         void Spill(ExpressionTree& tree);
 
@@ -286,10 +271,25 @@ namespace NativeJIT
     private:
         friend class ExpressionTree;
 
+        // Types used to select the correct flavor of immediate methods
+        // depending on whether T is a floating point value.
+        struct FloatingPointFlavor {};
+        struct NonFloatingPointFlavor {};
+        typedef typename std::conditional<std::is_floating_point<T>::value,
+                                          FloatingPointFlavor,
+                                          NonFloatingPointFlavor>::type
+            ImmediateFlavor;
+
         Storage(ExpressionTree::Data* data);
 
         void SetData(ExpressionTree::Data* data);
         void SetData(Storage& other);
+
+        void ConvertImmediateToDirect(NonFloatingPointFlavor);
+        void ConvertImmediateToDirect(FloatingPointFlavor);
+
+        void PrintImmediate(std::ostream& out, NonFloatingPointFlavor) const;
+        void PrintImmediate(std::ostream& out, FloatingPointFlavor) const;
 
         ExpressionTree::Data* m_data;
     };
@@ -528,28 +528,6 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE, typename T>
-    void ExpressionTree::MovImmediate(Register<SIZE, false> dest, T value)
-    {
-        m_code.EmitImmediate<OpCode::Mov>(dest, value);
-    }
-
-
-    template <unsigned SIZE, typename T>
-    void ExpressionTree::MovImmediate(Register<SIZE, true> dest, T value)
-    {
-        static_assert(sizeof(T) == SIZE, "The size of the immediate must match the register size.");
-        typedef std::conditional<SIZE == 4, unsigned __int32, unsigned __int64>::type TemporaryType;
-
-        // TODO: Consider RIP-relative addressing to eliminate a register allocation.
-        // TODO: This code will invalidate the Sethi-Ullman register counts in the Label pass.
-        auto temp = Direct<TemporaryType>();
-        auto r = temp.GetDirectRegister();
-        m_code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<TemporaryType*>(&value)));
-        m_code.Emit<OpCode::Mov>(dest, r);
-    }
-
-
     //*************************************************************************
     //
     // Template definitions for ExpressionTree::Data
@@ -595,12 +573,12 @@ namespace NativeJIT
                                T value)
         : m_tree(tree),
           m_storageClass(StorageClass::Immediate),
-          m_isFloat(IsFloatingPointType<T>::value),
+          m_isFloat(false),
           m_registerId(0),
           m_offset(0),
           m_refCount(0)
     {
-        // TODO: replace static_assert with enable_if
+        static_assert(!std::is_floating_point<T>::value, "Immediate floating point values are not supported");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         *reinterpret_cast<T*>(&m_immediate) = value;
     }
@@ -609,6 +587,7 @@ namespace NativeJIT
     template <typename T>
     T ExpressionTree::Data::GetImmediate() const
     {
+        static_assert(!std::is_floating_point<T>::value, "Immediate floating point values are not supported");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         Assert(m_storageClass == StorageClass::Immediate, "error");
         return *(reinterpret_cast<T*>(&m_immediate));
@@ -643,7 +622,7 @@ namespace NativeJIT
         : m_data(nullptr)
     {
         // Load the base pointer into a register.
-        base.ConvertToValue(tree, true);
+        base.ConvertToDirect(true);
 
         // Dereference it.
         base.m_data->ConvertToIndirect(byteOffset);
@@ -733,122 +712,105 @@ namespace NativeJIT
     template <typename T>
     T ExpressionTree::Storage<T>::GetImmediate() const
     {
+        static_assert(!std::is_floating_point<T>::value, "Immediate floating point values are not supported");
         Assert(m_data->GetStorageClass() == StorageClass::Immediate, "GetImmediate(): storage class must be immediate.");
         return m_data->GetImmediate<T>();
     }
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertToValue(ExpressionTree& tree, bool forModification)
+    typename ExpressionTree::Storage<T>::DirectRegister
+    ExpressionTree::Storage<T>::ConvertToDirect(bool forModification)
     {
-        // TODO: Why do we store tree in m_data if it is passed as a parameter here?
         // TODO: Target the whole target register with MovZX to prevent the partial register stall.
 
-        if (m_data->GetRefCount() == 1)
+        auto & tree = m_data->GetTree();
+        auto & code = tree.GetCodeGenerator();
+        const bool isSoleOwner = m_data->GetRefCount() == 1;
+
+        switch (m_data->GetStorageClass())
         {
-            // We are the sole owner of this storage and can repurpose it.
-            switch (m_data->GetStorageClass())
+        case StorageClass::Immediate:
+            ConvertImmediateToDirect(ImmediateFlavor());
+            break;
+
+        case StorageClass::Direct:
+            // If the storage is already direct, action is only necessary if it
+            // needs to be modified but we're not the sole owner.
+            if (!isSoleOwner && forModification)
             {
-            case StorageClass::Immediate:
-                {
-                    // Allocate a register and load this value into the register.
-                    auto dest = tree.Direct<T>();
-                    tree.MovImmediate(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+                auto dest = tree.Direct<T>();
+                code.Emit<OpCode::Mov>(dest.GetDirectRegister(), GetDirectRegister());
 
-                    // Problem here is that SetData occurs after Mov which allocates another register???
-
-                    SetData(dest);
-                }
-                break;
-            case StorageClass::Direct:
-                // This storage is already a direct value. No work required.
-                break;
-            case StorageClass::Indirect:
-                {
-                    BaseRegister base = BaseRegister(m_data->GetRegisterId());
-#pragma warning(push)
-#pragma warning(disable:4127)
-                    if (IsFloatingPointType<T>::value || base.IsRIP() || tree.IsBasePointer(base))
-#pragma warning(pop)
-                    {
-                        // We need to allocate a new register for the value for
-                        // one of the following reasons:
-                        //   The value is float and therefore cannot be stored in base.
-                        //   Base is the special-purpose RIP register.
-                        //   Base is the reserved base pointer register in the tree.
-                        auto dest = tree.Direct<T>();
-                        tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(),
-                                                                  base,
-                                                                  m_data->GetOffset());
-                        SetData(dest);
-                    }
-                    else
-                    {
-                        // We can reuse the base register for the value.
-                        DirectRegister dest(m_data->GetRegisterId());
-
-                        BaseRegister base = BaseRegister(m_data->GetRegisterId());
-                        __int32 offset = m_data->GetOffset();
-
-                        tree.GetCodeGenerator().Emit<OpCode::Mov>(dest, base, offset);
-                        m_data->SetStorageClass(StorageClass::Direct);
-                    }
-                }
-                break;
-            default:
-                Assert(false, "ConvertToValue: invalid storage class.");
+                SetData(dest);
             }
-        }
-        else
-        {
-            // We do not own this storage and therefore must allocate new storage.
-            // The main case for not owning the storage is when it represents the cached value
-            // of a common subexpression. WARNING: Note that holding an extra local copy of the
-            // storage will artificially increase the ref count.
-            switch (m_data->GetStorageClass())
+            break;
+        case StorageClass::Indirect:
             {
-            case StorageClass::Immediate:
-                {
-                    // Allocate a register and load this value into the register.
-                    auto dest = tree.Direct<T>();
-                    tree.MovImmediate(dest.GetDirectRegister(), m_data->GetImmediate<T>());
-                    SetData(dest);
-                }
-                break;
-            case StorageClass::Direct:
-                if (forModification)
-                {
-                    // We need to allocate a new register for the value.
-                    auto dest = tree.Direct<T>();
-                    auto src = DirectRegister(m_data->GetRegisterId());
-                    tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(), src);
-                    SetData(dest);
-                }
-                break;
-            case StorageClass::Indirect:
-                {
-                    // We need to allocate a new register for the value.
-                    auto dest = tree.Direct<T>();
+                BaseRegister base = GetBaseRegister();
 
-                    BaseRegister base = BaseRegister(m_data->GetRegisterId());
-                    __int32 offset = m_data->GetOffset();
-                    tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetDirectRegister(),
-                                                              base,
-                                                              offset);
+                // If we fully own the storage, the type of the base register is
+                // compatible and it's not one of the reserved (shared) registers,
+                // then the base register can be reused.
+                // TODO: Also check for RSP; add IsAnyReservedBaseRegister()
+                // method and use everywhere.
+                if (isSoleOwner
+                    && BaseRegister::c_isFloat == DirectRegister::c_isFloat
+                    && !base.IsRIP()
+                    && !tree.IsBasePointer(base))
+                {
+                    code.Emit<OpCode::Mov>(DirectRegister(base), base, GetOffset());
+                    m_data->SetStorageClass(StorageClass::Direct);
+                }
+                else
+                {
+                    // Otherwise, move the data to a newly allocated register.
+                    auto dest = tree.Direct<T>();
+                    code.Emit<OpCode::Mov>(dest.GetDirectRegister(), base, GetOffset());
                     SetData(dest);
                 }
-                break;
-            default:
-                Assert(false, "ConvertToValue: invalid storage class.");
             }
+            break;
+
+        default:
+            Assert(false, "ConvertToDirect: invalid storage class.");
+            break;
         }
+
+        return GetDirectRegister();
+    }
+
+
+    template <typename T>
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(NonFloatingPointFlavor)
+    {
+        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
+
+        auto & tree = m_data->GetTree();
+        auto & code = tree.GetCodeGenerator();
+
+        // Allocate a register and load the immediate into it.
+        auto dest = tree.Direct<T>();
+        code.EmitImmediate<OpCode::Mov>(dest.GetDirectRegister(), m_data->GetImmediate<T>());
+
+        SetData(dest);
+    }
+
+
+    template <typename T>
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(FloatingPointFlavor)
+    {
+        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
+
+        // This should never be hit, it's impossible to compile a float with StorageClass::Immediate.
+        Assert(false, "Unexpected occurrence of a floating point immediate");
     }
 
 
     template <typename T>
     void ExpressionTree::Storage<T>::Spill(ExpressionTree& tree)
     {
-        ConvertToValue(tree, false);
+        ConvertToDirect(false);
         auto dest = tree.Temporary<T>();
         tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
         *this = dest;
@@ -922,7 +884,7 @@ namespace NativeJIT
             break;
     
         case StorageClass::Immediate:
-            out << "immediate value " << std::hex << GetImmediate() << "h" << std::dec;
+            PrintImmediate(out, ImmediateFlavor());
             break;
 
         case StorageClass::Indirect:
@@ -943,6 +905,21 @@ namespace NativeJIT
             out << "[unknown storage type]";
             break;
         }
+    }
+
+
+    template <typename T>
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, NonFloatingPointFlavor) const
+    {
+        out << "immediate value " << std::hex << GetImmediate() << "h" << std::dec;
+    }
+
+
+    template <typename T>
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, FloatingPointFlavor) const
+    {
+        // This should never be hit, it's impossible to compile a float with StorageClass::Immediate.
+        Assert(false, "Unexpected occurrence of a floating point immediate");
     }
 
 
