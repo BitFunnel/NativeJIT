@@ -11,6 +11,73 @@ namespace NativeJIT
 {
     namespace ExpressionTreeUnitTest
     {
+        template <typename T>
+        using DirectRegister = typename Storage<T>::DirectRegister;
+
+        template <typename T>
+        using BaseRegister = typename Storage<T>::BaseRegister;
+
+        #define AssertSizeAndType(REG_TYPE, EXPECTED_SIZE, EXPECTED_IS_FLOAT) \
+            static_assert(REG_TYPE::c_size == EXPECTED_SIZE, #REG_TYPE " should require " #EXPECTED_SIZE " bytes"); \
+            static_assert(REG_TYPE::c_isFloat == EXPECTED_IS_FLOAT, "IsFloat property for " #REG_TYPE " should be " #EXPECTED_IS_FLOAT)
+
+        // These tests can only fail during compilation, never during runtime.
+        TestCase(StorageDefinition)
+        {
+            struct SmallerThanQuadword
+            {
+                unsigned __int8 m_x1;
+                unsigned __int8 m_x2;
+            };
+
+            struct LargerThanQuadword
+            {
+                unsigned __int64 m_x1;
+                unsigned __int16 m_x2;
+            };
+
+            // Direct register for primitive and small types.
+            AssertSizeAndType(DirectRegister<char>, 1, false);
+            AssertSizeAndType(DirectRegister<const char>, 1, false);
+            AssertSizeAndType(DirectRegister<unsigned __int64>, 8, false);
+
+            AssertSizeAndType(DirectRegister<float>, 4, true);
+            AssertSizeAndType(DirectRegister<double>, 8, true);
+            AssertSizeAndType(DirectRegister<const float>, 4, true);
+
+            AssertSizeAndType(DirectRegister<SmallerThanQuadword>, 2, false);
+
+            // Direct register for pointers.
+            AssertSizeAndType(DirectRegister<char*>, 8, false);
+            AssertSizeAndType(DirectRegister<char const *>, 8, false);
+            AssertSizeAndType(DirectRegister<char const * const>, 8, false);
+
+            AssertSizeAndType(DirectRegister<void*>, 8, false);
+            AssertSizeAndType(DirectRegister<float*>, 8, false);
+            AssertSizeAndType(DirectRegister<double*>, 8, false);
+
+            // Direct register for references.
+            AssertSizeAndType(DirectRegister<char&>, 8, false);
+            AssertSizeAndType(DirectRegister<const char&>, 8, false);
+            AssertSizeAndType(DirectRegister<float &>, 8, false);
+
+            // Direct register for arrays.
+            AssertSizeAndType(DirectRegister<int[1024]>, 8, false);
+            AssertSizeAndType(DirectRegister<float[1024]>, 8, false);
+
+            // Direct register for structures larger than quadword.
+            AssertSizeAndType(DirectRegister<LargerThanQuadword>, 8, false);
+
+            // Base register for various types.
+            AssertSizeAndType(BaseRegister<char>, 8, false);
+            AssertSizeAndType(BaseRegister<unsigned __int64>, 8, false);
+            AssertSizeAndType(BaseRegister<float>, 8, false);
+            AssertSizeAndType(BaseRegister<float[1024]>, 8, false);
+        }
+
+        #undef AssertSizeAndType
+
+
         TestClass(ExpressionTreeTest)
         {
         public:

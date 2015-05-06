@@ -5,7 +5,7 @@
 
 namespace NativeJIT
 {
-    unsigned RegisterBase::c_sizes[9] = {
+    unsigned RegisterBase::c_sizes[c_maxSize + 1] = {
         0,
         0,  // 1 bytes
         1,  // 2 bytes
@@ -19,7 +19,7 @@ namespace NativeJIT
 
 
     // TODO: These names are not in the same order as the declarations below.
-    char const * RegisterBase::c_names[2][4][16] =
+    char const * RegisterBase::c_names[c_typesCount][c_validSizesCount][c_maxRegisterID] =
     {
         {
             { "al", "cl", "dl", "bl", "spl", "bpl", "dil", "sil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b" },

@@ -233,6 +233,24 @@ namespace NativeJIT
     // ExpressionTree::Data
     //
     //*************************************************************************
+    ExpressionTree::Data::Data(ExpressionTree& tree,
+                               PointerRegister base,
+                               __int32 offset)
+        : m_tree(tree),
+          m_storageClass(StorageClass::Indirect),
+          m_isFloat(base.c_isFloat),
+          m_registerId(base.GetId()),
+          m_offset(offset),
+          m_refCount(0)
+    {
+        if (!base.IsRIP() && !tree.IsBasePointer(base))
+        {
+            auto & freeList = FreeListHelper<decltype(base)>::GetFreeList(tree);
+            freeList.SetData(m_registerId, this);
+        }
+    }
+
+
     ExpressionTree& ExpressionTree::Data::GetTree() const
     {
         return m_tree;

@@ -59,7 +59,7 @@ namespace NativeJIT
     class Node : public NodeBase
     {
     public:
-        typedef Register<sizeof(T), IsFloatingPointType<T>::value> RegisterType;
+        typedef typename ExpressionTree::Storage<T>::DirectRegister RegisterType;
 
         Node(ExpressionTree& tree);
 

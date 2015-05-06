@@ -41,7 +41,8 @@ namespace NativeJIT
             const RegTypes regTypes = std::is_same<SrcRegType, DESTREGTYPE>::value
                                       ? RegTypes::ExactlySame
                                       : RegTypes::Different;
-            const ImmediateType immediateType = RequiresRIPRelativeImmediate<SRC>::c_value
+            const ImmediateType immediateType = !IsValidImmediate<SRC>::value
+                                                    || RequiresRIPRelativeImmediate<SRC>::c_value
                                                 ? ImmediateType::NotAllowed
                                                 : ImmediateType::Allowed;
 

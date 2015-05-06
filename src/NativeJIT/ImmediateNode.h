@@ -23,6 +23,8 @@ namespace NativeJIT
     class ImmediateNode : public Node<T>
     {
     public:
+        static_assert(IsValidImmediate<T>::value, "Invalid type for an immediate node");
+
         ImmediateNode(ExpressionTree& tree, T value)
             : Node(tree),
               m_value(value)

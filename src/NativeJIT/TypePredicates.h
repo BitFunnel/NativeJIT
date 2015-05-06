@@ -2,9 +2,18 @@
 
 #include <type_traits>
 
+
 namespace NativeJIT
 {
-    template <typename T> struct IsFloatingPointType : std::false_type {};
-    template <> struct IsFloatingPointType<float> : std::true_type {};
-    template <> struct IsFloatingPointType<double> : std::true_type {};
+    // A trait used to determine whether a type has any decay other than
+    // const/volatile.
+    template <typename T>
+    struct HasMeaningfulDecay
+        : std::integral_constant<
+            bool,
+            !std::is_same<typename std::remove_cv<T>::type,
+                          typename std::decay<T>::type>
+                        ::value>
+    {
+    };
 }

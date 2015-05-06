@@ -58,13 +58,13 @@ namespace NativeJIT
         Storage<T> Direct();
 
         template <typename T>
-        Storage<T> Direct(Register<sizeof(T), IsFloatingPointType<T>::value> r);
+        Storage<T> Direct(typename Storage<T>::DirectRegister r);
 
         template <typename T>
         Storage<T> Indirect(__int32 offset);
 
         template <typename T>
-        Storage<T> Indirect(Register<sizeof(T), false> base, __int32 offset);
+        Storage<T> Indirect(PointerRegister base, __int32 offset);
 
         template <typename T>
         Storage<T> RIPRelative(__int32 offset);
@@ -130,8 +130,8 @@ namespace NativeJIT
         };
 
 
-        bool IsBasePointer(Register<8, false> r) const;
-        Register<sizeof(void*), false> GetBasePointer() const;
+        bool IsBasePointer(PointerRegister r) const;
+        PointerRegister GetBasePointer() const;
 
         void Pass0();
         void Pass1();
@@ -163,7 +163,7 @@ namespace NativeJIT
         unsigned m_temporaryCount;
         std::vector<__int32> m_temporaries;
 
-        Register<sizeof(void*), false> m_basePointer;
+        PointerRegister m_basePointer;
     };
 
 
@@ -173,10 +173,10 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r);
 
-        template <unsigned SIZE, bool ISFLOAT>
-        Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r, __int32 offset);
+        Data(ExpressionTree& tree, PointerRegister r, __int32 offset);
 
-        // Note: attempt to create an immediate storage will not compile for floats.
+        // Note: attempt to create an immediate storage will static_assert for
+        // invalid immediates.
         template <typename T>
         Data(ExpressionTree& tree, T value);
 
@@ -190,7 +190,7 @@ namespace NativeJIT
 
         __int32 GetOffset() const;
 
-        // Note: attempt to GetImmediate() will not compile for floats.
+        // Note: attempt to GetImmediate() will static_assert for invalid immediates.
         template <typename T>
         T GetImmediate() const;
 
@@ -219,17 +219,56 @@ namespace NativeJIT
     };
 
 
+    // Declares the properties of the type used for register storage.
+    template <typename T>
+    struct RegisterStorage
+    {
+        // The underlying type stored inside the register when passing the
+        // storage as an argument to a function. F. ex. references and large
+        // structures are passed as pointers. Any const/volatile qualifiers are
+        // removed.
+        typedef typename std::conditional<
+            std::is_reference<T>::value
+                || (sizeof(T) > RegisterBase::c_maxSize),
+            typename std::add_pointer<typename std::remove_cv<T>::type>::type,
+            typename std::conditional<
+                HasMeaningfulDecay<T>::value,
+                typename std::decay<T>::type,
+                typename std::remove_cv<T>::type
+            >::type
+        >::type UnderlyingType;
+
+        static const size_t c_size = sizeof(UnderlyingType);
+        static const size_t c_isFloat = std::is_floating_point<UnderlyingType>::value;
+
+        typedef Register<c_size, c_isFloat> RegisterType;
+    };
+
+
+    // Determines whether a type is valid as an immediate from Storage's perspective.
+    // Invalid types include void, float and anything that decays its type
+    // (references, structures larger than the full register, arrays, etc).
+    template <typename T>
+    struct IsValidImmediate
+        : std::integral_constant<
+            bool,
+            !std::is_void<T>::value
+                && !std::is_floating_point<T>::value
+                && std::is_same<typename RegisterStorage<T>::UnderlyingType,
+                                typename std::remove_cv<T>::type>::value>
+    {
+    };
+
+
     // Storage should be public because it is a return type for Node.
-    // No sense in making every instance be ExpressionTree::Storage
-    // when we're already in NativeJIT namespace.
     // Storage should be private so that its constructor can take an m_data.
     template <typename T>
     class ExpressionTree::Storage
     {
     public:
-        typedef Register<sizeof(T), IsFloatingPointType<T>::value> DirectRegister;
-        typedef Register<sizeof(T*), false> BaseRegister;
-        typedef Register<8, IsFloatingPointType<T>::value> FullRegister;
+        typedef typename RegisterStorage<T>::RegisterType DirectRegister;
+        typedef PointerRegister BaseRegister;
+        typedef typename DirectRegister::FullRegister FullRegister;
 
         Storage();
 
@@ -257,8 +296,12 @@ namespace NativeJIT
         BaseRegister GetBaseRegister() const;
         __int32 GetOffset() const;
 
-        // Note: attempt to GetImmediate() will not compile for floats.
-        T GetImmediate() const;
+        // Note: The method must be removed for invalid immediates rather than
+        // static_assert triggered because for some of them (arrays) the method
+        // has invalid declaration otherwise.
+        template <typename U = T,
+                  typename ENABLED = typename std::enable_if<IsValidImmediate<U>::value>::type>
+        U GetImmediate() const;
 
         DirectRegister ConvertToDirect(bool forModification);
 
@@ -271,13 +314,17 @@ namespace NativeJIT
     private:
         friend class ExpressionTree;
 
-        // Types used to select the correct flavor of immediate methods
-        // depending on whether T is a floating point value.
-        struct FloatingPointFlavor {};
-        struct NonFloatingPointFlavor {};
-        typedef typename std::conditional<std::is_floating_point<T>::value,
-                                          FloatingPointFlavor,
-                                          NonFloatingPointFlavor>::type
+        // Types used to select the correct flavor of immediate methods. This is
+        // necessary because GetStorageClass() is a runtime rather than a compile
+        // time property. Even though it is not possible to create a
+        // StorageClass::Immediate storage for an invalid immediate, the code
+        // that branches depending on various types of storage needs to always
+        // compile.
+        struct ValidImmediate {};
+        struct InvalidImmediate {};
+        typedef typename std::conditional<IsValidImmediate<T>::value,
+                                          ValidImmediate,
+                                          InvalidImmediate>::type
             ImmediateFlavor;
 
         Storage(ExpressionTree::Data* data);
@@ -285,14 +332,18 @@ namespace NativeJIT
         void SetData(ExpressionTree::Data* data);
         void SetData(Storage& other);
 
-        void ConvertImmediateToDirect(NonFloatingPointFlavor);
-        void ConvertImmediateToDirect(FloatingPointFlavor);
+        void ConvertImmediateToDirect(ValidImmediate);
+        void ConvertImmediateToDirect(InvalidImmediate);
 
-        void PrintImmediate(std::ostream& out, NonFloatingPointFlavor) const;
-        void PrintImmediate(std::ostream& out, FloatingPointFlavor) const;
+        void PrintImmediate(std::ostream& out, ValidImmediate) const;
+        void PrintImmediate(std::ostream& out, InvalidImmediate) const;
 
         ExpressionTree::Data* m_data;
     };
+
+
+    template <typename T>
+    using Storage = typename ExpressionTree::Storage<T>;
 
 
     //*************************************************************************
@@ -374,7 +425,7 @@ namespace NativeJIT
 
     template <typename T>
     ExpressionTree::Storage<T>
-    ExpressionTree::Direct(Register<sizeof(T), IsFloatingPointType<T>::value> r)
+    ExpressionTree::Direct(typename Storage<T>::DirectRegister r)
     {
         auto & freeList = FreeListHelper<T>::GetFreeList(*this);
 
@@ -423,7 +474,7 @@ namespace NativeJIT
 
     template <typename T>
     ExpressionTree::Storage<T>
-    ExpressionTree::Indirect(Register<sizeof(T), false> base, __int32 offset) // TODO: This should be Register<8, false> or Register<sizeof(T*), false>
+    ExpressionTree::Indirect(PointerRegister base, __int32 offset)
     {
         auto & freeList = FreeListHelper<T>::GetFreeList(*this);
 
@@ -543,28 +594,8 @@ namespace NativeJIT
           m_offset(0),
           m_refCount(0)
     {
-        auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
+        auto & freeList = FreeListHelper<decltype(r)>::GetFreeList(tree);
         freeList.SetData(m_registerId, this);
-    }
-
-
-    // TODO: This should never allow ISFLOAT == true.
-    template <unsigned SIZE, bool ISFLOAT>
-    ExpressionTree::Data::Data(ExpressionTree& tree,
-                               Register<SIZE, ISFLOAT> base,
-                               __int32 offset)
-        : m_tree(tree),
-          m_storageClass(StorageClass::Indirect),
-          m_isFloat(ISFLOAT),
-          m_registerId(base.GetId()),
-          m_offset(offset),
-          m_refCount(0)
-    {
-        if (!base.IsRIP() && !tree.IsBasePointer(base))
-        {
-            auto & freeList = FreeListHelper<Register<SIZE, ISFLOAT>>::GetFreeList(tree);
-            freeList.SetData(m_registerId, this);
-        }
     }
 
 
@@ -578,7 +609,7 @@ namespace NativeJIT
           m_offset(0),
           m_refCount(0)
     {
-        static_assert(!std::is_floating_point<T>::value, "Immediate floating point values are not supported");
+        static_assert(IsValidImmediate<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         *reinterpret_cast<T*>(&m_immediate) = value;
     }
@@ -587,9 +618,10 @@ namespace NativeJIT
     template <typename T>
     T ExpressionTree::Data::GetImmediate() const
     {
-        static_assert(!std::is_floating_point<T>::value, "Immediate floating point values are not supported");
+        static_assert(IsValidImmediate<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
-        Assert(m_storageClass == StorageClass::Immediate, "error");
+        Assert(m_storageClass == StorageClass::Immediate, "GetImmediate() called for non-immediate storage!");
+
         return *(reinterpret_cast<T*>(&m_immediate));
     }
 
@@ -710,10 +742,12 @@ namespace NativeJIT
 
 
     template <typename T>
-    T ExpressionTree::Storage<T>::GetImmediate() const
+    template <typename U, typename ENABLED>
+    U ExpressionTree::Storage<T>::GetImmediate() const
     {
-        static_assert(!std::is_floating_point<T>::value, "Immediate floating point values are not supported");
+        static_assert(std::is_same<T, U>::value, "U must not be specified explicitly");
         Assert(m_data->GetStorageClass() == StorageClass::Immediate, "GetImmediate(): storage class must be immediate.");
+
         return m_data->GetImmediate<T>();
     }
 
@@ -782,7 +816,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(NonFloatingPointFlavor)
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(ValidImmediate)
     {
         Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
 
@@ -798,12 +832,12 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(FloatingPointFlavor)
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(InvalidImmediate)
     {
+        // This should never be hit, it's impossible to compile an invalid immediate
+        // with StorageClass::Immediate.
         Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
-
-        // This should never be hit, it's impossible to compile a float with StorageClass::Immediate.
-        Assert(false, "Unexpected occurrence of a floating point immediate");
+        Assert(false, "Unexpected occurrence of an invalid immediate storage");
     }
 
 
@@ -909,17 +943,19 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, NonFloatingPointFlavor) const
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, ValidImmediate) const
     {
         out << "immediate value " << std::hex << GetImmediate() << "h" << std::dec;
     }
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, FloatingPointFlavor) const
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, InvalidImmediate) const
     {
-        // This should never be hit, it's impossible to compile a float with StorageClass::Immediate.
-        Assert(false, "Unexpected occurrence of a floating point immediate");
+        // This should never be hit, it's impossible to compile an invalid immediate
+        // with StorageClass::Immediate.
+        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
+        Assert(false, "Unexpected occurrence of an invalid immediate storage");
     }
 
 

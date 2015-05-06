@@ -7,10 +7,21 @@ namespace NativeJIT
 {
     class RegisterBase
     {
+    public:
+        static const unsigned c_maxSize = 8;
+
     protected:
-        // TODO: Magic numbers.
-        static unsigned c_sizes[9];
-        static char const * c_names[2][4][16];
+        static const unsigned c_maxIntegerRegisterID = 16;
+        static const unsigned c_maxFloatRegisterID = 15;
+        static const unsigned c_maxRegisterID = 16;
+
+        static const unsigned c_validSizesCount = 4;
+        static const unsigned c_typesCount = 2;
+
+        // Add 1 to adjust for the fact that array is zero based, unlike size.
+        static unsigned c_sizes[c_maxSize + 1];
+
+        static char const * c_names[c_typesCount][c_validSizesCount][c_maxRegisterID];
 
         static const unsigned c_RIP = 16;
     };
@@ -23,6 +34,8 @@ namespace NativeJIT
         static_assert((ISFLOAT == 0 && (SIZE == 1 || SIZE == 2 || SIZE == 4 || SIZE == 8))
                       || (ISFLOAT == 1 && (SIZE == 4 || SIZE == 8)),
                       "Invalid register definition.");
+
+        typedef Register<c_maxSize, ISFLOAT> FullRegister;
 
         // Templates that don't explicitly receive SIZE and ISFLOAT but rather
         // have access to a Register need to have a way to access the size and
@@ -39,8 +52,9 @@ namespace NativeJIT
         explicit Register(unsigned id)
             : m_id(id)
         {
-            // TODO: Remove this magic number.
-            Assert(id < c_RIP || (id == c_RIP && !ISFLOAT), "Invalid register id.");
+            Assert((!ISFLOAT && id <= c_maxIntegerRegisterID)
+                       || (ISFLOAT && id <= c_maxFloatRegisterID),
+                   "Invalid register id.");
         }
 
 
@@ -140,6 +154,7 @@ namespace NativeJIT
         }
     };
 
+    typedef Register<sizeof(void*), false> PointerRegister;
 
     // TODO: Need to avoid "static initialization order fiasco" for register definitions.
     // See http://www.parashift.com/c++-faq/static-init-order.html.
