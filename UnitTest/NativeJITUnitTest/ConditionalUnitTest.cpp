@@ -11,7 +11,7 @@
 
 namespace NativeJIT
 {
-    namespace UnsignedUnitTest
+    namespace ConditionalUnitTest
     {
         TestClass(FunctionTest)
         {
@@ -67,7 +67,7 @@ namespace NativeJIT
                     auto expected = (p1 > p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestAssert(observed == expected);
+                    TestEqual(expected, observed);
 
                     p1 = 5;
                     p2 = 4;
@@ -75,9 +75,68 @@ namespace NativeJIT
                     expected = (p1 > p2) ? trueValue : falseValue;
                     observed = function(p1, p2);
 
-                    // TODO: Enable after implementing conditional jumps.
-                    TestAssert(observed == expected);
+                    TestEqual(expected, observed);
                 }
+            }
+
+
+            TestCase(IfNotZero)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                Function<unsigned __int64,
+                         unsigned __int32,
+                         unsigned __int64,
+                         unsigned __int64> e(m_allocator, *m_code);
+
+                auto & test = e.IfNotZero(e.GetP1(), e.GetP2(), e.GetP3());
+                auto function = e.Compile(test);
+
+                unsigned __int32 p1 = 0;
+                unsigned __int64 p2 = 0xFFFFFFFFFFFFFFFF;
+                unsigned __int64 p3 = 0;
+
+                auto expected = p1 != 0 ? p2 : p3;
+                auto observed = function(p1, p2, p3);
+
+                TestEqual(expected, observed);
+
+                p1 = 1;
+
+                expected = p1 != 0 ? p2 : p3;
+                observed = function(p1, p2, p3);
+
+                TestEqual(expected, observed);
+            }
+
+
+            TestCase(If)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                Function<unsigned __int64,
+                         bool,
+                         unsigned __int64,
+                         unsigned __int64> e(m_allocator, *m_code);
+
+                auto & test = e.If(e.GetP1(), e.GetP2(), e.GetP3());
+                auto function = e.Compile(test);
+
+                bool p1 = true;
+                unsigned __int64 p2 = 0xFFFFFFFFFFFFFFFF;
+                unsigned __int64 p3 = 0;
+
+                auto expected = p1 ? p2 : p3;
+                auto observed = function(p1, p2, p3);
+
+                TestEqual(expected, observed);
+
+                p1 = false;
+
+                expected = p1 ? p2 : p3;
+                observed = function(p1, p2, p3);
+
+                TestEqual(expected, observed);
             }
 
 

@@ -52,37 +52,6 @@ namespace NativeJIT
     };
 
 
-    // TODO: This should be a cast node instead of IsTrue.
-    template <typename T>
-    class IsTrue : public FlagExpressionNode<JccType::JZ>
-    {
-    public:
-        IsTrue(ExpressionTree& tree, Node<T>& value);
-
-
-        //
-        // Overrides of Node methods.
-        //
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
-
-
-        //
-        // Overrides of Node<T> methods.
-        //
-        virtual ExpressionTree::Storage<bool> CodeGenValue(ExpressionTree& tree) override;
-
-
-        //
-        // Overrides of FlagExpression methods.
-        //
-        virtual void CodeGenFlags(ExpressionTree& tree) override;
-
-    private:
-        Node<T>& m_value;
-    };
-
-
     template <typename T, JccType JCC>
     class RelationalOperatorNode : public FlagExpressionNode<JCC>
     {
@@ -216,85 +185,6 @@ namespace NativeJIT
         code.PlaceLabel(l2);
 
         return falseValue;
-    }
-
-
-    //*************************************************************************
-    //
-    // Template definitions for IsTrue
-    //
-    //*************************************************************************
-    template <typename T>
-    IsTrue<T>::IsTrue(ExpressionTree& tree, Node<T>& value)
-        : FlagExpressionNode(tree),
-          m_value(value)
-    {
-    }
-
-
-    template <typename T>
-    unsigned IsTrue<T>::LabelSubtree(bool /*isLeftChild*/)
-    {
-        SetRegisterCount(m_value.LabelSubtree(true));
-
-        return GetRegisterCount();
-    }
-
-
-    template <typename T>
-    void IsTrue<T>::Print() const
-    {
-        std::cout << "IsTrue id=" << GetId();
-        std::cout << ", parents = " << GetParentCount();
-        std::cout << ", value = " << m_value.GetId();
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
-    }
-
-
-    template <typename T>
-    typename ExpressionTree::Storage<bool> IsTrue<T>::CodeGenValue(ExpressionTree& tree)
-    {
-        X64CodeGenerator& code = tree.GetCodeGenerator();
-
-        CodeGenFlags(tree);
-
-        Label l1 = code.AllocateLabel();
-        code.Jcc(JccType::JZ, l1);
-
-        RegisterType r = tree.AllocateRegister<RegisterType>();
-        code.Emit<OpCode::Mov>(r, 1);
-
-        Label l2 = code.AllocateLabel();
-        code.Jmp(l2);
-        code.PlaceLabel(l1);
-
-        code.Emit<OpCode::Mov>(r, 1);
-        code.PlaceLabel(l2);
-
-        return ExpressionTree::Storage<bool>(tree, r);
-    }
-
-
-    template <typename T>
-    void IsTrue<T>::CodeGenFlags(ExpressionTree& tree)
-    {
-        X64CodeGenerator& code = tree.GetCodeGenerator();
-
-        if (IsCached())
-        {
-            auto value = GetCache();
-            ReleaseCache();
-            auto r = value.GetDirectRegister();
-            code.Emit<OpCode::Or>(r, r);
-        }
-        else
-        {
-            auto value = m_value.CodeGenValue(tree);
-            auto r = value.ConvertToDirect(false);
-
-            code.Emit<OpCode::Or>(r, r);
-        }
     }
 
 

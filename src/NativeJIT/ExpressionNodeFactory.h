@@ -39,7 +39,13 @@ namespace NativeJIT
         template <typename TO, typename FROM> Node<TO>& Cast(Node<FROM>& value);
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename T> Node<T>& Deref(Node<T*>& pointer, __int32 index);
-        template <typename OBJECT, typename FIELD> Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field);
+
+        // Note: OBJECT1 is there to allow for template deduction in all cases
+        // since OBJECT may or may not be const, but OBJECT1 is never const
+        // in FieldPointer(someObjectNode, &SomeObject::m_field) expression.
+        template <typename OBJECT, typename FIELD, typename OBJECT1 = OBJECT>
+        Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT1::*field);
+
         template <typename T> NodeBase& Return(Node<T>& value);
 
 
@@ -72,10 +78,16 @@ namespace NativeJIT
 
 
         //
-        // Conditional operator
+        // Conditional operators
         //
         template <typename T, JccType JCC>
-        Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& left, Node<T>& right);
+        Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& trueValue, Node<T>& falseValue);
+
+        template <typename CONDT, typename T>
+        Node<T>& IfNotZero(Node<CONDT>& conditionValue, Node<T>& trueValue, Node<T>& falseValue);
+
+        template <typename T>
+        Node<T>& If(Node<bool>& conditionValue, Node<T>& thenValue, Node<T>& elseValue);
 
 
         //
@@ -165,9 +177,15 @@ namespace NativeJIT
     }
 
 
-    template <typename OBJECT, typename FIELD>
-    Node<FIELD*>& ExpressionNodeFactory::FieldPointer(Node<OBJECT*>& object, FIELD OBJECT::*field)
     {
+    template <typename OBJECT, typename FIELD, typename OBJECT1>
+    Node<FIELD*>&
+    ExpressionNodeFactory::FieldPointer(Node<OBJECT*>& object, FIELD OBJECT1::*field)
+    {
+        static_assert(std::is_same<typename std::remove_const<OBJECT>::type,
+                                   typename std::remove_const<OBJECT1>::type>::value,
+                      "Invalid FieldPointer() usage");
+
         return * new (m_allocator.Allocate(sizeof(FieldPointerNode<OBJECT, FIELD>)))
                      FieldPointerNode<OBJECT, FIELD>(*this, object, field);
     }
@@ -289,16 +307,34 @@ namespace NativeJIT
 
 
     //
-    // Conditional operator
+    // Conditional operators
     //
     template <typename T, JccType JCC>
     Node<T>& ExpressionNodeFactory::Conditional(FlagExpressionNode<JCC>& condition,
-                                                Node<T>& left,
-                                                Node<T>& right)
+                                                Node<T>& trueValue,
+                                                Node<T>& falseValue)
     {
         typedef ConditionalNode<T, JCC> NodeType;
         return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, condition, left, right);
+                     NodeType(*this, condition, trueValue, falseValue);
+    }
+
+
+    template <typename CONDT, typename T>
+    Node<T>& ExpressionNodeFactory::IfNotZero(Node<CONDT>& conditionValue, Node<T>& trueValue, Node<T>& falseValue)
+    {
+        // TODO: This can be achieved with a FlagExpressionNode implementation in
+        // terms of the x64 test instruction, once the instruction is available.
+        auto & conditionNode = Compare<JccType::JNE>(conditionValue, Immediate<CONDT>(0));
+
+        return Conditional(conditionNode, trueValue, falseValue);
+    }
+
+
+    template <typename T>
+    Node<T>& ExpressionNodeFactory::If(Node<bool>& conditionValue, Node<T>& thenValue, Node<T>& elseValue)
+    {
+        return IfNotZero(conditionValue, thenValue, elseValue);
     }
 
 
