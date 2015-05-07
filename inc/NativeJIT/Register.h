@@ -21,9 +21,7 @@ namespace NativeJIT
         // Add 1 to adjust for the fact that array is zero based, unlike size.
         static unsigned c_sizes[c_maxSize + 1];
 
-        static char const * c_names[c_typesCount][c_validSizesCount][c_maxRegisterID];
-
-        static const unsigned c_RIP = 16;
+        static char const * c_names[c_typesCount][c_validSizesCount][c_maxRegisterID + 1];
     };
 
 
@@ -95,32 +93,29 @@ namespace NativeJIT
 
         char const * GetName() const
         {
-            if (m_id == c_RIP)
-            {
-                // TODO: Text of name should be near other register names.
-                return "rip";
-            }
-            else
-            {
-                char const * name = c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
-                Assert(name != nullptr, "Attempting to get name for invalid register.");
-                return name;
-            }
+            char const * name = c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
+            Assert(name != nullptr, "Attempting to get name for invalid register.");
+
+            return name;
         }
 
 
         bool IsRIP() const
         {
-            // Note: the left side of the condition is there only to make the
-            // test explicit, there is no FP register with ID of c_RIP.
-            return !ISFLOAT && m_id == c_RIP;
+            return IsSameHardwareRegister(rip);
+        }
+
+
+        bool IsStackPointer() const
+        {
+            return IsSameHardwareRegister(rsp);
         }
 
 
         // Returns whether the registers are exactly the same (size, type and ID).
         // This will return false for comparison between f. ex. rax and eax.
         template <unsigned SIZE2, bool ISFLOAT2>
-        bool operator==(Register<SIZE2, ISFLOAT2> other)
+        bool operator==(Register<SIZE2, ISFLOAT2> other) const
         {
             return SIZE2 == SIZE
                    && ISFLOAT2 == ISFLOAT
@@ -133,7 +128,7 @@ namespace NativeJIT
         // false for comparison between rax and xmm0 (even though they have the
         // same register ID).
         template <unsigned SIZE2, bool ISFLOAT2>
-        bool IsSameHardwareRegister(Register<SIZE2, ISFLOAT2> other)
+        bool IsSameHardwareRegister(Register<SIZE2, ISFLOAT2> other) const
         {
             return ISFLOAT2 == ISFLOAT
                 && other.GetId() == GetId();
@@ -144,15 +139,6 @@ namespace NativeJIT
         unsigned m_id;
     };
 
-
-    class RegisterIP : public Register<8, false>
-    {
-    public:
-        RegisterIP()
-        {
-            m_id = c_RIP;
-        }
-    };
 
     typedef Register<sizeof(void*), false> PointerRegister;
 
@@ -227,7 +213,7 @@ namespace NativeJIT
     extern Register<8, false> r13;
     extern Register<8, false> r14;
     extern Register<8, false> r15;
-    extern RegisterIP rip;
+    extern Register<8, false> rip;
 
     extern Register<4, true> xmm0s;
     extern Register<4, true> xmm1s;

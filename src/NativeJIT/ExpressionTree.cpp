@@ -243,7 +243,7 @@ namespace NativeJIT
           m_offset(offset),
           m_refCount(0)
     {
-        if (!base.IsRIP() && !tree.IsBasePointer(base))
+        if (!tree.IsAnyReservedBaseRegister(base))
         {
             auto & freeList = FreeListHelper<decltype(base)>::GetFreeList(tree);
             freeList.SetData(m_registerId, this);
@@ -288,11 +288,19 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::Data::ConvertToIndirect(__int32 offset)
+    void ExpressionTree::Data::ConvertDirectToIndirect(__int32 offset)
     {
         Assert(m_storageClass == StorageClass::Direct, "StorageClass must be Direct.");
         m_storageClass = StorageClass::Indirect;
         m_offset = offset;
+    }
+
+
+    void ExpressionTree::Data::ConvertIndirectToDirect()
+    {
+        Assert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect.");
+        m_storageClass = StorageClass::Direct;
+        m_offset = 0;
     }
 
 

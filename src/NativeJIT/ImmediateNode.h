@@ -2,6 +2,7 @@
 
 #include <type_traits>
 
+#include "CastNode.h"
 #include "Node.h"
 
 
@@ -14,8 +15,8 @@ namespace NativeJIT
         // so RIP-relative indirect must be used. Also, many instructions taking
         // an integer immediate (such as Add, Cmp etc) do not have a form which
         // takes a 64-bit immediate and need a RIP-relative indirect.
-        static const bool c_value = std::is_floating_point<T>::value
-            || (std::is_integral<T>::value && sizeof(T) == 8);
+        static const bool c_value = RegisterStorage<T>::c_isFloat
+                                    || RegisterStorage<T>::c_size == 8;
     };
 
 
@@ -45,9 +46,6 @@ namespace NativeJIT
         }
 
 
-        //
-        // Overrrides of ValueNode methods
-        //
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override
         {
             return tree.Immediate(m_value);
@@ -87,6 +85,7 @@ namespace NativeJIT
             m_offset = 0;
         }
 
+
         //
         // Overrides of Node methods
         //
@@ -101,23 +100,26 @@ namespace NativeJIT
         }
 
 
-        //
-        // Overrrides of ValueNode methods
-        //
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override
         {
             return tree.RIPRelative<T>(m_offset);
         }
 
+
         //
-        // Overrrides of RIPRelativeImmediate methods
+        // Overrides of RIPRelativeImmediate methods
         //
         virtual void EmitStaticData(ExpressionTree& tree) override
         {
             auto & code = tree.GetCodeGenerator();
             code.AdvanceToAlignment<T>();
             m_offset = code.CurrentPosition();
-            code.EmitValueBytes(m_value);
+
+            // Emit the value using a canonical type since the EmitValueBytes
+            // method intentionally has a limited number of input types. Basic
+            // types will be unchanged, but f. ex. function pointers will be
+            // emitted as unsigned __int64.
+            code.EmitValueBytes(Casting::ForcedCast<typename CanonicalRegisterStorageType<T>::Type>(m_value));
         }
 
     private:

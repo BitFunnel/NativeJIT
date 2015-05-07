@@ -19,13 +19,13 @@ namespace NativeJIT
 
 
     // TODO: These names are not in the same order as the declarations below.
-    char const * RegisterBase::c_names[c_typesCount][c_validSizesCount][c_maxRegisterID] =
+    char const * RegisterBase::c_names[c_typesCount][c_validSizesCount][c_maxRegisterID + 1] =
     {
         {
             { "al", "cl", "dl", "bl", "spl", "bpl", "dil", "sil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b" },
             { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w" },
             { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d" },
-            { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" },
+            { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "rip" },
         },
         {
             {},
@@ -108,7 +108,7 @@ namespace NativeJIT
     Register<8, false> r13(13);
     Register<8, false> r14(14);
     Register<8, false> r15(15);
-    RegisterIP rip;
+    Register<8, false> rip(16);
 
 
     Register<4, true> xmm0s(0);

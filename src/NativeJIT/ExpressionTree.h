@@ -69,6 +69,8 @@ namespace NativeJIT
         template <typename T>
         Storage<T> RIPRelative(__int32 offset);
 
+        // Returns indirect storage relative to the base pointer for a variable
+        // of type T.
         template <typename T>
         Storage<T> Temporary();
 
@@ -133,6 +135,14 @@ namespace NativeJIT
         bool IsBasePointer(PointerRegister r) const;
         PointerRegister GetBasePointer() const;
 
+        // Returns whether the register is one of the reserved/shared base
+        // registers (instruction, stack or base pointer).
+        template <unsigned SIZE>
+        bool IsAnyReservedBaseRegister(Register<SIZE, false> r) const;
+
+        template <unsigned SIZE>
+        bool IsAnyReservedBaseRegister(Register<SIZE, true> r) const;
+
         void Pass0();
         void Pass1();
         void Pass2();
@@ -194,7 +204,8 @@ namespace NativeJIT
         template <typename T>
         T GetImmediate() const;
 
-        void ConvertToIndirect(__int32 offset);
+        void ConvertDirectToIndirect(__int32 offset);
+        void ConvertIndirectToDirect();
 
         unsigned GetRefCount() const;
         unsigned Decrement();
@@ -219,47 +230,6 @@ namespace NativeJIT
     };
 
 
-    // Declares the properties of the type used for register storage.
-    template <typename T>
-    struct RegisterStorage
-    {
-        // The underlying type stored inside the register when passing the
-        // storage as an argument to a function. F. ex. references and large
-        // structures are passed as pointers. Any const/volatile qualifiers are
-        // removed.
-        typedef typename std::conditional<
-            std::is_reference<T>::value
-                || (sizeof(T) > RegisterBase::c_maxSize),
-            typename std::add_pointer<typename std::remove_cv<T>::type>::type,
-            typename std::conditional<
-                HasMeaningfulDecay<T>::value,
-                typename std::decay<T>::type,
-                typename std::remove_cv<T>::type
-            >::type
-        >::type UnderlyingType;
-
-        static const size_t c_size = sizeof(UnderlyingType);
-        static const size_t c_isFloat = std::is_floating_point<UnderlyingType>::value;
-
-        typedef Register<c_size, c_isFloat> RegisterType;
-    };
-
-
-    // Determines whether a type is valid as an immediate from Storage's perspective.
-    // Invalid types include void, float and anything that decays its type
-    // (references, structures larger than the full register, arrays, etc).
-    template <typename T>
-    struct IsValidImmediate
-        : std::integral_constant<
-            bool,
-            !std::is_void<T>::value
-                && !std::is_floating_point<T>::value
-                && std::is_same<typename RegisterStorage<T>::UnderlyingType,
-                                typename std::remove_cv<T>::type>::value>
-    {
-    };
-
-
     // Storage should be public because it is a return type for Node.
     // Storage should be private so that its constructor can take an m_data.
     template <typename T>
@@ -279,6 +249,15 @@ namespace NativeJIT
         // dereferences it to produce a Storage<T>. Equivalent to
         // *static_cast<T*>(base + byteOffset).
         Storage(ExpressionTree& tree, Storage<void*>&& base, __int32 byteOffset);
+
+        // Loads the address of an immediate storage into a newly created direct
+        // storage and resets the original storage. If possible, reuses the
+        // register from the source storage.
+        // Note: do not call this method with a last reference to a Temporary as
+        // the Temporary may be released after the source storage is reset and
+        // the created storage would point to invalid the memory.
+        template <typename U>
+        static Storage<T> AddressOfIndirect(Storage<U>&& indirect);
 
         Storage(Storage const & other);
 
@@ -427,9 +406,12 @@ namespace NativeJIT
     ExpressionTree::Storage<T>
     ExpressionTree::Direct(typename Storage<T>::DirectRegister r)
     {
+        Assert(!IsAnyReservedBaseRegister(r),
+               "Attempted to reserve one of the special registers");
         auto & freeList = FreeListHelper<T>::GetFreeList(*this);
 
         unsigned src = r.GetId();
+
         if (!freeList.IsAvailable(src))
         {
             // Register is not available - bump it.
@@ -514,6 +496,9 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Temporary()
     {
+        static_assert(sizeof(T) <= sizeof(void*),
+                      "The size of the variable is too large.");
+
         __int32 temp;
 
         if (m_temporaries.size() > 0)
@@ -576,6 +561,22 @@ namespace NativeJIT
     unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, true> /*ignore*/) const
     {
         return m_xmmFreeList.GetCount();
+    }
+
+
+    template <unsigned SIZE>
+    bool ExpressionTree::IsAnyReservedBaseRegister(Register<SIZE, false> r) const
+    {
+        return IsBasePointer(PointerRegister(r))
+               || r.IsRIP()
+               || r.IsStackPointer();
+    }
+
+
+    template <unsigned SIZE>
+    bool ExpressionTree::IsAnyReservedBaseRegister(Register<SIZE, true> r) const
+    {
+        return false;
     }
 
 
@@ -657,11 +658,56 @@ namespace NativeJIT
         base.ConvertToDirect(true);
 
         // Dereference it.
-        base.m_data->ConvertToIndirect(byteOffset);
+        base.m_data->ConvertDirectToIndirect(byteOffset);
 
         // Transfer ownership of datablock to this Storage.
         SetData(base.m_data);
         base.Reset();
+    }
+
+
+    template <typename T>
+    template <typename U>
+    static Storage<T> ExpressionTree::Storage<T>::AddressOfIndirect(Storage<U>&& indirect)
+    {
+        static_assert(std::is_pointer<T>::value, "T must be a pointer type");
+        static_assert(std::is_same<U, typename std::remove_pointer<T>::type>::value,
+                        "U must be the type T points to");
+
+        // The storage being created.
+        Storage<T> target;
+
+        // Source information.
+        const auto base = indirect.GetBaseRegister();
+        const auto offset = indirect.GetOffset();
+
+        auto & tree = indirect.m_data->GetTree();
+        auto & code = tree.GetCodeGenerator();
+
+        // Reuse the base register if possible. Since the indirect argument
+        // is giving away the ownership, the register can be reused if that's
+        // the only reference to it and if it's not one of the special
+        // reserved/shared registers. Since T is a pointer type, the register
+        // it needs is compatible to indirect's base PointerRegister.
+        if (indirect.m_data->GetRefCount() == 1
+            && !tree.IsAnyReservedBaseRegister(base))
+        {
+            // Get the address and convert the storage to indirect.
+            code.Emit<OpCode::Lea>(base, base, offset);
+
+            indirect.m_data->ConvertIndirectToDirect();
+            target.SetData(indirect.m_data);
+        }
+        else
+        {
+            target = tree.Direct<T>();
+            code.Emit<OpCode::Lea>(target.GetDirectRegister(), base, offset);
+        }
+
+        // Take away ownership from the indirect storage.
+        indirect.Reset();
+
+        return target;
     }
 
 
@@ -786,12 +832,9 @@ namespace NativeJIT
                 // If we fully own the storage, the type of the base register is
                 // compatible and it's not one of the reserved (shared) registers,
                 // then the base register can be reused.
-                // TODO: Also check for RSP; add IsAnyReservedBaseRegister()
-                // method and use everywhere.
                 if (isSoleOwner
                     && BaseRegister::c_isFloat == DirectRegister::c_isFloat
-                    && !base.IsRIP()
-                    && !tree.IsBasePointer(base))
+                    && !tree.IsAnyReservedBaseRegister(base))
                 {
                     code.Emit<OpCode::Mov>(DirectRegister(base), base, GetOffset());
                     m_data->SetStorageClass(StorageClass::Direct);
@@ -879,6 +922,14 @@ namespace NativeJIT
                         {
                             std::cout << "Release temporary " << m_data->GetOffset() << std::endl;
                             m_data->GetTree().ReleaseTemporary(m_data->GetOffset());
+                        }
+                        else if (base.IsStackPointer())
+                        {
+                            // Note: this branch should be after the IsBasePointer()
+                            // branch to also cover the cases when stack pointer
+                            // is chosen to be the base pointer.
+                            std::cout << "Don't release stack-relative indirect at "
+                                      << m_data->GetOffset() << std::endl;
                         }
                         else
                         {
