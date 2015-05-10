@@ -12,7 +12,10 @@
 #include "Node.h"
 #include "PackedMinMaxNode.h"
 #include "ParameterNode.h"
+#include "PointerNode.h"
+#include "ReferenceNode.h"
 #include "ReturnNode.h"
+#include "StackVariableNode.h"
 #include "Temporary/Allocator.h"
 
 
@@ -32,13 +35,20 @@ namespace NativeJIT
         template <typename T> Node<T>& Immediate(T value);
         template <typename T> ParameterNode<T>& Parameter();
 
+        // See StackVariableNode for important information about stack variable
+        // lifetime.
+        template <typename T> Node<T&>& StackVariable();
+
 
         //
         // Unary operators
         //
+        template <typename T> Node<T*>& AsPointer(Node<T&>& reference);
+        template <typename T> Node<T&>& AsReference(Node<T*>& pointer);
         template <typename TO, typename FROM> Node<TO>& Cast(Node<FROM>& value);
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename T> Node<T>& Deref(Node<T*>& pointer, __int32 index);
+        template <typename T> Node<T>& Deref(Node<T&>& reference);
 
         // Note: OBJECT1 is there to allow for template deduction in all cases
         // since OBJECT may or may not be const, but OBJECT1 is never const
@@ -153,9 +163,31 @@ namespace NativeJIT
     }
 
 
+    template <typename T>
+    Node<T&>& ExpressionNodeFactory::StackVariable()
+    {
+        return * new (m_allocator.Allocate(sizeof(StackVariableNode<T>))) StackVariableNode<T>(*this);
+    }
+
+
     //
     // Unary operators
     //
+
+    template <typename T>
+    Node<T*>& ExpressionNodeFactory::AsPointer(Node<T&>& reference)
+    {
+        return * new (m_allocator.Allocate(sizeof(PointerNode<T>))) PointerNode<T>(*this, reference);
+    }
+
+
+    template <typename T>
+    Node<T&>& ExpressionNodeFactory::AsReference(Node<T*>& pointer)
+    {
+        return * new (m_allocator.Allocate(sizeof(ReferenceNode<T>))) ReferenceNode<T>(*this, pointer);
+    }
+
+
     template <typename TO, typename FROM>
     Node<TO>& ExpressionNodeFactory::Cast(Node<FROM>& source)
     {
@@ -177,7 +209,13 @@ namespace NativeJIT
     }
 
 
+    template <typename T>
+    Node<T>& ExpressionNodeFactory::Deref(Node<T&>& reference)
     {
+        return Deref(AsPointer(reference));
+    }
+
+
     template <typename OBJECT, typename FIELD, typename OBJECT1>
     Node<FIELD*>&
     ExpressionNodeFactory::FieldPointer(Node<OBJECT*>& object, FIELD OBJECT1::*field)

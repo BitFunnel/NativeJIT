@@ -357,6 +357,116 @@ namespace NativeJIT
             }
 
 
+            // Verifies that the references to stack variables are in a sane
+            // memory range.
+            static int VerifyStackVariableAddresses(unsigned __int32& intRef, float& floatRef)
+            {
+                // Since the stack pointer moves downwards, the upper limit of
+                // this function's stack range represents the lower limit of
+                // the previous function's stack range in the call stack.
+                // The previous function is the jitted function whose stack
+                // variable address we are trying to verify. The size of its
+                // stack range is roughly estimated to be 64 bytes.
+                // Note: it would also be possible to define the range as the
+                // value between _AddressOfReturnAddress() as returned here
+                // and _AddressOfReturnAddress() as returned by the caller of the
+                // jitted function (that value would be passed as an argument).
+                auto bufferStart = static_cast<unsigned __int8 const *>(_AddressOfReturnAddress());
+                auto bufferLimit = bufferStart + 64;
+
+                auto intPtr = reinterpret_cast<unsigned char*>(&intRef);
+                auto floatPtr = reinterpret_cast<unsigned char*>(&floatRef);
+
+                TestAssert(intPtr >= bufferStart && intPtr < bufferLimit,
+                           "Expected range: [%I64x, %I64x), found: %I64x",
+                           bufferStart,
+                           bufferLimit,
+                           intPtr);
+                TestAssert(floatPtr >= bufferStart && floatPtr < bufferLimit,
+                           "Expected range: [%I64x, %I64x), found: %I64x",
+                           bufferStart,
+                           bufferLimit,
+                           intPtr);
+
+                return 1;
+            }
+
+
+            TestCase(StackVariableAddressRange)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<int> e(m_allocator, *m_code);
+
+                auto & sampleFunction = e.Immediate(VerifyStackVariableAddresses);
+
+                auto & intVariable = e.StackVariable<unsigned __int32>();
+                auto & floatVariable = e.StackVariable<float>();
+
+                auto & call = e.Call(sampleFunction, intVariable, floatVariable);
+
+                auto function = e.Compile(call);
+                function();
+            }
+
+
+            // Verifies that pointer and reference arguments refer to the same
+            // memory location and that it contains the expected value.
+            static int VerifyPointerVsReference(unsigned __int32* intPtr,
+                                                unsigned __int32& intRef,
+                                                unsigned int expectedValue)
+            {
+                TestEqual(intPtr, &intRef, "Pointer and reference should have referred to the same address");
+                TestEqual(expectedValue, intRef, "Unexpected target value");
+
+                return 1;
+            }
+
+
+            TestCase(PointerToReferenceConversion)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<int> e(m_allocator, *m_code);
+
+                unsigned __int32 testValue = 7;
+
+                auto & testFunction = e.Immediate(VerifyPointerVsReference);
+                auto & intPtrArgument = e.Immediate(&testValue);
+                auto & intRefArgument = e.AsReference(intPtrArgument);
+
+                auto & call = e.Call(testFunction,
+                                     intPtrArgument,
+                                     intRefArgument,
+                                     e.Immediate(testValue));
+
+                auto function = e.Compile(call);
+
+                function();
+            }
+
+
+            static int& Return10ByReference()
+            {
+                static int ten = 10;
+
+                return ten;
+            }
+
+
+            TestCase(ReturnReference)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<int&> e(m_allocator, *m_code);
+
+                auto & return10 = e.Immediate(Return10ByReference);
+                auto & call = e.Call(return10);
+                auto function = e.Compile(call);
+
+                int& result = function();
+
+                TestEqual(10, result);
+            }
+
+
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;
