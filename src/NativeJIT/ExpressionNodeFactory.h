@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BinaryImmediateNode.h"
 #include "BinaryNode.h"
 #include "CallNode.h"
 #include "CastNode.h"
@@ -8,6 +9,7 @@
 #include "FieldPointerNode.h"
 #include "ImmediateNode.h"
 #include "IndirectNode.h"
+#include "NativeJIT/BitOperations.h"
 #include "NativeJIT/Model.h"
 #include "Node.h"
 #include "PackedMinMaxNode.h"
@@ -15,6 +17,7 @@
 #include "PointerNode.h"
 #include "ReferenceNode.h"
 #include "ReturnNode.h"
+#include "ShldNode.h"
 #include "StackVariableNode.h"
 #include "Temporary/Allocator.h"
 
@@ -65,12 +68,19 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
+        template <typename L, typename R> Node<L>& Mul(Node<L>& left, R right);
+        template <typename L, typename R> Node<L>& Or(Node<L>& left, Node<R>& right);
+        template <typename L, typename R> Node<L>& Sal(Node<L>& left, R right);
 
         template <typename T, size_t SIZE, typename INDEX>
         Node<T*>& Add(Node<T(*)[SIZE]>& array, Node<INDEX>& index);
 
         template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 
+        //
+        // Ternary arithmetic operators
+        template <typename T>
+        Node<T>& Shld(Node<T>& shiftee, Node<T>& filler, unsigned __int8 bitCount);
 
         //
         // Model related.
@@ -137,6 +147,7 @@ namespace NativeJIT
 
     private:
         template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, Node<R>& right);
+        template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, R right);
     };
 
 
@@ -261,46 +272,74 @@ namespace NativeJIT
     }
 
 
+    template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Mul(Node<L>& left, R right)
+    {
+        Node<L>* result;
+
+        if (right == 0)
+        {
+            result = &Immediate<L>(0);
+        }
+        else if (right == 1)
+        {
+            result = &left;
+        }
+        else if (BitOp::GetNonZeroBitCount(right) == 1)
+        {
+            // Note: not checking return value of GetLowestBitSet() as it's
+            // guaranteed to return an index when a bit is set.
+            unsigned bitIndex;
+            BitOp::GetLowestBitSet(right, &bitIndex);
+
+            result = &Sal(left, static_cast<unsigned __int8>(bitIndex));
+        }
+        else
+        {
+            result = &Binary<OpCode::IMul>(left, right);
+        }
+
+        return *result;
+    }
+
+
+    template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Or(Node<L>& left, Node<R>& right)
+    {
+        return Binary<OpCode::Or>(left, right);
+    }
+
+
+    template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Sal(Node<L>& left, R right)
+    {
+        return Binary<OpCode::Sal>(left, right);
+    }
+
+
+    template <typename T>
+    Node<T>& ExpressionNodeFactory::Shld(Node<T>& shiftee, Node<T>& filler, unsigned __int8 bitCount)
+    {
+        return * new (m_allocator.Allocate(sizeof(ShldNode<T>))) 
+            ShldNode<T>(*this, shiftee, filler, bitCount);
+    }
+
+
     template <typename T, typename INDEX>
     Node<T*>& ExpressionNodeFactory::Add(Node<T*>& array, Node<INDEX>& index)
     {
-        // TODO: Implement the following optimization for using Sal instead of Mul for sizeof(T) values
-        // that are powers of 2.
-        //
-        // Need some sort of ShiftImmediate node. ExpressionNodeFactory::Shift(Node<T>, unsigned __int8 shift);
-        // This would be different than a binary shift operator node that has two node children.
-        //
-        //if (sizeof(T) == 8)
-        //{
-        //    // TODO: Implement.
-        //    throw 0;
-        //}
-        //else if (sizeof(T) == 4)
-        //{
-        //    auto & size = Immediate(static_cast<unsigned __int8>(2));
-        //    auto & offset = Shl(index, size);
-        //    return Binary<OpCode::Add>(array, offset);
-        //}
-        //else if (sizeof(T) == 2)
-        //{
-        //    // TODO: Implement.
-        //    throw 0;
-        //}
-        //else if (sizeof(T) == 1)
-        //{
-        //    // TODO: Implement.
-        //    throw 0;
-        //}
-        //else
-        {
-            // Cast the size of T and index to UInt64 to make sure that the
-            // calculated offset will not overflow. This will also make it
-            // possible to use OpCode::Add on the result regardless of
-            // sizeof(INDEX) since both T* and UInt64 use the same register size.
-            auto & size = Immediate<unsigned __int64>(sizeof(T));
-            auto & offset = Mul(Cast<unsigned __int64>(index), size);
-            return Binary<OpCode::Add>(array, offset);
-        }
+        // Cast the index to UInt64 to make sure that the calculated offset
+        // will not overflow. This will also make it possible to use OpCode::Add
+        // on the result regardless of sizeof(INDEX) since both T* and UInt64
+        // use the same register size.
+        auto & index64 = Cast<unsigned __int64>(index);
+
+        // The IMul instruction doesn't suport 64-bit immediates, but there's
+        // also no need to support types whose size is larger than UINT32_MAX.
+        static_assert(sizeof(T) <= UINT32_MAX, "Unsupported type");
+        auto & offset = Mul(index64, static_cast<unsigned __int32>(sizeof(T)));
+
+        return Binary<OpCode::Add>(array, offset);
     }
 
 
@@ -463,5 +502,13 @@ namespace NativeJIT
     {
         return * new (m_allocator.Allocate(sizeof(BinaryNode<OP, L, R>))) 
                      BinaryNode<OP, L, R>(*this, left, right);
+    }
+
+
+    template <OpCode OP, typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Binary(Node<L>& left, R right)
+    {
+        return * new (m_allocator.Allocate(sizeof(BinaryImmediateNode<OP, L, R>))) 
+                     BinaryImmediateNode<OP, L, R>(*this, left, right);
     }
 }

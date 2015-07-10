@@ -59,9 +59,9 @@ namespace NativeJIT
 
         // Note: the pushed X-bit value gets placed to the end of m_fields after
         // the existing bits are moved to the left. Thus the final order of
-        // bits inside Packed<A, Packed<B, Packed<C>>> is CBA.
+        // bits inside Packed<C, Packed<B, Packed<A>>> is ABC.
         template <unsigned X>
-        Packed<X, Packed> Push(unsigned __int64 value)
+        Packed<X, Packed> Push(unsigned __int64 value) const
         {
             unsigned __int64 fields = (m_fields << X) | value;
             return Packed<X, Packed>::Create(fields);

@@ -81,6 +81,12 @@
     <ClInclude Include="ReferenceNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ShldNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryImmediateNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

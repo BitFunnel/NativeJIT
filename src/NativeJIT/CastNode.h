@@ -51,6 +51,9 @@ namespace NativeJIT
         template <typename TO, typename FROM>
         struct Traits
         {
+            static_assert(std::is_reference<FROM>::value == std::is_reference<TO>::value,
+                          "Both/neither type must be a reference");
+
             // Source and target register types and properties.
             typedef typename ExpressionTree::Storage<FROM>::DirectRegister FromRegister;
             typedef typename ExpressionTree::Storage<TO>::DirectRegister ToRegister;
