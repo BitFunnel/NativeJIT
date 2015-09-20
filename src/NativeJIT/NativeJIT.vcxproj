@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocator.cpp" />
+    <ClCompile Include="BitOperations.cpp" />
     <ClCompile Include="CallNode.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
