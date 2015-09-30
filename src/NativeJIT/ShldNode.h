@@ -68,13 +68,13 @@ namespace NativeJIT
 
         // Convert both arguments to direct registers. The filler value will
         // not be touched.
-        // TODO: This relies on the fact that register from the first line will
-        // not get bumped by the call in the second line. The framework must be
-        // able to provide a way to guarantee that through some mechanism.
-        auto shifteeReg = shiftee.ConvertToDirect(true);
-        auto fillerReg = filler.ConvertToDirect(false);
+        {
+            auto shifteeReg = shiftee.ConvertToDirect(true);
+            ReferenceCounter shifteePin = shiftee.GetPin();
+            auto fillerReg = filler.ConvertToDirect(false);
 
-        code.EmitImmediate<OpCode::Shld>(shifteeReg, fillerReg, m_bitCount);
+            code.EmitImmediate<OpCode::Shld>(shifteeReg, fillerReg, m_bitCount);
+        }
 
         return shiftee;
     }

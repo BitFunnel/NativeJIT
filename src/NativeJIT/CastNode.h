@@ -403,6 +403,11 @@ namespace NativeJIT
                 // converts from an immediate. Use the compiler to get the
                 // target floating point value and place it directly into
                 // the target register through a temporary.
+                //
+                // NOTE: MovThroughTemporary allocates a temporary *integer*
+                // register to perform the move. There is no danger that the
+                // register allocated for the "target" Storage above will be
+                // spilled since it is a *floating point* register.
                 CodeGenHelpers::MovThroughTemporary(tree,
                                                     target.GetDirectRegister(),
                                                     static_cast<TO>(source.GetImmediate()));

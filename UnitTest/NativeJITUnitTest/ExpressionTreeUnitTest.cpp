@@ -186,6 +186,185 @@ namespace NativeJIT
             }
 
 
+            TestCase(ReferenceCounter)
+            {
+                unsigned count = 0;
+
+                ReferenceCounter ref1(count);
+                TestEqual(1, count);
+
+                ReferenceCounter ref2(count);
+                TestEqual(2, count);
+
+                ReferenceCounter ref3;
+                TestEqual(2, count);
+
+                ref3 = ref2;
+                TestEqual(3, count);
+
+                ref3.Reset();
+                TestEqual(2, count);
+
+                ref2 = ReferenceCounter();
+                TestEqual(1, count);
+
+                ref1.Reset();
+                TestEqual(0, count);
+            }
+
+
+            TestCase(RegisterSpillingInteger)
+            {
+                AutoResetAllocator reset(m_allocator);
+                ExpressionNodeFactory e(m_allocator, *m_code);
+                std::vector<Storage<int>> storages;
+                const unsigned totalRegisterCount = RegisterBase::c_maxIntegerRegisterID + 1;
+
+                // Try to obtain totalRegisterCount direct registers.
+                for (unsigned i = 0; i < totalRegisterCount; ++i)
+                {
+                    storages.push_back(e.Direct<int>());
+                    TestAssert(storages.back().GetStorageClass() == StorageClass::Direct);
+                }
+
+                // There won't be enough registers for all storages to stay
+                // direct since reserved base pointers can't be obtained. Thus,
+                // some of the storages should have their registers spilled.
+
+                // Three reserved registers are RBP, RSP and RIP. Note: this
+                // assumes that RBP is a base register - if RSP is used instead
+                // of RBP, the test will need to be adjusted.
+                // Alternatively, ExpressionTree::IsAnyBaseRegister could be
+                // made accessible and used to count the reserved registers.
+                const unsigned reservedRegisterCount = 3;
+                unsigned directCount = 0;
+                unsigned indirectCount = 0;
+                unsigned indexOfFirstDirect = 0;
+
+                for (unsigned i = 0; i < storages.size(); ++i)
+                {
+                    if (storages[i].GetStorageClass() == StorageClass::Direct)
+                    {
+                        directCount++;
+
+                        if (directCount == 1)
+                        {
+                            indexOfFirstDirect = i;
+                        }
+                    }
+                    else
+                    {
+                        indirectCount++;
+                    }
+                }
+
+                // Most storages should be direct, some corresponding to the
+                // reserved registers should not.
+                TestEqual(totalRegisterCount - reservedRegisterCount, directCount);
+                TestEqual(reservedRegisterCount, indirectCount);
+
+                // A new direct storage should cause the oldest reserved register
+                // to be spilled (note: this assumes current allocation strategy).
+                TestAssert(storages[indexOfFirstDirect].GetStorageClass() == StorageClass::Direct);
+                Storage<int> spillTrigger = e.Direct<int>();
+
+                TestAssert(spillTrigger.GetStorageClass() == StorageClass::Direct);
+                TestAssert(storages[indexOfFirstDirect].GetStorageClass() == StorageClass::Indirect);
+            }
+
+
+            TestCase(RegisterSpillingFloat)
+            {
+                AutoResetAllocator reset(m_allocator);
+                ExpressionNodeFactory e(m_allocator, *m_code);
+                std::vector<Storage<float>> storages;
+                const unsigned totalRegisterCount = RegisterBase::c_maxFloatRegisterID + 1;
+
+                // Try to obtain totalRegisterCount direct registers.
+                for (unsigned i = 0; i < totalRegisterCount; ++i)
+                {
+                    storages.push_back(e.Direct<float>());
+                    TestAssert(storages.back().GetStorageClass() == StorageClass::Direct);
+                }
+
+                // There are no reserved registers for floats, so no register
+                // should have been bumped.
+                for (const auto & s : storages)
+                {
+                    TestAssert(s.GetStorageClass() == StorageClass::Direct);
+                }
+
+                // A new direct storage should cause the oldest reserved register
+                // to be spilled (note: this assumes current allocation strategy).
+                Storage<float> spillTrigger = e.Direct<float>();
+
+                TestAssert(spillTrigger.GetStorageClass() == StorageClass::Direct);
+                TestAssert(storages[0].GetStorageClass() == StorageClass::Indirect);
+
+                Storage<float> spillTrigger2 = e.Direct<float>();
+
+                TestAssert(spillTrigger2.GetStorageClass() == StorageClass::Direct);
+                TestAssert(storages[1].GetStorageClass() == StorageClass::Indirect);
+
+                // Make sure that a released register will be used for a new
+                // direct rather than spilling storages[2] for it.
+                TestAssert(storages[2].GetStorageClass() == StorageClass::Direct);
+                spillTrigger2.Reset();
+
+                spillTrigger2 = e.Direct<float>();
+                TestAssert(storages[2].GetStorageClass() == StorageClass::Direct);
+            }
+
+
+            template <typename T>
+            void TestRegisterPinning()
+            {
+                AutoResetAllocator reset(m_allocator);
+                ExpressionNodeFactory e(m_allocator, *m_code);
+
+                // Get a direct register and pin it.
+                Storage<T> storage = e.Direct<T>();
+                ReferenceCounter pin = storage.GetPin();
+
+                auto reg = storage.GetDirectRegister();
+
+                // Attempt to obtain that specific register should now fail.
+                try
+                {
+                    e.Direct<T>(reg);
+                    TestFail("It should not have been possible to obtain a pinned register");
+                }
+                catch (std::exception const & e)
+                {
+                    std::string msg = e.what();
+
+                    TestAssert(msg.find("Attempted to obtain the pinned register") != std::string::npos,
+                               "Unexpected exception received");
+                }
+                catch (...)
+                {
+                    TestFail("Unexpected exception type");
+                }
+
+                // Unpin the register and try obtaining it again (should succceed now).
+                pin.Reset();
+                Storage<T> storage2 = e.Direct<T>(reg);
+
+                // The new storage should own the register, the old not should not.
+                TestAssert(storage2.GetStorageClass() == StorageClass::Direct
+                           && storage2.GetDirectRegister() == reg);
+                TestAssert(!(storage.GetStorageClass() == StorageClass::Direct
+                             && storage.GetDirectRegister() == reg));
+            }
+
+
+            TestCase(RegisterPinning)
+            {
+                TestRegisterPinning<int>();
+                TestRegisterPinning<float>();
+            }
+
+
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;

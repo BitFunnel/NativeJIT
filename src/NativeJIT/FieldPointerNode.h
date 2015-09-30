@@ -60,11 +60,16 @@ namespace NativeJIT
     typename ExpressionTree::Storage<FIELD*> FieldPointerNode<OBJECT, FIELD>::CodeGenValue(ExpressionTree& tree)
     {
         auto base = CodeGenBase(tree);
-        base.ConvertToDirect(true);
 
-        if (GetOffset() != 0)
+        if (GetOffset() == 0)
         {
-            tree.GetCodeGenerator().EmitImmediate<OpCode::Add>(base.GetDirectRegister(), GetOffset());
+            base.ConvertToDirect(false);
+        }
+        else
+        {
+            base.ConvertToDirect(true);
+            tree.GetCodeGenerator()
+                .EmitImmediate<OpCode::Add>(base.GetDirectRegister(), GetOffset());
         }
 
         // With the added offset, the type changes from void* to FIELD*.

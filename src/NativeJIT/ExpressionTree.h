@@ -1,17 +1,15 @@
 #pragma once
 
+#include <array>                // For arrays in FreeList.
 #include <iostream>             // TODO: Remove this temp debug include.
 #include <vector>
 
+#include "NativeJIT/BitOperations.h"
 #include "NativeJIT/Register.h"
 #include "Temporary/NonCopyable.h"
 #include "Temporary/Assert.h"         // TODO: Delete this.
 #include "Temporary/NonCopyable.h"
 #include "TypePredicates.h"
-
-/*
-Attempting to spill a temporary
-*/
 
 namespace Allocators
 {
@@ -25,6 +23,45 @@ namespace NativeJIT
     class NodeBase;
     class ParameterBase;
     class RIPRelativeImmediate;
+
+
+    // A class which increases reference counter on construction and decreases
+    // it on destruction.
+    // This class is not thread safe.
+    class ReferenceCounter final
+    {
+    public:
+        // Default constructor performs no observable reference counting. Used
+        // in cases where an object of this class needs to be constructed before
+        // the counter object is known (f. ex. in constructors of classes which
+        // contain the ReferenceCounter as a member).
+        ReferenceCounter();
+
+        // Increases the reference count in the specified counter.
+        ReferenceCounter(unsigned& counter);
+
+        // Uses the counter in the other object as its counter and increases it.
+        ReferenceCounter(ReferenceCounter const & other);
+
+        // Decreases the current counter.
+        ~ReferenceCounter();
+
+        // Decreases the current counter, replaces it with the one in the other
+        // object and increases that counter.
+        ReferenceCounter& operator=(ReferenceCounter const & other);
+
+        // Decreases the current counter and disassociates itself from it.
+        void Reset();
+
+    private:
+        // Pointer to the current counter.
+        unsigned* m_counter;
+
+        // Methods to add and remove a reference to the counter.
+        void AddReference();
+        void RemoveReference();
+    };
+
 
     enum class StorageClass {Direct, Indirect, Immediate};
 
@@ -61,12 +98,6 @@ namespace NativeJIT
         Storage<T> Direct(typename Storage<T>::DirectRegister r);
 
         template <typename T>
-        Storage<T> Indirect(__int32 offset);
-
-        template <typename T>
-        Storage<T> Indirect(PointerRegister base, __int32 offset);
-
-        template <typename T>
         Storage<T> RIPRelative(__int32 offset);
 
         // Returns indirect storage relative to the base pointer for a variable
@@ -85,12 +116,13 @@ namespace NativeJIT
 
         void ReleaseTemporary(__int32 offset);
 
-        //
-        //
-        //
-        template <typename REGISTERTYPE>
-        unsigned GetAvailableRegisterCount() const;
+        // Returns whether a register is pinned.
+        template <unsigned SIZE, bool ISFLOAT>
+        bool IsPinned(Register<SIZE, ISFLOAT> reg);
 
+        //
+        //
+        //
         unsigned GetRXXUsageMask() const;
 
     protected:
@@ -100,35 +132,89 @@ namespace NativeJIT
         FunctionBuffer & m_code;
 
     private:
-        template <typename T> friend class Storage;
-
+        // Keeps track of used and free registers and the Data* associated with
+        // each register.
+        //
+        // The Data* is kept so that it's easily possible to create another
+        // Storage around an allocated register when necessary (f. ex. for
+        // spilling. Thus, there's a required 1-1 mapping between a general
+        // purpose register and the Data* that refers to it (either as Direct
+        // or Indirect).
+        //
+        // Note that it's neither necessary nor possible to hold information
+        // about a singular Data* for *Indirect* references to shared base
+        // registers such as RSP and RIP since multiple Data* refer to them by
+        // definition and since they don't need to be spilled. The Data* for
+        // Direct reference to shared base registers is kept, though.
         template <unsigned SIZE>
         class FreeList
         {
         public:
+            // The bit-mask signifying that all valid registers have been allocated.
+            static const unsigned c_fullUsageMask = (1ul << SIZE) - 1;
+
             FreeList();
 
-            unsigned GetCount() const;
+            // Returns the number of unallocated registers.
+            unsigned GetFreeCount() const;
 
             bool IsAvailable(unsigned id) const;
 
             unsigned Allocate();
+
             void Allocate(unsigned id);
+
+            // Returns a pin for a register. Pinned register cannot be spilled.
+            // IMPORTANT: Register pinning should be done in a very limited
+            // scope. Otherwise, in a larger scope (f. ex. before a CodeGen()
+            // call) there is a risk of pinning some of the registers used for
+            // parameter passing, which would cause the compilation of a function
+            // call to fail.
+            ReferenceCounter GetPin(unsigned id);
+
+            // Returns whether a register is pinned.
+            bool IsPinned(unsigned id) const;
 
             void Release(unsigned id);
 
-            void SetData(unsigned id, Data* data);
+            // The methods to set and retrieve the Data* owned by the respective
+            // register. The InitializeData() and UpdateData() methods differ
+            // only in sanity checks: the former requires that no Data* was
+            // previously set for the register whereas the latter requires that
+            // a Data* already existed.
+            void InitializeData(unsigned id, Data* data);
+            void UpdateData(unsigned id, Data* data);
             Data* GetData(unsigned id) const;
-            void MoveData(unsigned dest, unsigned src);
 
-            unsigned GetUsageMask() const;
+            // Returns the bit-mask for used and allocated registers.
+            unsigned GetUsedMask() const;
+            unsigned GetFreeMask() const;
+
+            // Returns the ID of an allocated register that is not pinned and
+            // can be spilled. Throws if there are no such registers available.
+            unsigned GetAllocatedSpillable() const;
 
         private:
-            unsigned m_positions[SIZE];
-            unsigned m_free[SIZE];
-            Data* m_data[SIZE];
-            unsigned m_count;
+            // Helper methods to perform sanity check on arguments and data contents.
+            void AssertValidID(unsigned id) const;
+            void AssertValidData(unsigned id) const;
+            void AssertValidData(unsigned id, Data* data) const;
+
             unsigned m_usageMask;
+
+            // See the class description for more details.
+            std::array<Data*, SIZE> m_data;
+
+            // An array of currently allocated IDs, oldest at the beginning.
+            // DESIGN NOTE: Deque and list better satisfy this variable's usage
+            // pattern in general (elements always added at the back, mostly pulled
+            // out from the front). However, given the small number of elements
+            // and the simplicitly of the vector, it is likely to perform better.
+            std::vector<unsigned __int8> m_allocatedRegisters;
+
+            // Number of active references to a pinned register. The register
+            // cannot be spilled while it's pinned.
+            std::array<unsigned, SIZE> m_pinCount;
         };
 
 
@@ -149,27 +235,27 @@ namespace NativeJIT
         void Pass3();
         void Print() const;
 
+        // The following template and the alias template provide a way to access
+        // the free list for a register and a C++ type respectively.
 
-        template <unsigned SIZE>
-        unsigned GetAvailableRegisterCountInternal(Register<SIZE, false> ignore) const;
-
-        template <unsigned SIZE>
-        unsigned GetAvailableRegisterCountInternal(Register<SIZE, true> ignore) const;
+        template <bool ISFLOAT>
+        class FreeListForRegister;
 
         template <typename T>
-        class FreeListHelper;
+        using FreeListForType = typename FreeListForRegister<RegisterStorage<T>::c_isFloat>;
 
         std::vector<NodeBase*> m_topologicalSort;
         std::vector<ParameterBase*> m_parameters;
         std::vector<RIPRelativeImmediate*> m_ripRelatives;
 
-        static const unsigned c_rxxCount = 16;
-        FreeList<c_rxxCount> m_rxxFreeList;
+        FreeList<RegisterBase::c_maxIntegerRegisterID + 1> m_rxxFreeList;
+        FreeList<RegisterBase::c_maxFloatRegisterID + 1> m_xmmFreeList;
 
-        static const unsigned c_xmmCount = 16;
-        FreeList<c_xmmCount> m_xmmFreeList;
+        // Note: using void* since there are no floating point reserved registers.
+        std::vector<Storage<void*>> m_reservedRegistersStorages;
+        std::vector<ReferenceCounter> m_reservedRegistersPins;
 
-        // TODO: Do we want to use an std::vector here?
+        // TODO: Use StlAllocator for the vector.
         unsigned m_temporaryCount;
         std::vector<__int32> m_temporaries;
 
@@ -183,6 +269,10 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r);
 
+        // TODO: Review. Indirect data must know the size of the memory it
+        // points to, otherwise access violation can happen if larger, non-owned
+        // memory area is dereferenced.
+        // Also applies to ConvertDirectToIndirect and Storage::Direct(Register).
         Data(ExpressionTree& tree, PointerRegister r, __int32 offset);
 
         // Note: attempt to create an immediate storage will static_assert for
@@ -193,11 +283,8 @@ namespace NativeJIT
         ExpressionTree& GetTree() const;
 
         StorageClass GetStorageClass() const;
-        void SetStorageClass(StorageClass storageClass);
 
         unsigned GetRegisterId() const;
-        void SetRegisterId(unsigned id);
-
         __int32 GetOffset() const;
 
         // Note: attempt to GetImmediate() will static_assert for invalid immediates.
@@ -211,7 +298,29 @@ namespace NativeJIT
         unsigned Decrement();
         void Increment();
 
+        // Swaps the targets between two Data objects keeping the reference
+        // count unchanged and notifies the free list of the register change.
+        // Used when all clients of both data objects need to have the contents
+        // exchanged.
+        void SwapContents(Data* other);
+
     private:
+        // The type of the register change that the free list gets notified about.
+        enum class RegisterChangeType { Initialize, Update };
+
+        // Returns true if data's storage class is direct/immediate and if the
+        // register it refers to is one of the shared registers.
+        bool IsSharedBaseRegister() const;
+
+        // Notifies the free list that register ID of this data object has
+        // been modified. Calls the templated version of the same method to
+        // peform the actual work.
+        void NotifyDataRegisterChange(RegisterChangeType type);
+
+        // See above.
+        template <bool ISFLOAT>
+        void NotifyDataRegisterChange(RegisterChangeType type);
+
         ExpressionTree& m_tree;
 
         // How the data is stored.
@@ -222,8 +331,8 @@ namespace NativeJIT
         unsigned m_registerId;
         __int32 m_offset;
 
-        // m_immediate is mutable to avoid const-cast in ExpressionTree::Data::GetImmediate().
-        mutable size_t m_immediate;
+        // Holds the immediate value for Data whose storage class is Immediate.
+        size_t m_immediate;
 
         // Who is using it.
         unsigned m_refCount;
@@ -236,19 +345,57 @@ namespace NativeJIT
     class ExpressionTree::Storage
     {
     public:
+        // All Storages need to be treated as the same class, regardless of
+        // the template parameter.
+        template <typename T> friend class Storage;
+
         typedef typename RegisterStorage<T>::RegisterType DirectRegister;
         typedef PointerRegister BaseRegister;
         typedef typename DirectRegister::FullRegister FullRegister;
+
+        // Types of swaps. The Single swap affects only the two storages directly
+        // involved by swapping their Data*. The AllReferences swap modifies the
+        // underlying Data objects thus swapping the data for the first storage
+        // as well as the storages that share the same Data* with the second
+        // storage as well as the storages that share its Data*.
+        enum class SwapType { Single, AllReferences };
 
         Storage();
 
         template <typename U>
         explicit Storage(const Storage<U>& other);
 
+        Storage(Storage const & other);
+
         // Takes ownership of a base storage, adds the offset to it and
         // dereferences it to produce a Storage<T>. Equivalent to
         // *static_cast<T*>(base + byteOffset).
         Storage(ExpressionTree& tree, Storage<void*>&& base, __int32 byteOffset);
+
+        // Creates another storage referencing a register. The register must
+        // already be allocated. For shared base registers, the Storage will
+        // reference the direct Data version which cannot be converted to
+        // indirect nor spilled since it's pinned.
+        static Storage<T> ForAdditionalReferenceToRegister(
+            ExpressionTree& tree,
+            DirectRegister reg);
+
+        // Allocates an empty register and creates a direct storage referencing it.
+        // Can only be called when there are available registers.
+        static Storage<T> ForAnyFreeRegister(ExpressionTree& tree);
+
+        // Allocates a specific empty register and creates a direct storage
+        // referencing it. Can only be called when the specified register is free.
+        static Storage<T> ForFreeRegister(ExpressionTree& tree,
+                                          DirectRegister reg);
+
+        // Creates an indirect storage against a shared base register.
+        static Storage<T> ForSharedBaseRegister(ExpressionTree& tree,
+                                                BaseRegister base,
+                                                __int32 offset);
+
+        // Creates an immediate storage with the specified value.
+        static Storage<T> ForImmediate(ExpressionTree& tree, T value);
 
         // Loads the address of an immediate storage into a newly created direct
         // storage and resets the original storage. If possible, reuses the
@@ -258,8 +405,6 @@ namespace NativeJIT
         // the created storage would point to invalid the memory.
         template <typename U>
         static Storage<T> AddressOfIndirect(Storage<U>&& indirect);
-
-        Storage(Storage const & other);
 
         Storage& operator=(Storage const & other);
 
@@ -284,15 +429,21 @@ namespace NativeJIT
 
         DirectRegister ConvertToDirect(bool forModification);
 
-        void Spill(ExpressionTree& tree);
+        // Swaps the contents of the two storages. See SwapType definition for
+        // more details.
+        void Swap(Storage<T>& other, SwapType type);
+
+        // Returns a pin for the storage's register. While the pin is held,
+        // the register cannot be spilled. Can only be called if Storage is
+        // either direct or if it's indirect and refers to non-shared base
+        // registers.
+        ReferenceCounter GetPin();
 
         // Prints the information about the storage's type, value, base register
         // and offset to the output stream.
         void Print(std::ostream& out) const;
 
     private:
-        friend class ExpressionTree;
-
         // Types used to select the correct flavor of immediate methods. This is
         // necessary because GetStorageClass() is a runtime rather than a compile
         // time property. Even though it is not possible to create a
@@ -311,8 +462,8 @@ namespace NativeJIT
         void SetData(ExpressionTree::Data* data);
         void SetData(Storage& other);
 
-        void ConvertImmediateToDirect(ValidImmediate);
-        void ConvertImmediateToDirect(InvalidImmediate);
+        void ConvertImmediateToDirect(bool forModification, ValidImmediate);
+        void ConvertImmediateToDirect(bool forModification, InvalidImmediate);
 
         void PrintImmediate(std::ostream& out, ValidImmediate) const;
         void PrintImmediate(std::ostream& out, InvalidImmediate) const;
@@ -330,11 +481,11 @@ namespace NativeJIT
     // Template definitions for ExpressionTree
     //
     //*************************************************************************
-    template <typename T>
-    class ExpressionTree::FreeListHelper
+    template <>
+    class ExpressionTree::FreeListForRegister<false>
     {
     public:
-        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_rxxFreeList ) &
+        static auto Get(ExpressionTree& tree) -> decltype(tree.m_rxxFreeList) &
         {
             return tree.m_rxxFreeList;
         }
@@ -342,43 +493,10 @@ namespace NativeJIT
 
 
     template <>
-    class ExpressionTree::FreeListHelper<float>
+    class ExpressionTree::FreeListForRegister<true>
     {
     public:
-        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_xmmFreeList ) &
-        {
-            return tree.m_xmmFreeList;
-        }
-    };
-
-
-    template <>
-    class ExpressionTree::FreeListHelper<double>
-    {
-    public:
-        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_xmmFreeList ) &
-        {
-            return tree.m_xmmFreeList;
-        }
-    };
-
-
-    template <unsigned SIZE>
-    class ExpressionTree::FreeListHelper<Register<SIZE, false>>
-    {
-    public:
-        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_rxxFreeList ) &
-        {
-            return tree.m_rxxFreeList;
-        }
-    };
-
-
-    template <unsigned SIZE>
-    class ExpressionTree::FreeListHelper<Register<SIZE, true>>
-    {
-    public:
-        static auto GetFreeList(ExpressionTree& tree) -> decltype( tree.m_rxxFreeList ) &
+        static auto Get(ExpressionTree& tree) -> decltype(tree.m_xmmFreeList) &
         {
             return tree.m_xmmFreeList;
         }
@@ -388,17 +506,20 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Direct()
     {
-        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
+        auto & freeList = FreeListForType<T>::Get(*this);
+        Storage<T> direct;
 
-        // TODO: What if Allocate() fails?
-        unsigned id = freeList.Allocate();
+        if (freeList.GetFreeCount() > 0)
+        {
+            direct = Storage<T>::ForAnyFreeRegister(*this);
+        }
+        else
+        {
+            const unsigned id = freeList.GetAllocatedSpillable();
+            direct = Direct<T>(Storage<T>::DirectRegister(id));
+        }
 
-        Storage<T>::DirectRegister r(id);
-
-        // TODO: Use allocator.
-        Data* data = new Data(*this, r);
-
-        return Storage<T>(data);
+        return direct;
     }
 
 
@@ -406,90 +527,74 @@ namespace NativeJIT
     ExpressionTree::Storage<T>
     ExpressionTree::Direct(typename Storage<T>::DirectRegister r)
     {
-        Assert(!IsAnyReservedBaseRegister(r),
-               "Attempted to reserve one of the special registers");
-        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
+        typedef Storage<T>::FullRegister FullRegister;
+
+        auto & code = GetCodeGenerator();
+        auto & freeList = FreeListForType<T>::Get(*this);
+
+        Assert(!IsPinned(r), "Attempted to obtain the pinned register %s", r.GetName());
 
         unsigned src = r.GetId();
 
         if (!freeList.IsAvailable(src))
         {
-            // Register is not available - bump it.
-            // TODO: Should be able to allocate a temporary if no registers are available.
-            // This requires some knowledge of how to dereference indirects since an
-            // indirect may have to be spilled to a temporary. At the very least, need to
-            // know how to move the data (i.e. its size).
-            // TODO: What if Allocate() fails?
-            unsigned dest = freeList.Allocate();
+            typedef typename CanonicalRegisterType<FullRegister>::Type FullType;
+            // TODO: If the storage is indirect, FullType may not be the correct
+            // size. It will still get the right data due to the little endian
+            // architecture, but if the process doesn't have access to the
+            // additional bytes (f. ex. at the end of the allocated memory
+            // block) it will trigger access violation. See also the comment
+            // for the indirect Data constructor.
+            auto registerStorage = Storage<FullType>
+                ::ForAdditionalReferenceToRegister(*this, FullRegister(src));
+            Storage<FullType> destStorage;
 
-            // Important to preserve all bits of register. Reason is that we don't know the
-            // size required by the previous user.
-            GetCodeGenerator().Emit<OpCode::Mov>(Storage<T>::FullRegister(dest), Storage<T>::FullRegister(src));
+            // Use another register if available or a temporary otherwise to
+            // bump the current contents of the register.
+            if (freeList.GetFreeCount() > 0)
+            {
+                destStorage = Storage<FullType>::ForAnyFreeRegister(*this);
+                CodeGenHelpers::Emit<OpCode::Mov>(code,
+                                                  destStorage.GetDirectRegister(),
+                                                  registerStorage);
+            }
+            else
+            {
+                // Since the target value is indirect, ensure that the source is
+                // direct since MOV doesn't have a version taking two indirects.
+                // The same register will be reused because the conversion is not
+                // for modification and because the register is not one of the base
+                // registers.
+                registerStorage.ConvertToDirect(false);
+                auto fullReg = registerStorage.GetDirectRegister();
+                Assert(fullReg.IsSameHardwareRegister(r),
+                       "Converting %s to direct without modification should "
+                       "not have moved into a different register (%s)",
+                       r.GetName(),
+                       fullReg.GetName());
 
-            freeList.MoveData(dest, src);
+                destStorage = Temporary<FullType>();
+                code.Emit<OpCode::Mov>(destStorage.GetBaseRegister(),
+                                       destStorage.GetOffset(),
+                                       fullReg);
+            }
+
+            // Swap storages for the target storage and for the register
+            // (including all the references to it).
+            // After the swap, the register will have only one storage reference
+            // (the one in destStorage). That reference will be released after
+            // this block's closing brace and the register will be available.
+            registerStorage.Swap(destStorage, Storage<FullType>::SwapType::AllReferences);
         }
 
-        freeList.Allocate(src);
-
-        // TODO: Use allocator.
-        Data* data = new Data(*this, r);
-
-        return Storage<T>(data);
-    }
-
-
-    template <typename T>
-    ExpressionTree::Storage<T> ExpressionTree::Indirect(__int32 offset)
-    {
-        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
-
-        unsigned id = freeList.Allocate();
-
-        Storage<T>::IndirectRegister base(id);
-
-        // TODO: Use allocator.
-        Data* data = new Data(*this, base, offset);
-
-        return Storage<T>(data);
-    }
-
-
-    template <typename T>
-    ExpressionTree::Storage<T>
-    ExpressionTree::Indirect(PointerRegister base, __int32 offset)
-    {
-        auto & freeList = FreeListHelper<T>::GetFreeList(*this);
-
-        unsigned src = base.GetId();
-        if (!freeList.IsAvailable(src))
-        {
-            // Register is not available - bump it.
-            // TODO: Should be able to allocate a temporary if no registers are available.
-            unsigned dest = freeList.Allocate();
-
-            // Important to preserve all bits of register. Reason is that we don't know the
-            // size required by the previous user.
-            GetCodeGenerator().Emit<OpCode::Mov>(Storage<T>::FullRegister(dest), Storage<T>::FullRegister(src));
-
-            freeList.MoveData(dest, src);
-        }
-
-        freeList.Allocate(src);
-
-        // TODO: Use allocator.
-        Data* data = new Data(*this, base, offset);
-
-        return Storage<T>(data);
+        return Storage<T>::ForFreeRegister(*this, r);
     }
 
 
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::RIPRelative(__int32 offset)
     {
-        // TODO: Use allocator.
-        Data* data = new Data(*this, rip, offset);
-
-        return Storage<T>(data);
+        return Storage<T>::ForSharedBaseRegister(*this, rip, offset);
     }
 
 
@@ -513,19 +618,14 @@ namespace NativeJIT
 
         __int32 offset = temp * sizeof(void*);
 
-        // TODO: Use allocator.
-        // TODO: BUGBUG: data needs to be put in m_rxxFreeList.m_data[].
-        Data* data = new Data(*this, GetBasePointer(), offset);
-
-        return Storage<T>(data);
+        return Storage<T>::ForSharedBaseRegister(*this, GetBasePointer(), offset);
     }
 
 
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Immediate(T value)
     {
-        // TODO: Use allocator.
-        return Storage<T>(new Data(*this, value));
+        return Storage<T>::ForImmediate(*this, value);
     }
 
 
@@ -543,24 +643,12 @@ namespace NativeJIT
     }
 
 
-    template <typename REGISTERTYPE>
-    unsigned ExpressionTree::GetAvailableRegisterCount() const
+    template <unsigned SIZE, bool ISFLOAT>
+    bool ExpressionTree::IsPinned(Register<SIZE, ISFLOAT> reg)
     {
-        return GetAvailableRegisterCountInternal(REGISTERTYPE());
-    }
+        auto & freeList = FreeListForRegister<ISFLOAT>::Get(*this);
 
-
-    template <unsigned SIZE>
-    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, false> /*ignore*/) const
-    {
-        return m_rxxFreeList.GetCount();
-    }
-
-
-    template <unsigned SIZE>
-    unsigned ExpressionTree::GetAvailableRegisterCountInternal(Register<SIZE, true> /*ignore*/) const
-    {
-        return m_xmmFreeList.GetCount();
+        return freeList.IsPinned(reg.GetId());
     }
 
 
@@ -574,7 +662,7 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    bool ExpressionTree::IsAnyReservedBaseRegister(Register<SIZE, true> r) const
+    bool ExpressionTree::IsAnyReservedBaseRegister(Register<SIZE, true> /* r */) const
     {
         return false;
     }
@@ -595,8 +683,7 @@ namespace NativeJIT
           m_offset(0),
           m_refCount(0)
     {
-        auto & freeList = FreeListHelper<decltype(r)>::GetFreeList(tree);
-        freeList.SetData(m_registerId, this);
+        NotifyDataRegisterChange(RegisterChangeType::Initialize);
     }
 
 
@@ -613,6 +700,9 @@ namespace NativeJIT
         static_assert(IsValidImmediate<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         *reinterpret_cast<T*>(&m_immediate) = value;
+
+        // Note: no need to call NotifyDataRegisterChange() as this constructor
+        // doesn't apply to registers.
     }
 
 
@@ -623,7 +713,49 @@ namespace NativeJIT
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         Assert(m_storageClass == StorageClass::Immediate, "GetImmediate() called for non-immediate storage!");
 
-        return *(reinterpret_cast<T*>(&m_immediate));
+        return *(reinterpret_cast<T const *>(&m_immediate));
+    }
+
+
+    template <bool ISFLOAT>
+    void ExpressionTree::Data::NotifyDataRegisterChange(RegisterChangeType type)
+    {
+        Assert(m_storageClass != StorageClass::Immediate, "Invalid storage class");
+        auto & freeList = FreeListForRegister<ISFLOAT>::Get(m_tree);
+
+        switch (type)
+        {
+        case RegisterChangeType::Initialize:
+            // The free list doesn't need to keep data for indirects relative
+            // to shared base registers since there can be many of them for
+            // the same register.
+            if (!(m_storageClass == StorageClass::Indirect
+                  && IsSharedBaseRegister()))
+            {
+                freeList.InitializeData(m_registerId, this);
+            }
+            break;
+
+        case RegisterChangeType::Update:
+            // Only initialization is allowed for the direct shared registers.
+            Assert(!(m_storageClass == StorageClass::Direct
+                     && IsSharedBaseRegister()),
+                   "Cannot update data for shared register %u",
+                   m_registerId);
+
+            // At this point, any reference to shared register is indirect
+            // and the free list doesn't need to know about such updates.
+            if (!IsSharedBaseRegister())
+            {
+                freeList.UpdateData(m_registerId, this);
+            }
+
+            break;
+
+        default:
+            Assert(false, "Unknown register change type %u", type);
+            break;
+        }
     }
 
 
@@ -667,12 +799,74 @@ namespace NativeJIT
 
 
     template <typename T>
+    Storage<T> ExpressionTree::Storage<T>::ForAdditionalReferenceToRegister(
+            ExpressionTree& tree,
+            DirectRegister reg)
+    {
+        auto & freeList = FreeListForType<T>::Get(tree);
+        Assert(!freeList.IsAvailable(reg.GetId()),
+               "Register %s must already be allocated",
+               reg.GetName());
+
+        return Storage<T>(freeList.GetData(reg.GetId()));
+    }
+
+
+    template <typename T>
+    Storage<T> ExpressionTree::Storage<T>::ForAnyFreeRegister(ExpressionTree& tree)
+    {
+        auto & freeList = FreeListForType<T>::Get(tree);
+        Storage<T>::DirectRegister r(freeList.Allocate());
+
+        // TODO: Use allocator.
+        Data* data = new Data(tree, r);
+
+        return Storage<T>(data);
+    }
+
+
+    template <typename T>
+    Storage<T> ExpressionTree::Storage<T>::ForFreeRegister(ExpressionTree& tree,
+                                                           DirectRegister reg)
+    {
+        auto & freeList = FreeListForType<T>::Get(tree);
+        freeList.Allocate(reg.GetId());
+
+        // TODO: Use allocator.
+        Data* data = new Data(tree, reg);
+
+        return Storage<T>(data);
+    }
+
+
+    template <typename T>
+    Storage<T> ExpressionTree::Storage<T>::ForSharedBaseRegister(
+        ExpressionTree& tree,
+        BaseRegister base,
+        __int32 offset)
+    {
+        Assert(tree.IsAnyReservedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
+
+        // TODO: Use allocator.
+        return Storage<T>(new Data(tree, base, offset));
+    }
+
+
+    template <typename T>
+    Storage<T> ExpressionTree::Storage<T>::ForImmediate(ExpressionTree& tree, T value)
+    {
+        // TODO: Use allocator.
+        return Storage<T>(new Data(tree, value));
+    }
+
+
+    template <typename T>
     template <typename U>
-    static Storage<T> ExpressionTree::Storage<T>::AddressOfIndirect(Storage<U>&& indirect)
+    Storage<T> ExpressionTree::Storage<T>::AddressOfIndirect(Storage<U>&& indirect)
     {
         static_assert(std::is_pointer<T>::value, "T must be a pointer type");
         static_assert(std::is_same<U, typename std::remove_pointer<T>::type>::value,
-                        "U must be the type T points to");
+                      "U must be the type T points to");
 
         // The storage being created.
         Storage<T> target;
@@ -700,6 +894,9 @@ namespace NativeJIT
         }
         else
         {
+            // Get a pin for the base register to make sure it doesn't get spilled
+            // by the target register allocation.
+            ReferenceCounter basePin = indirect.GetPin();
             target = tree.Direct<T>();
             code.Emit<OpCode::Lea>(target.GetDirectRegister(), base, offset);
         }
@@ -811,7 +1008,7 @@ namespace NativeJIT
         switch (m_data->GetStorageClass())
         {
         case StorageClass::Immediate:
-            ConvertImmediateToDirect(ImmediateFlavor());
+            ConvertImmediateToDirect(forModification, ImmediateFlavor());
             break;
 
         case StorageClass::Direct:
@@ -820,31 +1017,49 @@ namespace NativeJIT
             if (!isSoleOwner && forModification)
             {
                 auto dest = tree.Direct<T>();
-                code.Emit<OpCode::Mov>(dest.GetDirectRegister(), GetDirectRegister());
 
+                // There's a possibility that the current register may get spilled
+                // by the allocation, so move from Storage instead of from register.
+                CodeGenHelpers::Emit<OpCode::Mov>(code,
+                                                  dest.GetDirectRegister(),
+                                                  *this);
                 SetData(dest);
             }
             break;
+
         case StorageClass::Indirect:
             {
                 BaseRegister base = GetBaseRegister();
 
-                // If we fully own the storage, the type of the base register is
-                // compatible and it's not one of the reserved (shared) registers,
-                // then the base register can be reused.
-                if (isSoleOwner
+                // If we either fully own the storage or don't plan to make
+                // modifications, the type of the base register is compatible
+                // and it's not one of the reserved (shared) registers, then
+                // the base register can be reused.
+                if ((isSoleOwner || !forModification)
                     && BaseRegister::c_isFloat == DirectRegister::c_isFloat
                     && !tree.IsAnyReservedBaseRegister(base))
                 {
                     code.Emit<OpCode::Mov>(DirectRegister(base), base, GetOffset());
-                    m_data->SetStorageClass(StorageClass::Direct);
+                    m_data->ConvertIndirectToDirect();
                 }
                 else
                 {
-                    // Otherwise, move the data to a newly allocated register.
-                    auto dest = tree.Direct<T>();
+                    // Otherwise, move the data to a newly allocated register,
+                    // making sure that the base register doesn't get spilled.
+                    Storage<T> dest;
+                    {
+                        ReferenceCounter basePin = GetPin();
+                        dest = tree.Direct<T>();
+                    }
+
                     code.Emit<OpCode::Mov>(dest.GetDirectRegister(), base, GetOffset());
-                    SetData(dest);
+
+                    // Let every owner benefit from moving to direct storage if
+                    // possible. This is also necessary for the register to be
+                    // fully released during spilling.
+                    Swap(dest, forModification
+                               ? Storage<T>::SwapType::Single
+                               : Storage<T>::SwapType::AllReferences);
                 }
             }
             break;
@@ -859,7 +1074,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(ValidImmediate)
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool forModification, ValidImmediate)
     {
         Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
 
@@ -870,12 +1085,15 @@ namespace NativeJIT
         auto dest = tree.Direct<T>();
         code.EmitImmediate<OpCode::Mov>(dest.GetDirectRegister(), m_data->GetImmediate<T>());
 
-        SetData(dest);
+        // Let every owner benefit from moving to direct storage if possible.
+        Swap(dest, forModification
+                   ? Storage<T>::SwapType::Single
+                   : Storage<T>::SwapType::AllReferences);
     }
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(InvalidImmediate)
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool /* forModification */, InvalidImmediate)
     {
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.
@@ -885,12 +1103,43 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::Spill(ExpressionTree& tree)
+    void ExpressionTree::Storage<T>::Swap(Storage<T>& other, SwapType type)
     {
-        ConvertToDirect(false);
-        auto dest = tree.Temporary<T>();
-        tree.GetCodeGenerator().Emit<OpCode::Mov>(dest.GetBaseRegister(), dest.GetOffset(), GetDirectRegister());
-        *this = dest;
+        switch (type)
+        {
+        case SwapType::Single:
+            std::swap(m_data, other.m_data);
+            break;
+
+        case SwapType::AllReferences:
+            m_data->SwapContents(other.m_data);
+            break;
+
+        default:
+            Assert(false, "Unknown swap type %u", type);
+            break;
+        }
+    }
+
+
+    template <typename T>
+    ReferenceCounter ExpressionTree::Storage<T>::GetPin()
+    {
+        Assert(GetStorageClass() != StorageClass::Immediate,
+               "Cannot pin a register for immediate storage");
+
+        if (GetStorageClass() == StorageClass::Direct)
+        {
+            auto & freeList = FreeListForType<T>::Get(m_data->GetTree());
+
+            return freeList.GetPin(m_data->GetRegisterId());
+        }
+        else
+        {
+            auto & freeList = FreeListForRegister<false>::Get(m_data->GetTree());
+
+            return freeList.GetPin(m_data->GetRegisterId());
+        }
     }
 
 
@@ -1017,42 +1266,69 @@ namespace NativeJIT
     //*************************************************************************
     template <unsigned SIZE>
     ExpressionTree::FreeList<SIZE>::FreeList()
-        : m_count(0),
-          m_usageMask(0)
+        : m_usageMask(0),
+          m_data(),
+          m_pinCount()
     {
-        // Mark all positions as unavailable.
-        for (unsigned i = 0 ; i < SIZE; ++i)
-        {
-            m_positions[i] = SIZE;
-            m_data[i] = nullptr;
-        }
+        m_allocatedRegisters.reserve(SIZE);
     }
 
 
     template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetCount() const
+    void ExpressionTree::FreeList<SIZE>::AssertValidID(unsigned id) const
     {
-        return m_count;
+        Assert(id < SIZE, "Register %u is out of range.", id);
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::FreeList<SIZE>::AssertValidData(unsigned id) const
+    {
+        AssertValidID(id);
+        AssertValidData(id, m_data[id]);
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::FreeList<SIZE>::AssertValidData(unsigned id, Data* data) const
+    {
+        Assert(data != nullptr, "Unexpected null data at/intended for register %u", id);
+        Assert(data->GetStorageClass() != StorageClass::Immediate,
+               "Invalid storage class %u for data at/intended for register %u",
+               data->GetStorageClass(),
+               id);
+        Assert(data->GetRegisterId() == id,
+               "Mismatched register ID %u for data at/intended for register %u",
+               data->GetRegisterId(),
+               id);
+    }
+
+
+    template <unsigned SIZE>
+    unsigned ExpressionTree::FreeList<SIZE>::GetFreeCount() const
+    {
+        return BitOp::GetNonZeroBitCount(GetFreeMask());
     }
 
 
     template <unsigned SIZE>
     bool ExpressionTree::FreeList<SIZE>::IsAvailable(unsigned id) const
     {
-        Assert(id < SIZE, "id out of range.");
-        return m_positions[id] != SIZE;
+        AssertValidID(id);
+
+        return BitOp::TestBit(GetFreeMask(), id);
     }
 
 
     template <unsigned SIZE>
     unsigned ExpressionTree::FreeList<SIZE>::Allocate()
     {
-        Assert(m_count > 0, "no ids available.");
+        unsigned id;
 
-        unsigned id = m_free[m_count - 1];
-        m_positions[id] = SIZE;
-        m_usageMask |= (1ul << id);
-        m_count--;
+        const bool registerFound = BitOp::GetHighestBitSet(GetFreeMask(), &id);
+        Assert(registerFound, "No free registers available");
+
+        Allocate(id);
 
         return id;
     }
@@ -1064,51 +1340,55 @@ namespace NativeJIT
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::Allocate(unsigned id)
     {
-        Assert(id < SIZE, "id out of range.");
+        AssertValidID(id);
+        Assert(BitOp::TestBit(GetFreeMask(), id), "Register %u must be free", id);
+        Assert(!IsPinned(id), "Register %u must be unpined when free", id);
+        Assert(m_data[id] == nullptr, "Data for register %u must be null", id);
 
-        unsigned position = m_positions[id];
-        Assert(position < SIZE, "id not available.");
-
-        if (position < m_count - 1)
-        {
-            // Move the last id in to the position of the requested id.
-            unsigned lastId = m_free[m_count - 1];
-            m_free[position] = lastId;
-            m_positions[lastId] = position;
-            m_count--;
-
-            m_positions[id] = SIZE;
-        }
-        else
-        {
-            // Requested if is in the last position. Just trim the array.
-            m_positions[id] = SIZE;
-            m_count--;
-        }
-
-        m_usageMask |= (1ul << id);
+        BitOp::SetBit(&m_usageMask, id);
+        m_allocatedRegisters.push_back(static_cast<unsigned __int8>(id));
     }
 
 
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::Release(unsigned id)
     {
-        Assert(id < SIZE, "id out of range.");
-        Assert(m_positions[id] == SIZE, "attempting to return unallocated id.");
+        AssertValidID(id);
+        Assert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated", id);
+        Assert(!IsPinned(id), "Register %u must be unpinned before release", id);
+        Assert(m_data[id] != nullptr, "Data for register %u must not be null", id);
+        Assert(m_data[id]->GetRefCount() == 0, "Reference count for register %u must be zero", id);
+        AssertValidData(id);
 
-        m_free[m_count] = id;
-        m_positions[id] = m_count;
         m_data[id] = nullptr; 
-        m_usageMask &= ~(1ul << id);
-        m_count++;
+        BitOp::ClearBit(&m_usageMask, id);
+
+        auto it = std::find(m_allocatedRegisters.begin(),
+                            m_allocatedRegisters.end(),
+                            static_cast<unsigned __int8>(id));
+        Assert(it != m_allocatedRegisters.end(), "Couldn't find allocation record for %u", id);
+        m_allocatedRegisters.erase(it);
     }
 
 
     template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::SetData(unsigned id, Data* data)
+    void ExpressionTree::FreeList<SIZE>::InitializeData(unsigned id, Data* data)
     {
-        Assert(id < SIZE, "id out of range.");
-        Assert(m_data[id] == nullptr, "error");
+        AssertValidID(id);
+        Assert(m_data[id] == nullptr, "Data for register %u must be clear", id);
+        AssertValidData(id, data);
+
+        m_data[id] = data;
+    }
+
+
+    template <unsigned SIZE>
+    void ExpressionTree::FreeList<SIZE>::UpdateData(unsigned id, Data* data)
+    {
+        AssertValidID(id);
+        Assert(m_data[id] != nullptr, "Data for register %u must not be clear", id);
+        AssertValidData(id, data);
+
         m_data[id] = data;
     }
 
@@ -1116,35 +1396,71 @@ namespace NativeJIT
     template <unsigned SIZE>
     ExpressionTree::Data* ExpressionTree::FreeList<SIZE>::GetData(unsigned id) const
     {
-        Assert(id < SIZE, "id out of range.");
+        AssertValidData(id);
+
         return m_data[id];
     }
 
 
     template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::MoveData(unsigned dest, unsigned src)
+    unsigned ExpressionTree::FreeList<SIZE>::GetUsedMask() const
     {
-        Assert(dest < SIZE, "dest id out of range.");
-        Assert(src < SIZE, "src id out of range.");
-        Assert(m_data[dest] == nullptr, "error");
-        Assert(m_data[src] != nullptr, "error");
-
-        StorageClass storageClass = m_data[src]->GetStorageClass();
-        Assert(storageClass == StorageClass::Direct ||
-               storageClass == StorageClass::Indirect, "error");
-
-        m_data[dest] = m_data[src];
-        m_data[src] = nullptr;
-
-        m_data[dest]->SetRegisterId(dest);
-
-        Release(src);
+        return m_usageMask;
     }
 
 
     template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetUsageMask() const
+    unsigned ExpressionTree::FreeList<SIZE>::GetFreeMask() const
     {
-        return m_usageMask;
+        return ~m_usageMask & c_fullUsageMask;
+    }
+
+
+    template <unsigned SIZE>
+    unsigned ExpressionTree::FreeList<SIZE>::GetAllocatedSpillable() const
+    {
+        unsigned numPinned = 0;
+
+        // Start looking from the oldest allocated register. This is expected
+        // to give best results as recently allocated registers are more likely
+        // to be needed in the code that's currently being compiled.
+        for (unsigned id : m_allocatedRegisters)
+        {
+            if (IsPinned(id))
+            {
+                numPinned++;
+            }
+            else
+            {
+                return id;
+            }
+
+        }
+
+        throw std::runtime_error("Couldn't find any registers for spilling: "
+                                 + std::to_string(m_allocatedRegisters.size())
+                                 + " registers allocated, "
+                                 + std::to_string(numPinned)
+                                 + " of those are pinned");
+    }
+
+    template <unsigned SIZE>
+    ReferenceCounter
+    ExpressionTree::FreeList<SIZE>::GetPin(unsigned id)
+    {
+        AssertValidID(id);
+        Assert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated to be pinned", id);
+        AssertValidData(id);
+
+        return ReferenceCounter(m_pinCount[id]);
+    }
+
+
+    template <unsigned SIZE>
+    bool ExpressionTree::FreeList<SIZE>::IsPinned(unsigned id) const
+    {
+        AssertValidID(id);
+
+        return m_pinCount[id] != 0;
     }
 }

@@ -92,31 +92,32 @@ namespace NativeJIT
             sLeft = m_left.CodeGen(tree);
         }
 
-        // Convert the left and right parameters into direct registers. We will
-        // be building the result in the left register and destroy the right
-        // register in the process.
-        // TODO: This relies on the fact that register from the first line will
-        // not get bumped by the call in the second line. The framework must be
-        // able to provide a way to guarantee that f. ex. by using a shared
-        // pointer-like concept for locked registers.
-        auto l = sLeft.ConvertToDirect(true);
-        auto r = sRight.ConvertToDirect(true);
+        // Convert the left and right parameters into direct registers making
+        // sure that they don't get spilled.
+        // We will be building the result in the left register and destroy the
+        // right register in the process.
+        {
+            auto l = sLeft.ConvertToDirect(true);
+            ReferenceCounter lPin = sLeft.GetPin();
+            auto r = sRight.ConvertToDirect(true);
+            ReferenceCounter rPin = sRight.GetPin();
 
-        // The algorithm works by comparing the left and right register field
-        // by field. In each step, the left register will contain the result
-        // for the already processed fields. Bits in both registers are rotated
-        // after each step so that the fields that are currently being compared
-        // are in the leftmost portion of the registers. Once the whole process
-        // is completed, the registers will have been rotated the full circle
-        // and the left register will contain the final result of the operation.
+            // The algorithm works by comparing the left and right register field
+            // by field. In each step, the left register will contain the result
+            // for the already processed fields. Bits in both registers are rotated
+            // after each step so that the fields that are currently being compared
+            // are in the leftmost portion of the registers. Once the whole process
+            // is completed, the registers will have been rotated the full circle
+            // and the left register will contain the final result of the operation.
 
-        // Process the unused portion of the PACKED by clearing the unused bits.
-        code.EmitImmediate<OpCode::Sal>(l, static_cast<unsigned __int8>(64 - PACKED::c_totalBitCount));
-        code.EmitImmediate<OpCode::Sal>(r, static_cast<unsigned __int8>(64 - PACKED::c_totalBitCount));
+            // Process the unused portion of the PACKED by clearing the unused bits.
+            code.EmitImmediate<OpCode::Sal>(l, static_cast<unsigned __int8>(64 - PACKED::c_totalBitCount));
+            code.EmitImmediate<OpCode::Sal>(r, static_cast<unsigned __int8>(64 - PACKED::c_totalBitCount));
 
-        // Start the recursion.
-        typedef decltype(l) RegisterType;
-        PackedMinMaxHelper::MinMaxEmitter<ISMAX, RegisterType, PACKED>::Emit(code, l, r);
+            // Start the recursion. The helper does not use any additional registers.
+            typedef decltype(l) RegisterType;
+            PackedMinMaxHelper::MinMaxEmitter<ISMAX, RegisterType, PACKED>::Emit(code, l, r);
+        }
 
         return sLeft;
     }

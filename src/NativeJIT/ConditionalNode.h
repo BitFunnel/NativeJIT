@@ -115,9 +115,9 @@ namespace NativeJIT
     //*************************************************************************
     template <typename T, JccType JCC>
     ConditionalNode<T, JCC>::ConditionalNode(ExpressionTree& tree,
-                                            FlagExpressionNode<JCC>& condition,
-                                            Node<T>& trueExpression,
-                                            Node<T>& falseExpression)
+                                             FlagExpressionNode<JCC>& condition,
+                                             Node<T>& trueExpression,
+                                             Node<T>& falseExpression)
         : Node(tree),
           m_condition(condition),
           m_trueExpression(trueExpression),
@@ -159,6 +159,14 @@ namespace NativeJIT
     {
         m_condition.CodeGenFlags(tree);
 
+        // TODO: This will not work in cases where the false and true expressions
+        // are more complex. The execution in NativeJIT has a continuous flow
+        // regardless of the outcome of the condition whereas the generated x64 code
+        // has two branches and each of them can have independent impact on
+        // allocated and spilled registers. The code has to ensure that the state
+        // of the allocated/spilled registers (i.e. all Storages) is consistent
+        // once those two x64 branches converge back.
+        // TODO: Pin the result register.
         X64CodeGenerator& code = tree.GetCodeGenerator();
         Label l1 = code.AllocateLabel();
         code.EmitConditionalJump<JCC>(l1);
@@ -241,14 +249,18 @@ namespace NativeJIT
 
         // Evaluate the condition and react based on it.
         CodeGenFlags(tree);
+        // Allocate the result register before the conditional jump so that
+        // if any register gets spilled, the spill applies to both branches.
+        // The spilling (i.e. the MOV instruction that is used to copy the
+        // spilled value from the register onto stack) does not affect any flags.
+        auto result = tree.Direct<bool>();
         code.EmitConditionalJump<JCC>(conditionIsTrue);
 
-        auto result = tree.Direct<bool>();
         code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), false);
         code.Jmp(testCompleted);
 
         code.PlaceLabel(conditionIsTrue);
-        code.EmitImmediate<OpCode::Mov>(result.ConvertToDirect(true), true);
+        code.EmitImmediate<OpCode::Mov>(result.GetDirectRegister(), true);
 
         code.PlaceLabel(testCompleted);
 
@@ -274,39 +286,23 @@ namespace NativeJIT
         {
             unsigned l = m_left.GetRegisterCount();
             unsigned r = m_right.GetRegisterCount();
-            unsigned a = tree.GetAvailableRegisterCount<RegisterType>();
 
-            if (r <= l && r < a)
+            Storage<T> sLeft;
+            Storage<T> sRight;
+
+            // Evaluate the side which uses more registers first.
+            if (l >= r)
             {
-                // Evaluate left first. Once evaluation completes, left will use one register,
-                // leaving at least a-1 registers for right.
-                auto sLeft = m_left.CodeGen(tree);
-                sLeft.ConvertToDirect(true);
-                auto sRight = m_right.CodeGen(tree);
-
-                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
-            }
-            else if (l < r && l < a)
-            {
-                // Evaluate right first. Once evaluation completes, right will use one register,
-                // leaving at least a-1 registers for left.
-                auto sRight = m_right.CodeGen(tree);
-                auto sLeft = m_left.CodeGen(tree);
-
-                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
+                sLeft = m_left.CodeGen(tree);
+                sRight = m_right.CodeGen(tree);
             }
             else
             {
-                // The smaller of l and r is greater than a, therefore
-                // both l and r are greater than a. Since there are not
-                // enough registers available, need to spill to memory.
-                auto sRight = m_right.CodeGen(tree);
-                sRight.Spill(tree);
-
-                auto sLeft = m_left.CodeGen(tree);
-
-                CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
+                sRight = m_right.CodeGen(tree);
+                sLeft = m_left.CodeGen(tree);
             }
+
+            CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(false), sRight);
         }
     }
 }

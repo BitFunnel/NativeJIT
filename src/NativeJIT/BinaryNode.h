@@ -47,52 +47,25 @@ namespace NativeJIT
     {
         unsigned l = m_left.GetRegisterCount();
         unsigned r = m_right.GetRegisterCount();
-        unsigned a = tree.GetAvailableRegisterCount<RegisterType>();
 
-        if (r <= l && r < a)
+        Storage<L> sLeft;
+        Storage<R> sRight;
+
+        // Evaluate the side which uses more registers first to minimize spilling.
+        if (l >= r)
         {
-            // Evaluate left first. Once evaluation completes, left will use one register,
-            // leaving at least a-one register for right.
-            auto sLeft = m_left.CodeGen(tree);
-            sLeft.ConvertToDirect(true);
-            auto sRight = m_right.CodeGen(tree);
-
-            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.GetDirectRegister(), sRight);
-            return sLeft;
-        }
-        else if (l < r && l < a)
-        {
-            // Evaluate right first. Once evaluation completes, right will use one register,
-            // leaving at least one register for left.
-            auto sRight = m_right.CodeGen(tree);
-            auto sLeft = m_left.CodeGen(tree);
-
-            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
-            return sLeft;
+            sLeft = m_left.CodeGen(tree);
+            sRight = m_right.CodeGen(tree);
         }
         else
         {
-            // The smaller of l and r is greater than a, therefore
-            // both l and r are greater than a. Since there are not
-            // enough registers available, need to spill to memory.
-            auto sRight = m_right.CodeGen(tree);
-
-            // TODO: What if this register holds a CSE that is referenced by m_left?
-            // In this case, the spill will allocate another location, but retain the
-            // original location. Also, it is possible that sRight has already been
-            // spilled and is BP indirect, so that spilling won't free up any registers.
-            // Need to ensure this code works in all situations. If there aren't enough
-            // registers to compute m_left and spilling sRight won't free up a register,
-            // the operation will fail unless we can free up some other register.
-            // NOTE: when considering a fix, search the codebase for other instances
-            // of Storage::Spill().
-            sRight.Spill(tree);
-
-            auto sLeft = m_left.CodeGen(tree);
-            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
-
-            return sLeft;
+            sRight = m_right.CodeGen(tree);
+            sLeft = m_left.CodeGen(tree);
         }
+
+        CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
+
+        return sLeft;
     }
 
 

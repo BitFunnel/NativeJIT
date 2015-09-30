@@ -192,7 +192,6 @@ Does indirect load of 1-byte impact other bytes in register?
 
 Support for more than 4 parameters. (or at least assert)
 
-x ExpressionTree::GetAvailableRegisterCount needs to handle all types of registers.
 x Implement and use ExpressionTree::ReleaseRegister()
 x Use templates to simplify implementation of ExpressionTree::AllocateRegister().
 x Implement ExpressionNodeFactory with arena allocator.

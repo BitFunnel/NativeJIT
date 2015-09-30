@@ -22,18 +22,27 @@ namespace NativeJIT
           m_temporaryCount(0),
           m_basePointer(rbp)
     {
+        m_reservedRegistersStorages.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
+        m_reservedRegistersPins.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
 
-        // TODO: Free up correct registers (e.g. not RSP, RBP. Also reserve RAX?)
-        // TODO: Free up xmm registers.
-        // TODO: Deal with parameters.
-        for (unsigned i = 0 ; i < c_rxxCount; ++i)
+        for (unsigned i = 0 ; i <= RegisterBase::c_maxIntegerRegisterID; ++i)
         {
-            m_rxxFreeList.Release(i);
+            const PointerRegister reg(i);
+
+            if (IsAnyReservedBaseRegister(reg))
+            {
+                auto s = Direct<void*>(reg);
+
+                m_reservedRegistersStorages.push_back(s);
+                m_reservedRegistersPins.push_back(s.GetPin());
+            }
         }
 
-        for (unsigned i = 0 ; i < c_xmmCount; ++i)
+        for (unsigned i = 0 ; i <= RegisterBase::c_maxFloatRegisterID; ++i)
         {
-            m_xmmFreeList.Release(i);
+            Assert(!IsAnyReservedBaseRegister(Register<8, true>(i)),
+                   "Unexpected reserved FP register %u",
+                   i);
         }
     }
 
@@ -50,12 +59,6 @@ namespace NativeJIT
     }
 
 
-    //Register<sizeof(void*), false> ExpressionTree::GetBasePointer() const
-    //{
-    //    return m_basePointer;
-    //}
-
-
     void ExpressionTree::ReleaseTemporary(__int32 offset)
     {
         m_temporaries.push_back(offset / sizeof(void*));
@@ -64,17 +67,17 @@ namespace NativeJIT
 
     unsigned ExpressionTree::GetRXXUsageMask() const
     {
-        return m_rxxFreeList.GetUsageMask();
+        return m_rxxFreeList.GetUsedMask();
     }
 
 
-    bool ExpressionTree::IsBasePointer(Register<8, false> r) const
+    bool ExpressionTree::IsBasePointer(PointerRegister r) const
     {
         return r.GetId() == m_basePointer.GetId();
     }
 
 
-    Register<sizeof(void*), false> ExpressionTree::GetBasePointer() const
+    PointerRegister ExpressionTree::GetBasePointer() const
     {
         return m_basePointer;
     }
@@ -207,7 +210,7 @@ namespace NativeJIT
         std::cout << std::endl;
 
         std::cout << "RXX Registers:" << std::endl;
-        for (unsigned i = 0 ; i < c_rxxCount;  ++i)
+        for (unsigned i = 0 ; i <= RegisterBase::c_maxIntegerRegisterID; ++i)
         {
             std::cout << Register<8, false>(i).GetName();
             if (m_rxxFreeList.IsAvailable(i))
@@ -243,11 +246,7 @@ namespace NativeJIT
           m_offset(offset),
           m_refCount(0)
     {
-        if (!tree.IsAnyReservedBaseRegister(base))
-        {
-            auto & freeList = FreeListHelper<decltype(base)>::GetFreeList(tree);
-            freeList.SetData(m_registerId, this);
-        }
+        NotifyDataRegisterChange(RegisterChangeType::Initialize);
     }
 
 
@@ -263,34 +262,28 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::Data::SetStorageClass(StorageClass storageClass)
-    {
-        m_storageClass = storageClass;
-    }
-
-
     unsigned ExpressionTree::Data::GetRegisterId() const
     {
         return m_registerId;
     }
 
 
-    void ExpressionTree::Data::SetRegisterId(unsigned id)
-    {
-        m_registerId = id;
-    }
-
-
     __int32 ExpressionTree::Data::GetOffset() const
     {
-        Assert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect.");
+        Assert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect, found %u", m_storageClass);
         return m_offset;
     }
 
 
     void ExpressionTree::Data::ConvertDirectToIndirect(__int32 offset)
     {
-        Assert(m_storageClass == StorageClass::Direct, "StorageClass must be Direct.");
+        Assert(m_storageClass == StorageClass::Direct,
+               "StorageClass must be Direct, found %u",
+               m_storageClass);
+        Assert(!IsSharedBaseRegister(),
+               "Cannot change type of shared register %u from direct to indirect",
+               m_registerId);
+
         m_storageClass = StorageClass::Indirect;
         m_offset = offset;
     }
@@ -298,7 +291,13 @@ namespace NativeJIT
 
     void ExpressionTree::Data::ConvertIndirectToDirect()
     {
-        Assert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect.");
+        Assert(m_storageClass == StorageClass::Indirect,
+               "StorageClass must be Indirect, found %u",
+               m_storageClass);
+        Assert(!IsSharedBaseRegister(),
+               "Cannot change type of shared register %u from indirect to direct",
+               m_registerId);
+
         m_storageClass = StorageClass::Direct;
         m_offset = 0;
     }
@@ -323,5 +322,116 @@ namespace NativeJIT
     {
         ++m_refCount;
 //        std::cout << "Increment " << this << " to " << m_refCount << std::endl;
+    }
+
+
+    void ExpressionTree::Data::SwapContents(Data* other)
+    {
+        std::swap(m_storageClass, other->m_storageClass);
+        std::swap(m_isFloat, other->m_isFloat);
+        std::swap(m_registerId, other->m_registerId);
+        std::swap(m_offset, other->m_offset);
+
+        std::swap(m_immediate, other->m_immediate);
+
+        // Both Data objects keep their m_refCount.
+
+        NotifyDataRegisterChange(RegisterChangeType::Update);
+        other->NotifyDataRegisterChange(RegisterChangeType::Update);
+    }
+
+
+    void ExpressionTree::Data::NotifyDataRegisterChange(RegisterChangeType type)
+    {
+        if (m_storageClass != StorageClass::Immediate)
+        {
+            if (m_isFloat)
+            {
+                NotifyDataRegisterChange<true>(type);
+            }
+            else
+            {
+                NotifyDataRegisterChange<false>(type);
+            }
+        }
+    }
+
+
+    bool ExpressionTree::Data::IsSharedBaseRegister() const
+    {
+        return m_storageClass != StorageClass::Immediate
+            && !m_isFloat
+            && m_tree.IsAnyReservedBaseRegister(PointerRegister(m_registerId));
+    }
+
+
+    ReferenceCounter::ReferenceCounter()
+        : m_counter(nullptr)
+    {
+        // No-op, for symmetry only.
+        AddReference();
+    }
+
+
+    ReferenceCounter::ReferenceCounter(unsigned& counter)
+        : m_counter(&counter)
+    {
+        AddReference();
+    }
+
+
+    ReferenceCounter::ReferenceCounter(ReferenceCounter const & other)
+        : ReferenceCounter(*other.m_counter)
+    {
+    }
+
+
+    ReferenceCounter::~ReferenceCounter()
+    {
+        RemoveReference();
+    }
+
+
+    ReferenceCounter& ReferenceCounter::operator=(ReferenceCounter const & other)
+    {
+        if (m_counter != other.m_counter)
+        {
+            RemoveReference();
+
+            m_counter = other.m_counter;
+            AddReference();
+        }
+
+        return *this;
+    }
+
+
+    void ReferenceCounter::Reset()
+    {
+        RemoveReference();
+        m_counter = nullptr;
+    }
+
+
+    void ReferenceCounter::AddReference()
+    {
+        if (m_counter != nullptr)
+        {
+            ++(*m_counter);
+        }
+    }
+
+
+    void ReferenceCounter::RemoveReference()
+    {
+        if (m_counter != nullptr)
+        {
+            if (*m_counter == 0)
+            {
+                throw std::logic_error("Tried to remove a reference with zero reference count");
+            }
+
+            --(*m_counter);
+        }
     }
 }

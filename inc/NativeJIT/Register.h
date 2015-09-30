@@ -9,10 +9,10 @@ namespace NativeJIT
     {
     public:
         static const unsigned c_maxSize = 8;
-
-    protected:
         static const unsigned c_maxIntegerRegisterID = 16;
         static const unsigned c_maxFloatRegisterID = 15;
+
+    protected:
         static const unsigned c_maxRegisterID = 16;
 
         static const unsigned c_validSizesCount = 4;
