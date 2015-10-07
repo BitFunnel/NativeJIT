@@ -85,17 +85,6 @@ namespace NativeJIT
     };
 
 
-    //class LogicalAndNode : public FlagExpressionNode
-    //{
-    //public:
-    //    LogicalAndNode(FlagExpressionNode& left, FlagExpressionNode& right);
-
-    //private:
-    //    FlagExpressionNode& m_left;
-    //    FlagExpressionNode& m_right;
-    //};
-
-
     //*************************************************************************
     //
     // Template definitions for FlagExpressionNode
@@ -132,8 +121,6 @@ namespace NativeJIT
         unsigned condition = m_condition.LabelSubtree(true);
         unsigned trueExpression = m_trueExpression.LabelSubtree(true);
         unsigned falseExpression = m_falseExpression.LabelSubtree(true);
-
-        // TODO: Might want to store the counts separately and only spill when necessary.
 
         SetRegisterCount((std::max)(condition, (std::max)(trueExpression, falseExpression)));
 
@@ -271,38 +258,24 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void RelationalOperatorNode<T, JCC>::CodeGenFlags(ExpressionTree& tree)
     {
-        if (IsCached())
-        {
-            auto result = GetCache();
-            ReleaseCache();
+        const unsigned l = m_left.GetRegisterCount();
+        const unsigned r = m_right.GetRegisterCount();
 
-            // TODO: This code is wrong - need to set the correct JCC - not just the zero flag.
-            // TODO: For this opcode to work, result must be direct. Might consider putting flags check into storage.
-            auto direct = result.GetDirectRegister();
-            tree.GetCodeGenerator().Emit<OpCode::Or>(direct, direct);
-            throw 0;
+        Storage<T> sLeft;
+        Storage<T> sRight;
+
+        // Evaluate the side which uses more registers first.
+        if (l >= r)
+        {
+            sLeft = m_left.CodeGen(tree);
+            sRight = m_right.CodeGen(tree);
         }
         else
         {
-            unsigned l = m_left.GetRegisterCount();
-            unsigned r = m_right.GetRegisterCount();
-
-            Storage<T> sLeft;
-            Storage<T> sRight;
-
-            // Evaluate the side which uses more registers first.
-            if (l >= r)
-            {
-                sLeft = m_left.CodeGen(tree);
-                sRight = m_right.CodeGen(tree);
-            }
-            else
-            {
-                sRight = m_right.CodeGen(tree);
-                sLeft = m_left.CodeGen(tree);
-            }
-
-            CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(false), sRight);
+            sRight = m_right.CodeGen(tree);
+            sLeft = m_left.CodeGen(tree);
         }
+
+        CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(false), sRight);
     }
 }
