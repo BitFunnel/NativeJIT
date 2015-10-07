@@ -372,7 +372,7 @@ namespace NativeJIT
                 // and _AddressOfReturnAddress() as returned by the caller of the
                 // jitted function (that value would be passed as an argument).
                 auto bufferStart = static_cast<unsigned __int8 const *>(_AddressOfReturnAddress());
-                auto bufferLimit = bufferStart + 64;
+                auto bufferLimit = bufferStart + 96;
 
                 auto intPtr = reinterpret_cast<unsigned char*>(&intRef);
                 auto floatPtr = reinterpret_cast<unsigned char*>(&floatRef);
@@ -386,7 +386,7 @@ namespace NativeJIT
                            "Expected range: [%I64x, %I64x), found: %I64x",
                            bufferStart,
                            bufferLimit,
-                           intPtr);
+                           floatPtr);
 
                 return 1;
             }
@@ -467,6 +467,275 @@ namespace NativeJIT
             }
 
 
+            static unsigned s_regPreserveTestFuncCallCount;
+
+            // These helper functions are used to overwrite the EAX/XMM0s
+            // registers with a specific value, different than some special value
+            // that other functions return.
+
+            template <int VAL>
+            static int ReturnInt()
+            {
+                return VAL;
+            }
+
+
+            static float Return7Point7()
+            {
+                return 7.7f;
+            }
+
+
+            static float Return3Point3()
+            {
+                return 3.3f;
+            }
+
+
+            // These two functions return a fixed value in EAX/XMM0s and overwrite
+            // the opposite register (XMM0s/EAX) with an unrelated value using
+            // the functions above. This makes it possible to verify that XMM0s/EAX
+            // is preserved when necessary (f. ex. for its re-use in cache).
+            // Since the order of the calls is important in such tests, they
+            // ensure that the call is made when expected.
+
+            template <unsigned CALLNUMBER>
+            static int Return10()
+            {
+                ++s_regPreserveTestFuncCallCount;
+                TestEqual(CALLNUMBER, s_regPreserveTestFuncCallCount,
+                          "Return10 must be call #%u", CALLNUMBER);
+
+                // Call any function which returns a float other than 1.3 used
+                // in the function below to make sure that xmm0s is overwritten.
+                // This will ensure that the test will succeed only if the caller
+                // which needs to re-use the original value correctly preserved it.
+                Return7Point7();
+
+                return 10;
+            }
+
+
+            template <unsigned CALLNUMBER>
+            static float Return1Point3()
+            {
+                ++s_regPreserveTestFuncCallCount;
+                TestEqual(CALLNUMBER, s_regPreserveTestFuncCallCount,
+                          "Return1Point3 must be call #%u", CALLNUMBER);
+
+                // Call any function which returns an integer other than 10 used
+                // in the function above to make sure eax is overwritten.
+                // This will ensure that the test will succeed only if the caller
+                // which needs to re-use the original value correctly preserved it.
+                ReturnInt<999>();
+
+                return 1.3f;
+            }
+
+
+            // Verify that the return register is preserved accross two
+            // consecutive calls.
+
+            TestCase(PreserveReturnRegisterInt)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<int> e(m_allocator, *m_code);
+
+                auto & return7 = e.Call(e.Immediate(ReturnInt<7>));
+                auto & return8 = e.Call(e.Immediate(ReturnInt<8>));
+
+                // Ensure that 7 is preserved before the call that would overwrite
+                // it with 8.
+                auto & sum = e.Add(return7, return8);
+                auto function = e.Compile(sum);
+                int result = function();
+
+                TestEqual(7 + 8, result);
+            }
+
+
+            TestCase(PreserveReturnRegisterFloat)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<float> e(m_allocator, *m_code);
+
+                auto & return7Point7 = e.Call(e.Immediate(Return7Point7));
+                auto & return3Point3 = e.Call(e.Immediate(Return3Point3));
+
+                // Ensure that 7.7 is preserved before the call that would overwrite
+                // it with 3.3.
+                auto & sum = e.Add(return7Point7, return3Point3);
+                auto function = e.Compile(sum);
+                float result = function();
+
+                TestEqual(7.7 + 3.3, result);
+            }
+
+
+            // Verify that the return register is treated volatile only when it's
+            // actually used (i.e. don't treat EAX as volatile and presereve it
+            // if a function returning in XMM0 is called).
+            TestCase(SaveOtherReturnRegisterIntFloat)
+            {
+                s_regPreserveTestFuncCallCount = 0;
+
+                AutoResetAllocator reset(m_allocator);
+                Function<int> e(m_allocator, *m_code);
+
+                // Call the function returning 10 in EAX first, followed by
+                // a function returning 1.3 in XMM0s. Since EAX will be referenced
+                // later and it's not used for calling the float function, it
+                // must be preserved accross that call (i.e. not treated as volatile).
+                auto & return10 = e.Immediate(Return10<1>);
+                auto & call10 = e.Call(return10);
+
+                auto & return1Point3 = e.Immediate(Return1Point3<2>);
+                auto & call1Point3 = e.Call(return1Point3);
+
+                // Convert 1.3 to 1. This is to ensure that the call is referenced
+                // and the value is then used since it's convenient.
+                auto & int1 = e.Cast<int>(call1Point3);
+
+                // Sum 10, 1 and 10, expecting to get 21. If the cached value
+                // of 10 is not preserved correctly accross the call, the result
+                // will be incorrect.
+                auto & sum = e.Add(e.Add(call10, int1), call10);
+                auto function = e.Compile(sum);
+                int result = function();
+
+                TestEqual(21, result);
+            }
+
+
+            // Verify that return register is treated volatile only when it's
+            // actually used (i.e. don't treat EAX as volatile and preserve it
+            // if a function returning in XMM0 is called).
+            TestCase(SaveOtherReturnRegisterFloatInt)
+            {
+                s_regPreserveTestFuncCallCount = 0;
+
+                AutoResetAllocator reset(m_allocator);
+                Function<float> e(m_allocator, *m_code);
+
+                // Call the function returning 1.3 in XMM0s first, followed by
+                // a function returning 10 in EAX. Since XMM0s will be referenced
+                // later and it's not used for calling the int function, it
+                // must be preserved accross that call (i.e. not treated as volatile).
+                auto & return1Point3 = e.Immediate(Return1Point3<1>);
+                auto & call1Point3 = e.Call(return1Point3);
+
+                auto & return10 = e.Immediate(Return10<2>);
+                auto & call10 = e.Call(return10);
+
+                // Convert 10 to 10.0. This is to ensure that the call is referenced
+                // and the value is then used since it's convenient.
+                auto & float10 = e.Cast<float>(call10);
+
+                // Sum 1.3, 10.0 and 1.3, expecting to get 12.6. If the cached value
+                // of 1.3 is not preserved correctly accross the call, the result
+                // will be incorrect.
+                auto & sum = e.Add(e.Add(call1Point3, float10), call1Point3);
+                auto function = e.Compile(sum);
+                float result = function();
+
+                TestAssert(std::fabs(12.6 - result) < 0.01,
+                           "Result should be around 12.6, but found %.2f",
+                           result);
+            }
+
+
+            // These two functions are used to ensure zero is placed inside
+            // ECX/XMM1s when they are called. It is important that they
+            // are not inlined to achieve this.
+
+            __declspec(noinline)
+            static void TakeZeroIntArg(int arg)
+            {
+                TestEqual(0, arg);
+            }
+
+
+            __declspec(noinline)
+            static void TakeZeroFloatArg(float /* arg1 */, float arg2)
+            {
+                TestEqual(0.0f, arg2);
+            }
+
+
+            // These two helper functions return their argument and, as a
+            // side-effect, ensure that zero is placed inside ECX/XMM0s to
+            // demonstrate the volatility of these registers.
+
+            static int ZeroRcxAndReturnArg(int arg)
+            {
+                TakeZeroIntArg(0);
+
+                return arg;
+            }
+
+
+            static float ZeroXmm1AndReturnArg1(float arg1, float arg2)
+            {
+                TakeZeroFloatArg(0.0, 0.0);
+
+                return arg1;
+            }
+
+
+            // When function parameter happens to be in the desired register,
+            // if there are other references to it (f. ex. later in the expression),
+            // it should be preserved.
+
+            TestCase(VerifyFunctionParameterReuseInt)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<int, int> e(m_allocator, *m_code);
+
+                auto & zeroRcxAndReturnArg = e.Immediate(ZeroRcxAndReturnArg);
+
+                // Param1 is in ECX which happens to be the register where CALL
+                // needs it to be, but it needs to be re-used later as well.
+                // Since RCX is volatile, the other instance must be preserved
+                // before the call for the test to succeed.
+                auto & param1 = e.GetP1();
+                auto & call = e.Call(zeroRcxAndReturnArg, param1);
+
+                auto & sum = e.Add(call, param1);
+
+                auto function = e.Compile(sum);
+                int result = function(7);
+
+                // The first 7 comes from the return value from the call and the
+                // other 7 comes from the preserved value of ECX.
+                TestEqual(7 + 7, result);
+            }
+
+
+            TestCase(VerifyFunctionParameterReuseFloat)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<float, float, float> e(m_allocator, *m_code);
+
+                auto & zeroXmm1AndReturnArg1 = e.Immediate(ZeroXmm1AndReturnArg1);
+
+                // Param2 is in XMM1s which happens to be the register where CALL
+                // needs it to be, but it needs to be re-used later as well.
+                // Since XMM1s is volatile, the other instance must be preserved
+                // before the call for the test to succeed.
+                auto & param2 = e.GetP2();
+                auto & call = e.Call(zeroXmm1AndReturnArg1, e.GetP1(), param2);
+
+                auto & sum = e.Add(call, param2);
+
+                auto function = e.Compile(sum);
+                float result = function(2.5f, 7.5f);
+
+                // The 2.5 value comes from the return value from the call and
+                // 7.5 comes from the preserved value of XMM1s.
+                TestEqual(2.5f + 7.5f, result);
+            }
+
+
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;
@@ -483,5 +752,7 @@ namespace NativeJIT
         __int64 FunctionTest::s_int64Parameter3;
 
         bool FunctionTest::s_boolParameter4;
+
+        unsigned FunctionTest::s_regPreserveTestFuncCallCount;
     }
 }

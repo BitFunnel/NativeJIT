@@ -2,6 +2,7 @@
 
 #include <iostream>     // Accessed by template definition for Print().
 
+#include "CodeGenHelpers.h"
 #include "Node.h"       // Base class.
 
 // https://software.intel.com/en-us/articles/introduction-to-x64-assembly
@@ -20,23 +21,27 @@ namespace NativeJIT
         // These methods need to be public for access by
         //     CallNodeBase::FunctionChild
         //     CallNodeBase::ParameterChild
-        void SaveVolatiles(ExpressionTree& tree);
-        void RestoreVolatiles(ExpressionTree& tree);
 
-        template <unsigned SIZE>
-        void RecordParameterRegister(Register<SIZE, false> r);
+        void SaveVolatiles(ExpressionTree& tree, unsigned parameterCount);
+        void RestoreVolatiles(ExpressionTree& tree, unsigned parameterCount);
 
-        template <unsigned SIZE>
-        void RecordParameterRegister(Register<SIZE, true> r);
+        template <unsigned SIZE, bool ISFLOAT>
+        void RecordCallRegister(Register<SIZE, ISFLOAT> r, bool isSoleOwner);
 
     private:
-        // TODO: m_xmmParameters
-        unsigned m_rxxParameters;
-        unsigned m_xmmParameters;
+        // Returns the mask for the registers it's necessary to preserve accross
+        // the function call that's being made.
+        template <bool ISFLOAT>
+        unsigned GetRegistersToPreserve(ExpressionTree& tree) const;
+
+        // A bit-mask of registers that are exclusively owned for the function
+        // call and thus don't need to be preserved.
+        unsigned m_rxxCallExclusiveRegisterMask;
+        unsigned m_xmmCallExclusiveRegisterMask;
 
         // TODO: Figure out how to initialize with something like RAX | RCX | RDX | R8 | R9| R10| R11
-        static const unsigned c_rxxVolatiles = 0xf07; //1111 0000 0111
-        // TODO: c_xmmVolatiles
+        static const unsigned c_rxxVolatiles = 0xf07; // 1111 0000 0111
+        static const unsigned c_xmmVolatiles = 0x3f;  // 0011 1111 (XMM0-XMM5)
     };
 
 
@@ -94,8 +99,13 @@ namespace NativeJIT
             virtual void Release();
 
         protected:
+            // Pins the storage register so that it cannot be spilled until
+            // the Release() call.
+            void PinStorageRegister(ExpressionTree& tree);
+
             Node<T>& m_expression;
             ExpressionTree::Storage<T> m_storage;
+            ReferenceCounter m_registerPin;
         };
 
 
@@ -131,7 +141,8 @@ namespace NativeJIT
         class FunctionChild : public FunctionChildBase, public TypedChild<T>
         {
         public:
-            FunctionChild(Node<T>& expression);
+            FunctionChild(Node<T>& expression,
+                          typename Storage<R>::DirectRegister resultRegister);
 
             //
             // Overrides of Child methods.
@@ -145,13 +156,20 @@ namespace NativeJIT
             //
             virtual void EmitCall(ExpressionTree& tree) override;
             virtual void Print() override;
+
+        private:
+            typename Storage<R>::DirectRegister m_resultRegister;
         };
 
+        typename Storage<R>::DirectRegister GetResultRegister() const;
 
         // One child for each parameter plus one for the function pointer.
         static const unsigned c_childCount = PARAMETERCOUNT + 1;
         Child* m_children[c_childCount];
-        FunctionChildBase* m_function;
+
+        // Pointer to function's two base classes.
+        FunctionChildBase* m_functionBase;
+        Child* m_functionChild;
     };
 
 
@@ -254,17 +272,14 @@ namespace NativeJIT
     // Template definitions for SaveRestoreVolatilesHelper.
     //
     //*************************************************************************
-    template <unsigned SIZE>
-    void SaveRestoreVolatilesHelper::RecordParameterRegister(Register<SIZE, false> r)
+    template <unsigned SIZE, bool ISFLOAT>
+    void SaveRestoreVolatilesHelper::RecordCallRegister(Register<SIZE, ISFLOAT> r, bool isSoleOwner)
     {
-        m_rxxParameters |= (1ul << r.GetId());
-    }
-
-
-    template <unsigned SIZE>
-    void SaveRestoreVolatilesHelper::RecordParameterRegister(Register<SIZE, true> r)
-    {
-        m_xmmParameters |= (1ul << r.GetId());
+        if (isSoleOwner)
+        {
+            BitOp::SetBit(ISFLOAT ? &m_xmmCallExclusiveRegisterMask : &m_rxxCallExclusiveRegisterMask,
+                          r.GetId());
+        }
     }
 
 
@@ -282,48 +297,64 @@ namespace NativeJIT
 
 
     template <typename R, unsigned PARAMETERCOUNT>
+    typename Storage<R>::DirectRegister
+    CallNodeBase<R, PARAMETERCOUNT>::GetResultRegister() const
+    {
+        // Register 0 (i.e. appropriately sized RAX or XMM0).
+        return Storage<R>::DirectRegister(0);
+    }
+
+
+    template <typename R, unsigned PARAMETERCOUNT>
     ExpressionTree::Storage<R> CallNodeBase<R, PARAMETERCOUNT>::CodeGenValue(ExpressionTree& tree)
     {
+        // Make sure that the result register is not pinned at this point.
+        const auto resultRegister = GetResultRegister();
+        Assert(!tree.IsPinned(resultRegister), "The result register must not be pinned before the call");
+
         // Evaluate the function pointer and each parameter.
-        for (unsigned i = 0 ; i < c_childCount; ++i)
+        for (Child* child : m_children)
         {
-            m_children[i]->Evaluate(tree);
+            child->Evaluate(tree);
         }
 
-        // Stage each of the parameters in the correct register. At this point,
-        // there are no evaluations to compete for the target parameter registers.
-        for (unsigned i = 0 ; i < c_childCount; ++i)
+        for (Child* child : m_children)
         {
-            // TODO: What if there are not enough registers available for EmitStaging()?
-            // TODO: Also, how do we unit test the 
-            m_children[i]->EmitStaging(tree, *this);
+            // Stage the parameters first since they need to be placed into
+            // fixed registers.
+            if (child != m_functionChild)
+            {
+                child->EmitStaging(tree, *this);
+            }
         }
 
-        // Allocate the result register (register 0 for RXX And RMM).
-        ExpressionTree::Storage<R>::DirectRegister resultRegister;
-        ExpressionTree::Storage<R> result = tree.Direct<R>(resultRegister);
+        // Stage the function pointer into a register last since it can be staged
+        // staged into any register.
+        m_functionChild->EmitStaging(tree, *this);
 
-        //????????????????????????????????????????????????????????????
-        //
-        //
-        // TODO: Need to allocate backing storage for parameter homes.
-        //
-        //
-        //????????????????????????????????????????????????????????????
+        // If the result register is still not pinned (and thus unused by the
+        // call), enforce ownership over it.
+        if (!tree.IsPinned(resultRegister))
+        {
+            // Release the register right away by not keeping the Storage.
+            tree.Direct<R>(resultRegister);
+            RecordCallRegister(resultRegister, true);
+        }
 
-        SaveVolatiles(tree);
-
-        m_function->EmitCall(tree);
-
-        RestoreVolatiles(tree);
+        SaveVolatiles(tree, PARAMETERCOUNT);
+        m_functionBase->EmitCall(tree);
+        RestoreVolatiles(tree, PARAMETERCOUNT);
 
         // Free up registers used for function pointer and parameters.
-        for (unsigned i = 0 ; i < c_childCount; ++i)
+        for (Child* child : m_children)
         {
-            m_children[i]->Release();
+            child->Release();
         }
 
-        return result;
+        // At this point, the result register was either used by a parameter or
+        // the function pointer and then released, or it was empty after the
+        // explicit bump further above so the following call will bump nothing.
+        return tree.Direct<R>(resultRegister);
     }
 
 
@@ -396,7 +427,22 @@ namespace NativeJIT
     template <typename T>
     void CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::Release()
     {
+        // Release the register pin and reset the storage to release the register.
+        m_registerPin.Reset();
         m_storage.Reset();
+    }
+
+
+    template <typename R, unsigned PARAMETERCOUNT>
+    template <typename T>
+    void CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::PinStorageRegister(ExpressionTree& tree)
+    {
+        Assert(!m_storage.IsNull(), "Storage must be initialized");
+
+        if (m_storage.GetStorageClass() == StorageClass::Direct)
+        {
+            m_registerPin = m_storage.GetPin();
+        }
     }
 
 
@@ -408,8 +454,11 @@ namespace NativeJIT
     //*************************************************************************
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename F>
-    CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::FunctionChild(Node<F>& expression)
-        : TypedChild(expression)
+    CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::FunctionChild(
+        Node<F>& expression,
+        typename Storage<R>::DirectRegister resultRegister)
+        : TypedChild(expression),
+          m_resultRegister(resultRegister)
     {
     }
 
@@ -427,11 +476,31 @@ namespace NativeJIT
     void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::EmitStaging(ExpressionTree& tree,
                                                                         SaveRestoreVolatilesHelper& volatiles)
     {
+        // The CALL instruction requires a direct register, ensure that's the case.
+        // Convert for modification to ensure that the register doesn't need
+        // to be preserved accross the call.
         if (m_storage.GetStorageClass() != StorageClass::Direct)
         {
-            m_storage.ConvertToDirect(false);
+            m_storage.ConvertToDirect(true);
         }
-        volatiles.RecordParameterRegister(m_storage.GetDirectRegister());
+
+        // If function pointer happens to be in the result register and there
+        // are other owners, they must be spilled out of the register. Otherwise,
+        // the attempt to restore the contents into the result register after
+        // the call would overwrite the returned result.
+        if (!m_storage.IsSoleDataOwner()
+            && m_storage.GetDirectRegister().IsSameHardwareRegister(m_resultRegister))
+        {
+            m_storage.TakeSoleOwnershipOfDirect();
+        }
+
+        volatiles.RecordCallRegister(m_storage.GetDirectRegister(),
+                                     m_storage.IsSoleDataOwner());
+
+        // Make sure that nothing takes away this register.
+        // NOTE: This depends on the fact that the function pointer is staged
+        // last to ensure that a fixked parameter register is not picked.
+        PinStorageRegister(tree);
     }
 
 
@@ -479,15 +548,26 @@ namespace NativeJIT
     void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::EmitStaging(ExpressionTree& tree,
                                                                          SaveRestoreVolatilesHelper& volatiles)
     {
-        if (m_storage.GetStorageClass() != StorageClass::Direct || m_storage.GetDirectRegister().GetId() != m_destination.GetId())
+        if (m_storage.GetStorageClass() != StorageClass::Direct
+            || !m_storage.GetDirectRegister().IsSameHardwareRegister(m_destination))
         {
-            // Need to move the expression into the correct register.
-            // NOTE: destination will be released in Parameter destructor.
-            ExpressionTree::Storage<T> destination = tree.Direct<T>(m_destination);
+            ExpressionTree::Storage<T> regStorage = tree.Direct<T>(m_destination);
             CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), m_destination, m_storage);
-            m_storage = destination;
+            m_storage = regStorage;
         }
-        volatiles.RecordParameterRegister(m_destination);
+
+        // TODO: There's room for optimization if the data was already in the
+        // correct register and shared. If there are some free non-volatile
+        // registers, it would be better to enforce sole ownership of m_storage
+        // by spilling to such register (the callee may not be using it and may
+        // not need to push it to/pop it from the stack). Currently, in such
+        // case the register will always get pushed/popped by SaveRestoreVolatilesHelper.
+
+        volatiles.RecordCallRegister(m_storage.GetDirectRegister(),
+                                     m_storage.IsSoleDataOwner());
+
+        // The parameter needs to remain in the specified register.
+        PinStorageRegister(tree);
     }
 
 
@@ -508,12 +588,13 @@ namespace NativeJIT
     CallNode<R>::CallNode(ExpressionTree& tree,
                           Node<FunctionPointer>& function)
         : CallNodeBase(tree),
-          m_f(function)
+          m_f(function, GetResultRegister())
     {
         static_assert(std::is_pod<R>::value, "R must be a POD type.");
 
-        m_function = &m_f;
-        m_children[0] = &m_f;
+        m_functionBase = &m_f;
+        m_functionChild = &m_f;
+        m_children[0] = m_functionChild;
     }
 
 
@@ -522,14 +603,15 @@ namespace NativeJIT
                                   Node<FunctionPointer>& function,
                                   Node<P1>& p1)
         : CallNodeBase(tree),
-          m_f(function),
+          m_f(function, GetResultRegister()),
           m_p1(p1, 0)
     {
         static_assert(std::is_pod<R>::value, "R must be a POD type.");
         static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
 
-        m_function = &m_f;
-        m_children[0] = &m_f;
+        m_functionBase = &m_f;
+        m_functionChild = &m_f;
+        m_children[0] = m_functionChild;
         m_children[1] = &m_p1;
     }
 
@@ -540,7 +622,7 @@ namespace NativeJIT
                                   Node<P1>& p1,
                                   Node<P2>& p2)
         : CallNodeBase(tree),
-          m_f(function),
+          m_f(function, GetResultRegister()),
           m_p1(p1, 0),
           m_p2(p2, 1)
     {
@@ -548,8 +630,9 @@ namespace NativeJIT
         static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
         static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
 
-        m_function = &m_f;
-        m_children[0] = &m_f;
+        m_functionBase = &m_f;
+        m_functionChild = &m_f;
+        m_children[0] = m_functionChild;
         m_children[1] = &m_p1;
         m_children[2] = &m_p2;
     }
@@ -562,7 +645,7 @@ namespace NativeJIT
                                       Node<P2>& p2,
                                       Node<P3>& p3)
         : CallNodeBase(tree),
-          m_f(function),
+          m_f(function, GetResultRegister()),
           m_p1(p1, 0),
           m_p2(p2, 1),
           m_p3(p3, 2)
@@ -572,8 +655,9 @@ namespace NativeJIT
         static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
         static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
 
-        m_function = &m_f;
-        m_children[0] = &m_f;
+        m_functionBase = &m_f;
+        m_functionChild = &m_f;
+        m_children[0] = m_functionChild;
         m_children[1] = &m_p1;
         m_children[2] = &m_p2;
         m_children[3] = &m_p3;
@@ -588,7 +672,7 @@ namespace NativeJIT
                                           Node<P3>& p3,
                                           Node<P4>& p4)
         : CallNodeBase(tree),
-          m_f(function),
+          m_f(function, GetResultRegister()),
           m_p1(p1, 0),
           m_p2(p2, 1),
           m_p3(p3, 2),
@@ -600,8 +684,9 @@ namespace NativeJIT
         static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
         static_assert(std::is_pod<P4>::value, "P4 must be a POD type.");
 
-        m_function = &m_f;
-        m_children[0] = &m_f;
+        m_functionBase = &m_f;
+        m_functionChild = &m_f;
+        m_children[0] = m_functionChild;
         m_children[1] = &m_p1;
         m_children[2] = &m_p2;
         m_children[3] = &m_p3;
