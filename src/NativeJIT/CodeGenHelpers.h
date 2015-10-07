@@ -21,10 +21,23 @@ namespace NativeJIT
         template <RegTypes REGTYPES, ImmediateType IMMEDIATETYPE>
         struct Emitter
         {
+            // Emit from storage to register.
             template <OpCode OP, typename DESTREGTYPE, typename SRC>
-            static void Emit(X64CodeGenerator& code, DESTREGTYPE dest, const ExpressionTree::Storage<SRC>& src);
+            static void Emit(X64CodeGenerator& code,
+                             DESTREGTYPE dest,
+                             const ExpressionTree::Storage<SRC>& src);
+
+            // Emit from register to non-immediate storage.
+            template <OpCode OP, typename DEST, typename SRCREGTYPE>
+            static void Emit(X64CodeGenerator& code,
+                             const ExpressionTree::Storage<DEST>& dest,
+                             SRCREGTYPE src);
         };
 
+
+        //
+        // Classes and methods that take Storage as the source.
+        //
 
         // The Emit() method is used to Emit an opcode with the specified target
         // register and source storage. Depending on the type of the storage,
@@ -172,6 +185,80 @@ namespace NativeJIT
 
             code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<TemporaryType*>(&value)));
             code.Emit<OpCode::Mov>(dest, r);
+        }
+
+
+        //
+        // Classes and methods that take Storage as the destination.
+        //
+
+        // The Emit() method is used to Emit an opcode with the specified target
+        // storage and the source register. Depending on the type of the storage,
+        // the correct flavor of X64CodeGenerator's Emit() method will be called
+        // (i.e. registers of same or mixed type/size). Immediate storage is
+        // never allowed and triggers an assert.
+        template <OpCode OP, typename DEST, typename SRCREGTYPE>
+        void Emit(X64CodeGenerator& code,
+                  const ExpressionTree::Storage<DEST>& dest,
+                  SRCREGTYPE src)
+        {
+            typedef ExpressionTree::Storage<DEST>::DirectRegister DESTREGTYPE;
+
+            // Pick the right flavor of the helper class specialization and call it.
+            const RegTypes regTypes = std::is_same<SRCREGTYPE, DESTREGTYPE>::value
+                                      ? RegTypes::ExactlySame
+                                      : RegTypes::Different;
+
+            Emitter<regTypes, ImmediateType::NotAllowed>::Emit<OP>(code, dest, src);
+        }
+
+
+        // Storage and destination with registers with the same type and size.
+        template <>
+        template <OpCode OP, typename DEST, typename SRCREGTYPE>
+        void Emitter<RegTypes::ExactlySame, ImmediateType::NotAllowed>::Emit(
+            X64CodeGenerator& code,
+            const ExpressionTree::Storage<DEST>& dest,
+            SRCREGTYPE src)
+        {
+            switch (dest.GetStorageClass())
+            {
+            case StorageClass::Direct:
+                code.Emit<OP>(dest.GetDirectRegister(), src);
+                break;
+            case StorageClass::Indirect:
+                code.Emit<OP>(dest.GetBaseRegister(), dest.GetOffset(), src);
+                break;
+            default:
+                Assert(false, "Invalid storage class.");
+            }
+        }
+
+
+        // Storage and destination with registers with the mixed type and size.
+        template <>
+        template <OpCode OP, typename DEST, typename SRCREGTYPE>
+        void Emitter<RegTypes::Different, ImmediateType::NotAllowed>::Emit(
+            X64CodeGenerator& code,
+            const ExpressionTree::Storage<DEST>& dest,
+            SRCREGTYPE src)
+        {
+            typedef ExpressionTree::Storage<DEST>::DirectRegister DESTREGTYPE;
+
+            switch (dest.GetStorageClass())
+            {
+            case StorageClass::Direct:
+                code.Emit<OP>(dest.GetDirectRegister(), src);
+                break;
+            case StorageClass::Indirect:
+                code.Emit<OP,
+                          DESTREGTYPE::c_size, DESTREGTYPE::c_isFloat,
+                          SRCREGTYPE::c_size, SRCREGTYPE::c_isFloat>(
+                            dest.GetBaseRegister(), dest.GetOffset(), src);
+                break;
+            default:
+                Assert(false, "Invalid storage class.");
+            }
         }
     }
 }

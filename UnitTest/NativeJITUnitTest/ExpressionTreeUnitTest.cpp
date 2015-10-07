@@ -365,6 +365,62 @@ namespace NativeJIT
             }
 
 
+            TestCase(SoleDataOwner)
+            {
+                AutoResetAllocator reset(m_allocator);
+                ExpressionNodeFactory e(m_allocator, *m_code);
+
+                Storage<int> empty;
+                TestAssert(empty.IsSoleDataOwner());
+
+                auto s = e.Direct<int>();
+                TestAssert(s.IsSoleDataOwner());
+
+                auto s2 = s;
+                TestAssert(!s.IsSoleDataOwner());
+                TestAssert(!s2.IsSoleDataOwner());
+
+                s2.Reset();
+                TestAssert(s.IsSoleDataOwner());
+                TestAssert(s2.IsSoleDataOwner());
+
+                // Different indirects that refer to stack are sole owners of their storage.
+                auto stack1 = e.Temporary<int>();
+                TestAssert(stack1.IsSoleDataOwner());
+
+                auto stack2 = e.Temporary<int>();
+                TestAssert(stack2.IsSoleDataOwner());
+            }
+
+
+            TestCase(TakeSoleOwnershipOfDirect)
+            {
+                AutoResetAllocator reset(m_allocator);
+                ExpressionNodeFactory e(m_allocator, *m_code);
+
+                auto s = e.Direct<int>(eax);
+                TestAssert(s.IsSoleDataOwner());
+                TestAssert(s.GetStorageClass() == StorageClass::Direct);
+                TestAssert(s.GetDirectRegister() == eax);
+
+                auto s2 = s;
+                TestAssert(!s.IsSoleDataOwner());
+                TestAssert(!s2.IsSoleDataOwner());
+                TestAssert(s2.GetStorageClass() == StorageClass::Direct);
+                TestAssert(s2.GetDirectRegister() == eax);
+
+                s.TakeSoleOwnershipOfDirect();
+
+                TestAssert(s.IsSoleDataOwner());
+                TestAssert(s.GetStorageClass() == StorageClass::Direct);
+                TestAssert(s.GetDirectRegister() == eax);
+
+                TestAssert(s2.IsSoleDataOwner());
+                TestAssert(s2.GetStorageClass() == StorageClass::Direct);
+                TestAssert(!(s2.GetDirectRegister() == eax));
+            }
+
+
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;

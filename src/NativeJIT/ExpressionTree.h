@@ -101,7 +101,8 @@ namespace NativeJIT
         Storage<T> RIPRelative(__int32 offset);
 
         // Returns indirect storage relative to the base pointer for a variable
-        // of type T.
+        // of type T. It is guaranteed that it's legal to access the whole quadword
+        // at the target address.
         template <typename T>
         Storage<T> Temporary();
 
@@ -124,6 +125,7 @@ namespace NativeJIT
         //
         //
         unsigned GetRXXUsageMask() const;
+        unsigned GetXMMUsageMask() const;
 
     protected:
         void  const * GetUntypedEntryPoint() const;
@@ -224,10 +226,10 @@ namespace NativeJIT
         // Returns whether the register is one of the reserved/shared base
         // registers (instruction, stack or base pointer).
         template <unsigned SIZE>
-        bool IsAnyReservedBaseRegister(Register<SIZE, false> r) const;
+        bool IsAnySharedBaseRegister(Register<SIZE, false> r) const;
 
         template <unsigned SIZE>
-        bool IsAnyReservedBaseRegister(Register<SIZE, true> r) const;
+        bool IsAnySharedBaseRegister(Register<SIZE, true> r) const;
 
         void Pass0();
         void Pass1();
@@ -413,6 +415,13 @@ namespace NativeJIT
         void Reset();
         bool IsNull() const;
 
+        // Returns whether this Storage shares ownership over its Data*.
+        // Note that for direct storages, IsSoleDataOwner() result of true
+        // implies that the storage also exclusively owns the register. For
+        // indirect storages, this implication stands only for non-shared base
+        // registers.
+        bool IsSoleDataOwner() const;
+
         StorageClass GetStorageClass() const;
 
         DirectRegister GetDirectRegister() const;
@@ -431,7 +440,15 @@ namespace NativeJIT
 
         // Swaps the contents of the two storages. See SwapType definition for
         // more details.
-        void Swap(Storage<T>& other, SwapType type);
+        template <typename U>
+        void Swap(Storage<U>& other, SwapType type);
+
+        // If the storage is not the sole data owner, copies the data to stack
+        // and switches the ownership of other owners to it.
+        // Does nothing if the storage was already the sole data owner.
+        // Requires that the storage is direct and that it does not refer to
+        // one of the shared base registers.
+        void TakeSoleOwnershipOfDirect();
 
         // Returns a pin for the storage's register. While the pin is held,
         // the register cannot be spilled. Can only be called if Storage is
@@ -547,24 +564,28 @@ namespace NativeJIT
             // for the indirect Data constructor.
             auto registerStorage = Storage<FullType>
                 ::ForAdditionalReferenceToRegister(*this, FullRegister(src));
-            Storage<FullType> destStorage;
 
             // Use another register if available or a temporary otherwise to
             // bump the current contents of the register.
             if (freeList.GetFreeCount() > 0)
             {
-                destStorage = Storage<FullType>::ForAnyFreeRegister(*this);
+                auto destStorage = Storage<FullType>::ForAnyFreeRegister(*this);
                 CodeGenHelpers::Emit<OpCode::Mov>(code,
                                                   destStorage.GetDirectRegister(),
                                                   registerStorage);
+
+                // Swap storages for the target storage and for the register
+                // (including all the references to it). Once the destStorage
+                // variable goes out of scope, the register will be free.
+                registerStorage.Swap(destStorage, Storage<FullType>::SwapType::AllReferences);
             }
             else
             {
-                // Since the target value is indirect, ensure that the source is
-                // direct since MOV doesn't have a version taking two indirects.
-                // The same register will be reused because the conversion is not
-                // for modification and because the register is not one of the base
-                // registers.
+                // It is not possible to spill an indirect to stack in one
+                // step, so ensure that the source storage is direct.
+                // If it was previously indirect, its register will be reused
+                // because the conversion is not for modification and because
+                // the register is not one of the base registers.
                 registerStorage.ConvertToDirect(false);
                 auto fullReg = registerStorage.GetDirectRegister();
                 Assert(fullReg.IsSameHardwareRegister(r),
@@ -573,18 +594,10 @@ namespace NativeJIT
                        r.GetName(),
                        fullReg.GetName());
 
-                destStorage = Temporary<FullType>();
-                code.Emit<OpCode::Mov>(destStorage.GetBaseRegister(),
-                                       destStorage.GetOffset(),
-                                       fullReg);
+                // Make registerStorage the only owner. After it goes out of
+                // scope, the register will be free.
+                registerStorage.TakeSoleOwnershipOfDirect();
             }
-
-            // Swap storages for the target storage and for the register
-            // (including all the references to it).
-            // After the swap, the register will have only one storage reference
-            // (the one in destStorage). That reference will be released after
-            // this block's closing brace and the register will be available.
-            registerStorage.Swap(destStorage, Storage<FullType>::SwapType::AllReferences);
         }
 
         return Storage<T>::ForFreeRegister(*this, r);
@@ -653,7 +666,7 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    bool ExpressionTree::IsAnyReservedBaseRegister(Register<SIZE, false> r) const
+    bool ExpressionTree::IsAnySharedBaseRegister(Register<SIZE, false> r) const
     {
         return IsBasePointer(PointerRegister(r))
                || r.IsRIP()
@@ -662,7 +675,7 @@ namespace NativeJIT
 
 
     template <unsigned SIZE>
-    bool ExpressionTree::IsAnyReservedBaseRegister(Register<SIZE, true> /* r */) const
+    bool ExpressionTree::IsAnySharedBaseRegister(Register<SIZE, true> /* r */) const
     {
         return false;
     }
@@ -845,7 +858,7 @@ namespace NativeJIT
         BaseRegister base,
         __int32 offset)
     {
-        Assert(tree.IsAnyReservedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
+        Assert(tree.IsAnySharedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
 
         // TODO: Use allocator.
         return Storage<T>(new Data(tree, base, offset));
@@ -883,8 +896,8 @@ namespace NativeJIT
         // the only reference to it and if it's not one of the special
         // reserved/shared registers. Since T is a pointer type, the register
         // it needs is compatible to indirect's base PointerRegister.
-        if (indirect.m_data->GetRefCount() == 1
-            && !tree.IsAnyReservedBaseRegister(base))
+        if (indirect.IsSoleDataOwner()
+            && !tree.IsAnySharedBaseRegister(base))
         {
             // Get the address and convert the storage to indirect.
             code.Emit<OpCode::Lea>(base, base, offset);
@@ -954,6 +967,13 @@ namespace NativeJIT
 
 
     template <typename T>
+    bool ExpressionTree::Storage<T>::IsSoleDataOwner() const
+    {
+        return IsNull() || m_data->GetRefCount() == 1;
+    }
+
+
+    template <typename T>
     StorageClass ExpressionTree::Storage<T>::GetStorageClass() const
     {
         return m_data->GetStorageClass();
@@ -1003,7 +1023,6 @@ namespace NativeJIT
 
         auto & tree = m_data->GetTree();
         auto & code = tree.GetCodeGenerator();
-        const bool isSoleOwner = m_data->GetRefCount() == 1;
 
         switch (m_data->GetStorageClass())
         {
@@ -1014,7 +1033,7 @@ namespace NativeJIT
         case StorageClass::Direct:
             // If the storage is already direct, action is only necessary if it
             // needs to be modified but we're not the sole owner.
-            if (!isSoleOwner && forModification)
+            if (!IsSoleDataOwner() && forModification)
             {
                 auto dest = tree.Direct<T>();
 
@@ -1035,9 +1054,9 @@ namespace NativeJIT
                 // modifications, the type of the base register is compatible
                 // and it's not one of the reserved (shared) registers, then
                 // the base register can be reused.
-                if ((isSoleOwner || !forModification)
+                if ((IsSoleDataOwner() || !forModification)
                     && BaseRegister::c_isFloat == DirectRegister::c_isFloat
-                    && !tree.IsAnyReservedBaseRegister(base))
+                    && !tree.IsAnySharedBaseRegister(base))
                 {
                     code.Emit<OpCode::Mov>(DirectRegister(base), base, GetOffset());
                     m_data->ConvertIndirectToDirect();
@@ -1103,7 +1122,8 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::Swap(Storage<T>& other, SwapType type)
+    template <typename U>
+    void ExpressionTree::Storage<T>::Swap(Storage<U>& other, SwapType type)
     {
         switch (type)
         {
@@ -1118,6 +1138,46 @@ namespace NativeJIT
         default:
             Assert(false, "Unknown swap type %u", type);
             break;
+        }
+    }
+
+
+    template <typename T>
+    void ExpressionTree::Storage<T>::TakeSoleOwnershipOfDirect()
+    {
+        auto & tree = m_data->GetTree();
+
+        Assert(GetStorageClass() == StorageClass::Direct,
+               "Unexpected storage class %u",
+               GetStorageClass());
+        Assert(!tree.IsAnySharedBaseRegister(GetDirectRegister()),
+               "Cannot take sole ownership of %s",
+               GetDirectRegister().GetName());
+
+        if (!IsSoleDataOwner())
+        {
+            auto & freeList = FreeListForType<T>::Get(tree);
+            auto & code = tree.GetCodeGenerator();
+            typedef typename CanonicalRegisterType<FullRegister>::Type FullType;
+
+            // Use another register if available or a temporary otherwise to
+            // bump the full contents of the register.
+            Storage<FullType> destStorage
+                = freeList.GetFreeCount() > 0
+                  ? Storage<FullType>::ForAnyFreeRegister(tree)
+                  : tree.Temporary<FullType>();
+
+            CodeGenHelpers::Emit<OpCode::Mov>(code,
+                                              destStorage,
+                                              FullRegister(GetDirectRegister().GetId()));
+
+            // After the swap, the destStorage variable will be the only one
+            // still referring to the original register.
+            Swap(destStorage, SwapType::AllReferences);
+
+            // Make this instance another owner of the register. The other one
+            // in stackStorage will go away after the closing brace.
+            *this = Storage<T>(destStorage);
         }
     }
 

@@ -29,7 +29,7 @@ namespace NativeJIT
         {
             const PointerRegister reg(i);
 
-            if (IsAnyReservedBaseRegister(reg))
+            if (IsAnySharedBaseRegister(reg))
             {
                 auto s = Direct<void*>(reg);
 
@@ -40,7 +40,7 @@ namespace NativeJIT
 
         for (unsigned i = 0 ; i <= RegisterBase::c_maxFloatRegisterID; ++i)
         {
-            Assert(!IsAnyReservedBaseRegister(Register<8, true>(i)),
+            Assert(!IsAnySharedBaseRegister(Register<8, true>(i)),
                    "Unexpected reserved FP register %u",
                    i);
         }
@@ -68,6 +68,12 @@ namespace NativeJIT
     unsigned ExpressionTree::GetRXXUsageMask() const
     {
         return m_rxxFreeList.GetUsedMask();
+    }
+
+
+    unsigned ExpressionTree::GetXMMUsageMask() const
+    {
+        return m_xmmFreeList.GetUsedMask();
     }
 
 
@@ -361,7 +367,7 @@ namespace NativeJIT
     {
         return m_storageClass != StorageClass::Immediate
             && !m_isFloat
-            && m_tree.IsAnyReservedBaseRegister(PointerRegister(m_registerId));
+            && m_tree.IsAnySharedBaseRegister(PointerRegister(m_registerId));
     }
 
 
