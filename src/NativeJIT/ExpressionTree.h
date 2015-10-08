@@ -372,7 +372,7 @@ namespace NativeJIT
         // Takes ownership of a base storage, adds the offset to it and
         // dereferences it to produce a Storage<T>. Equivalent to
         // *static_cast<T*>(base + byteOffset).
-        Storage(ExpressionTree& tree, Storage<void*>&& base, __int32 byteOffset);
+        Storage(Storage<void*>&& base, __int32 byteOffset);
 
         // Creates another storage referencing a register. The register must
         // already be allocated. For shared base registers, the Storage will
@@ -794,8 +794,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    ExpressionTree::Storage<T>::Storage(ExpressionTree& tree,
-                                        Storage<void*>&& base,
+    ExpressionTree::Storage<T>::Storage(Storage<void*>&& base,
                                         __int32 byteOffset)
         : m_data(nullptr)
     {
@@ -1310,7 +1309,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, InvalidImmediate) const
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& /* out */, InvalidImmediate) const
     {
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.

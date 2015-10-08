@@ -59,7 +59,7 @@ namespace NativeJIT
         virtual void Print() const override;
 
     protected:
-        class Child
+        class Child : private NonCopyable
         {
         public:
             // Returns the number of registers needed to evaluate this child for
@@ -101,7 +101,7 @@ namespace NativeJIT
         protected:
             // Pins the storage register so that it cannot be spilled until
             // the Release() call.
-            void PinStorageRegister(ExpressionTree& tree);
+            void PinStorageRegister();
 
             Node<T>& m_expression;
             ExpressionTree::Storage<T> m_storage;
@@ -359,7 +359,7 @@ namespace NativeJIT
 
 
     template <typename R, unsigned PARAMETERCOUNT>
-    unsigned CallNodeBase<R, PARAMETERCOUNT>::LabelSubtree(bool isLeftChild)
+    unsigned CallNodeBase<R, PARAMETERCOUNT>::LabelSubtree(bool /* isLeftChild */)
     {
         static unsigned counts[c_childCount];
 
@@ -435,7 +435,7 @@ namespace NativeJIT
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename T>
-    void CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::PinStorageRegister(ExpressionTree& tree)
+    void CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::PinStorageRegister()
     {
         Assert(!m_storage.IsNull(), "Storage must be initialized");
 
@@ -473,7 +473,7 @@ namespace NativeJIT
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename F>
-    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::EmitStaging(ExpressionTree& tree,
+    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::EmitStaging(ExpressionTree& /* tree */,
                                                                         SaveRestoreVolatilesHelper& volatiles)
     {
         // The CALL instruction requires a direct register, ensure that's the case.
@@ -500,7 +500,7 @@ namespace NativeJIT
         // Make sure that nothing takes away this register.
         // NOTE: This depends on the fact that the function pointer is staged
         // last to ensure that a fixked parameter register is not picked.
-        PinStorageRegister(tree);
+        PinStorageRegister();
     }
 
 
@@ -567,7 +567,7 @@ namespace NativeJIT
                                      m_storage.IsSoleDataOwner());
 
         // The parameter needs to remain in the specified register.
-        PinStorageRegister(tree);
+        PinStorageRegister();
     }
 
 

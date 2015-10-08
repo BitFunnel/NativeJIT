@@ -191,25 +191,25 @@ namespace NativeJIT
                 unsigned count = 0;
 
                 ReferenceCounter ref1(count);
-                TestEqual(1, count);
+                TestEqual(1u, count);
 
                 ReferenceCounter ref2(count);
-                TestEqual(2, count);
+                TestEqual(2u, count);
 
                 ReferenceCounter ref3;
-                TestEqual(2, count);
+                TestEqual(2u, count);
 
                 ref3 = ref2;
-                TestEqual(3, count);
+                TestEqual(3u, count);
 
                 ref3.Reset();
-                TestEqual(2, count);
+                TestEqual(2u, count);
 
                 ref2 = ReferenceCounter();
-                TestEqual(1, count);
+                TestEqual(1u, count);
 
                 ref1.Reset();
-                TestEqual(0, count);
+                TestEqual(0u, count);
             }
 
 

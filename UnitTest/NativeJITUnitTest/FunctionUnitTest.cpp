@@ -674,7 +674,7 @@ namespace NativeJIT
             }
 
 
-            static float ZeroXmm1AndReturnArg1(float arg1, float arg2)
+            static float ZeroXmm1AndReturnArg1(float arg1, float /* arg2 */)
             {
                 TakeZeroFloatArg(0.0, 0.0);
 

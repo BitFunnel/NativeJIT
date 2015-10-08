@@ -140,14 +140,9 @@ namespace NativeJIT
         // the two values.
         code.Emit<OpCode::Cmp>(left, right);
 
-        if (ISMAX)
-        {
-            code.EmitConditionalJump<JccType::JAE>(keepLeftDigit);
-        }
-        else
-        {
-            code.EmitConditionalJump<JccType::JB>(keepLeftDigit);
-        }
+        const JccType jccType = ISMAX ? JccType::JAE : JccType::JB;
+
+        code.EmitConditionalJump<jccType>(keepLeftDigit);
 
         // Case: Want the keep the digit from the right parameter.
         //       Shift the high order bits from the right parameter into the low
@@ -177,7 +172,7 @@ namespace NativeJIT
 
 
     template <typename PACKED, bool ISMAX>
-    unsigned PackedMinMaxNode<PACKED, ISMAX>::LabelSubtree(bool isLeftChild)
+    unsigned PackedMinMaxNode<PACKED, ISMAX>::LabelSubtree(bool /* isLeftChild */)
     {
         const unsigned leftCount = m_left.LabelSubtree(true);
         const unsigned rightCount = m_right.LabelSubtree(false);

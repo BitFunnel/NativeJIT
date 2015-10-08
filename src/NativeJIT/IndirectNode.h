@@ -50,8 +50,7 @@ namespace NativeJIT
         const __int32 localOffset = sizeof(T) * m_index;
 
         // Dereference the T*.
-        return ExpressionTree::Storage<T>(tree,
-                                          m_base.CodeGenBase(tree),
+        return ExpressionTree::Storage<T>(m_base.CodeGenBase(tree),
                                           m_base.GetOffset() + localOffset);
     }
 

@@ -130,8 +130,8 @@ namespace NativeJIT
         template <unsigned SIZE2, bool ISFLOAT2>
         bool IsSameHardwareRegister(Register<SIZE2, ISFLOAT2> other) const
         {
-            return ISFLOAT2 == ISFLOAT
-                && other.GetId() == GetId();
+            return other.GetId() == GetId()
+                   && ISFLOAT2 == ISFLOAT;
         }
 
 

@@ -207,7 +207,6 @@ namespace NativeJIT
     typename ExpressionTree::Storage<TO>
     CastNode<TO, FROM, true>::CodeGenValue(ExpressionTree& tree)
     {
-        auto & code = tree.GetCodeGenerator();
         auto source = m_from.CodeGen(tree);
 
         return Casting::DirectCastGenerator<Traits::c_castType>::Generate<TO, FROM>(tree, source);
@@ -292,7 +291,7 @@ namespace NativeJIT
         template <>
         template <typename TO, typename FROM>
         ExpressionTree::Storage<TO>
-        DirectCastGenerator<Cast::NoOp>::Generate(ExpressionTree& tree, ExpressionTree::Storage<FROM>& source)
+        DirectCastGenerator<Cast::NoOp>::Generate(ExpressionTree& /* tree */, ExpressionTree::Storage<FROM>& source)
         {
             return ExpressionTree::Storage<TO>(source);
         }
@@ -394,7 +393,6 @@ namespace NativeJIT
         {
             static_assert(Traits<TO, FROM>::c_isDirectCast, "Invalid direct cast.");
 
-            auto & code = tree.GetCodeGenerator();
             auto target = tree.Direct<TO>();
 
             if (source.GetStorageClass() == StorageClass::Immediate)
@@ -461,6 +459,10 @@ namespace NativeJIT
         //
         // Template definitions for direct CompositeCastNodeBuilder.
         //
+
+// Supress warning about constant expression involving template parameters.
+#pragma warning(push)
+#pragma warning(disable:4127)
 
         // Composite node for casting from integer to float.
         template <>
@@ -557,5 +559,7 @@ namespace NativeJIT
 
             return *result;
         }
+
+#pragma warning(pop)
     }
 }
