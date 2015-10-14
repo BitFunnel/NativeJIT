@@ -100,12 +100,22 @@ namespace NativeJIT
         //
         // Conditional operators
         //
+
+        // WARNING: Both trueValue and falseValue are evaluated before testing the
+        // condition so both must be legal to evaluate regardless of the result
+        // of the condition. See the TODO note in ConditionalNode::CodeGenValue.
         template <typename T, JccType JCC>
         Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& trueValue, Node<T>& falseValue);
 
+        // WARNING: Both trueValue and falseValue are evaluated before testing the
+        // condition so both must be legal to evaluate regardless of the result
+        // of the condition. See the TODO note in ConditionalNode::CodeGenValue.
         template <typename CONDT, typename T>
         Node<T>& IfNotZero(Node<CONDT>& conditionValue, Node<T>& trueValue, Node<T>& falseValue);
 
+        // WARNING: Both thenValue and elseValue are evaluated before testing the
+        // condition so both must be legal to evaluate regardless of the result
+        // of the condition. See the TODO note in ConditionalNode::CodeGenValue.
         template <typename T>
         Node<T>& If(Node<bool>& conditionValue, Node<T>& thenValue, Node<T>& elseValue);
 

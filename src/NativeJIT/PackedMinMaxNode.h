@@ -79,18 +79,9 @@ namespace NativeJIT
         ExpressionTree::Storage<PACKED> sLeft;
         ExpressionTree::Storage<PACKED> sRight;
 
-        // Evaluate both input values in the order which uses the least number of
-        // registers.
-        if (m_left.GetRegisterCount() >= m_right.GetRegisterCount())
-        {
-            sLeft = m_left.CodeGen(tree);
-            sRight = m_right.CodeGen(tree);
-        }
-        else
-        {
-            sRight = m_right.CodeGen(tree);
-            sLeft = m_left.CodeGen(tree);
-        }
+        CodeGenInPreferredOrder(tree,
+                                m_left, sLeft,
+                                m_right, sRight);
 
         // Convert the left and right parameters into direct registers making
         // sure that they don't get spilled.

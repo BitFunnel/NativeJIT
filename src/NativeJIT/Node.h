@@ -12,6 +12,10 @@ namespace NativeJIT
 {
     class ExpressionTree;
 
+    // Used in NodeBase as an argument.
+    template <typename T>
+    class Node;
+
     class NodeBase : public NonCopyable
     {
     public:
@@ -49,6 +53,16 @@ namespace NativeJIT
         // and right subtree require a certain number of registers according
         // to Sethi-Ullman algorithm.
         static unsigned ComputeRegisterCount(unsigned leftTreeCount, unsigned rightTreeCount);
+
+        // Invokes CodeGen() method on both methods and assigns the result to the
+        // matching storage. The order of CodeGen() calls is determined by the
+        // estimated number of registers used: the node with higher requirements
+        // will be evaluated first to minimize spilling when the second node
+        // is evaluated.
+        template <typename T1, typename T2>
+        static void CodeGenInPreferredOrder(ExpressionTree& tree,
+                                            Node<T1>& n1, Storage<T1>& s1,
+                                            Node<T2>& n2, Storage<T2>& s2);
 
     private:
         unsigned m_id;
@@ -103,6 +117,30 @@ namespace NativeJIT
         unsigned m_registerCount;
     };
 
+
+    //*************************************************************************
+    //
+    // Template definitions for NodeBase
+    //
+    //*************************************************************************
+
+    template <typename T1, typename T2>
+    void NodeBase::CodeGenInPreferredOrder(ExpressionTree& tree,
+                                           Node<T1>& n1, Storage<T1>& s1,
+                                           Node<T2>& n2, Storage<T2>& s2)
+    {
+        // Evaluate the expression which uses more registers first.
+        if (n1.GetRegisterCount() >= n2.GetRegisterCount())
+        {
+            s1 = n1.CodeGen(tree);
+            s2 = n2.CodeGen(tree);
+        }
+        else
+        {
+            s2 = n2.CodeGen(tree);
+            s1 = n1.CodeGen(tree);
+        }
+    }
 
     //*************************************************************************
     //

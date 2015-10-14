@@ -45,23 +45,12 @@ namespace NativeJIT
     template <OpCode OP, typename L, typename R>
     typename ExpressionTree::Storage<L> BinaryNode<OP, L, R>::CodeGenValue(ExpressionTree& tree)
     {
-        unsigned l = m_left.GetRegisterCount();
-        unsigned r = m_right.GetRegisterCount();
-
         Storage<L> sLeft;
         Storage<R> sRight;
 
-        // Evaluate the side which uses more registers first to minimize spilling.
-        if (l >= r)
-        {
-            sLeft = m_left.CodeGen(tree);
-            sRight = m_right.CodeGen(tree);
-        }
-        else
-        {
-            sRight = m_right.CodeGen(tree);
-            sLeft = m_left.CodeGen(tree);
-        }
+        CodeGenInPreferredOrder(tree,
+                                m_left, sLeft,
+                                m_right, sRight);
 
         CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
 

@@ -144,42 +144,95 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     typename ExpressionTree::Storage<T> ConditionalNode<T, JCC>::CodeGenValue(ExpressionTree& tree)
     {
-        m_condition.CodeGenFlags(tree);
-
-        // TODO: This will not work in cases where the false and true expressions
-        // are more complex. The execution in NativeJIT has a continuous flow
-        // regardless of the outcome of the condition whereas the generated x64 code
-        // has two branches and each of them can have independent impact on
-        // allocated and spilled registers. The code has to ensure that the state
-        // of the allocated/spilled registers (i.e. all Storages) is consistent
-        // once those two x64 branches converge back.
-        // TODO: Pin the result register.
         X64CodeGenerator& code = tree.GetCodeGenerator();
-        Label l1 = code.AllocateLabel();
-        code.EmitConditionalJump<JCC>(l1);
 
-        auto falseValue = m_falseExpression.CodeGen(tree);
-        auto rFalse = falseValue.ConvertToDirect(true);
+        Label conditionIsTrue = code.AllocateLabel();
+        Label testCompleted = code.AllocateLabel();
 
-        Label l2 = code.AllocateLabel();
-        code.Jmp(l2);
+        // TODO: Evaluating both expressions in advance of the test is
+        // sub-optimal, but it is currently required to guarantee consistent
+        // state: the execution in NativeJIT has a continuous flow regardless
+        // of the outcome of the (runtime) condition whereas the generated x64
+        // code has two branches and each of them can have independent impact on
+        // allocated and spilled registers. To have each expression evaluated
+        // only if its branch is hit, the NativeJIT code would have to ensure
+        // that the state of the allocated/spilled registers (i.e. all Storages)
+        // is consistent once those two x64 branches converge back.
 
-        code.PlaceLabel(l1);
+        Storage<T> trueValue;
+        Storage<T> falseValue;
 
-        auto trueValue = m_trueExpression.CodeGen(tree);
-        auto rTrue = trueValue.ConvertToDirect(false);
+        CodeGenInPreferredOrder(tree,
+                                m_trueExpression, trueValue,
+                                m_falseExpression, falseValue);
 
-        if (!rTrue.IsSameHardwareRegister(rFalse))
+        // Enum that specifies whether the result storage currently holds the
+        // true value, false value or neither of them.
+        enum class ResultContents { NeitherValue, TrueValue, FalseValue };
+        ResultContents resultContents;
+        Storage<T> result;
+
         {
-            // TODO: Do we always need to move the value?
-            // In the case of caching, r2 may not be equal to r.
-            // TODO: unit test for this case
-            code.Emit<OpCode::Mov>(rFalse, rTrue);
+            // Evaluate the condition to update the CPU flags. No code in this
+            // block is allowed to modify the flags up until the
+            // EmitConditionalJump() call at the end. Spilling (i.e. the MOV
+            // instructions used used to copy the spilled value from register
+            // to stack) does not affect any flags.
+            m_condition.CodeGenFlags(tree);
+
+            // Try to re-use a direct register from true/false expressions if
+            // possible, otherwise allocate a register. The allocation must be
+            // done before the conditional jump so that any register spills
+            // apply to both branches.
+            if (trueValue.GetStorageClass() == StorageClass::Direct
+                && trueValue.IsSoleDataOwner())
+            {
+                result = trueValue;
+                resultContents = ResultContents::TrueValue;
+            }
+            else if (falseValue.GetStorageClass() == StorageClass::Direct
+                     && falseValue.IsSoleDataOwner())
+            {
+                result = falseValue;
+                resultContents = ResultContents::FalseValue;
+            }
+            else
+            {
+                result = tree.Direct<T>();
+                resultContents = ResultContents::NeitherValue;
+            }
+
+            code.EmitConditionalJump<JCC>(conditionIsTrue);
         }
 
-        code.PlaceLabel(l2);
+        // Emit the code for the "condition is false" branch.
 
-        return falseValue;
+        // Move the false value to the result register unless it's already there.
+        if (resultContents != ResultContents::FalseValue)
+        {
+            CodeGenHelpers::Emit<OpCode::Mov>(code, result.GetDirectRegister(), falseValue);
+        }
+
+        // Jump behind the true branch, unless the true branch is empty. The true
+        // branch is empty only if the true value is already in the result storage.
+        if (!(resultContents == ResultContents::TrueValue))
+        {
+            code.Jmp(testCompleted);
+        }
+
+        // Emit the code for the "condition is true" branch.
+
+        code.PlaceLabel(conditionIsTrue);
+
+        // Move the true value in the result register unless it's already there.
+        if (resultContents != ResultContents::TrueValue)
+        {
+            CodeGenHelpers::Emit<OpCode::Mov>(code, result.GetDirectRegister(), trueValue);
+        }
+
+        code.PlaceLabel(testCompleted);
+
+        return result;
     }
 
 
@@ -258,23 +311,12 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void RelationalOperatorNode<T, JCC>::CodeGenFlags(ExpressionTree& tree)
     {
-        const unsigned l = m_left.GetRegisterCount();
-        const unsigned r = m_right.GetRegisterCount();
-
         Storage<T> sLeft;
         Storage<T> sRight;
 
-        // Evaluate the side which uses more registers first.
-        if (l >= r)
-        {
-            sLeft = m_left.CodeGen(tree);
-            sRight = m_right.CodeGen(tree);
-        }
-        else
-        {
-            sRight = m_right.CodeGen(tree);
-            sLeft = m_left.CodeGen(tree);
-        }
+        CodeGenInPreferredOrder(tree,
+                                m_left, sLeft,
+                                m_right, sRight);
 
         CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(false), sRight);
     }

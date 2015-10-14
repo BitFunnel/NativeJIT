@@ -53,18 +53,9 @@ namespace NativeJIT
         Storage<T> shiftee;
         Storage<T> filler;
 
-        // Evaluate both input values in the order which uses the least number of
-        // registers.
-        if (m_shiftee.GetRegisterCount() >= m_filler.GetRegisterCount())
-        {
-            shiftee = m_shiftee.CodeGen(tree);
-            filler = m_filler.CodeGen(tree);
-        }
-        else
-        {
-            filler = m_filler.CodeGen(tree);
-            shiftee = m_shiftee.CodeGen(tree);
-        }
+        CodeGenInPreferredOrder(tree,
+                                m_shiftee, shiftee,
+                                m_filler, filler);
 
         // Convert both arguments to direct registers. The filler value will
         // not be touched.
