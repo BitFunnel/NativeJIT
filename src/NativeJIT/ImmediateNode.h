@@ -35,11 +35,9 @@ namespace NativeJIT
         //
         virtual void Print() const override
         {
-            std::cout << "ImmediateNode id=" << GetId();
-            std::cout << ", parents = " << GetParentCount();
+            PrintCoreProperties("ImmediateNode");
+
             std::cout << ", value = " << m_value;
-            std::cout << ", ";
-            PrintRegisterAndCacheInfo();
         }
 
 
@@ -89,12 +87,9 @@ namespace NativeJIT
         //
         virtual void Print() const override
         {
-            std::cout << "ImmediateNode id=" << GetId();
-            std::cout << ", parents = " << GetParentCount();
+            PrintCoreProperties("ImmediateNode (RIP-indirect)");
+
             std::cout << ", value = " << m_value;
-            std::cout << "  RIP-indirect, ";
-            std::cout << ", ";
-            PrintRegisterAndCacheInfo();
         }
 
 

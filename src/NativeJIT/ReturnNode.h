@@ -36,6 +36,8 @@ namespace NativeJIT
         : Node(tree),
           m_child(child)
     {
+        // There's an implicit parent to the return node: the function it's used by.
+        IncrementParentCount();
         child.IncrementParentCount();
     }
 
@@ -43,7 +45,10 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T> ReturnNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        // TODO: Prevent ReturnNode node from ever having a parent and being cached.
+        Assert(GetParentCount() == 1,
+               "Unexpected parent count for the root node: %u",
+               GetParentCount());
+
         return m_child.CodeGen(tree);
     }
 
@@ -81,9 +86,6 @@ namespace NativeJIT
     template <typename T>
     void ReturnNode<T>::Print() const
     {
-        std::cout << "ReturnNode id=" << GetId();
-        std::cout << ", parents = " << GetParentCount();
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
+        PrintCoreProperties("ReturnNode");
     }
 }

@@ -18,7 +18,23 @@ namespace NativeJIT
     public:
         FlagExpressionNode(ExpressionTree& tree);
 
+        //
+        // Overrides of NodeBase methods.
+        //
+        virtual bool CanBeOptimizedAway() const override;
+
+        //
+        // Overrides of Node<T> methods.
+        //
         virtual void CodeGenFlags(ExpressionTree& tree) = 0;
+
+
+        // Increments the number of parents that use the node's CodeGenFlags()
+        // method rather than the usual CodeGen() method.
+        void IncrementFlagsParentCount();
+
+    private:
+        unsigned m_flagsParentCount;
     };
 
 
@@ -38,12 +54,10 @@ namespace NativeJIT
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
-
         //
         // Overrides of Node<T> methods.
         //
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
-
 
     private:
         FlagExpressionNode<JCC>& m_condition;
@@ -92,8 +106,24 @@ namespace NativeJIT
     //*************************************************************************
     template <JccType JCC>
     FlagExpressionNode<JCC>::FlagExpressionNode(ExpressionTree& tree)
-        : Node(tree)
+        : Node(tree),
+          m_flagsParentCount(0)
     {
+    }
+
+
+    template <JccType JCC>
+    bool FlagExpressionNode<JCC>::CanBeOptimizedAway() const
+    {
+        return Node<bool>::CanBeOptimizedAway() && m_flagsParentCount == 0;
+    }
+
+
+    template <JccType JCC>
+    void FlagExpressionNode<JCC>::IncrementFlagsParentCount()
+    {
+        ++m_flagsParentCount;
+        MarkInsideTree();
     }
 
 
@@ -112,6 +142,11 @@ namespace NativeJIT
           m_trueExpression(trueExpression),
           m_falseExpression(falseExpression)
     {
+        m_trueExpression.IncrementParentCount();
+        m_falseExpression.IncrementParentCount();
+
+        // Use the CodeGenFlags()-related call.
+        m_condition.IncrementFlagsParentCount();
     }
 
 
@@ -131,13 +166,14 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void ConditionalNode<T, JCC>::Print() const
     {
-        std::cout << "Conditional(" << X64CodeGenerator::JccName(JCC) << ") id=" << GetId();
-        std::cout << ", parents = " << GetParentCount();
+        const std::string name = std::string("Conditional(")
+            + X64CodeGenerator::JccName(JCC)
+            + ") ";
+        PrintCoreProperties(name.c_str());
+
         std::cout << ", condition = " << m_condition.GetId();
         std::cout << ", trueExpression = " << m_trueExpression.GetId();
         std::cout << ", right = " << m_falseExpression.GetId();
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
     }
 
 
@@ -270,12 +306,13 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     void RelationalOperatorNode<T, JCC>::Print() const
     {
-        std::cout << "RelationalOperatorNode(" << X64CodeGenerator::JccName(JCC) << ") id=" << GetId();
-        std::cout << ", parents = " << GetParentCount();
+        const std::string name = std::string("RelationalOperatorNode(")
+            + X64CodeGenerator::JccName(JCC)
+            + ") ";
+        PrintCoreProperties(name.c_str());
+
         std::cout << ", left = " << m_left.GetId();
         std::cout << ", right = " << m_right.GetId();
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
     }
 
 

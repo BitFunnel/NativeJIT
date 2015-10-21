@@ -1,5 +1,6 @@
 #pragma once
 
+// Disable warning: 'function' : unreferenced local function has been removed
 #pragma warning(disable:4505)
 
 #include "ExpressionTree.h"             // ExpressionTree::Storage<T> return type.
@@ -23,8 +24,35 @@ namespace NativeJIT
 
         unsigned GetId() const;
 
+        // Increments the number of node's parents that will evaluate the node
+        // through the Node<T>::CodeGen() method. The node will be evaluated
+        // only once, but the result will also be stored in cache with a
+        // matching number of references. The cache will be released once all
+        // parents evaluate the node.
+        // IMPORTANT: Currently, there's an assumption that if a node is created,
+        // it must be placed inside the tree. TODO: Remove this assumption and
+        // allow for optimizing away unused nodes.
         void IncrementParentCount();
+
+        // Decrements the number of node's parents as set through
+        // IncrementParentCount(). Used only when nodes are optimized away.
+        void DecrementParentCount();
+
         unsigned GetParentCount() const;
+
+        // Returns whether the node has been evaluated through the Node<T>::CodeGen
+        // method.
+        bool IsEvaluated() const;
+        void MarkEvaluated();
+
+        // Returns whether node is inside the tree. Node is considered to be
+        // inside the tree if it has parents which will call its CodeGen() method
+        // or through some alternate method. The IncrementParentCount() call
+        // which implies the CodeGen() call will implicitly mark the node as part
+        // of the tree. Parents that use the node through some other means
+        // need to call MarkInsideTree() explicitly.
+        bool IsInsideTree() const;
+        void MarkInsideTree();
 
         //
         // Non-pure virtual methods.
@@ -32,23 +60,42 @@ namespace NativeJIT
 
         virtual void CompileAsRoot(ExpressionTree& tree);
 
-        // See Node<T>::CodeGenBase() for more information.
-        virtual __int32 GetOffset() const;
+        // Returns whether the node can be optimized away. Only nodes that have
+        // no parents and are not used through some node-specific means can
+        // be optimized away.
+        virtual bool CanBeOptimizedAway() const;
+
+        // When the node is optimized away, instructs it to undo the
+        // IncreaseParentCount() calls it made in its constructor. Default
+        // implementation throws.
+        virtual void ReleaseReferencesToChildren();
+
+        // For nodes that represent objects generated off of another base object
+        // with an added offset, populates the base and offset out parameters
+        // and returns true. Otherwise leaves the out parameters unchanged and
+        // returns false (default implementation).
+        // This allows to optimize a chain of references to the same object
+        // by collapsing them to the topmost base object and adding the offsets
+        // in the chain together.
+        // Callers that override this method also need to override
+        // ReleaseReferencesToChildren().
+        virtual bool GetBaseAndOffset(NodeBase*& base, __int32& offset) const;
 
         //
         // Pure virtual methods.
         //
 
         virtual void CodeGenCache(ExpressionTree& tree) = 0;
-        virtual ExpressionTree::Storage<void*> CodeGenBase(ExpressionTree& tree) = 0;
         virtual bool IsCached() const = 0;
+
+        // Evaluates the node and regardless of its type returns a void* Storage.
+        // This method is equivalent to Node<T>::CodeGen() with type erasure.
+        virtual Storage<void*> CodeGenAsBase(ExpressionTree& tree) = 0;
+
         virtual unsigned LabelSubtree(bool isLeftChild) = 0;
         virtual void Print() const = 0;
-
-
+        
     protected:
-        unsigned m_parentCount;
-
         // Calculates the number of registers needed by a node whose left
         // and right subtree require a certain number of registers according
         // to Sethi-Ullman algorithm.
@@ -66,6 +113,9 @@ namespace NativeJIT
 
     private:
         unsigned m_id;
+        unsigned m_parentCount;
+        bool m_isEvaluated;
+        bool m_isInsideTree;
     };
 
 
@@ -77,25 +127,9 @@ namespace NativeJIT
 
         Node(ExpressionTree& tree);
 
-        void SetCache(ExpressionTree::Storage<T> s);
-        ExpressionTree::Storage<T> GetCache();
-        void ReleaseCache();
-
         unsigned GetRegisterCount() const;
 
         ExpressionTree::Storage<T> CodeGen(ExpressionTree& tree);
-
-        // Generates the code to evaluate the node when T is a X* used
-        // as a base pointer. The returned Storage points to some unknown type,
-        // but once the GetOffset() value is added, it will turn into a
-        // Storage<X*>. Optimizations of chained base pointer accesses within
-        // the same object are possible by overriding this method, such as in
-        // FieldPointerNode. The default implementation calls CodeGen() and
-        // returns 0 for GetOffset(), which provides the correct behavior in
-        // all cases, but less optimal in cases when optimizations are possible.
-        virtual ExpressionTree::Storage<void*> CodeGenBase(ExpressionTree& tree);
-
-        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
 
         //
         // Overrides of NodeBase methods.
@@ -107,14 +141,19 @@ namespace NativeJIT
 
     protected:
         void SetRegisterCount(unsigned count);
-        void PrintRegisterAndCacheInfo() const;
+        void PrintCoreProperties(char const *nodeName) const;
 
     private:
-        bool m_isCached;
         unsigned m_cacheReferenceCount;
         ExpressionTree::Storage<T> m_cache;
 
         unsigned m_registerCount;
+
+        virtual Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
+        virtual Storage<void*> CodeGenAsBase(ExpressionTree& tree) override;
+
+        void SetCache(ExpressionTree::Storage<T> s);
+        Storage<T> GetAndReleaseCache();
     };
 
 
@@ -151,7 +190,6 @@ namespace NativeJIT
     template <typename T>
     Node<T>::Node(ExpressionTree& tree)
         : NodeBase(tree),
-          m_isCached(false),
           m_cacheReferenceCount(0),
           m_registerCount(0)
     {
@@ -161,46 +199,54 @@ namespace NativeJIT
     template <typename T>
     void Node<T>::SetCache(ExpressionTree::Storage<T> s)
     {
-        Assert(!IsCached(), "Cache register is already set.");
+        Assert(!IsCached(), "Cache is already set for node with ID %u", GetId());
+        Assert(GetParentCount() > 0, "Cannot set cache for node %u with zero parents", GetId());
 
-        m_cacheReferenceCount = m_parentCount;
+        m_cacheReferenceCount = GetParentCount();
         m_cache = s;
     }
 
 
     template <typename T>
-    ExpressionTree::Storage<T> Node<T>::GetCache()
+    Storage<T> Node<T>::GetAndReleaseCache()
     {
-        return m_cache;
-    }
+        Assert(IsCached(), "Cache has not been set for node ID %u", GetId());
 
-
-    template <typename T>
-    void Node<T>::ReleaseCache()
-    {
-        Assert(IsCached(), "Cache register has not been set.");
-
+        auto result = m_cache;
         --m_cacheReferenceCount;
+
         if (m_cacheReferenceCount == 0)
         {
             m_cache.Reset();
         }
+
+        return result;
     }
 
 
     template <typename T>
     bool Node<T>::IsCached() const
     {
+        // If cache is present, reference count cannot be zero. Similarly, when
+        // the cache is empty, reference count must be zero.
+        Assert(m_cache.IsNull() == (m_cacheReferenceCount == 0),
+               "Mismatch in cached storage and cache reference count: "
+               "have cache %u, reference count: %u",
+               m_cache.IsNull(),
+               m_cacheReferenceCount);
+
         return !m_cache.IsNull();
     }
 
 
-
     template <typename T>
-    void Node<T>::PrintRegisterAndCacheInfo() const
+    void Node<T>::PrintCoreProperties(char const* nodeName) const
     {
-        std::cout << "register count = " << m_registerCount;
-        std::cout << ", ";
+        std::cout << nodeName
+                  << " [id = " << GetId()
+                  << ", parents = " << GetParentCount()
+                  << ", register count = " << m_registerCount
+                  << ", ";
 
         if (IsCached())
         {
@@ -211,14 +257,24 @@ namespace NativeJIT
         {
             std::cout << "not cached";
         }
+
+        std::cout << "]";
     }
 
 
     template <typename T>
     void Node<T>::CodeGenCache(ExpressionTree& tree)
     {
-        LabelSubtree(true);
-        SetCache(CodeGenValue(tree));
+        Assert(!IsEvaluated(),
+               "Tried to CodeGenValue() node with ID %u more than once",
+               GetId());
+        MarkEvaluated();
+
+        if (GetParentCount() > 0)
+        {
+            LabelSubtree(true);
+            SetCache(CodeGenValue(tree));
+        }
     }
 
 
@@ -263,22 +319,25 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T> Node<T>::CodeGen(ExpressionTree& tree)
     {
-        if (IsCached())
+        Assert(GetParentCount() > 0,
+               "Cannot evaluate node %u with no parents",
+               GetId());
+
+        if (!IsCached())
         {
-            auto result = GetCache();
-            ReleaseCache();
-            return result;
+            CodeGenCache(tree);
         }
-        else
-        {
-            return CodeGenValue(tree);
-        }
+
+        return GetAndReleaseCache();
     }
 
 
     template <typename T>
-    ExpressionTree::Storage<void*> Node<T>::CodeGenBase(ExpressionTree& tree)
+    ExpressionTree::Storage<void*> Node<T>::CodeGenAsBase(ExpressionTree& tree)
     {
+        Assert(!RegisterStorage<T>::c_isFloat && RegisterStorage<T>::c_size == sizeof(void*),
+               "Invalid call to CodeGenAsBase");
+
         return ExpressionTree::Storage<void*>(CodeGen(tree));
     }
 }

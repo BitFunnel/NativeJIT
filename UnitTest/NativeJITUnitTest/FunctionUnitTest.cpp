@@ -736,6 +736,25 @@ namespace NativeJIT
             }
 
 
+            // Verify that no asserts are hit when using a function which doesn't
+            // reference some of its parameters.
+            TestCase(FunctionWithUnusedParameter)
+            {
+                AutoResetAllocator reset(m_allocator);
+                Function<__int64, __int64, __int64> expression(m_allocator, *m_code);
+
+                auto function = expression.Compile(expression.GetP2());
+
+                __int64 p1Unused = 0;
+                __int64 p2 = 123;
+
+                auto observed = function(p1Unused, p2);
+
+                TestEqual(p2, observed);
+            }
+
+
+
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;

@@ -257,12 +257,8 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     void CastNode<TO, FROM, true>::Print() const
     {
-        std::cout << "CastNode (one-step) id = " << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", from = " << m_from.GetId()
-                  << ", ";
-
-        PrintRegisterAndCacheInfo();
+        PrintCoreProperties("CastNode (one-step)");
+        std::cout << ", from = " << m_from.GetId();
     }
 
 
@@ -302,12 +298,9 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     void CastNode<TO, FROM, false>::Print() const
     {
-        std::cout << "CastNode (composite) id = " << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", conversionNode = " << m_conversionNode.GetId()
-                  << ", ";
+        PrintCoreProperties("CastNode (composite)");
 
-        PrintRegisterAndCacheInfo();
+        std::cout << ", conversionNode = " << m_conversionNode.GetId();
     }
 
 

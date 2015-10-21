@@ -102,8 +102,12 @@ namespace NativeJIT
 
                 auto & structNode = e.Immediate(&testStruct);
                 auto & indirectNode = e.Deref(e.FieldPointer(structNode, &Test::m_dummy));
+                indirectNode.IncrementParentCount();
 
-                auto storage = indirectNode.CodeGenValue(e);
+                structNode.CodeGenCache(e);
+                indirectNode.CodeGenCache(e);
+
+                auto storage = indirectNode.CodeGen(e);
                 auto baseRegister = storage.GetBaseRegister();
 
                 TestAssert(storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
@@ -149,8 +153,12 @@ namespace NativeJIT
 
                 auto & structNode = e.Immediate(&testStruct);
                 auto & indirectNode = e.Deref(e.FieldPointer(structNode, &Test::m_dummy));
+                indirectNode.IncrementParentCount();
 
-                auto storage = indirectNode.CodeGenValue(e);
+                structNode.CodeGenCache(e);
+                indirectNode.CodeGenCache(e);
+
+                auto storage = indirectNode.CodeGen(e);
                 auto baseRegister = storage.GetBaseRegister();
 
                 TestAssert(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));

@@ -96,10 +96,9 @@ namespace NativeJIT
     }
 
 
-    unsigned ExpressionTree::AddParameter(ParameterBase& parameter)
+    void ExpressionTree::AddParameter(NodeBase& parameter)
     {
         m_parameters.push_back(&parameter);
-        return static_cast<unsigned>(m_parameters.size() - 1);
     }
 
 
@@ -124,7 +123,18 @@ namespace NativeJIT
         Pass3();
         m_code.PatchCallSites();
 
+        // Release the reserved registers.
+        m_reservedRegistersPins.clear();
+        m_reservedRegistersStorages.clear();
         Print();
+
+        Assert(GetRXXUsageMask() == 0,
+               "Some integer registers have not been released: 0x%x",
+               GetRXXUsageMask());
+
+        Assert(GetXMMUsageMask() == 0,
+               "Some floating point registers have not been released: 0x%x",
+               GetXMMUsageMask());
     }
 
 
@@ -143,6 +153,35 @@ namespace NativeJIT
         {
             m_ripRelatives[i]->EmitStaticData(*this);
         }
+
+        // Walk the nodes in reverse order of creation (i.e. in potential order
+        // of execution) to see whether they can be optimized away.
+        //
+        // Note: currently it is not important whether the optimize-away pass
+        // traverses the nodes in order or in reverse order. This is because the
+        // only existing optimization technique (base pointer collapsing) is
+        // performed when node is constructed and removing references from
+        // children in such case will not create an opportunity for additional
+        // optimizations.
+        for (auto nodeIt = m_topologicalSort.rbegin();
+             nodeIt != m_topologicalSort.rend();
+             ++nodeIt)
+        {
+            auto node = *nodeIt;
+
+            if (!node->IsInsideTree())
+            {
+                Print();
+                Assert(node->IsInsideTree(),
+                       "Node with ID %u has been created but not placed inside the tree",
+                       node->GetId());
+            }
+
+            if (node->CanBeOptimizedAway())
+            {
+                node->ReleaseReferencesToChildren();
+            }
+        }
     }
 
 
@@ -151,9 +190,9 @@ namespace NativeJIT
         std::cout << "=== Pass1 ===" << std::endl;
 
         // Reserve registers used to pass in parameters.
-        for (unsigned i = 0 ; i < m_parameters.size(); ++i)
+        for (const auto param : m_parameters)
         {
-            m_parameters[i]->ReserveRegister(*this);
+            param->CodeGenCache(*this);
         }
     }
 
@@ -166,9 +205,7 @@ namespace NativeJIT
         {
             NodeBase& node = *m_topologicalSort[i];
 
-            // Assert(parentCount of zero legal only for last node);
-
-            if (node.GetParentCount() > 1 && !node.IsCached())
+            if (node.GetParentCount() > 1 && !node.IsEvaluated())
             {
                 node.CodeGenCache(*this);
             }
@@ -194,7 +231,7 @@ namespace NativeJIT
         std::cout << "Parameters:" << std::endl;
         for (unsigned i = 0 ; i < m_parameters.size(); ++i)
         {
-            m_parameters[i]->PrintParameter();
+            m_parameters[i]->Print();
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -210,16 +247,19 @@ namespace NativeJIT
         std::cout << "RXX Registers:" << std::endl;
         for (unsigned i = 0 ; i <= RegisterBase::c_maxIntegerRegisterID; ++i)
         {
-            std::cout << Register<8, false>(i).GetName();
-            if (m_rxxFreeList.IsAvailable(i))
-            {
-                std::cout << " free";
-            }
-            else
-            {
-                std::cout << " in use";
-            }
-            std::cout << std::endl;
+            std::cout << Register<8, false>(i).GetName()
+                      << (m_rxxFreeList.IsAvailable(i) ? " free" : " in use")
+                      << std::endl;
+        }
+
+        std::cout << std::endl;
+
+        std::cout << "XMM Registers:" << std::endl;
+        for (unsigned i = 0 ; i <= RegisterBase::c_maxFloatRegisterID; ++i)
+        {
+            std::cout << Register<8, true>(i).GetName()
+                      << (m_xmmFreeList.IsAvailable(i) ? " free" : " in use")
+                      << std::endl;
         }
 
         std::cout << "Temporaries used: " << m_temporaryCount << std::endl;

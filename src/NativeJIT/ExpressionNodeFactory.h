@@ -36,7 +36,7 @@ namespace NativeJIT
         // Leaf nodes
         //
         template <typename T> Node<T>& Immediate(T value);
-        template <typename T> ParameterNode<T>& Parameter();
+        template <typename T> ParameterNode<T>& Parameter(unsigned position);
 
         // See StackVariableNode for important information about stack variable
         // lifetime.
@@ -178,9 +178,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    ParameterNode<T>& ExpressionNodeFactory::Parameter()
+    ParameterNode<T>& ExpressionNodeFactory::Parameter(unsigned position)
     {
-        return * new (m_allocator.Allocate(sizeof(ParameterNode<T>))) ParameterNode<T>(*this);
+        return * new (m_allocator.Allocate(sizeof(ParameterNode<T>))) ParameterNode<T>(*this, position);
     }
 
 

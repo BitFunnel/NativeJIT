@@ -179,13 +179,10 @@ namespace NativeJIT
     template <typename PACKED, bool ISMAX>
     void PackedMinMaxNode<PACKED, ISMAX>::Print() const
     {
-        std::cout << "PackedMinMaxNode id=" << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", isMax = " << std::boolalpha << ISMAX
-                  << ", left = " << m_left.GetId()
-                  << ", right = " << m_right.GetId()
-                  << ", ";
+        PrintCoreProperties("PackedMinMaxNode");
 
-        PrintRegisterAndCacheInfo();
+        std::cout << ", isMax = " << std::boolalpha << ISMAX
+                  << ", left = " << m_left.GetId()
+                  << ", right = " << m_right.GetId();
     }
 }

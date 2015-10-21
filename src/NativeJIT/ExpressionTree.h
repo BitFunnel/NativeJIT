@@ -21,7 +21,6 @@ namespace NativeJIT
 {
     class FunctionBuffer;
     class NodeBase;
-    class ParameterBase;
     class RIPRelativeImmediate;
 
 
@@ -81,7 +80,7 @@ namespace NativeJIT
         // Tree construction
         //
         unsigned AddNode(NodeBase& node);
-        unsigned AddParameter(ParameterBase& parameter);
+        void AddParameter(NodeBase& parameter);
         void AddRIPRelative(RIPRelativeImmediate& node);
         void Compile();
 
@@ -247,7 +246,7 @@ namespace NativeJIT
         using FreeListForType = typename FreeListForRegister<RegisterStorage<T>::c_isFloat>;
 
         std::vector<NodeBase*> m_topologicalSort;
-        std::vector<ParameterBase*> m_parameters;
+        std::vector<NodeBase*> m_parameters;
         std::vector<RIPRelativeImmediate*> m_ripRelatives;
 
         FreeList<RegisterBase::c_maxIntegerRegisterID + 1> m_rxxFreeList;

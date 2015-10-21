@@ -87,13 +87,10 @@ namespace NativeJIT
     template <typename T>
     void ShldNode<T>::Print() const
     {
-        std::cout << "Shld id=" << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", shiftee = " << m_shiftee.GetId()
-                  << ", filler = " << m_filler.GetId()
-                  << ", bitCount = " << m_bitCount
-                  << ", ";
+        PrintCoreProperties("Shld");
 
-        PrintRegisterAndCacheInfo();
+        std::cout << ", shiftee = " << m_shiftee.GetId()
+                  << ", filler = " << m_filler.GetId()
+                  << ", bitCount = " << m_bitCount;
     }
 }

@@ -25,11 +25,8 @@ namespace NativeJIT
 
             //
             // TODO:
-            //   Register spilling
-            //   Storage class
             //   Other boolean operators: shift, sub, mul, etc.
             //   Signed vs unsigned
-            //   Richer integration examples (e.g. JitExample1)
             //   Test throws from within generated code.
             //
 
@@ -79,7 +76,6 @@ namespace NativeJIT
                 long long m_q;
             };
 #pragma pack(pop)
-
 
             TestCase(FieldPointerPrimitive)
             {
@@ -133,6 +129,41 @@ namespace NativeJIT
                     auto observed = function(p1);
 
                     TestAssert(observed == expected);
+                }
+            }
+
+
+            TestCase(FieldPointerEmbeddedCVE)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                {
+                    Function<unsigned __int64, OuterClass*> e(m_allocator, *m_code);
+
+                    // The inner variable has a single FieldPointer parent (the
+                    // outer parameter) and it is a common parent to both innerA
+                    // and innerB FieldPointers into the same object. Given that
+                    // FieldPointerNode has optimization related to collapsing
+                    // nested accesses to the same object, this test is meant
+                    // to implicitly ensure that cache references are set correctly
+                    // and that evaluations are done the expected number of times.
+                    auto & inner = e.FieldPointer(e.GetP1(), &OuterClass::m_innerEmbedded);
+                    auto & innerA = e.Deref(e.FieldPointer(inner, &InnerClass::m_a));
+                    auto & innerB = e.Deref(e.FieldPointer(inner, &InnerClass::m_b));
+
+                    auto & sum = e.Add(e.Cast<unsigned __int64>(innerA),
+                                       innerB);
+
+                    auto function = e.Compile(sum);
+
+                    OuterClass outerClass;
+                    outerClass.m_innerEmbedded.m_a = 10;
+                    outerClass.m_innerEmbedded.m_b = 1;
+
+                    auto expected = 11;
+                    auto observed = function(&outerClass);
+
+                    TestEqual(expected, observed);
                 }
             }
 

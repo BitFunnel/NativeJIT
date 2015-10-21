@@ -44,6 +44,7 @@ namespace NativeJIT
           m_right(right)
     {
         m_left.IncrementParentCount();
+        // m_right is not a Node, so no IncrementParentCount() call.
     }
 
 
@@ -69,13 +70,12 @@ namespace NativeJIT
     template <OpCode OP, typename L, typename R>
     void BinaryImmediateNode<OP, L, R>::Print() const
     {
-        std::cout << "Operation (" << X64CodeGenerator::OpCodeName(OP) << ")"
-                  << " id = " << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", left = " << m_left.GetId()
-                  << ", right = " << m_right
-                  << ", ";
+        const std::string name = std::string("Operation (")
+            + X64CodeGenerator::OpCodeName(OP)
+            + ") ";
+        PrintCoreProperties(name.c_str());
 
-        PrintRegisterAndCacheInfo();
+        std::cout << ", left = " << m_left.GetId()
+                  << ", right = " << m_right;
     }
 }

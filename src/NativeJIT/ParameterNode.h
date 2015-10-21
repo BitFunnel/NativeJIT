@@ -7,26 +7,16 @@
 
 namespace NativeJIT
 {
-    class ParameterBase
-    {
-    public:
-        ParameterBase(ExpressionTree& tree);
-
-        unsigned GetPosition() const;
-        void PrintParameter() const;
-
-        virtual void ReserveRegister(ExpressionTree& tree) = 0;
-
-    private:
-        unsigned m_position;
-    };
-
-
     template <typename T>
-    class ParameterNode : public Node<T>, ParameterBase
+    class ParameterNode : public Node<T>
     {
     public:
-        ParameterNode(ExpressionTree& tree);
+        ParameterNode(ExpressionTree& tree, unsigned position);
+
+        //
+        // Overrides of NodeBase methods.
+        //
+        virtual void ReleaseReferencesToChildren() override;
 
         //
         // Overrides of Node methods.
@@ -35,11 +25,8 @@ namespace NativeJIT
 
         virtual void Print() const override;
 
-
-        //
-        // Overrides of ParameterBase methods.
-        //
-        virtual void ReserveRegister(ExpressionTree& tree) override;
+    private:
+        unsigned m_position;
     };
 
 
@@ -48,9 +35,6 @@ namespace NativeJIT
     // Template definitions for ParameterNode
     //
     //*************************************************************************
-    template <unsigned SIZE, bool ISFLOAT>
-    void GetParameterRegister(unsigned id, Register<SIZE, ISFLOAT>& r);
-
 
     template <unsigned SIZE>
     void GetParameterRegister(unsigned id, Register<SIZE, false>& r)
@@ -61,7 +45,7 @@ namespace NativeJIT
 
         // Integer parameters are passed in RCX, RDX, R8, and R9.
         // TODO: Use constants to encode registers.
-        static unsigned idMap[] = {1, 2, 8, 9};
+        static const unsigned idMap[] = {1, 2, 8, 9};
 
         r = Register<SIZE, false>(idMap[id]);
     }
@@ -80,41 +64,39 @@ namespace NativeJIT
 
 
     template <typename T>
-    ParameterNode<T>::ParameterNode(ExpressionTree& tree)
+    ParameterNode<T>::ParameterNode(ExpressionTree& tree, unsigned position)
         : Node(tree),
-          ParameterBase(tree)
+          m_position(position)
     {
+        // Parameter nodes are always considered to be inside the tree (as a
+        // part of the function being compiled) even when they are not referenced.
+        MarkInsideTree();
+        tree.AddParameter(*this);
     }
 
 
     template <typename T>
-    typename ExpressionTree::Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& /*tree*/)
+    void ParameterNode<T>::ReleaseReferencesToChildren()
     {
-        Assert(IsCached(), "Must assign register before attempting code generation.");
+        // No children to release.
+    }
 
-        auto result = GetCache();
-        ReleaseCache();
-        return result;
+
+    template <typename T>
+    typename ExpressionTree::Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& tree)
+    {
+        Storage<T>::DirectRegister reg;
+        GetParameterRegister(m_position, reg);
+
+        return tree.Direct<T>(reg);
     }
 
 
     template <typename T>
     void ParameterNode<T>::Print() const
     {
-        std::cout << "ParameterNode id=" << GetId();
-        std::cout << ", parents = " << GetParentCount();
-        std::cout << ", position = " << GetPosition();
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
-    }
+        PrintCoreProperties("ParameterNode");
 
-
-    template <typename T>
-    void ParameterNode<T>::ReserveRegister(ExpressionTree& tree)
-    {
-        RegisterType r;
-        GetParameterRegister(GetPosition(), r);
-
-        SetCache(tree.Direct<T>(r));
+        std::cout << ", position = " << m_position;
     }
 }

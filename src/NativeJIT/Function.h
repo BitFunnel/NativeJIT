@@ -145,10 +145,11 @@ namespace NativeJIT
         static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
         static_assert(std::is_pod<P4>::value, "P4 must be a POD type.");
 
-        m_p1 = &Parameter<P1>();
-        m_p2 = &Parameter<P2>();
-        m_p3 = &Parameter<P3>();
-        m_p4 = &Parameter<P4>();
+        unsigned position = 0;
+        m_p1 = &Parameter<P1>(position++);
+        m_p2 = &Parameter<P2>(position++);
+        m_p3 = &Parameter<P3>(position++);
+        m_p4 = &Parameter<P4>(position++);
     }
 
 
@@ -221,9 +222,10 @@ namespace NativeJIT
         static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
         static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
 
-        m_p1 = &Parameter<P1>();
-        m_p2 = &Parameter<P2>();
-        m_p3 = &Parameter<P3>();
+        unsigned position = 0;
+        m_p1 = &Parameter<P1>(position++);
+        m_p2 = &Parameter<P2>(position++);
+        m_p3 = &Parameter<P3>(position++);
     }
 
 
@@ -288,8 +290,9 @@ namespace NativeJIT
         static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
         static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
 
-        m_p1 = &Parameter<P1>();
-        m_p2 = &Parameter<P2>();
+        unsigned position = 0;
+        m_p1 = &Parameter<P1>(position++);
+        m_p2 = &Parameter<P2>(position++);
     }
 
 
@@ -346,7 +349,8 @@ namespace NativeJIT
         static_assert(std::is_pod<R>::value, "R must be a POD type.");
         static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
 
-        m_p1 = &Parameter<P1>();
+        unsigned position = 0;
+        m_p1 = &Parameter<P1>(position++);
     }
 
 

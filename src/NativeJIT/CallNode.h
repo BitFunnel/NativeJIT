@@ -386,17 +386,13 @@ namespace NativeJIT
     template <typename R, unsigned PARAMETERCOUNT>
     void CallNodeBase<R, PARAMETERCOUNT>::Print() const
     {
-        std::cout << "CallNode id=" << GetId();
-        std::cout << ", parents = " << GetParentCount();
+        PrintCoreProperties("CallNode");
 
         for (unsigned i = 0 ; i < c_childCount; ++i)
         {
             std::cout << ", ";
             m_children[i]->Print();
         }
-
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
     }
 
 

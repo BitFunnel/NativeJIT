@@ -110,9 +110,6 @@
     <ClCompile Include="Examples.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParameterNode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CallNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

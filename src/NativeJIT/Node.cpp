@@ -16,7 +16,9 @@ namespace NativeJIT
     //*************************************************************************
     NodeBase::NodeBase(ExpressionTree& tree)
         : m_id(tree.AddNode(*this)),
-          m_parentCount(0)
+          m_parentCount(0),
+          m_isEvaluated(false),
+          m_isInsideTree(false)
     {
     }
 
@@ -27,11 +29,50 @@ namespace NativeJIT
     }
 
 
-    // TODO: Figure out a way to make it less probable/impossible to forget to
-    // call this.
     void NodeBase::IncrementParentCount()
     {
+        Assert(!IsEvaluated(), "Cannot change the parent count after the node was evaluated");
+
         ++m_parentCount;
+        MarkInsideTree();
+    }
+
+
+    void NodeBase::DecrementParentCount()
+    {
+        Assert(!IsEvaluated(), "Cannot change the parent count after the node was evaluated");
+        Assert(m_parentCount > 0,
+               "Cannot decrement parent count of node %u with zero parents",
+               GetId());
+
+        --m_parentCount;
+        // Note: m_isInsideTree is not affected by this, decrementing the parent
+        // count is optimization-related call which doesn't change the
+        // fact that a node at least conceptually belongs inside the tree.
+    }
+
+
+    bool NodeBase::IsEvaluated() const
+    {
+        return m_isEvaluated;
+    }
+
+
+    void NodeBase::MarkEvaluated()
+    {
+        m_isEvaluated = true;
+    }
+
+
+    bool NodeBase::IsInsideTree() const
+    {
+        return m_isInsideTree;
+    }
+
+
+    void NodeBase::MarkInsideTree()
+    {
+        m_isInsideTree = true;
     }
 
 
@@ -47,9 +88,23 @@ namespace NativeJIT
     }
 
 
-    __int32 NodeBase::GetOffset() const
+    bool NodeBase::CanBeOptimizedAway() const
     {
-        return 0;
+        return GetParentCount() == 0;
+    }
+
+
+    void NodeBase::ReleaseReferencesToChildren()
+    {
+        Assert(false,
+               "Don't know how to remove optimized away references for node with ID %u (orphan node?)",
+               GetId());
+    }
+
+
+    bool NodeBase::GetBaseAndOffset(NodeBase*& /* base */, __int32& /* offset */) const
+    {
+        return false;
     }
 
 

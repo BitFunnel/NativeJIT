@@ -39,12 +39,9 @@ namespace NativeJIT
     template <typename T>
     void PointerNode<T>::Print() const
     {
-        std::cout << "PointerNode id=" << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", reference " << m_reference.GetId()
-                  << ", ";
+        PrintCoreProperties("PointerNode");
 
-        PrintRegisterAndCacheInfo();
+        std::cout << ", reference " << m_reference.GetId();
     }
 
 

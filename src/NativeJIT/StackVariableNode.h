@@ -38,8 +38,7 @@ namespace NativeJIT
     template <typename T>
     void StackVariableNode<T>::Print() const
     {
-        std::cout << "StackVariableNode id=" << GetId()
-                  << ", parents = " << GetParentCount();
+        PrintCoreProperties("StackVariableNode");
 
         if (!m_stackStorage.IsNull())
         {
@@ -50,9 +49,6 @@ namespace NativeJIT
         {
             std::cout << ", storage not yet assigned";
         }
-
-        std::cout << ", ";
-        PrintRegisterAndCacheInfo();
     }
 
 
