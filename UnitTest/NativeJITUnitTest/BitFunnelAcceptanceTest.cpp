@@ -60,7 +60,7 @@ namespace NativeJIT
             // TODO: Will eventually need a way to resolve the address of LookupHelper on remote system.
             // Either ProcessResources contains all function pointers for various feature types or
             // codegen does casts or inline lookup code.
-            static TermFeatures LookupHelper(TermScoreTable* table, TermHash key)
+            static TermFeatures LookupHelper(TermScoreTable* /* table */, TermHash /* key */)
             {
                 return TermFeatures();
             }
@@ -111,7 +111,7 @@ namespace NativeJIT
                     Function<int, ProcessResources*, Shard, DocIndex> expression(m_allocator, *m_code);
 
                     auto & processResources = expression.GetP1();
-                    auto & shard = expression.GetP2();
+                    /* auto & shard = */ expression.GetP2();
                     auto & docIndex = expression.GetP3();
 
                     // TODO: Is LookupHelperType necessary?
@@ -137,11 +137,11 @@ namespace NativeJIT
 
                     auto & result = expression.Call(callback, docId, termScore1);
 
-                    auto function = expression.Compile(result);
+                    /* auto function = */ expression.Compile(result);
 
                     //ProcessResources p1;
-                    Shard p2 = 3;
-                    DocIndex p3 = 0x1234;
+                    // Shard p2 = 3;
+                    // DocIndex p3 = 0x1234;
 
                     //auto expected = model.Apply(packedParameter);
                     //auto observed = function(&p1, p2, p3);

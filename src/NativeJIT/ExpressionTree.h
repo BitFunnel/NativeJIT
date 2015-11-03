@@ -433,7 +433,8 @@ namespace NativeJIT
         // static_assert triggered because for some of them (arrays) the method
         // has invalid declaration otherwise.
         template <typename U = T,
-                  typename ENABLED = typename std::enable_if<IsValidImmediate<U>::value>::type>
+                  typename ENABLED = typename std::enable_if<ImmediateCategoryOf<U>::value
+                                                             == ImmediateCategory::CoreImmediate>::type>
         U GetImmediate() const;
 
         DirectRegister ConvertToDirect(bool forModification);
@@ -467,11 +468,11 @@ namespace NativeJIT
         // StorageClass::Immediate storage for an invalid immediate, the code
         // that branches depending on various types of storage needs to always
         // compile.
-        struct ValidImmediate {};
-        struct InvalidImmediate {};
-        typedef typename std::conditional<IsValidImmediate<T>::value,
-                                          ValidImmediate,
-                                          InvalidImmediate>::type
+        struct ValidImmediateStorage {};
+        struct InvalidImmediateStorage {};
+        typedef typename std::conditional<CanBeInImmediateStorage<T>::value,
+                                          ValidImmediateStorage,
+                                          InvalidImmediateStorage>::type
             ImmediateFlavor;
 
         Storage(ExpressionTree::Data* data);
@@ -479,11 +480,11 @@ namespace NativeJIT
         void SetData(ExpressionTree::Data* data);
         void SetData(Storage& other);
 
-        void ConvertImmediateToDirect(bool forModification, ValidImmediate);
-        void ConvertImmediateToDirect(bool forModification, InvalidImmediate);
+        void ConvertImmediateToDirect(bool forModification, ValidImmediateStorage);
+        void ConvertImmediateToDirect(bool forModification, InvalidImmediateStorage);
 
-        void PrintImmediate(std::ostream& out, ValidImmediate) const;
-        void PrintImmediate(std::ostream& out, InvalidImmediate) const;
+        void PrintImmediate(std::ostream& out, ValidImmediateStorage) const;
+        void PrintImmediate(std::ostream& out, InvalidImmediateStorage) const;
 
         ExpressionTree::Data* m_data;
     };
@@ -710,7 +711,7 @@ namespace NativeJIT
           m_offset(0),
           m_refCount(0)
     {
-        static_assert(IsValidImmediate<T>::value, "Invalid immediate type");
+        static_assert(CanBeInImmediateStorage<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         *reinterpret_cast<T*>(&m_immediate) = value;
 
@@ -722,7 +723,7 @@ namespace NativeJIT
     template <typename T>
     T ExpressionTree::Data::GetImmediate() const
     {
-        static_assert(IsValidImmediate<T>::value, "Invalid immediate type");
+        static_assert(CanBeInImmediateStorage<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         Assert(m_storageClass == StorageClass::Immediate, "GetImmediate() called for non-immediate storage!");
 
@@ -1092,7 +1093,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool forModification, ValidImmediate)
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool forModification, ValidImmediateStorage)
     {
         Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
 
@@ -1111,7 +1112,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool /* forModification */, InvalidImmediate)
+    void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool /* forModification */, InvalidImmediateStorage)
     {
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.
@@ -1302,14 +1303,14 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, ValidImmediate) const
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, ValidImmediateStorage) const
     {
         out << "immediate value " << std::hex << GetImmediate() << "h" << std::dec;
     }
 
 
     template <typename T>
-    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& /* out */, InvalidImmediate) const
+    void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& /* out */, InvalidImmediateStorage) const
     {
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.

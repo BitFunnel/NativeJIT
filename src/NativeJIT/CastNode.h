@@ -23,16 +23,16 @@ namespace NativeJIT
     {
         // All the possible types of casts. Note that integer applies to register
         // type, i.e. everything that is not a floating point.
-        enum class Cast { NoOp, Int, Float, IntToFloat, FloatToInt };
+        enum class Cast { NoOp, IntToInt, FloatToFloat, IntToFloat, FloatToInt };
 
         // A class used to specialize code generation for casts that can be
         // implemented directly using the X64 conversion instructions.
         template <Cast TYPE>
-        struct DirectCastGenerator
+        struct OneStepCastGenerator
         {
             template <typename TO, typename FROM>
-            static ExpressionTree::Storage<TO>
-            Generate(ExpressionTree& tree, ExpressionTree::Storage<FROM>& source);
+            static Storage<TO>
+            Generate(ExpressionTree& tree, Storage<FROM>& source);
         };
 
 
@@ -49,15 +49,17 @@ namespace NativeJIT
 
         // Properties for a cast.
         template <typename TO, typename FROM>
-        struct Traits
+        class Traits
         {
+        public:
             static_assert(std::is_reference<FROM>::value == std::is_reference<TO>::value,
                           "Both/neither type must be a reference");
 
             // Source and target register types and properties.
-            typedef typename ExpressionTree::Storage<FROM>::DirectRegister FromRegister;
-            typedef typename ExpressionTree::Storage<TO>::DirectRegister ToRegister;
+            typedef typename Storage<FROM>::DirectRegister FromRegister;
+            typedef typename Storage<TO>::DirectRegister ToRegister;
 
+        private:
             static const bool c_isSameRegisterType = std::is_same<FromRegister, ToRegister>::value;
             static const bool c_isSameFloatValue = FromRegister::c_isFloat == ToRegister::c_isFloat;
 
@@ -86,36 +88,41 @@ namespace NativeJIT
                       && !FromRegister::c_isFloat
                       && FromRegister::c_size > ToRegister::c_size);
 
+        public:
             // Determine which type of cast should be performed.
             static const Cast c_castType
                 = c_isNoOp
                   ? Cast::NoOp
                   : (c_isSameFloatValue
-                     ? (FromRegister::c_isFloat ? Cast::Float : Cast::Int)
+                     ? (FromRegister::c_isFloat ? Cast::FloatToFloat : Cast::IntToInt)
                      : (FromRegister::c_isFloat ? Cast::FloatToInt : Cast::IntToFloat));
 
-            // Check whether an int to float cast can be done directly.
-            static const bool c_isDirectIntToFloatCast
+        private:
+            // Check whether an int to float cast can be done using a single x64
+            // conversion instruction.
+            static const bool c_isOneStepIntToFloatCast
                 = c_castType == Cast::IntToFloat
-                  && (std::is_same<FROM, __int32>::value
-                      || std::is_same<FROM, __int64>::value);
+                  && (std::is_same<std::remove_cv<FROM>::type, __int32>::value
+                      || std::is_same<std::remove_cv<FROM>::type, __int64>::value);
 
-            // Check whether a float to int cast can be done directly.
-            static const bool c_isDirectFloatToIntCast
+            // Check whether a float to int cast can be done using a single x64
+            // conversion instruction.
+            static const bool c_isOneStepFloatToIntCast
                 = c_castType == Cast::FloatToInt
-                  && (std::is_same<TO, __int32>::value
-                      || std::is_same<TO, __int64>::value);
+                  && (std::is_same<std::remove_cv<TO>::type, __int32>::value
+                      || std::is_same<std::remove_cv<TO>::type, __int64>::value);
 
-            static const bool c_isDirectCast
+        public:
+            static const bool c_isOneStepCast
                 = c_castType == Cast::NoOp
-                  || c_castType == Cast::Int
-                  || c_castType == Cast::Float
-                  || c_isDirectIntToFloatCast
-                  || c_isDirectFloatToIntCast;
+                  || c_castType == Cast::IntToInt
+                  || c_castType == Cast::FloatToFloat
+                  || c_isOneStepIntToFloatCast
+                  || c_isOneStepFloatToIntCast;
         };
 
 
-        // Cast using a static_cast for convertible types.
+        // Cast using a static_cast for convertible immediates.
         template <typename TO, typename FROM>
         TO ForcedCast(FROM from,
                       typename std::enable_if<std::is_convertible<FROM, TO>::value>::type* = nullptr)
@@ -124,26 +131,48 @@ namespace NativeJIT
         }
 
 
-        // Cast using a reinterpret_cast for non-convertible types of the same size.
+        // Cast using a reinterpret_cast for non-convertible immediates of the
+        // same size.
         template <typename TO, typename FROM>
         TO ForcedCast(FROM from,
-                      typename std::enable_if<!std::is_convertible<FROM, TO>::value
-                                              && sizeof(FROM) == sizeof(TO)>::type* = nullptr)
+                      typename std::enable_if<!std::is_convertible<FROM, TO>::value>::type* = nullptr)
         {
+            static_assert(sizeof(FROM) == sizeof(TO),
+                          "Cannot do a forced cast between incompatible types of different sizes");
+
             return *reinterpret_cast<TO*>(&from);
         }
+
+
+        // A class used to specialize code generation for casts that need to
+        // convert between two immediate storages. The class is needed instead
+        // of a simple if/else branch because f. ex. if TO type belongs to a
+        // RIPRelativeImmediate category, the if/else branch that contained 
+        // a tree.Immediate() call would fail to compile.
+        // Two levels of structs are used to allow different template specializations.
+        template <ImmediateCategory FROMCATEGORY>
+        struct FromImmediate
+        {
+            template <Cast CASTTYPE, ImmediateCategory TOCATEGORY>
+            struct CastGenerator
+            {
+                template <typename TO, typename FROM>
+                static Storage<TO>
+                Generate(ExpressionTree& tree, Storage<FROM>& source);
+            };
+        };
     }
 
 
-    // The CastNode is partially specialized depending on whether or not a direct
+    // The CastNode is partially specialized depending on whether or not a one-step
     // cast can be used.
     template <typename TO,
               typename FROM,
-              bool ISDIRECT = Casting::Traits<TO, FROM>::c_isDirectCast>
+              bool ISONESTEP = Casting::Traits<TO, FROM>::c_isOneStepCast>
     class CastNode;
 
 
-    // Direct cast version of the CastNode.
+    // One-step cast version of the CastNode.
     template <typename TO, typename FROM>
     class CastNode<TO, FROM, true> : public Node<TO>
     {
@@ -154,7 +183,7 @@ namespace NativeJIT
         // Overrides of Node methods.
         //
 
-        virtual ExpressionTree::Storage<TO> CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<TO> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -176,7 +205,7 @@ namespace NativeJIT
         // Overrides of Node methods.
         //
 
-        virtual ExpressionTree::Storage<TO> CodeGenValue(ExpressionTree& tree) override;
+        virtual Storage<TO> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
@@ -190,7 +219,7 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template definitions for direct CastNode.
+    // Template definitions for the one-step CastNode.
     //
     //*************************************************************************
 
@@ -204,12 +233,14 @@ namespace NativeJIT
 
 
     template <typename TO, typename FROM>
-    typename ExpressionTree::Storage<TO>
+    typename Storage<TO>
     CastNode<TO, FROM, true>::CodeGenValue(ExpressionTree& tree)
     {
         auto source = m_from.CodeGen(tree);
 
-        return Casting::DirectCastGenerator<Traits::c_castType>::Generate<TO, FROM>(tree, source);
+        return Casting
+            ::OneStepCastGenerator<Traits::c_castType>
+            ::Generate<TO, FROM>(tree, source);
     }
 
 
@@ -226,7 +257,7 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     void CastNode<TO, FROM, true>::Print() const
     {
-        std::cout << "CastNode (direct) id = " << GetId()
+        std::cout << "CastNode (one-step) id = " << GetId()
                   << ", parents = " << GetParentCount()
                   << ", from = " << m_from.GetId()
                   << ", ";
@@ -247,13 +278,12 @@ namespace NativeJIT
           m_conversionNode(Casting::CompositeCastNodeBuilder<Casting::Traits<TO, FROM>::c_castType>
                             ::Build<TO, FROM>(tree, from))
     {
-        from.IncrementParentCount();
         m_conversionNode.IncrementParentCount();
     }
 
 
     template <typename TO, typename FROM>
-    typename ExpressionTree::Storage<TO>
+    typename Storage<TO>
     CastNode<TO, FROM, false>::CodeGenValue(ExpressionTree& tree)
     {
         return m_conversionNode.CodeGen(tree);
@@ -272,7 +302,7 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     void CastNode<TO, FROM, false>::Print() const
     {
-        std::cout << "CastNode (indirect) id = " << GetId()
+        std::cout << "CastNode (composite) id = " << GetId()
                   << ", parents = " << GetParentCount()
                   << ", conversionNode = " << m_conversionNode.GetId()
                   << ", ";
@@ -284,26 +314,26 @@ namespace NativeJIT
     namespace Casting
     {
         //
-        // Template definitions for direct DirectCastGenerator.
+        // Template definitions for OneStepCastGenerator.
         //
 
         // No-op cast.
         template <>
         template <typename TO, typename FROM>
-        ExpressionTree::Storage<TO>
-        DirectCastGenerator<Cast::NoOp>::Generate(ExpressionTree& /* tree */, ExpressionTree::Storage<FROM>& source)
+        Storage<TO>
+        OneStepCastGenerator<Cast::NoOp>::Generate(ExpressionTree& /* tree */, Storage<FROM>& source)
         {
-            return ExpressionTree::Storage<TO>(source);
+            return Storage<TO>(source);
         }
 
 
         // Cast between two float registers.
         template <>
         template <typename TO, typename FROM>
-        ExpressionTree::Storage<TO>
-        DirectCastGenerator<Cast::Float>::Generate(ExpressionTree& tree, ExpressionTree::Storage<FROM>& source)
+        Storage<TO>
+        OneStepCastGenerator<Cast::FloatToFloat>::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {
-            static_assert(Traits<TO, FROM>::c_isDirectCast, "Invalid direct cast.");
+            static_assert(Traits<TO, FROM>::c_isOneStepCast, "Invalid one-step cast.");
 
             auto target = tree.Direct<TO>();
 
@@ -318,16 +348,16 @@ namespace NativeJIT
         // Cast between two integer registers.
         template <>
         template <typename TO, typename FROM>
-        ExpressionTree::Storage<TO>
-        DirectCastGenerator<Cast::Int>::Generate(ExpressionTree& tree, ExpressionTree::Storage<FROM>& source)
+        Storage<TO>
+        OneStepCastGenerator<Cast::IntToInt>::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {
             typedef Traits<TO, FROM> Traits;
 
-            static_assert(Traits::c_isDirectCast, "Invalid direct cast.");
+            static_assert(Traits::c_isOneStepCast, "Invalid one-step cast.");
             static_assert(Traits::FromRegister::c_size < Traits::ToRegister::c_size,
-                          "Invalid direct cast.");
+                          "Invalid one-step cast.");
 
-            typedef ExpressionTree::Storage<TO> ToStorage;
+            typedef Storage<TO> ToStorage;
 
             // The cast needs to extend the source storage to a larger target.
             // Depending on the signedness of the source type, use sign extension
@@ -341,8 +371,10 @@ namespace NativeJIT
             switch (source.GetStorageClass())
             {
             case StorageClass::Immediate:
-                // Use the compiler to perform the cast.
-                result = tree.Immediate(Casting::ForcedCast<TO, FROM>(source.GetImmediate()));
+                result = Casting
+                    ::FromImmediate<ImmediateCategoryOf<FROM>::value>
+                    ::CastGenerator<Cast::IntToInt, ImmediateCategoryOf<TO>::value>
+                    ::Generate<TO, FROM>(tree, source);
                 break;
 
             case StorageClass::Indirect:
@@ -388,51 +420,45 @@ namespace NativeJIT
         // Cast from integer to float register.
         template <>
         template <typename TO, typename FROM>
-        ExpressionTree::Storage<TO>
-        DirectCastGenerator<Cast::IntToFloat>::Generate(ExpressionTree& tree, ExpressionTree::Storage<FROM>& source)
+        Storage<TO>
+        OneStepCastGenerator<Cast::IntToFloat>::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {
-            static_assert(Traits<TO, FROM>::c_isDirectCast, "Invalid direct cast.");
+            static_assert(Traits<TO, FROM>::c_isOneStepCast, "Invalid one-step cast.");
 
-            auto target = tree.Direct<TO>();
+            Storage<TO> result;
 
             if (source.GetStorageClass() == StorageClass::Immediate)
             {
-                // The conversion instruction doesn't have the flavor which
-                // converts from an immediate. Use the compiler to get the
-                // target floating point value and place it directly into
-                // the target register through a temporary.
-                //
-                // NOTE: MovThroughTemporary allocates a temporary *integer*
-                // register to perform the move. There is no danger that the
-                // register allocated for the "target" Storage above will be
-                // spilled since it is a *floating point* register.
-                CodeGenHelpers::MovThroughTemporary(tree,
-                                                    target.GetDirectRegister(),
-                                                    static_cast<TO>(source.GetImmediate()));
+                result = Casting
+                    ::FromImmediate<ImmediateCategoryOf<FROM>::value>
+                    ::CastGenerator<Cast::IntToFloat, ImmediateCategoryOf<TO>::value>
+                    ::Generate<TO, FROM>(tree, source);
             }
             else
             {
+                result = tree.Direct<TO>();
+
                 // TODO: Implement xorps/xorpd and add a "xor target, target" call to
                 // clear the target FP register before changing its lower 32/64 bits.
                 // Doing that will prevent a partial register stall.
                 using namespace CodeGenHelpers;
                 Emitter<RegTypes::Different, ImmediateType::NotAllowed>
                     ::Emit<OpCode::CvtSI2FP>(tree.GetCodeGenerator(),
-                                             target.GetDirectRegister(),
+                                             result.GetDirectRegister(),
                                              source);
             }
 
-            return target;
+            return result;
         }
 
 
         // Cast from float to integer register.
         template <>
         template <typename TO, typename FROM>
-        ExpressionTree::Storage<TO>
-        DirectCastGenerator<Cast::FloatToInt>::Generate(ExpressionTree& tree, ExpressionTree::Storage<FROM>& source)
+        Storage<TO>
+        OneStepCastGenerator<Cast::FloatToInt>::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {
-            static_assert(Traits<TO, FROM>::c_isDirectCast, "Invalid direct cast.");
+            static_assert(Traits<TO, FROM>::c_isOneStepCast, "Invalid one-step cast.");
 
             auto target = tree.Direct<TO>();
 
@@ -445,19 +471,105 @@ namespace NativeJIT
 
 
         // A helper method to build two cast nodes which would convert from FROM
-        // to TO by using direct casts through an INTERMEDIATE.
+        // to TO by using one-step casts through an INTERMEDIATE.
         template <typename TO, typename INTERMEDIATE, typename FROM>
         Node<TO>& TwoStepCast(ExpressionNodeFactory& tree, Node<FROM>& from)
         {
-            static_assert(Traits<FROM, INTERMEDIATE>::c_isDirectCast, "Must be a direct cast.");
-            static_assert(Traits<INTERMEDIATE, TO>::c_isDirectCast, "Must be a direct cast.");
+            static_assert(Traits<FROM, INTERMEDIATE>::c_isOneStepCast, "Must be a one-step cast.");
+            static_assert(Traits<INTERMEDIATE, TO>::c_isOneStepCast, "Must be a one-step cast.");
 
             return tree.Cast<TO, INTERMEDIATE>(tree.Cast<INTERMEDIATE, FROM>(from));
         }
 
 
         //
-        // Template definitions for direct CompositeCastNodeBuilder.
+        // Template definitions for FromImmediate::CastGenerator.
+        //
+
+        // Target can be represented as a core immediate so an immediate Storage
+        // can be used.
+        template <>
+        template <>
+        template <typename TO, typename FROM>
+        Storage<TO>
+        FromImmediate<ImmediateCategory::CoreImmediate>
+            ::CastGenerator<Cast::IntToInt, ImmediateCategory::CoreImmediate>
+            ::Generate(ExpressionTree& tree, Storage<FROM>& source)
+        {
+            return tree.Immediate(ForcedCast<TO, FROM>(source.GetImmediate()));
+        }
+
+
+        // Target requires a RIP relative immediate, so a direct register has
+        // to be used instead of an immediate Storage.
+        template <>
+        template <>
+        template <typename TO, typename FROM>
+        Storage<TO>
+        FromImmediate<ImmediateCategory::CoreImmediate>
+            ::CastGenerator<Cast::IntToInt, ImmediateCategory::RIPRelativeImmediate>
+            ::Generate(ExpressionTree& tree, Storage<FROM>& source)
+        {
+            Storage<TO> result = tree.Direct<TO>();
+
+            // After the compiler performs the cast, move the value to a direct register.
+            auto targetImmediate = Casting::ForcedCast<TO, FROM>(source.GetImmediate());
+            tree.GetCodeGenerator().EmitImmediate<OpCode::Mov>(result.GetDirectRegister(),
+                                                               targetImmediate);
+
+            return result;
+        }
+
+
+        // The integer to floating point conversion instruction doesn't have the
+        // flavor which converts from an immediate directly. Use the compiler
+        // to get the target floating point value and place it directly into
+        // the target register through a temporary.
+        template <>
+        template <>
+        template <typename TO, typename FROM>
+        Storage<TO>
+        FromImmediate<ImmediateCategory::CoreImmediate>
+            ::CastGenerator<Cast::IntToFloat, ImmediateCategory::RIPRelativeImmediate>
+            ::Generate(ExpressionTree& tree, Storage<FROM>& source)
+        {
+            Storage<TO> result = tree.Direct<TO>();
+
+            // NOTE: MovThroughTemporary allocates a temporary *integer*
+            // register to perform the move. There is no danger that the
+            // register allocated for the "target" Storage above will be
+            // spilled since it is a *floating point* register.
+            CodeGenHelpers::MovThroughTemporary(tree,
+                                                result.GetDirectRegister(),
+                                                static_cast<TO>(source.GetImmediate()));
+
+            return result;
+        }
+
+
+        // Fallback case which should never be reachable.
+        template <ImmediateCategory FROMCATEGORY>
+        template <Cast CASTTYPE, ImmediateCategory TOCATEGORY>
+        template <typename TO, typename FROM>
+        Storage<TO>
+        FromImmediate<FROMCATEGORY>
+            ::CastGenerator<CASTTYPE, TOCATEGORY>
+            ::Generate(ExpressionTree& /* tree */, Storage<FROM>& /* source */)
+        {
+            static_assert(Traits<TO, FROM>::c_isOneStepCast, "Invalid one-step cast.");
+
+            // The compile time checks should prevent writing code that will
+            // reach this point. Since GetStorageClass() is a runtime method, it's
+            // necessary to provide a body for the remaining cases even though
+            // they should not be reachable.
+            Assert(false, "Unexpected immediate type");
+
+            return Storage<TO>();
+        }
+
+
+        //
+        // Template definitions for CompositeCastNodeBuilder.
         //
 
 // Supress warning about constant expression involving template parameters.
@@ -474,18 +586,26 @@ namespace NativeJIT
 
             if (sizeof(FROM) <= 2)
             {
-                // Two direct casts: [unsigned] __int8/16 -> __int32 -> float.
+                // Two one-step casts: [unsigned] __int8/16 -> __int32 -> float.
+                // Note that both unsigned __int8/16 can fully fit into a signed
+                // __int32.
                 result = &TwoStepCast<TO, __int32, FROM>(tree, from);
             }
             else if (sizeof(FROM) == 4)
             {
-                // Two direct casts: __int32 -> __int64 -> float.
+                // This path can only be reached for unsigned __int32 (cast from
+                // a signed __int32 is a one-step cast). Cast using two one-step
+                // casts: unsigned __int32 -> __int64 -> float.
                 result = &TwoStepCast<TO, __int64, FROM>(tree, from);
             }
             else
             {
-                // Cast unsigned __int64 to float as if it is a signed __int64
-                // and add 2^64 if the signed __int64 was negative to adjust.
+                // This path can only be reached for unsigned __int64 (cast from
+                // a signed __int64 is a one-step cast). Cast it to float as if it
+                // was a signed __int64. If the number observed as signed __int64
+                // was negative, such a conversion would have produced a number
+                // that's 2^64 smaller than expected. Add 2^64 back case to adjust
+                // in that case. This is how VC++ does the conversion as well.
 
                 // This test could be done with the group 3 "test" instruction
                 // in case it was available.
@@ -522,19 +642,19 @@ namespace NativeJIT
             // integer or if the float is too large.
             if (sizeof(TO) <= 2)
             {
-                // Two direct casts: float -> __int32 -> [unsigned] __int8/16.
+                // Two one-step casts: float -> __int32 -> [unsigned] __int8/16.
                 result = &TwoStepCast<TO, __int32, FROM>(tree, from);
             }
             else if (sizeof(TO) == 4)
             {
-                // Two direct casts: float -> __int64 -> unsigned __int32.
+                // Two one-step casts: float -> __int64 -> unsigned __int32.
                 result = &TwoStepCast<TO, __int64, FROM>(tree, from);
             }
             else
             {
                 // When converting unsigned __int64 to float, there are two
                 // branches: if the float is smaller than 2^63 and it will fit
-                // into a signed __int64, use essentially a direct cast.
+                // into a signed __int64, use essentially a one-step cast.
                 // Otherwise, subtract 2^63 from the floating point, convert
                 // to signed __int64 and add (integer) 2^63 to the result.
                 unsigned __int64 twoToThePowerOf63 = 1ull << 63;

@@ -8,24 +8,21 @@
 
 namespace NativeJIT
 {
-    template <typename T>
-    struct RequiresRIPRelativeImmediate
+    template <typename T, ImmediateCategory IMMCATEGORY = ImmediateCategoryOf<T>::value>
+    class ImmediateNode : public Node<T>
     {
-        // Floating point instructions don't allow for immediate values,
-        // so RIP-relative indirect must be used. Also, many instructions taking
-        // an integer immediate (such as Add, Cmp etc) do not have a form which
-        // takes a 64-bit immediate and need a RIP-relative indirect.
-        static const bool c_value = RegisterStorage<T>::c_isFloat
-                                    || RegisterStorage<T>::c_size == 8;
     };
 
 
-    template <typename T, typename ENABLE = void>
-    class ImmediateNode : public Node<T>
+    //*************************************************************************
+    //
+    // Template specializations for ImmediateNode for CoreImmediate types.
+    //
+    //*************************************************************************
+    template <typename T>
+    class ImmediateNode<T, ImmediateCategory::CoreImmediate> : public Node<T>
     {
     public:
-        static_assert(IsValidImmediate<T>::value, "Invalid type for an immediate node");
-
         ImmediateNode(ExpressionTree& tree, T value)
             : Node(tree),
               m_value(value)
@@ -58,9 +55,10 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template specializations for ImmediateNode<double>
+    // Template specializations for ImmediateNode for RIPRelativeImmediate types.
     //
     //*************************************************************************
+
     class RIPRelativeImmediate
     {
     public:
@@ -69,7 +67,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    class ImmediateNode<T, typename std::enable_if<RequiresRIPRelativeImmediate<T>::c_value>::type>
+    class ImmediateNode<T, ImmediateCategory::RIPRelativeImmediate>
         : public Node<T>,
           public RIPRelativeImmediate
     {

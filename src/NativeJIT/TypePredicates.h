@@ -46,18 +46,53 @@ namespace NativeJIT
         typedef Register<c_size, c_isFloat> RegisterType;
     };
 
+    // In the context of immediates that are emitted as parts of x64 instructions,
+    // there are three categories of types:
+    //
+    // 1. NonImmediate types cannot be immediates at all (void).
+    // 2. RIPRelativeImmediate types must be represented as RIP-relative indirects
+    //    because there are no x64 instructions that support them as immediates
+    //    (floating point values) or most x64 instructions don't support them as
+    //    immediates (quadwords, including function pointers, things that decay
+    //    to pointers such as arrays etc).
+    // 3. CoreImmediate types can be used directly as immediates in x64 instructions.
+    enum class ImmediateCategory { NonImmediate, RIPRelativeImmediate, CoreImmediate };
 
-    // Determines whether a type is valid as an immediate from Storage's perspective.
-    // Invalid types include void, float and anything that decays its type
-    // (references, structures larger than the full register, arrays, etc).
+    // Classifies types that belong to the RIPRelativeImmediate category.
     template <typename T>
-    struct IsValidImmediate
+    struct MustBeEncodedAsRIPRelative
+        : std::integral_constant<bool,
+                                 RegisterStorage<T>::c_isFloat
+                                 || RegisterStorage<T>::c_size == 8
+          >
+    {
+    };
+
+
+    // Classifies types that belong to the CoreImmediate category in the list above.
+    template <typename T>
+    struct CanBeInImmediateStorage
         : std::integral_constant<
             bool,
             !std::is_void<T>::value
-                && !std::is_floating_point<T>::value
                 && std::is_same<typename RegisterStorage<T>::UnderlyingType,
-                                typename std::remove_cv<T>::type>::value>
+                                typename std::remove_cv<T>::type>::value
+                && !MustBeEncodedAsRIPRelative<T>::value
+          >
+    {
+    };
+
+
+    // Classifies types by ImmediateCategory.
+    template <typename T>
+    struct ImmediateCategoryOf
+        : std::integral_constant<ImmediateCategory,
+                                 CanBeInImmediateStorage<T>::value
+                                    ? ImmediateCategory::CoreImmediate
+                                    : (MustBeEncodedAsRIPRelative<T>::value
+                                        ? ImmediateCategory::RIPRelativeImmediate
+                                        : ImmediateCategory::NonImmediate)
+          >
     {
     };
 

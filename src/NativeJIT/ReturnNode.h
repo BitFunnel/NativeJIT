@@ -52,13 +52,14 @@ namespace NativeJIT
     void ReturnNode<T>::CompileAsRoot(ExpressionTree& tree)
     {
         ExpressionTree::Storage<T> s = CodeGen(tree);
-        auto r = s.ConvertToDirect(false);
 
-        // Move result into register 0.
-        if (r.GetId() != 0)
+        RegisterType resultRegister(0);
+
+        // Move result into register 0 unless already there.
+        if (!(s.GetStorageClass() == StorageClass::Direct
+              && s.GetDirectRegister().IsSameHardwareRegister(resultRegister)))
         {
-            auto dest = RegisterType(0);
-            CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), dest, s);
+            CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), resultRegister, s);
         }
 
         tree.GetCodeGenerator().EmitEpilogue();
