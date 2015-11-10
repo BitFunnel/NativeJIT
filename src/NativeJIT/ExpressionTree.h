@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "NativeJIT/BitOperations.h"
+#include "NativeJIT/JumpTable.h"      // ExpressionTree embeds Label.
 #include "NativeJIT/Register.h"
 #include "Temporary/NonCopyable.h"
 #include "Temporary/Assert.h"         // TODO: Delete this.
@@ -19,6 +20,7 @@ namespace Allocators
 
 namespace NativeJIT
 {
+    class ExecutionPreconditionTest;
     class FunctionBuffer;
     class NodeBase;
     class RIPRelativeImmediate;
@@ -70,6 +72,12 @@ namespace NativeJIT
         class Data;
 
     public:
+        template <typename T> class Storage;
+
+        // Returns the function return register for the specified type.
+        template <typename T>
+        static typename Storage<T>::DirectRegister GetResultRegister();
+
         ExpressionTree(Allocators::IAllocator& allocator, FunctionBuffer& code);
 
         Allocators::IAllocator& GetAllocator() const;
@@ -87,8 +95,6 @@ namespace NativeJIT
         //
         // Storage allocation.
         //
-
-        template <typename T> class Storage;
 
         template <typename T>
         Storage<T> Direct();
@@ -126,8 +132,14 @@ namespace NativeJIT
         unsigned GetRXXUsageMask() const;
         unsigned GetXMMUsageMask() const;
 
+        Label GetStartOfEpilogue() const;
+
     protected:
-        void  const * GetUntypedEntryPoint() const;
+        // Adds a precondition for executing the expression. See the
+        // m_preconditionTests variable for more information.
+        void AddExecutionPreconditionTest(ExecutionPreconditionTest& test);
+
+        void const * GetUntypedEntryPoint() const;
 
         Allocators::IAllocator& m_allocator;
         FunctionBuffer & m_code;
@@ -249,6 +261,11 @@ namespace NativeJIT
         std::vector<NodeBase*> m_parameters;
         std::vector<RIPRelativeImmediate*> m_ripRelatives;
 
+        // Preconditions for evaluating the whole expression. The preconditions
+        // are evaluated right after the parameters and will cause the function
+        // to return early if any of them is not met.
+        std::vector<ExecutionPreconditionTest*> m_preconditionTests;
+
         FreeList<RegisterBase::c_maxIntegerRegisterID + 1> m_rxxFreeList;
         FreeList<RegisterBase::c_maxFloatRegisterID + 1> m_xmmFreeList;
 
@@ -261,6 +278,8 @@ namespace NativeJIT
         std::vector<__int32> m_temporaries;
 
         PointerRegister m_basePointer;
+
+        Label m_startOfEpilogue;
     };
 
 
@@ -491,13 +510,23 @@ namespace NativeJIT
 
     template <typename T>
     using Storage = typename ExpressionTree::Storage<T>;
+}
 
+// Note: including CodeGenHelpers.h in the section where template declarations are
+// specified since only the implementation uses it. Doing otherwise would
+// create circular dependency for some headers.
+// This is analog to including CodeGenHelpers.h in ExpressionTree.cpp if
+// ExpressionTree had no templated methods which have to be inside a header.
+#include "CodeGenHelpers.h"
 
+namespace NativeJIT
+{
     //*************************************************************************
     //
     // Template definitions for ExpressionTree
     //
     //*************************************************************************
+
     template <>
     class ExpressionTree::FreeListForRegister<false>
     {
@@ -518,6 +547,13 @@ namespace NativeJIT
             return tree.m_xmmFreeList;
         }
     };
+
+
+    template <typename T>
+    typename Storage<T>::DirectRegister ExpressionTree::GetResultRegister()
+    {
+        return Storage<T>::DirectRegister(0);
+    }
 
 
     template <typename T>

@@ -2,7 +2,6 @@
 
 #include <type_traits>
 
-#include "CastNode.h"
 #include "Node.h"
 
 
@@ -49,8 +48,18 @@ namespace NativeJIT
     private:
         T m_value;
     };
+}
 
 
+// Note: including CastNode.h in the section where template declarations are
+// specified since only the implementation uses CastNode. Doing otherwise would
+// create circular dependency for some headers.
+// This is analog to including CastNode.h in ImmediateNode.cpp if ImmediateNode
+// was a regular class rather than a template.
+#include "CastNode.h"
+
+namespace NativeJIT
+{
     //*************************************************************************
     //
     // Template specializations for ImmediateNode for RIPRelativeImmediate types.

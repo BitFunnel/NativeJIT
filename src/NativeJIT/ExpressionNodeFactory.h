@@ -35,7 +35,7 @@ namespace NativeJIT
         //
         // Leaf nodes
         //
-        template <typename T> Node<T>& Immediate(T value);
+        template <typename T> ImmediateNode<T>& Immediate(T value);
         template <typename T> ParameterNode<T>& Parameter(unsigned position);
 
         // See StackVariableNode for important information about stack variable
@@ -66,11 +66,11 @@ namespace NativeJIT
         // Binary arithmetic operators
         //
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
-        template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
-        template <typename L, typename R> Node<L>& Mul(Node<L>& left, R right);
+        template <typename L, typename R> Node<L>& MulImmediate(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Or(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Sal(Node<L>& left, R right);
+        template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
 
         template <typename T, size_t SIZE, typename INDEX>
         Node<T*>& Add(Node<T(*)[SIZE]>& array, Node<INDEX>& index);
@@ -171,7 +171,7 @@ namespace NativeJIT
     // Leaf nodes
     //
     template <typename T>
-    Node<T>& ExpressionNodeFactory::Immediate(T value)
+    ImmediateNode<T>& ExpressionNodeFactory::Immediate(T value)
     {
         return * new (m_allocator.Allocate(sizeof(ImmediateNode<T>))) ImmediateNode<T>(*this, value);
     }
@@ -243,7 +243,7 @@ namespace NativeJIT
     {
         static_assert(std::is_same<typename std::remove_const<OBJECT>::type,
                                    typename std::remove_const<OBJECT1>::type>::value,
-                      "Invalid FieldPointer() usage");
+                      "Mismatch between the provided object type and field's parent object type");
 
         return * new (m_allocator.Allocate(sizeof(FieldPointerNode<OBJECT, FIELD>)))
                      FieldPointerNode<OBJECT, FIELD>(*this, object, field);
@@ -283,7 +283,7 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    Node<L>& ExpressionNodeFactory::Mul(Node<L>& left, R right)
+    Node<L>& ExpressionNodeFactory::MulImmediate(Node<L>& left, R right)
     {
         Node<L>* result;
 
@@ -347,7 +347,7 @@ namespace NativeJIT
         // The IMul instruction doesn't suport 64-bit immediates, but there's
         // also no need to support types whose size is larger than UINT32_MAX.
         static_assert(sizeof(T) <= UINT32_MAX, "Unsupported type");
-        auto & offset = Mul(index64, static_cast<unsigned __int32>(sizeof(T)));
+        auto & offset = MulImmediate(index64, static_cast<unsigned __int32>(sizeof(T)));
 
         return Binary<OpCode::Add>(array, offset);
     }

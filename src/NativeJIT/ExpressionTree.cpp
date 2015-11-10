@@ -3,6 +3,7 @@
 #include <iostream>             // TODO: Remove this temp debug include.
 
 #include "Assert.h"
+#include "ExecutionPreconditionTest.h"
 #include "ExpressionTree.h"
 #include "ImmediateNode.h"
 #include "NativeJIT/FunctionBuffer.h"
@@ -21,6 +22,7 @@ namespace NativeJIT
           m_code(code),
           m_temporaryCount(0),
           m_basePointer(rbp)
+          // m_startOfEpilogue intentionally left uninitialized, see Compile().
     {
         m_reservedRegistersStorages.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
         m_reservedRegistersPins.reserve(RegisterBase::c_maxIntegerRegisterID + 1);
@@ -88,6 +90,11 @@ namespace NativeJIT
         return m_basePointer;
     }
 
+    Label ExpressionTree::GetStartOfEpilogue() const
+    {
+        return m_startOfEpilogue;
+    }
+
 
     unsigned ExpressionTree::AddNode(NodeBase& node)
     {
@@ -108,19 +115,33 @@ namespace NativeJIT
     }
 
 
+    void ExpressionTree::AddExecutionPreconditionTest(ExecutionPreconditionTest& test)
+    {
+        m_preconditionTests.push_back(&test);
+    }
+
+
     void ExpressionTree::Compile()
     {
+        // Note: the call to Reset() clears all allocated labels, so start of
+        // epilogue label must be allocated after that point.
         m_code.Reset();
+        m_startOfEpilogue = m_code.AllocateLabel();
 
         // Generate constants.
         Pass0();
 
         // Generate code.
         m_code.EmitPrologue();
+
         Pass1();
         Pass2();
         Print();
         Pass3();
+
+        m_code.PlaceLabel(m_startOfEpilogue);
+        m_code.EmitEpilogue();
+
         m_code.PatchCallSites();
 
         // Release the reserved registers.
@@ -193,6 +214,12 @@ namespace NativeJIT
         for (const auto param : m_parameters)
         {
             param->CodeGenCache(*this);
+        }
+
+        // Execute any return-early tests before compiling the expression further.
+        for (auto test : m_preconditionTests)
+        {
+            test->Evaluate(*this);
         }
     }
 

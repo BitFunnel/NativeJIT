@@ -754,6 +754,33 @@ namespace NativeJIT
             }
 
 
+            TestCase(ExecuteOnlyIf)
+            {
+                AutoResetAllocator reset(m_allocator);
+
+                Function<float, unsigned __int64> e(m_allocator, *m_code);
+
+                // Regular value is argument + 2.5.
+                auto & regularValue = e.Add(e.Cast<float>(e.GetP1()),
+                                            e.Immediate(2.5f));
+
+                // Execute the regular expression only if argument is less than
+                // 7, otherwise abort and return 0.
+                auto & argLessThan7 = e.Compare<JccType::JB>(e.GetP1(), e.Immediate(7ull));
+                e.AddExecuteOnlyIfStatement(argLessThan7, e.Immediate(0.0f));
+
+                auto function = e.Compile(regularValue);
+
+                // Argument is less than 7, the regular value should be returned.
+                auto observed = function(5);
+                TestEqual(5.0f + 2.5f, observed);
+
+                // Argument is not less than 7, 0 should be returned.
+                observed = function(10);
+
+                TestEqual(0.0f, observed);
+            }
+
 
         private:
             Allocator m_allocator;

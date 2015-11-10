@@ -161,8 +161,6 @@ namespace NativeJIT
             typename Storage<R>::DirectRegister m_resultRegister;
         };
 
-        typename Storage<R>::DirectRegister GetResultRegister() const;
-
         // One child for each parameter plus one for the function pointer.
         static const unsigned c_childCount = PARAMETERCOUNT + 1;
         Child* m_children[c_childCount];
@@ -297,19 +295,10 @@ namespace NativeJIT
 
 
     template <typename R, unsigned PARAMETERCOUNT>
-    typename Storage<R>::DirectRegister
-    CallNodeBase<R, PARAMETERCOUNT>::GetResultRegister() const
-    {
-        // Register 0 (i.e. appropriately sized RAX or XMM0).
-        return Storage<R>::DirectRegister(0);
-    }
-
-
-    template <typename R, unsigned PARAMETERCOUNT>
     ExpressionTree::Storage<R> CallNodeBase<R, PARAMETERCOUNT>::CodeGenValue(ExpressionTree& tree)
     {
         // Make sure that the result register is not pinned at this point.
-        const auto resultRegister = GetResultRegister();
+        const auto resultRegister = tree.GetResultRegister<R>();
         Assert(!tree.IsPinned(resultRegister), "The result register must not be pinned before the call");
 
         // Evaluate the function pointer and each parameter.
@@ -584,7 +573,7 @@ namespace NativeJIT
     CallNode<R>::CallNode(ExpressionTree& tree,
                           Node<FunctionPointer>& function)
         : CallNodeBase(tree),
-          m_f(function, GetResultRegister())
+          m_f(function, tree.GetResultRegister<R>())
     {
         static_assert(std::is_pod<R>::value, "R must be a POD type.");
 
@@ -599,7 +588,7 @@ namespace NativeJIT
                                   Node<FunctionPointer>& function,
                                   Node<P1>& p1)
         : CallNodeBase(tree),
-          m_f(function, GetResultRegister()),
+          m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0)
     {
         static_assert(std::is_pod<R>::value, "R must be a POD type.");
@@ -618,7 +607,7 @@ namespace NativeJIT
                                   Node<P1>& p1,
                                   Node<P2>& p2)
         : CallNodeBase(tree),
-          m_f(function, GetResultRegister()),
+          m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0),
           m_p2(p2, 1)
     {
@@ -641,7 +630,7 @@ namespace NativeJIT
                                       Node<P2>& p2,
                                       Node<P3>& p3)
         : CallNodeBase(tree),
-          m_f(function, GetResultRegister()),
+          m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0),
           m_p2(p2, 1),
           m_p3(p3, 2)
@@ -668,7 +657,7 @@ namespace NativeJIT
                                           Node<P3>& p3,
                                           Node<P4>& p4)
         : CallNodeBase(tree),
-          m_f(function, GetResultRegister()),
+          m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0),
           m_p2(p2, 1),
           m_p3(p3, 2),

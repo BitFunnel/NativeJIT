@@ -76,6 +76,7 @@
     <ClInclude Include="CallNode.h" />
     <ClInclude Include="CastNode.h" />
     <ClInclude Include="CodeGenHelpers.h" />
+    <ClInclude Include="ExecutionPreconditionTest.h" />
     <ClInclude Include="Function.h" />
     <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
