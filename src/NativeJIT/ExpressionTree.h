@@ -650,6 +650,9 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<T> ExpressionTree::Temporary()
     {
+        // TODO: Ensure that the highest temporary doesn't exceed the allocated
+        // stack space (preferrably as part of TFS 17238).
+
         static_assert(sizeof(T) <= sizeof(void*),
                       "The size of the variable is too large.");
 

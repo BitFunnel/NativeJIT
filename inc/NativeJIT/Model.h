@@ -11,11 +11,13 @@ namespace NativeJIT
     public:
         Model();
 
-        float Apply(PACKED packed);
+        float Apply(PACKED packed) const;
 
         float& operator[](unsigned index);
+        float const & operator[](unsigned index) const;
 
         float& operator[](PACKED packed);
+        float const & operator[](PACKED packed) const;
 
         // m_data must be public or friend of NativeJIT::ExpressionNodeFactory.
         // Otherwise the JIT compiler cannot access m_data.
@@ -43,7 +45,7 @@ namespace NativeJIT
 
 
     template <typename PACKED>
-    float Model<PACKED>::Apply(PACKED packed)
+    float Model<PACKED>::Apply(PACKED packed) const
     {
         return m_data[packed.m_fields];
     }
@@ -57,7 +59,21 @@ namespace NativeJIT
 
 
     template <typename PACKED>
+    float const & Model<PACKED>::operator[](unsigned index) const
+    {
+        return m_data[index];
+    }
+
+
+    template <typename PACKED>
     float& Model<PACKED>::operator[](PACKED packed)
+    {
+        return m_data[packed.m_fields];
+    }
+
+
+    template <typename PACKED>
+    float const & Model<PACKED>::operator[](PACKED packed) const
     {
         return m_data[packed.m_fields];
     }

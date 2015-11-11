@@ -66,6 +66,7 @@ namespace NativeJIT
         // Binary arithmetic operators
         //
         template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
+        template <typename L, typename R> Node<L>& And(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& MulImmediate(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Or(Node<L>& left, Node<R>& right);
@@ -265,6 +266,13 @@ namespace NativeJIT
     Node<L>& ExpressionNodeFactory::Add(Node<L>& left, Node<R>& right)
     {
         return Binary<OpCode::Add>(left, right);
+    }
+
+
+    template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::And(Node<L>& left, Node<R>& right)
+    {
+        return Binary<OpCode::And>(left, right);
     }
 
 

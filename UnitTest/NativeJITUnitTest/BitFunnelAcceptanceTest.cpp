@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <map>
 
 #include "Function.h"
 #include "NativeJIT/ExecutionBuffer.h"
@@ -13,31 +14,36 @@
 
 namespace NativeJIT
 {
-    //*************************************************************************
-    //
-    // This file contains temporary unit test used during development of
-    // partially implemented features. The intention is that this file will
-    // eventually be deleted.
-    //
-    //*************************************************************************
     namespace BitFunnelAcceptance
     {
         TestClass(AcceptanceUnitTest)
         {
         public:
             AcceptanceUnitTest()
-                : m_allocator(5000),
+                : m_allocator(64 * 1024),
                   m_executionBuffer(5000)
             {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
+                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 11, 0, false));
             }
 
 
-            typedef Packed<2, Packed <3, Packed <4, Packed<5>>>> TermFeatures;
+            static const unsigned c_bitsForAnchor = 4;
+            static const unsigned c_bitsForBody = 4;
+            static const unsigned c_bitsForTitle = 1;
+            static const unsigned c_bitsForUrl = 1;
+            static const unsigned c_bitsForPosition = 4;
+            static const unsigned c_bitsForShard = 4;
+
+            typedef Packed<c_bitsForUrl, Packed<c_bitsForTitle, Packed<c_bitsForBody, Packed<c_bitsForAnchor>>>> TermFrequencies;
+            typedef Packed<c_bitsForShard, Packed <c_bitsForPosition, TermFrequencies>> TermFeatures;
             typedef Model<TermFeatures> TermModel;
 
-            typedef Packed<4> DocFeatures;
-            typedef Model<DocFeatures> DocModel;
+            typedef Packed<2> ClickFeature;
+            typedef Model<ClickFeature> ClickModel;
+
+            typedef Packed<1> BoolFeature;
+            typedef Model<BoolFeature> LanguageModel;
+            typedef Model<BoolFeature> LocationModel;
 
             typedef unsigned __int64 TermHash;
             typedef unsigned __int64 DocId;
@@ -45,156 +51,1428 @@ namespace NativeJIT
 
             typedef unsigned __int32 DocIndex;
 
-            // TODO: Currently it is not possible to call a function that returns void.
-            // The templates won't compile because of a sizeof(void).
-            // typedef void (*Callback)(DocId docId, float score);
-            //typedef void (*Callback)(DocId docId, float score);
-            typedef int (*Callback)(DocId docId, float score);
-
-            class TermScoreTable
+            // TODO: Add a warning to all structures used for the ComputeScore
+            // call that they must be backwards and forwards compatible since
+            // they are accessed both from MLA and OS.
+            struct MarketData
             {
-            public:
-                TermFeatures Lookup(TermHash key);
+                unsigned __int32 m_languageHash;
+                unsigned __int32 m_locationHash;
             };
 
-            // TODO: Will eventually need a way to resolve the address of LookupHelper on remote system.
-            // Either ProcessResources contains all function pointers for various feature types or
-            // codegen does casts or inline lookup code.
-            static TermFeatures LookupHelper(TermScoreTable* /* table */, TermHash /* key */)
-            {
-                return TermFeatures();
-            }
 
-            typedef TermFeatures (*LookupHelperType)(TermScoreTable* table, TermHash key);
+            struct QueryContext
+            {
+                MarketData m_queryMarket;
+            };
+
+
+            typedef bool (*HashLookupFunc)(void const * buffer, unsigned slotCount, unsigned __int64 key, unsigned __int64& value);
 
 #pragma pack(push, 1)
-            struct DocInfo
+            struct WebDocData
             {
-                TermScoreTable* m_termScoreTable;
-                unsigned m_staticScore;         // TODO: Need some way to make Packed use less than 64 bits.
-                                                // Either Packed automatically sizes m_fields or need constructor
-                                                // from smaller sizes.
-                DocId m_docId;
+                float m_staticScore;
+                float m_advancedPreferScore;
+
+                MarketData m_documentMarket;
+
+                // Extracted from a metaword used to store the FILETIME of document's discovery.
+                unsigned __int64 m_discoveryTimeTicks;
+
+                unsigned m_termSlotCount;
+                unsigned m_clickSlotCount;
             };
 #pragma pack(pop)
 
-            class DocTable
+            typedef unsigned FixedSizeBlobId;
+            typedef unsigned VariableSizeBlobId;
+
+
+            class DocumentHandle : NonCopyable
             {
             public:
-                DocInfo* m_entries;
+                DocumentHandle(std::map<FixedSizeBlobId, void*> const & fixedSizeBlobs,
+                               std::map<VariableSizeBlobId, void*> const & variableSizeBlobs)
+                    : m_fixedSizeBlobs(fixedSizeBlobs),
+                      m_variableSizeBlobs(variableSizeBlobs)
+                {
+                }
+
+
+                // Note: at least in this test, the blobs are accessed through
+                // a function call instead of JITGetFixedSizeBlob() method
+                // creating a Node to do so.
+                void* GetFixedSizeBlob(FixedSizeBlobId blobId) const
+                {
+                    auto blobIt = m_fixedSizeBlobs.find(blobId);
+
+                    Assert(blobIt != m_fixedSizeBlobs.end(),
+                           "Unknown fixed size blob ID %u",
+                           blobId);
+
+                    return blobIt->second;
+                }
+
+
+                void* GetVariableSizeBlob(VariableSizeBlobId blobId) const
+                {
+                    auto blobIt = m_variableSizeBlobs.find(blobId);
+
+                    Assert(blobIt != m_variableSizeBlobs.end(),
+                           "Unknown variable size blob ID %u",
+                           blobId);
+
+                    return blobIt->second;
+                }
+
+            private:
+                std::map<FixedSizeBlobId, void*> const & m_fixedSizeBlobs;
+                std::map<VariableSizeBlobId, void*> const & m_variableSizeBlobs;
             };
 
-            struct ModelSet
+
+            struct WebModelSetV1
             {
+                LanguageModel* m_languageModel;
+                LocationModel* m_locationModel;
                 TermModel* m_termModel;
-                DocModel* m_docModel;
+                ClickModel* m_clickModel;
             };
 
-            struct ProcessResources
+
+            // The CommonRankerContext tries to simulate a scenario where
+            // the code is being compiled on MLA and executed on OS, so it
+            // tries to keep the size of the context fixed for compatibility.
+            struct CommonRankerContext
             {
-                ModelSet* m_models;
-                DocTable *m_docTable;
-                Callback m_callback;
+                void* (*m_getFixedSizeBlobFunc)(DocumentHandle const * handle,
+                                                FixedSizeBlobId id);
+                void* (*m_getVariableSizeBlobFunc)(DocumentHandle const * handle,
+                                                   VariableSizeBlobId id);
+
+                void* m_modelSet;
+
+                /* const */ char m_fixedSizePadding[64 - 3 * sizeof(void*)];
+            };
+
+            static_assert(std::is_pod<CommonRankerContext>::value,
+                          "CommonRankerContext must be a POD");
+            static_assert(sizeof(CommonRankerContext) == 64,
+                          "CommonRankerContext must have a fixed size");
+
+
+            struct WebRankerContext
+            {
+                struct CommonRankerContext m_commonContext;
+
+                FixedSizeBlobId m_docDataBlobId;
+
+                VariableSizeBlobId m_termFreqTableBlobId;
+                VariableSizeBlobId m_clickFreqTableBlobId;
+
+                HashLookupFunc m_termLookupFunc;
+                HashLookupFunc m_clickLookupFunc;
+            };
+
+            static_assert(std::is_pod<WebRankerContext>::value,
+                          "WebRankerContext must be a POD");
+
+            static const TermFrequencies c_defaultTermFrequencies;
+
+
+            // Creates term frequencies out of its components.
+            static TermFrequencies MakeTermFrequencies(unsigned __int64 anchorFrequency,
+                                                       unsigned __int64 bodyFrequency,
+                                                       unsigned __int64 titleFrequency,
+                                                       unsigned __int64 urlFrequency)
+            {
+                return Packed<>()
+                    .Push<c_bitsForAnchor>(anchorFrequency)
+                    .Push<c_bitsForBody>(bodyFrequency)
+                    .Push<c_bitsForTitle>(titleFrequency)
+                    .Push<c_bitsForUrl>(urlFrequency);
+            }
+
+
+            // Creates term features out of frequencies and position and shard.
+            static TermFeatures MakeTermFeatures(TermFrequencies const & frequencies,
+                                                 unsigned __int8 position,
+                                                 Shard shard)
+            {
+                return frequencies
+                    .Push<c_bitsForPosition>(position)
+                    .Push<c_bitsForShard>(shard);
+            }
+
+
+            // Some test constants.
+            static const TermHash c_redHash = 0x54342434;
+
+            static const TermHash c_dogHash = 0x1233333333;
+            static const TermHash c_dogsHash = 0x1255555555;
+
+            static const TermHash c_houseHash = 0x23444444444;
+            static const TermHash c_housesHash = 0x2500000001;
+
+            static const float c_anyIdf1;
+            static const float c_anyIdf2;
+            static const float c_anyIdf3;
+            static const float c_anyIdf4;
+
+            // For click phrase bigram.
+            static const TermHash c_dogHouseHash = 0x5236264;
+            static const TermHash c_nonExistentPhraseHash = 0x3475897234;
+
+            static const unsigned c_expectedSlotCount = 0xC0DE;
+
+            // A single term anywhere inside the query (on its own, as a part of
+            // phrase, inside word: operator).
+            struct TermInfo
+            {
+                TermInfo(TermHash hash, float idf)
+                    : m_hash(hash),
+                      m_idf(idf)
+                {
+                }
+
+                TermHash m_hash;
+                float m_idf;
             };
 
 
-            TestCase(BitFunnel)
+            // Unigram ("dog"), bigram ("dog house") etc. to represent a single
+            // word or a multi-word phrase.
+            struct QueryNGram
+            {
+                QueryNGram(std::initializer_list<TermInfo> list)
+                    : m_terms(list)
+                {
+                }
+
+                std::vector<TermInfo> m_terms;
+            };
+
+
+            // A query component at a certain position. A single n-gram represents
+            // a single word or a phrase, whereas multiple n-grams represent
+            // various candidates. For example, word:(ny "new york") is a query
+            // component with two n-grams: a unigram "ny" and a bigram "new york".
+            struct QueryComponent
+            {
+                QueryComponent(std::initializer_list<QueryNGram> list)
+                    : m_candidates(list)
+                {
+                }
+
+                std::vector<QueryNGram> m_candidates;
+            };
+
+
+            // All the word components that make up a query from the scoring
+            // perspective.
+            struct QueryWords
+            {
+                QueryWords(std::initializer_list<QueryComponent> list)
+                    : m_components(list)
+                {
+                }
+
+                std::vector<QueryComponent> m_components;
+            };
+
+
+            // A simple class to handle values that may or may not be provided.
+            template <typename T>
+            class Nullable
+            {
+            public:
+                Nullable()
+                    : m_hasValue(false),
+                      m_value()
+                {
+                }
+
+
+                Nullable(T const & value)
+                    : m_hasValue(true),
+                      m_value(value)
+                {
+                }
+
+
+                void Set(T const & value)
+                {
+                    m_value = value;
+                    m_hasValue = true;
+                }
+
+
+                bool HasValue() const
+                {
+                    return m_hasValue;
+                }
+
+
+                T& Get()
+                {
+                    Assert(m_hasValue, "Cannot Get() null value");
+                    return m_value;
+                }
+
+                T const & Get() const
+                {
+                    Assert(m_hasValue, "Cannot Get() null value");
+                    return m_value;
+                }
+
+            private:
+                bool m_hasValue;
+                T m_value;
+            };
+
+
+            // A constant used in rangeconstraint: behavior simulation.
+            static const float c_discardedDocumentScore;
+
+            static const MarketData c_anyMarketData;
+            static const MarketData c_anyOtherMarketDataWithSameLanguage;
+            static const MarketData c_anyOtherFullyDifferentMarketData;
+            static const MarketData c_clickPhraseMarketData;
+
+            struct ParsedQuery
+            {
+                ParsedQuery(QueryWords const & queryWords, MarketData const & queryMarket)
+                    : m_queryWords(queryWords),
+                      m_queryMarket(queryMarket)
+                {
+                }
+
+
+                ParsedQuery& SetClickPhrase(TermHash clickPhrase)
+                {
+                    m_clickPhrase.Set(clickPhrase);
+
+                    return *this;
+                }
+
+
+                ParsedQuery& RequireDiscoveryTimeTicksLessThan(unsigned __int64 value)
+                {
+                    m_discoveryTimeTicksLessThanConstraint.Set(value);
+
+                    return *this;
+                }
+
+
+                QueryWords m_queryWords;
+                MarketData m_queryMarket;
+
+                Nullable<TermHash> m_clickPhrase;
+
+                // Used in rangeconstraint operator simulation: if non-null then
+                // DocData::m_discoveryTimeTicks must match the constraint (its value
+                // must be lower than the value inside the nullable).
+                Nullable<unsigned __int64> m_discoveryTimeTicksLessThanConstraint;
+            };
+
+
+            // A class used to evaluate query words through the term model using
+            // the C++ constructs, to be compared against the NativeJIT version.
+            class TermEvaluationContextCPlusPlus : private NonCopyable
+            {
+            public:
+                TermEvaluationContextCPlusPlus(
+                    WebRankerContext const * rankerContext,
+                    TermModel* termModel,
+                    WebDocData const * docData,
+                    void const * termFreqTable,
+                    Shard shard)
+                    : m_termFreqTable(termFreqTable),
+                      m_termSlotCount(docData->m_termSlotCount),
+                      m_termLookupFunc(rankerContext->m_termLookupFunc),
+                      m_termModel(termModel),
+                      m_shard(shard)
+                {
+                }
+
+
+                float CalculateQueryWordsScore(QueryWords const & queryWords)
+                {
+                    auto const & components = queryWords.m_components;
+                    float score = 0;
+
+                    for(unsigned __int8 position = 0;
+                        position < components.size();
+                        ++position)
+                    {
+                        float idf;
+                        TermFrequencies frequencies
+                            = EstimateQueryComponentFrequencyAndIDF(components[position],
+                                                                    idf);
+
+                        TermFeatures termFeatures = MakeTermFeatures(frequencies, position, m_shard);
+                        auto termModelScore = m_termModel->Apply(termFeatures);
+
+                        score += termModelScore * idf;
+                    }
+
+                    return score;
+                }
+
+
+            private:
+                // Per-component aggregation of two TermFrequencies using the
+                // specified function.
+                TermFrequencies Aggregate(TermFrequencies f1ABTU,
+                                          TermFrequencies f2ABTU,
+                                          unsigned __int64 (*aggFunc)(unsigned __int64,
+                                                                      unsigned __int64))
+                {
+                    auto url = aggFunc(f1ABTU.Back(), f2ABTU.Back());
+                    auto f1ABT = f1ABTU.Pop();
+                    auto f2ABT = f2ABTU.Pop();
+
+                    auto title = aggFunc(f1ABT.Back(), f2ABT.Back());
+                    auto f1AB = f1ABT.Pop();
+                    auto f2AB = f2ABT.Pop();
+
+                    auto body = aggFunc(f1AB.Back(), f2AB.Back());
+                    auto f1A = f1AB.Pop();
+                    auto f2A = f2AB.Pop();
+
+                    auto anchor = aggFunc(f1A.m_fields, f2A.m_fields);
+
+                    return MakeTermFrequencies(anchor, body, title, url);
+                }
+
+
+                TermFrequencies PackedMin(TermFrequencies f1ABTU, TermFrequencies f2ABTU)
+                {
+                    return Aggregate(f1ABTU,
+                                     f2ABTU,
+                                     [](unsigned __int64 a, unsigned __int64 b)
+                                     {
+                                         return (std::min)(a, b);
+                                     });
+                }
+
+
+                TermFrequencies PackedMax(TermFrequencies f1ABTU, TermFrequencies f2ABTU)
+                {
+                    return Aggregate(f1ABTU,
+                                     f2ABTU,
+                                     [](unsigned __int64 a, unsigned __int64 b)
+                                     {
+                                         return (std::max)(a, b);
+                                     });
+                }
+
+
+                TermFrequencies LookupTermFrequencies(TermHash termHash)
+                {
+                    unsigned __int64 termFrequenciesRaw;
+                    const bool lookupSuccessful = m_termLookupFunc(m_termFreqTable,
+                                                                   m_termSlotCount,
+                                                                   termHash,
+                                                                   termFrequenciesRaw);
+
+                    if (!lookupSuccessful)
+                    {
+                        termFrequenciesRaw = c_defaultTermFrequencies;
+                    }
+
+
+                    return TermFrequencies::Create(termFrequenciesRaw);
+                }
+
+
+                TermFrequencies
+                EstimateNGramFrequencyAndIDF(QueryNGram const & nGram,
+                                             float & estimatedIdf)
+                {
+                    auto const & termInfos = nGram.m_terms;
+
+                    Assert(termInfos.size() > 0, "Cannot process n-gram with zero words");
+
+                    TermFrequencies currFrequencies = LookupTermFrequencies(termInfos[0].m_hash);
+                    float currentIdf = termInfos[0].m_idf;
+
+                    // See the Node version of this method for details about the
+                    // logic.
+                    for (unsigned i = 1; i < termInfos.size(); ++i)
+                    {
+                        TermFrequencies frequencies = LookupTermFrequencies(termInfos[i].m_hash);
+
+                        currFrequencies = PackedMin(currFrequencies, frequencies);
+                        currentIdf = (std::max)(currentIdf, termInfos[i].m_idf);
+                    }
+
+                    estimatedIdf = currentIdf;
+                    return currFrequencies;
+                }
+
+
+                TermFrequencies
+                EstimateQueryComponentFrequencyAndIDF(QueryComponent const & component,
+                                                      float & estimatedIdf)
+                {
+                    auto const & candidates = component.m_candidates;
+                    Assert(candidates.size() > 0, "Cannot process an empty query component");
+
+                    float currentIdf;
+                    TermFrequencies currFrequencies
+                        = EstimateNGramFrequencyAndIDF(candidates[0], currentIdf);
+
+                    // See the Node version of this method for details about the
+                    // logic.
+                    for (unsigned i = 1; i < candidates.size(); ++i)
+                    {
+                        // Get the data for the current candidate.
+                        float idf;
+                        TermFrequencies frequencies
+                            = EstimateNGramFrequencyAndIDF(candidates[i], idf);
+
+                        currFrequencies = PackedMax(currFrequencies, frequencies);
+                        currentIdf = (std::min)(currentIdf, idf);
+                    }
+
+                    estimatedIdf = currentIdf;
+                    return currFrequencies;
+                }
+
+
+                void const * m_termFreqTable;
+                unsigned m_termSlotCount;
+
+                HashLookupFunc m_termLookupFunc;
+                TermModel const * m_termModel;
+
+                Shard m_shard;
+            };
+
+
+            static unsigned __int16 ComputeClickHash(unsigned __int32 queryLanguageHash,
+                                                     unsigned __int32 queryLocationHash,
+                                                     TermHash clickPhrase)
+            {
+                const unsigned __int64 lang64 = queryLanguageHash;
+                const unsigned __int64 loc64 = queryLocationHash;
+
+                // (language64 | (location64 << 32)) + clickPhrase)
+                const unsigned __int64 clickHash64
+                    = (lang64 | (loc64 << 32)) + clickPhrase;
+
+                // Keep only the lowest 16 bits.
+                // Note: the original calculation uses % 65521 (the largest
+                // prime 16-bit number) to calculate the value.
+                return static_cast<unsigned __int16>(clickHash64);
+            }
+
+
+            static float GetClickPhraseScore(WebRankerContext const * rankerContext,
+                                             ClickModel* clickModel,
+                                             WebDocData const * docData,
+                                             void const * clickFreqTable,
+                                             unsigned __int32 queryLanguageHash,
+                                             unsigned __int32 queryLocationHash,
+                                             TermHash clickPhrase)
+            {
+                const auto clickHash = ComputeClickHash(queryLanguageHash,
+                                                        queryLocationHash,
+                                                        clickPhrase);
+                unsigned __int64 clickFeatureRaw;
+
+                const bool lookupSuccessful
+                    = rankerContext->m_clickLookupFunc(clickFreqTable,
+                                                       docData->m_clickSlotCount,
+                                                       clickHash,
+                                                       clickFeatureRaw);
+
+                if (!lookupSuccessful)
+                {
+                    clickFeatureRaw = 0;
+                }
+
+                auto clickFeature = ClickFeature::Create(clickFeatureRaw);
+
+                return clickModel->Apply(clickFeature);
+            }
+
+
+            static float CalculateScore(ParsedQuery const & parsedQuery,
+                                        Shard shard,
+                                        DocumentHandle const * docHandle,
+                                        void const * rankerContextRaw,
+                                        QueryContext const * queryContext)
+            {
+                auto const * rankerContext = static_cast<WebRankerContext const *>(rankerContextRaw);
+                auto const & commonRankerContext = rankerContext->m_commonContext;
+
+                // Get WebDocData with static score and advance prefer score.
+                auto getFixedSizedBlobFunc = commonRankerContext.m_getFixedSizeBlobFunc;
+
+                auto docData = reinterpret_cast<WebDocData const *>(
+                    getFixedSizedBlobFunc(docHandle, rankerContext->m_docDataBlobId));
+
+                // Check if the document should be discarded.
+                if (parsedQuery.m_discoveryTimeTicksLessThanConstraint.HasValue()
+                    && !(docData->m_discoveryTimeTicks
+                         < parsedQuery.m_discoveryTimeTicksLessThanConstraint.Get()))
+                {
+                    return c_discardedDocumentScore;
+                }
+
+                auto const * modelSet = reinterpret_cast<WebModelSetV1 const *>(commonRankerContext.m_modelSet);
+
+                // Initialize the score to the static score.
+                float totalScore = docData->m_staticScore;
+
+                // Get query and document language and compare them.
+                auto docLanguage = docData->m_documentMarket.m_languageHash;
+                auto queryLanguage = queryContext->m_queryMarket.m_languageHash;
+
+                const unsigned languageMatches = docLanguage == queryLanguage ? 1 : 0;
+                totalScore += modelSet->m_languageModel->Apply(BoolFeature::Create(languageMatches));
+
+                // Do the same for the location.
+                auto docLocation = docData->m_documentMarket.m_locationHash;
+                auto queryLocation = queryContext->m_queryMarket.m_locationHash;
+
+                const unsigned locationMatches = docLocation == queryLocation ? 1: 0;
+                totalScore += modelSet->m_locationModel->Apply(BoolFeature::Create(locationMatches));
+
+                // If both language and location match, use the advanced prefer score.
+                if (languageMatches && locationMatches)
+                {
+                    totalScore += docData->m_advancedPreferScore;
+                }
+
+                auto getVarSizedBlobFunc = commonRankerContext.m_getVariableSizeBlobFunc;
+                auto const & queryWords = parsedQuery.m_queryWords;
+
+                // Prepare to evaluate term and click models.
+                if (!queryWords.m_components.empty())
+                {
+                    auto termHashTable = getVarSizedBlobFunc(docHandle, rankerContext->m_termFreqTableBlobId);
+                    auto termModel = modelSet->m_termModel;
+
+                    // Evaluate the term model.
+                    TermEvaluationContextCPlusPlus termContext(rankerContext,
+                                                               termModel,
+                                                               docData,
+                                                               termHashTable,
+                                                               shard);
+
+                    totalScore += termContext.CalculateQueryWordsScore(queryWords);
+                }
+
+                if (parsedQuery.m_clickPhrase.HasValue())
+                {
+                    auto clickHashTable = getVarSizedBlobFunc(docHandle, rankerContext->m_clickFreqTableBlobId);
+                    auto clickModel = modelSet->m_clickModel;
+
+                    totalScore += GetClickPhraseScore(rankerContext,
+                                                      clickModel,
+                                                      docData,
+                                                      clickHashTable,
+                                                      queryLanguage,
+                                                      queryLocation,
+                                                      parsedQuery.m_clickPhrase.Get());
+                }
+
+                return totalScore;
+            }
+
+
+            // A class used to evaluate query words through the term model using
+            // the NativeJIT constructs, to be compared against the C++ version.
+            class TermEvaluationContextNativeJIT : private NonCopyable
+            {
+            public:
+                TermEvaluationContextNativeJIT(ExpressionNodeFactory& e,
+                                               Node<WebRankerContext const *>& rankerContext,
+                                               Node<TermModel*>& termModel,
+                                               Node<WebDocData const *>& docData,
+                                               Node<void const *>& termFreqTable,
+                                               Node<Shard>& shard)
+                    : m_termFreqTable(termFreqTable),
+                      m_termSlotCount(e.Deref(e.FieldPointer(docData, &WebDocData::m_termSlotCount))),
+                      m_termLookupFunc(e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_termLookupFunc))),
+                      m_defaultTermFrequencies(e.Immediate(c_defaultTermFrequencies)),
+                      m_termModel(termModel),
+                      m_shardShiftedToMSB(e.Sal(e.Cast<unsigned __int64>(shard),
+                                                static_cast<unsigned __int8>(64 - c_bitsForShard)))
+                {
+                }
+
+
+                Node<float>& AddQueryWordsScore(ExpressionNodeFactory& e,
+                                                QueryWords const & queryWords,
+                                                Node<float>& currentScore)
+                {
+                    Node<float>* updatedScore = &currentScore;
+                    auto const & components = queryWords.m_components;
+
+                    for(unsigned __int8 position = 0;
+                        position < components.size();
+                        ++position)
+                    {
+                        float idf;
+                        auto & frequencies
+                            = EstimateQueryComponentFrequencyAndIDF(e,
+                                                                    components[position],
+                                                                    idf);
+
+                        auto & termFeatures = GetTermFeatures(e,
+                                                              frequencies,
+                                                              position);
+                        auto & termModelScore = e.ApplyModel(m_termModel, termFeatures);
+                        auto & componentScore = e.Mul(termModelScore, e.Immediate(idf));
+
+                        updatedScore = &e.Add(*updatedScore, componentScore);
+                    }
+
+                    return *updatedScore;
+                }
+
+
+            private:
+                // Given a term hash, lookup the corresponding term frequencies
+                // from the hash table.
+                Node<TermFrequencies>& LookupTermFrequencies(ExpressionNodeFactory& e,
+                                                             TermHash term)
+                {
+                    // TODO: For a query with a lot of words, this can allocate
+                    // a lot of stack given the current behavior of StackVariable
+                    // (see the TODO comment in StackVariable::CodeGenValue()).
+                    auto & termFrequenciesRaw = e.StackVariable<unsigned __int64>();
+                    auto & termHash = e.Immediate(term);
+                    auto & termLookupSuccessful = e.Call(m_termLookupFunc,
+                                                         m_termFreqTable,
+                                                         m_termSlotCount,
+                                                         termHash,
+                                                         termFrequenciesRaw);
+
+                    auto & termFrequencies = e.If(termLookupSuccessful,
+                                                  e.Cast<TermFrequencies>(e.Deref(termFrequenciesRaw)),
+                                                  m_defaultTermFrequencies);
+
+                    return termFrequencies;
+                }
+
+
+                Node<TermFeatures>& GetTermFeatures(ExpressionNodeFactory& e,
+                                                    Node<TermFrequencies>& frequencies,
+                                                    unsigned __int8 position)
+                {
+                    const unsigned __int64 positionShiftedToMSB
+                        = static_cast<unsigned __int64>(position) << (64 - c_bitsForPosition);
+
+                    // Shift the position from the MSB position into the
+                    // LSB position in the target variable.
+                    auto & frequenciesAndShard
+                        = e.Shld(e.Cast<unsigned __int64>(frequencies),
+                                 e.Immediate(positionShiftedToMSB),
+                                 c_bitsForPosition);
+
+                    // Do the same for shard to finalize the full term features.
+                    auto & rawTermFeatures
+                        = e.Shld(frequenciesAndShard,
+                                 m_shardShiftedToMSB,
+                                 c_bitsForShard);
+
+                    return e.Cast<TermFeatures>(rawTermFeatures);
+                }
+
+
+                Node<TermFrequencies>&
+                EstimateNGramFrequencyAndIDF(ExpressionNodeFactory& e,
+                                             QueryNGram const & nGram,
+                                             float & estimatedIdf)
+                {
+                    auto const & termInfos = nGram.m_terms;
+
+                    Assert(termInfos.size() > 0, "Cannot process n-gram with zero words");
+
+                    Node<TermFrequencies>* currFrequencies
+                        = &LookupTermFrequencies(e, termInfos[0].m_hash);
+                    float currentIdf = termInfos[0].m_idf;
+
+                    for (unsigned i = 1; i < termInfos.size(); ++i)
+                    {
+                        // The "word1 word2" phrase can appear at most min(word1AppearanceCount,
+                        // word2AppearanceCount) times in the document.
+                        auto & frequencies = LookupTermFrequencies(e, termInfos[i].m_hash);
+                        currFrequencies = &e.PackedMin(*currFrequencies, frequencies);
+
+                        // IDF is a measure of term's value with regard to its unambiguity - if
+                        // a term is rare (and thus its IDF is high) then the search is more
+                        // specific and the term adds more value to it.
+                        // A phrase search is more specific and thus has more value than each
+                        // of the terms on their own. That value is approximated by taking a
+                        // maximum of the two IDFs.
+                        currentIdf = (std::max)(currentIdf, termInfos[i].m_idf);
+                    }
+
+                    estimatedIdf = currentIdf;
+                    return *currFrequencies;
+                }
+
+
+                Node<TermFrequencies>&
+                EstimateQueryComponentFrequencyAndIDF(ExpressionNodeFactory& e,
+                                                      QueryComponent const & component,
+                                                      float & estimatedIdf)
+                {
+                    auto const & candidates = component.m_candidates;
+                    Assert(candidates.size() > 0, "Cannot process an empty query component");
+
+                    float currentIdf;
+                    Node<TermFrequencies>* currFrequencies
+                        = &EstimateNGramFrequencyAndIDF(e,
+                                                        candidates[0],
+                                                        currentIdf);
+
+                    for (unsigned i = 1; i < candidates.size(); ++i)
+                    {
+                        // Get the data for the current candidate.
+                        float idf;
+                        auto & frequencies = EstimateNGramFrequencyAndIDF(e,
+                                                                          candidates[i],
+                                                                          idf);
+
+                        // Use a maximum of the two term's frequencies as term frequency for
+                        // word candidates. Note: the sum of the frequencies may seem like
+                        // a better fit but it is a bit more complicated to calculate when term
+                        // frequencies are log conditioned and also experiments show almost
+                        // nonexistent relevance difference when it is used.
+                        currFrequencies = &e.PackedMax(*currFrequencies, frequencies);
+
+                        // IDF is a measure of term's value with regard to its unambiguity - if
+                        // a term is rare (and thus its IDF is high) then the search is more
+                        // specific and the term adds more value to it.
+                        // A search with word candidates is less specific and thus has less
+                        // value than each of the terms on their own. That value is approximated
+                        // by taking a minimum of the two IDFs.
+                        currentIdf = (std::min)(currentIdf, idf);
+                    }
+
+                    estimatedIdf = currentIdf;
+                    return *currFrequencies;
+                }
+
+
+                Node<void const *>& m_termFreqTable;
+                Node<unsigned>& m_termSlotCount;
+
+                Node<HashLookupFunc>& m_termLookupFunc;
+                Node<TermFrequencies>& m_defaultTermFrequencies;
+
+                Node<TermModel*>& m_termModel;
+
+                Node<unsigned __int64>& m_shardShiftedToMSB;
+            };
+
+
+            Node<unsigned __int16>& ComputeClickHash(
+                ExpressionNodeFactory& e,
+                Node<unsigned __int32>& queryLanguageHash,
+                Node<unsigned __int32>& queryLocationHash,
+                TermHash clickPhrase)
+            {
+                auto & lang64 = e.Cast<unsigned __int64>(queryLanguageHash);
+                auto & loc64 = e.Cast<unsigned __int64>(queryLocationHash);
+
+                // (language64 | (location64 << 32)) + clickPhrase)
+                auto & clickHash64 = e.Add(e.Or(lang64,
+                                                e.Sal(loc64, static_cast<unsigned __int8>(32))),
+                                           e.Immediate(clickPhrase));
+
+                // Keep only the lowest 16 bits.
+                // Note: the original calculation uses % 65521 (the largest
+                // prime 16-bit number) to calculate the value.
+                return e.Cast<unsigned __int16>(clickHash64);
+            }
+
+
+            Node<float>&
+            GetClickPhraseScore(ExpressionNodeFactory& e,
+                                Node<WebRankerContext const *>& rankerContext,
+                                Node<ClickModel*>& clickModel,
+                                Node<WebDocData const *>& docData,
+                                Node<void const *>& clickFreqTable,
+                                Node<unsigned __int32>& queryLanguageHash,
+                                Node<unsigned __int32>& queryLocationHash,
+                                TermHash clickPhrase)
+            {
+                auto & clickHash = ComputeClickHash(e, queryLanguageHash, queryLocationHash, clickPhrase);
+                auto & clickFeatureRaw = e.StackVariable<unsigned __int64>();
+
+                auto & clickLookupSuccessful = e.Call(e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_clickLookupFunc)),
+                                                      clickFreqTable,
+                                                      e.Deref(e.FieldPointer(docData, &WebDocData::m_clickSlotCount)),
+                                                      e.Cast<unsigned __int64>(clickHash),
+                                                      clickFeatureRaw);
+
+                auto & clickFeature = e.If(clickLookupSuccessful,
+                                           e.Cast<ClickFeature>(e.Deref(clickFeatureRaw)),
+                                           e.Immediate(ClickFeature::Create(0)));
+
+                return e.ApplyModel(clickModel, clickFeature);
+            }
+
+
+            typedef float (*ScoringFunction)(Shard, DocumentHandle const *, void const *, QueryContext const *);
+
+            ScoringFunction
+            BuildAndCompileScoringFunction(ParsedQuery const & parsedQuery, Allocator& allocator)
+            {
+                Function<float, Shard, DocumentHandle const *, void const *, QueryContext const *> e(allocator, *m_code);
+
+                auto & shard = e.GetP1();
+                auto & docHandle = e.GetP2();
+                auto & rankerContext = e.Cast<WebRankerContext const *>(e.GetP3());
+                auto & queryContext = e.GetP4();
+
+                auto & commonRankerContext = e.FieldPointer(rankerContext, &WebRankerContext::m_commonContext);
+                auto & modelSet = e.Cast<WebModelSetV1 const *>(e.Deref(e.FieldPointer(commonRankerContext, &CommonRankerContext::m_modelSet)));
+                auto & floatZero = e.Immediate<float>(0);
+
+                // Get WebDocData with static score and advance prefer score.
+                auto & getFixedSizedBlobFunc = e.Deref(e.FieldPointer(commonRankerContext, &CommonRankerContext::m_getFixedSizeBlobFunc));
+
+                auto & docDataBlobId = e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_docDataBlobId));
+                auto & docData = e.Cast<WebDocData const *>(e.Call(getFixedSizedBlobFunc, docHandle, docDataBlobId));
+
+                // Initialize the score to the static score.
+                auto & staticScore = e.Deref(e.FieldPointer(docData, &WebDocData::m_staticScore));
+                auto totalScore = &staticScore;
+
+                // Get query and document market.
+                auto & docMarket = e.FieldPointer(docData, &WebDocData::m_documentMarket);
+                auto & queryMarket = e.FieldPointer(queryContext, &QueryContext::m_queryMarket);
+
+                // Get query and document language and compare them.
+                auto & docLanguage = e.Deref(e.FieldPointer(docMarket, &MarketData::m_languageHash));
+                auto & queryLanguage = e.Deref(e.FieldPointer(queryMarket, &MarketData::m_languageHash));
+
+                auto & languageMatches = e.Compare<JccType::JE>(docLanguage, queryLanguage);
+                auto & languageModel = e.Deref(e.FieldPointer(modelSet, &WebModelSetV1::m_languageModel));
+
+                // Evaluate the language model.
+                totalScore = &e.Add(*totalScore,
+                                    e.ApplyModel(languageModel,
+                                                 e.Cast<BoolFeature>(e.Cast<unsigned __int64>(languageMatches))));
+
+                // Do the same for the location.
+                auto & docLocation = e.Deref(e.FieldPointer(docMarket, &MarketData::m_locationHash));
+                auto & queryLocation = e.Deref(e.FieldPointer(queryMarket, &MarketData::m_locationHash));
+
+                auto & locationMatches = e.Compare<JccType::JE>(docLocation, queryLocation);
+                auto & locationModel = e.Deref(e.FieldPointer(modelSet, &WebModelSetV1::m_locationModel));
+
+                totalScore = &e.Add(*totalScore,
+                                    e.ApplyModel(locationModel,
+                                                 e.Cast<BoolFeature>(e.Cast<unsigned __int64>(locationMatches))));
+
+                // If both language and location match, add the advanced prefer score.
+                auto & marketMatches = e.And(languageMatches, locationMatches);
+                auto & advPreferScore = e.Deref(e.FieldPointer(docData, &WebDocData::m_advancedPreferScore));
+
+                totalScore = &e.Add(*totalScore,
+                                    e.If(marketMatches, advPreferScore, floatZero));
+
+                auto const & queryWords = parsedQuery.m_queryWords;
+
+                // Prepare to evaluate term and click models.
+                if (!queryWords.m_components.empty()
+                    || parsedQuery.m_clickPhrase.HasValue())
+                {
+                    auto & getVarSizedBlobFunc = e.Deref(e.FieldPointer(commonRankerContext, &CommonRankerContext::m_getVariableSizeBlobFunc));
+
+                    if (!queryWords.m_components.empty())
+                    {
+                        auto & termFreqTableBlobId = e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_termFreqTableBlobId));
+                        auto & termHashTable = e.Call(getVarSizedBlobFunc, docHandle, termFreqTableBlobId);
+                        auto & termModel = e.Deref(e.FieldPointer(modelSet, &WebModelSetV1::m_termModel));
+
+                        // Evaluate the term model.
+                        TermEvaluationContextNativeJIT termContext(e,
+                                                                   rankerContext,
+                                                                   termModel,
+                                                                   docData,
+                                                                   e.Cast<void const *>(termHashTable),
+                                                                   shard);
+
+                        totalScore = &termContext.AddQueryWordsScore(e,
+                                                                     queryWords,
+                                                                     *totalScore);
+                    }
+
+                    if (parsedQuery.m_clickPhrase.HasValue())
+                    {
+                        auto & clickFreqTableBlobId = e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_clickFreqTableBlobId));
+                        auto & clickHashTable = e.Call(getVarSizedBlobFunc, docHandle, clickFreqTableBlobId);
+
+                        auto & clickModel = e.Deref(e.FieldPointer(modelSet, &WebModelSetV1::m_clickModel));
+
+                        totalScore = &e.Add(*totalScore,
+                                            GetClickPhraseScore(e,
+                                                                rankerContext,
+                                                                clickModel,
+                                                                docData,
+                                                                e.Cast<void const *>(clickHashTable),
+                                                                queryLanguage,
+                                                                queryLocation,
+                                                                parsedQuery.m_clickPhrase.Get()));
+                    }
+                }
+
+                // If there's a discovery ticks constraint, the expression should
+                // only be evaluated if discovery ticks are below the constraint,
+                // otherwise a constant value will be returned.
+                if (parsedQuery.m_discoveryTimeTicksLessThanConstraint.HasValue())
+                {
+                    auto & discoveryTicks = e.Deref(e.FieldPointer(docData, &WebDocData::m_discoveryTimeTicks));
+
+                    e.AddExecuteOnlyIfStatement(e.Compare<JccType::JB>(discoveryTicks,
+                                                                       e.Immediate(parsedQuery.m_discoveryTimeTicksLessThanConstraint.Get())),
+                                                e.Immediate(c_discardedDocumentScore));
+                }
+
+                return e.Compile(*totalScore);
+            }
+
+
+            struct DocumentDescriptor : NonCopyable
+            {
+                DocumentDescriptor(MarketData const & docMarket)
+                    : m_documentMarket(docMarket),
+                      m_discoveryTimeTicks(0)
+                {
+                }
+
+                DocumentDescriptor& SetDiscoveryTimeTicks(unsigned __int64 value)
+                {
+                    m_discoveryTimeTicks = value;
+
+                    return *this;
+                }
+
+                const MarketData m_documentMarket;
+                unsigned __int64 m_discoveryTimeTicks;
+            };
+
+
+            struct TestData
+            {
+                TestData(DocumentDescriptor const & docDescriptor,
+                         ParsedQuery const & parsedQuery)
+                    : m_shard(3),
+                      m_docHandle(m_fixedSizeBlobs, m_variableSizeBlobs)
+                {
+                    m_termFreqMap[c_redHash] = MakeTermFrequencies(4, 3, 1, 1);
+                    // c_dogHash not placed into the map to signify a trivial term.
+                    m_termFreqMap[c_dogsHash] = MakeTermFrequencies(2, 3, 0, 1);
+                    m_termFreqMap[c_houseHash] = MakeTermFrequencies(0, 2, 0, 0);
+                    m_termFreqMap[c_housesHash] = MakeTermFrequencies(1, 2, 1, 0);
+
+                    const auto clickHash
+                        = ComputeClickHash(c_clickPhraseMarketData.m_languageHash,
+                                           c_clickPhraseMarketData.m_locationHash,
+                                           c_dogHouseHash);
+                    m_clickFreqMap[clickHash] = ClickFeature::Create(2);
+
+                    m_docData.m_staticScore = 5.7f;
+                    m_docData.m_advancedPreferScore = 1.3f;
+                    m_docData.m_documentMarket = docDescriptor.m_documentMarket;
+                    m_docData.m_discoveryTimeTicks = docDescriptor.m_discoveryTimeTicks;
+                    m_docData.m_termSlotCount = c_expectedSlotCount;
+                    m_docData.m_clickSlotCount = c_expectedSlotCount;
+
+                    m_modelSet.m_clickModel = &m_clickModel;
+                    m_modelSet.m_languageModel = &m_languageModel;
+                    m_modelSet.m_locationModel = &m_locationModel;
+                    m_modelSet.m_termModel = &m_termModel;
+
+                    m_fixedSizeBlobs[c_docDataBlobId] = &m_docData;
+                    m_variableSizeBlobs[c_termFreqTableBlobId] = &m_termFreqMap;
+                    m_variableSizeBlobs[c_clickFreqTableBlobId] = &m_clickFreqMap;
+
+                    m_rankerContext.m_commonContext.m_getFixedSizeBlobFunc = &GetFixedSizeBlobFunc;
+                    m_rankerContext.m_commonContext.m_getVariableSizeBlobFunc = &GetVariableSizeBlobFunc;
+                    m_rankerContext.m_commonContext.m_modelSet = &m_modelSet;
+
+                    m_rankerContext.m_docDataBlobId = c_docDataBlobId;
+                    m_rankerContext.m_termFreqTableBlobId = c_termFreqTableBlobId;
+                    m_rankerContext.m_clickFreqTableBlobId = c_clickFreqTableBlobId;
+
+                    m_rankerContext.m_termLookupFunc = &HashLookupFunc<TermFrequencies>;
+                    m_rankerContext.m_clickLookupFunc = &HashLookupFunc<ClickFeature>;
+
+                    m_queryContext.m_queryMarket = parsedQuery.m_queryMarket;
+
+                    InitModel(m_languageModel, 0.37f, 0.72f);
+                    InitModel(m_locationModel, 0.12f, 0.05f);
+                    InitModel(m_clickModel, 1.23f, 0.26f);
+                    InitModel(m_termModel, 1, 0.01f);
+                }
+
+                const Shard m_shard;
+
+                DocumentHandle m_docHandle;
+                WebRankerContext m_rankerContext;
+                QueryContext m_queryContext;
+
+            private:
+                FixedSizeBlobId c_docDataBlobId = 2;
+                VariableSizeBlobId c_termFreqTableBlobId = 5;
+                VariableSizeBlobId c_clickFreqTableBlobId = 6;
+
+                WebDocData m_docData;
+
+                LanguageModel m_languageModel;
+                LocationModel m_locationModel;
+                TermModel m_termModel;
+                ClickModel m_clickModel;
+
+                WebModelSetV1 m_modelSet;
+
+                std::map<FixedSizeBlobId, void*> m_fixedSizeBlobs;
+                std::map<VariableSizeBlobId, void*> m_variableSizeBlobs;
+
+                std::map<unsigned __int64, TermFrequencies> m_termFreqMap;
+                std::map<unsigned  __int64, ClickFeature> m_clickFreqMap;
+
+
+                static void* GetFixedSizeBlobFunc(DocumentHandle const * handle,
+                                                  FixedSizeBlobId id)
+                {
+                    return handle->GetFixedSizeBlob(id);
+                }
+
+
+                static void* GetVariableSizeBlobFunc(DocumentHandle const * handle,
+                                                     VariableSizeBlobId id)
+                {
+                    return handle->GetVariableSizeBlob(id);
+                }
+
+
+                template <typename VALUE>
+                static bool HashLookupFunc(void const * buffer,
+                                           unsigned slotCount,
+                                           unsigned __int64 key,
+                                           unsigned __int64& value)
+                {
+                    TestEqual(c_expectedSlotCount, slotCount);
+
+                    auto map = reinterpret_cast<std::map<unsigned __int64, VALUE> const *>(buffer);
+
+                    auto it = map->find(key);
+                    bool found = it != map->end();
+
+                    if (found)
+                    {
+                        value = it->second;
+                    }
+
+                    return found;
+                }
+
+
+                template <typename T>
+                static void InitModel(T& model, float startValue, float stepValue)
+                {
+                    float currValue = startValue;
+
+                    for (unsigned i = 0; i < T::c_size; ++i)
+                    {
+                        model[i] = currValue;
+                        currValue += stepValue;
+                    }
+                }
+            };
+
+
+            void RunTestCase(DocumentDescriptor const & docDescriptor,
+                             ParsedQuery const & parsedQuery)
             {
                 AutoResetAllocator reset(m_allocator);
 
                 {
-                    typedef Packed<3, Packed<4, Packed<5>>> PackedType;
-                    typedef Model<PackedType> ModelType;
+                    Assert(offsetof(WebRankerContext, m_commonContext) == 0,
+                           "Invalid WebRankerContext structure layout");
 
-                    // TODO: Currently the JIT does not support return type of void.
-                    //Function<void, ProcessResources*, Shard, DocIndex> expression(m_allocator, *m_code);
-                    Function<int, ProcessResources*, Shard, DocIndex> expression(m_allocator, *m_code);
+                    // TestData is large, allocate from heap to avoid stack overflow.
+                    auto testData = std::make_unique<TestData>(docDescriptor, parsedQuery);
+                    auto expected = CalculateScore(parsedQuery,
+                                                   testData->m_shard,
+                                                   &testData->m_docHandle,
+                                                   &testData->m_rankerContext.m_commonContext,
+                                                   &testData->m_queryContext);
 
-                    auto & processResources = expression.GetP1();
-                    /* auto & shard = */ expression.GetP2();
-                    auto & docIndex = expression.GetP3();
+                    auto function = BuildAndCompileScoringFunction(parsedQuery, m_allocator);
+                    auto actual = function(testData->m_shard,
+                                           &testData->m_docHandle,
+                                           &testData->m_rankerContext.m_commonContext,
+                                           &testData->m_queryContext);
 
-                    // TODO: Is LookupHelperType necessary?
-                    auto & lookupFunction = expression.Immediate<LookupHelperType>(LookupHelper);
-
-                    auto & docTable = expression.Deref(expression.FieldPointer(processResources, &ProcessResources::m_docTable));
-                    auto & docTableEntries = expression.Deref(expression.FieldPointer(docTable, &DocTable::m_entries));
-                    auto & docInfo = expression.Add(docTableEntries, docIndex);
-                    auto & termScoreTable = expression.Deref(expression.FieldPointer<DocInfo, TermScoreTable*>(docInfo, &DocInfo::m_termScoreTable));
-
-                    auto & callback = expression.Deref(expression.FieldPointer(processResources, & ProcessResources::m_callback));
-
-                    auto & modelSet = expression.Deref(expression.FieldPointer(processResources, &ProcessResources::m_models));
-                    auto & termModel = expression.Deref(expression.FieldPointer(modelSet, &ModelSet::m_termModel));
-
-                    // Term 1
-                    auto & termHash1 = expression.Immediate(1234ull);
-                    auto & termFeatures1 = expression.Call(lookupFunction, termScoreTable, termHash1);
-                    //    // TODO: Need to implement Packed::Push() to append shard.
-                    auto & termScore1 = expression.ApplyModel(termModel, termFeatures1);
-
-                    auto & docId = expression.Deref(expression.FieldPointer(docInfo, &DocInfo::m_docId));
-
-                    auto & result = expression.Call(callback, docId, termScore1);
-
-                    /* auto function = */ expression.Compile(result);
-
-                    //ProcessResources p1;
-                    // Shard p2 = 3;
-                    // DocIndex p3 = 0x1234;
-
-                    //auto expected = model.Apply(packedParameter);
-                    //auto observed = function(&p1, p2, p3);
-
-                    //TestAssert(observed == expected);
+                    TestAssert(std::abs(actual - expected) < 0.0001,
+                               "Expected score: %.6f, actual score: %.6f",
+                               expected,
+                               actual);
                 }
             }
 
 
-/*************************************I*************************
-imul r8, 14h                    // r8 = docIndex * sizeof(DocInfo)
-mov r12, rcx                    // r12 = processResources
-mov r12, [r12 + 8h]             // r12 = processResources->docTable
-mov r12, [r12]                  // r12 = &processResources->docTable->m_entries[0]
-add r12, r8                     // r12 = &processResources->docTable->m_entries[docIndex]
+            TestCase(SingleWord)
+            {
+                // house
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                        }
+                    }
+                };
 
-mov r8, rcx                     // r8 = processResources (save for later)
-mov r11, r12                    // r11 = docInfo (save for later)
+                const MarketData market = c_anyMarketData;
 
-mov r10, 000007FAA29A30B2h      // r10 = &Lookup
+                DocumentDescriptor docDescriptor(market);
+                ParsedQuery query(queryWords, market);
 
-mov r9, rcx                     // r9 = processResources (save for later)
-mov rcx, [r12]                  // rcx = docInfo.m_termScoreTable
+                RunTestCase(docDescriptor, query);
+            }
 
-mov r12, rdx                    // r12 = shard (save for later)
-mov rdx, 4D2h                   // rdx = termHash1
 
-push r8
-push r9
-push r11
-call r10                        // rax = Lookup(docInfo.m_termScoreTable, termHash1)
-pop r11
-pop r9
-pop r8
+            TestCase(MultipleWords)
+            {
+                // red dog house
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_redHash, c_anyIdf1) }
+                        },
 
-imul rax, 4h                    // rax *= sizeof(float) for index into model float array
-mov r9, [r9]                    // r9 = processResources->m_models
-mov r9, [r9]                    // r9 = processResources->m_models->m_termModel
-add r9, rax                     // r9 = &processResources->m_models->m_termModel[valueIndex]
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_dogHash, c_anyIdf2) }
+                        },
 
-mov r8, [r8 + 10h]              // r8 = processResources->m_callback
-mov rcx, [r11 + Ch]             // rcx = docInfo.m_docId
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_houseHash, c_anyIdf3) }
+                        }
+                    }
+                };
 
-mov xmm1s, [r9]                 // xmm1s = *modelValuePointer
+                const MarketData market = c_anyMarketData;
 
-call r8                         // Callback(docId, modelValue)
+                DocumentDescriptor docDescriptor(market);
+                ParsedQuery query(queryWords, market);
 
-*****************************/
+                RunTestCase(docDescriptor, query);
+            }
+
+
+            TestCase(Phrase)
+            {
+                // red "dog house"
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_redHash, c_anyIdf1) }
+                        },
+
+                        QueryComponent
+                        {
+                            QueryNGram
+                            {
+                                TermInfo(c_dogHash, c_anyIdf1),
+                                TermInfo(c_houseHash, c_anyIdf2)
+                            }
+                        }
+                    }
+                };
+
+                const MarketData market = c_anyMarketData;
+
+                DocumentDescriptor docDescriptor(market);
+                ParsedQuery query(queryWords, market);
+
+                RunTestCase(docDescriptor, query);
+            }
+
+
+            TestCase(WordCandidates)
+            {
+                // red word:("dog house" houses)
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_redHash, c_anyIdf4) },
+                        },
+
+                        QueryComponent
+                        {
+                            QueryNGram
+                            {
+                                TermInfo(c_dogHash, c_anyIdf1),
+                                TermInfo(c_houseHash, c_anyIdf3)
+                            },
+                            QueryNGram { TermInfo(c_housesHash, c_anyIdf4) }
+                        }
+                    }
+                };
+
+                const MarketData market = c_anyMarketData;
+
+                DocumentDescriptor docDescriptor(market);
+                ParsedQuery query(queryWords, market);
+
+                RunTestCase(docDescriptor, query);
+            }
+
+
+            TestCase(ClickPhrase)
+            {
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_dogHash, c_anyIdf1) },
+                            QueryNGram { TermInfo(c_dogsHash, c_anyIdf2) }
+                        },
+
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_houseHash, c_anyIdf3) },
+                        }
+                    }
+                };
+
+                DocumentDescriptor docDescriptor(c_anyMarketData);
+
+                // Click phrase in the click table.
+                {
+                    ParsedQuery query(queryWords, c_clickPhraseMarketData);
+
+                    query.SetClickPhrase(c_dogHouseHash);
+                    RunTestCase(docDescriptor, query);
+                }
+
+                // Click phrase not in the click table.
+                {
+                    ParsedQuery query(queryWords, c_clickPhraseMarketData);
+
+                    query.SetClickPhrase(c_nonExistentPhraseHash);
+                    RunTestCase(docDescriptor, query);
+                }
+            }
+
+
+            TestCase(ConstraintDiscard)
+            {
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                        }
+                    }
+                };
+
+                const MarketData market = c_anyMarketData;
+
+                ParsedQuery query(queryWords, market);
+                query.RequireDiscoveryTimeTicksLessThan(10);
+
+                // The following document should not be discarded.
+                {
+                    DocumentDescriptor docDescriptorNoDiscard(market);
+                    docDescriptorNoDiscard.SetDiscoveryTimeTicks(9);
+
+                    RunTestCase(docDescriptorNoDiscard, query);
+                }
+
+                // The following document should be discarded.
+                {
+                    DocumentDescriptor docDescriptorDiscard(market);
+                    docDescriptorDiscard.SetDiscoveryTimeTicks(10);
+
+                    RunTestCase(docDescriptorDiscard, query);
+                }
+            }
+
+
+            TestCase(CompletelyDifferentMarket)
+            {
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                        }
+                    }
+                };
+
+                DocumentDescriptor docDescriptor(c_anyMarketData);
+                ParsedQuery query(queryWords, c_anyOtherFullyDifferentMarketData);
+
+                RunTestCase(docDescriptor, query);
+            }
+
+
+            TestCase(DifferentMarketWithSameLanguage)
+            {
+                QueryWords queryWords
+                {
+                    {
+                        QueryComponent
+                        {
+                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                        }
+                    }
+                };
+
+                DocumentDescriptor docDescriptor(c_anyMarketData);
+                ParsedQuery query(queryWords, c_anyOtherMarketDataWithSameLanguage);
+
+                RunTestCase(docDescriptor, query);
+            }
+
 
         private:
             Allocator m_allocator;
             ExecutionBuffer m_executionBuffer;
             std::unique_ptr<FunctionBuffer> m_code;
         };
+
+        const AcceptanceUnitTest::TermFrequencies AcceptanceUnitTest::c_defaultTermFrequencies = AcceptanceUnitTest::MakeTermFrequencies(0, 1, 0, 0);
+
+        const float AcceptanceUnitTest::c_discardedDocumentScore = std::numeric_limits<float>::lowest();
+
+        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_anyMarketData = {0x01234567, 0x11112222};
+        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_anyOtherMarketDataWithSameLanguage = {0x01234567, 0x22222222};
+        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_anyOtherFullyDifferentMarketData = {0x89ABCDEF, 0x33334444};
+        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_clickPhraseMarketData = {0xC11CC, 0xDA7ADA7A};
+
+        const float AcceptanceUnitTest::c_anyIdf1 = 0.1f;
+        const float AcceptanceUnitTest::c_anyIdf2 = 0.23f;
+        const float AcceptanceUnitTest::c_anyIdf3 = 0.67f;
+        const float AcceptanceUnitTest::c_anyIdf4 = 1.5f;
     }
 }

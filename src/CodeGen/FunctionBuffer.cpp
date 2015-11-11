@@ -26,6 +26,13 @@ namespace NativeJIT
                                            bool isLeaf)
         : X64CodeGenerator(allocator, capacity, maxLabels, maxCallSites)
     {
+        // TODO: This cannot be known in advance, only after the function is
+        // compiled. For now, save all nonvolatile RXX registers to have the
+        // retail unit tests pass. As part of TFS 17238, this will be addressed
+        // properly, along with XMM registers. A unit test which puts garbage
+        // into all nonvolatile registers should be added as well.
+        registerSaveMask = 0xF0E8; // All RXX volatiles.
+
 #ifdef _DEBUG
         FillWithBreakCode(0, BufferSize());
 #endif

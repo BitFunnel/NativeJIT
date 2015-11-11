@@ -247,7 +247,9 @@ namespace NativeJIT
         else
         {
             TestFail();
-            return 0;
+#ifdef _DEBUG
+            throw std::runtime_error("Unreachable code");
+#endif
         }
     }
 

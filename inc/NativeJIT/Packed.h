@@ -126,7 +126,7 @@ namespace NativeJIT
             return m_fields;
         }
 
-        operator unsigned __int64()
+        operator unsigned __int64() const
         {
             return m_fields;
         }
