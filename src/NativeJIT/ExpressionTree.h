@@ -617,6 +617,11 @@ namespace NativeJIT
             }
             else
             {
+                // IMPORTANT: the spilling code must not affect and CPU flags
+                // since many nodes (e.g. ConditionalNode) assume that they
+                // can modify flags, allocate a register and then act on flags.
+                // The MOV instruction does not affect any flags.
+                //
                 // It is not possible to spill an indirect to stack in one
                 // step, so ensure that the source storage is direct.
                 // If it was previously indirect, its register will be reused
@@ -1059,6 +1064,8 @@ namespace NativeJIT
     {
         // TODO: Target the whole target register with MovZX to prevent the partial register stall.
 
+        // IMPORTANT: This method must not affect any CPU flags. See the comment
+        // in Direct(reg) method for more information.
         auto & tree = m_data->GetTree();
         auto & code = tree.GetCodeGenerator();
 
@@ -1183,6 +1190,8 @@ namespace NativeJIT
     template <typename T>
     void ExpressionTree::Storage<T>::TakeSoleOwnershipOfDirect()
     {
+        // IMPORTANT: This method must not affect any CPU flags. See the comment
+        // in Direct(reg) method for more information.
         auto & tree = m_data->GetTree();
 
         Assert(GetStorageClass() == StorageClass::Direct,
@@ -1274,7 +1283,10 @@ namespace NativeJIT
                         {
                             // Note: this branch should be after the IsBasePointer()
                             // branch to also cover the cases when stack pointer
-                            // is chosen to be the base pointer.
+                            // is chosen to be the base pointer. For such cases,
+                            // it's important that temporaries (which are based
+                            // off base pointer) are released and the IsBasePointer()
+                            // branch handles that.
                             std::cout << "Don't release stack-relative indirect at "
                                       << m_data->GetOffset() << std::endl;
                         }

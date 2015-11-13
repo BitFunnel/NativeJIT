@@ -6,6 +6,7 @@
 
 #include <iosfwd>
 
+#include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeBuffer.h"       // Inherits from CodeBuffer.
 #include "NativeJIT/Register.h"         // Register parameter.
 #include "NativeJIT/ValuePredicates.h"  // Called by template code.
@@ -828,14 +829,14 @@ namespace NativeJIT
         static_assert(sizeof(T) < 8, "64-bit immediates are not supported by IMul.");
         static_assert(std::is_integral<T>::value, "IMul works only with integral values.");
 
-        unsigned valueSize = Size(value);
+        const unsigned valueSize = Size(value);
 
         EmitOpSizeOverrideDirect(dest, dest);
         EmitRexDirect(dest, dest);
 
         if (valueSize <= 1
-            && (static_cast<__int16>(value) < 0
-                || static_cast<unsigned __int8>(value) < 0x80))
+            && (static_cast<__int64>(value) < 0
+                || !BitOp::TestBit(static_cast<unsigned __int64>(value), 7)))
         {
             // Use the sign-extend flavor of the opcode only if the value is
             // signed and negative or if the bit #7 is not set otherwise.
@@ -888,8 +889,8 @@ namespace NativeJIT
         }
         else if (SIZE == 8
                  && Size(value) <= 4
-                 && (static_cast<__int64>(value) < 0
-                     || static_cast<unsigned __int32>(value) < 0x80000000))
+                 && ((std::is_signed<T>::value && static_cast<__int64>(value) < 0)
+                     || !BitOp::TestBit(static_cast<unsigned __int64>(value), 31)))
         {
             // Use the sign-extend flavor of the opcode only if the value is
             // signed and negative or if the bit #31 is not set otherwise.
@@ -1334,8 +1335,8 @@ namespace NativeJIT
             // #7 is clear).
             if (valueSize <= 1
                 && (SIZE == 1
-                    || (static_cast<__int16>(value) < 0
-                        || static_cast<unsigned __int8>(value) < 0x80)))
+                    || (static_cast<__int64>(value) < 0
+                        || !BitOp::TestBit(static_cast<unsigned __int64>(value), 7))))
             {
                 if (SIZE == 1)
                 {

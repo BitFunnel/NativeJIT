@@ -75,12 +75,6 @@
     <ClInclude Include="StackVariableNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PointerNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ReferenceNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ShldNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>

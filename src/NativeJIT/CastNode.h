@@ -52,8 +52,13 @@ namespace NativeJIT
         class Traits
         {
         public:
-            static_assert(std::is_reference<FROM>::value == std::is_reference<TO>::value,
-                          "Both/neither type must be a reference");
+            // Either neither side is a reference, or if one of them is, the
+            // other one must be a pointer.
+            static_assert((!std::is_reference<FROM>::value
+                           && !std::is_reference<TO>::value)
+                          || (std::is_pointer<FROM>::value
+                              || std::is_pointer<TO>::value),
+                          "If one side is a reference, the other one must be a pointer");
 
             // Source and target register types and properties.
             typedef typename Storage<FROM>::DirectRegister FromRegister;
@@ -146,7 +151,7 @@ namespace NativeJIT
 
         // A class used to specialize code generation for casts that need to
         // convert between two immediate storages. The class is needed instead
-        // of a simple if/else branch because f. ex. if TO type belongs to a
+        // of a simple if/else branch because e.g. if TO type belongs to a
         // RIPRelativeImmediate category, the if/else branch that contained 
         // a tree.Immediate() call would fail to compile.
         // Two levels of structs are used to allow different template specializations.

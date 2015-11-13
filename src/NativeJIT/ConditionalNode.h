@@ -194,6 +194,16 @@ namespace NativeJIT
         // only if its branch is hit, the NativeJIT code would have to ensure
         // that the state of the allocated/spilled registers (i.e. all Storages)
         // is consistent once those two x64 branches converge back.
+        //
+        // A related note: if this is addressed, then it may be possible to
+        // also address the fact that common subexpression (CSE) code is
+        // inefficient in some cases because some CSEs may not need to be
+        // evaluated. For example:
+        //   (v == 1)? a : ((v == 2) ? a + b : b + c)
+        //
+        // Depending on the value of v, either a or c may not need to be
+        // evaluated. One possibility is to lazily evaluate CSEs *at runtime*
+        // as they are needed.
 
         Storage<T> trueValue;
         Storage<T> falseValue;

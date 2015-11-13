@@ -52,16 +52,6 @@ namespace NativeJIT
         static_assert(std::is_trivially_copyable<T>::value, "Invalid variable type.");
         const size_t varSize = sizeof(T);
 
-        // DESIGN NOTE: Intentionally omitting check for buffer overrun.
-        // This code relies on a protected guard page immedidately after the buffer
-        // to detect overruns.
-        //
-        // Temporarily add an if check to make sure if buffer overrun happens, a C++
-        // exception is thrown so that the upper layer component can catch the exception.
-        // TFS 10628 is opened to evaluate the performance and the necessity of this change
-        // in the near future. The DESIGN NOTE comment is intentionally left untouched
-        // because a final decision of what should be done to handle buffer overrun will be
-        // evaluated when TFS 10628 is resolved.
         if (m_current + (varSize - 1) >= m_bufferEnd)
         {
             throw std::runtime_error("NativeJIT code buffer overrun.");
@@ -155,7 +145,6 @@ namespace NativeJIT
     // before advancing.
     unsigned __int8* CodeBuffer::Advance(int byteCount)
     {
-        // TODO: See the TFS 10628 note above.
         if (m_current + byteCount - 1 >= m_bufferEnd)
         {
             throw std::runtime_error("NativeJIT code buffer overrun.");
@@ -169,7 +158,6 @@ namespace NativeJIT
 
     void CodeBuffer::Fill(unsigned start, unsigned length, unsigned __int8 value)
     {
-        // TODO: See the TFS 10628 note above.
         if (m_bufferStart + start + length - 1 >= m_bufferEnd)
         {
             throw std::runtime_error("NativeJIT code buffer overrun.");

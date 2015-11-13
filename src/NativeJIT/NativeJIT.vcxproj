@@ -88,8 +88,6 @@
     <ClInclude Include="Node.h" />
     <ClInclude Include="PackedMinMaxNode.h" />
     <ClInclude Include="ParameterNode.h" />
-    <ClInclude Include="PointerNode.h" />
-    <ClInclude Include="ReferenceNode.h" />
     <ClInclude Include="ReturnNode.h" />
     <ClInclude Include="ShldNode.h" />
     <ClInclude Include="stdafx.h" />

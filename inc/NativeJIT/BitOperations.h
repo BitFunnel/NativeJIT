@@ -6,6 +6,10 @@
 
 namespace NativeJIT
 {
+    // WARNING: the methods in this file are thin wrappers around compiler
+    // intrinsic methods. As such, they are meant to have no or minimal added
+    // overhead which is why only compile-time checks are done, but no runtime
+    // checks for valid input range or similar are performed.
     namespace BitOp
     {
         extern const bool c_isPopCntSupported;
@@ -13,7 +17,7 @@ namespace NativeJIT
 
         // Reinterprets the cast from FROM* to TO*, ensuring that FROM and
         // TO are indeed of the same size.
-        // This is necessary since bit intrinsics take f. ex. pointer to long
+        // This is necessary since bit intrinsics take e.g. pointer to long
         // and won't accept pointer to __int32 (i.e. int) even though long and
         // int have the same size. The cast doesn't verify that signedness is
         // the same since bit intrinsics work the same way regardless of sign.
@@ -103,6 +107,7 @@ namespace NativeJIT
 
 
         // Returns a boolean indicating whether the specified bit is set or not.
+        // WARNING: Does not verify that bitIndex is in valid range.
         __forceinline
         bool TestBit(unsigned __int64 value, unsigned bitIndex)
         {
@@ -114,6 +119,7 @@ namespace NativeJIT
 
 
         // Returns a boolean indicating whether the specified bit is set or not.
+        // WARNING: Does not verify that bitIndex is in valid range.
         template <typename T>
         __forceinline
         bool TestBit(T value, unsigned bitIndex)
@@ -131,6 +137,7 @@ namespace NativeJIT
 
         // Sets the specified bit to 1 and returns whether the bit was previously
         // set or not.
+        // WARNING: Does not verify that bitIndex is in valid range.
         __forceinline
         bool TestAndSetBit(unsigned __int32* value, unsigned bitIndex)
         {
@@ -143,6 +150,7 @@ namespace NativeJIT
 
         // Sets the specified bit to 1 and returns whether the bit was previously
         // set or not.
+        // WARNING: Does not verify that bitIndex is in valid range.
         __forceinline
         bool TestAndSetBit(unsigned __int64* value, unsigned bitIndex)
         {
@@ -154,6 +162,7 @@ namespace NativeJIT
 
 
         // A (naming) convenience wrapper for TestAndSetBit.
+        // WARNING: Does not verify that bitIndex is in valid range.
         template <typename T>
         __forceinline
         void SetBit(T* value, unsigned bitIndex)
@@ -164,6 +173,7 @@ namespace NativeJIT
 
         // Sets the specified bit to 0 and returns whether the bit was previously
         // set or not.
+        // WARNING: Does not verify that bitIndex is in valid range.
         __forceinline
         bool TestAndClearBit(unsigned __int32* value, unsigned bitIndex)
         {
@@ -176,6 +186,7 @@ namespace NativeJIT
 
         // Sets the specified bit to 1 and returns whether the bit was previously
         // set or not.
+        // WARNING: Does not verify that bitIndex is in valid range.
         __forceinline
         bool TestAndClearBit(unsigned __int64* value, unsigned bitIndex)
         {
@@ -187,6 +198,7 @@ namespace NativeJIT
 
 
         // A (naming) convenience wrapper for TestAndClearBit.
+        // WARNING: Does not verify that bitIndex is in valid range.
         template <typename T>
         __forceinline
         void ClearBit(T* value, unsigned bitIndex)

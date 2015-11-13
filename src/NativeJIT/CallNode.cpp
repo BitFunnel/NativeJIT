@@ -74,6 +74,7 @@ namespace NativeJIT
         // implicit PUSH/POP of the return address by CALL).
         // The code above may leave the stack non 16-bytes aligned.
         // Also review/adjust the related code in RestoreVolatiles().
+        // This will be addressed as part of TFS 17238.
         if (parameterCount > 0)
         {
             code.EmitImmediate<OpCode::Sub>(

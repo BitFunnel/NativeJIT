@@ -70,6 +70,11 @@ namespace NativeJIT
             "\3\4\4\5\4\5\5\6\4\5\5\6\5\6\6\7"
             "\4\5\5\6\5\6\6\7\5\6\6\7\6\7\7\x8";
 
+        // Note: "static initialization fiasco" is not an issue here: two phase
+        // initialization will ensure that this has a value of 0 before
+        // initializers start executing, so the worst case scenario is that
+        // GetNonZeroBitCountFallback() is used until all the initializers
+        // complete and main() starts executing.
         const bool c_isPopCntSupported = IsPopCntSupported();
     }
 }

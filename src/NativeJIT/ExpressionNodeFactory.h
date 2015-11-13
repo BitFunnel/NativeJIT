@@ -14,8 +14,6 @@
 #include "Node.h"
 #include "PackedMinMaxNode.h"
 #include "ParameterNode.h"
-#include "PointerNode.h"
-#include "ReferenceNode.h"
 #include "ReturnNode.h"
 #include "ShldNode.h"
 #include "StackVariableNode.h"
@@ -56,6 +54,10 @@ namespace NativeJIT
         // Note: OBJECT1 is there to allow for template deduction in all cases
         // since OBJECT may or may not be const, but OBJECT1 is never const
         // in FieldPointer(someObjectNode, &SomeObject::m_field) expression.
+        // Otherwise, the following code would fail to compile:
+        //
+        // Node<SomeObject const *>& obj = ...;
+        // FieldPointer(obj, &SomeObject::m_field)
         template <typename OBJECT, typename FIELD, typename OBJECT1 = OBJECT>
         Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT1::*field);
 
@@ -199,14 +201,14 @@ namespace NativeJIT
     template <typename T>
     Node<T*>& ExpressionNodeFactory::AsPointer(Node<T&>& reference)
     {
-        return * new (m_allocator.Allocate(sizeof(PointerNode<T>))) PointerNode<T>(*this, reference);
+        return Cast<T*>(reference);
     }
 
 
     template <typename T>
     Node<T&>& ExpressionNodeFactory::AsReference(Node<T*>& pointer)
     {
-        return * new (m_allocator.Allocate(sizeof(ReferenceNode<T>))) ReferenceNode<T>(*this, pointer);
+        return Cast<T&>(pointer);
     }
 
 

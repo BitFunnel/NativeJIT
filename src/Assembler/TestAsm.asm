@@ -140,12 +140,15 @@ cmp rdx, [rsi + 56h]
 ; Direct-immediate, different opcodes depending on
 ; whether sign extension is acceptable.
 ;
-; The immediates that will be sign extended.
-; The first two lines would correctly fail to compile
-; in NativeJIT. They would produce the value of
-; FFFFFFFF80000000h unexpectedly since sign extension
-; is unconditionally used for 32-bit immediates targeting
-; 64-bit registers.
+; The immediates that will be sign extended or will use the
+; sign-extend opcode in cases when it makes no difference
+; (when both source and target are 1-byte).
+;
+; The first two lines would correctly fail to compile in NativeJIT
+; and are thus commented out. They would produce the value of
+; FFFFFFFF80000000h unexpectedly since sign extension is unconditionally
+; used for 32-bit immediates targeting 64-bit registers.
+;
 ; or rax, 80000000h
 ; or rcx, 80000000h
 or rax, -7fffffffh
