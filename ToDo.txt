@@ -1,3 +1,17 @@
+====================================================
+NOTES for CMake, Google Test, and Linux/OSX ports.
+
+Figure out which public header files to list.
+  Does a project list all that it uses, all that it owns?
+Windows.h
+Stack unwinding.
+Add README.md
+Add documentation build.
+Decide on submodules vs direct incorporation vs package convention for gtest.
+
+
+====================================================
+
 /*
 xJITExample1 is showing redundant adds when collapsing field pointers.
 x        === Pass3 ===

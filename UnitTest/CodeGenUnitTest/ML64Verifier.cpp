@@ -2,8 +2,16 @@
 
 #include <iostream>             // TODO: Temporary - for debugging.
 
+#ifdef USING_GTEST
+#include "gtest/gtest.h"
+#endif
+
 #include "ML64Verifier.h"
+
+#ifndef USING_GTEST
 #include "SuiteCpp/UnitTest.h"
+#define TEST(a, b) TestCase(b)
+#endif
 
 
 namespace NativeJIT
@@ -35,8 +43,14 @@ namespace NativeJIT
                     unsigned __int64 value;
                     unsigned size;
 
+#ifdef USING_GTEST
+                    ASSERT_TRUE(ReadHexNumber(value, size));
+                    ASSERT_LE(size, 8u);
+                    ASSERT_GT(size, 0u);
+#else
                     TestAssert(ReadHexNumber(value, size));
                     TestAssert(size <= 8 && size > 0);
+#endif
 
                     for (unsigned i = 0 ; i < size; ++i)
                     {
@@ -51,7 +65,12 @@ namespace NativeJIT
                             ReportError(x, m_testOutput[m_bytesVerified]);
                         }
 
+#ifdef USING_GTEST
+                        ASSERT_EQ(x, m_testOutput[m_bytesVerified]);
+#else
                         TestAssert(x == m_testOutput[m_bytesVerified]);
+#endif
+
                         ++m_bytesVerified;
                     }
 
@@ -145,8 +164,14 @@ namespace NativeJIT
             {
                 unsigned __int64 value;
                 unsigned size;
+
+#ifdef USING_GTEST
+                ASSERT_TRUE(ReadHexNumber(value, size));
+                ASSERT_EQ(4, size);
+#else
                 TestAssert(ReadHexNumber(value, size));
                 TestAssert(size == 4);
+#endif
             }
         }
     }
@@ -230,7 +255,20 @@ namespace NativeJIT
 
     unsigned ML64Verifier::ReadHexDigit()
     {
+#ifdef USING_GTEST
+        // Would like to use
+        //   ASSERT_NE(0, isxdigit(PeekChar()));
+        // but can't. See following article for explanation.
+        //   http://stackoverflow.com/questions/12617806/assert-true-return-type-does-not-match-function-type-in-gtest
+        // Instead use throw.
+        if (isxdigit(PeekChar()) == 0)
+        {
+            throw 0;
+        }
+#else
         TestAssert(isxdigit(PeekChar()) != 0);
+#endif
+
         char c = GetChar();
         if (c >= '0' && c <= '9')
         {
@@ -246,8 +284,13 @@ namespace NativeJIT
         }
         else
         {
+#ifdef USING_GTEST
+            // Force unit test to fail.
+            throw 0;
+#else
             TestFail();
             return 0;
+#endif
         }
     }
 
