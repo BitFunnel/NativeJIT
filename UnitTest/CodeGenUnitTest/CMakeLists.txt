@@ -19,8 +19,6 @@ set(PUBLIC_HFILES
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
 
-message("include_directories xxx: ${INCLUDE_DIRECTORIES}")
-
 add_executable(CodeGenUnitTest ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
 target_link_libraries (CodeGenUnitTest CodeGen gtest gtest_main)
 

@@ -42,4 +42,12 @@ include_directories(inc)
 add_subdirectory(src/CodeGen)
 add_subdirectory(UnitTest/CodeGenUnitTest)
 
-#add_custom_target(TOPLEVEL SOURCES ToDo.txt)
+add_custom_target(TOPLEVEL SOURCES
+  ToDo.txt
+  CMakeLists.txt.in
+  Configure_OSX_Make.sh
+  Configure_OSX_XCode.sh
+  Configure_Windows.bat
+  LICENSE.txt
+  README.md
+  )

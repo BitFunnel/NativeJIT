@@ -1,6 +1,7 @@
 ====================================================
 NOTES for CMake, Google Test, and Linux/OSX ports.
 
+Configure_Windows.bat doesn't show up in TOPLEVEL for some reason.
 Figure out which public header files to list.
   Does a project list all that it uses, all that it owns?
 Windows.h
