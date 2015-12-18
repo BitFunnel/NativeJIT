@@ -22,6 +22,7 @@ namespace NativeJIT
     }
 
 
+    // http://stackoverflow.com/questions/570257/jit-compilation-and-dep
     ExecutionBuffer::ExecutionBuffer(size_t bufferSize)
         : m_buffer(nullptr),
           m_bytesAllocated(0)

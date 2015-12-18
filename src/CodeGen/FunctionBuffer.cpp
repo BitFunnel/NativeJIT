@@ -18,12 +18,12 @@ namespace NativeJIT
     //
     //*************************************************************************
     FunctionBuffer::FunctionBuffer(Allocators::IAllocator& allocator,
-                                           unsigned capacity,
-                                           unsigned maxLabels,
-                                           unsigned maxCallSites,
-                                           unsigned slotCount,
-                                           unsigned registerSaveMask,
-                                           bool isLeaf)
+                                   unsigned capacity,
+                                   unsigned maxLabels,
+                                   unsigned maxCallSites,
+                                   unsigned slotCount,
+                                   unsigned registerSaveMask,
+                                   bool isLeaf)
         : X64CodeGenerator(allocator, capacity, maxLabels, maxCallSites)
     {
 #ifdef _DEBUG
@@ -74,8 +74,8 @@ namespace NativeJIT
 
 
     void FunctionBuffer::EmitUnwindInfo(unsigned char slotCount,
-                                            unsigned registerSaveMask,
-                                            bool isLeaf)
+                                        unsigned registerSaveMask,
+                                        bool isLeaf)
     {
         // TODO: Is the leaf functionality worthwhile or would it be better to require the user
         // to allocate the space before calling out? The current functionality isn't useful for

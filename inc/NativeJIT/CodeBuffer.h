@@ -99,6 +99,7 @@ namespace NativeJIT
 
         JumpTable m_localJumpTable;    // Jumps within a single CodeBuffer.
 
+        // http://stackoverflow.com/questions/8897791/how-to-define-forceinline-inline
         // Writes the bits of the argument to the current position in the buffer.
         // WARNING: Non portable. Assumes little endian machine architecture.
         template <typename T>

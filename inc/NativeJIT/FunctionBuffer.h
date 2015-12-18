@@ -40,9 +40,6 @@ namespace NativeJIT
         void EmitPrologue();
         void EmitEpilogue();
 
-        void SaveVolatileRegisters();
-        void RestoreVolatileRegisters();
-
         void Reset();
 
 
@@ -93,9 +90,5 @@ namespace NativeJIT
 
         // Offset of first stack local relative to frame pointer RBP.
         size_t m_stackLocalsBase;
-
-        // Leaf functions do not call other functions or allocate space on the
-        // stack.
-//        bool m_isLeaf;
     };
 }
