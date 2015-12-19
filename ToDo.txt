@@ -9,6 +9,9 @@ Stack unwinding.
 Add README.md
 Add documentation build.
 Decide on submodules vs direct incorporation vs package convention for gtest.
+stdafx.h
+    http://stackoverflow.com/questions/1191248/handling-stdafx-h-in-cross-platform-code
+    http://stackoverflow.com/questions/10539391/what-is-sdkddkver-h-for
 
 
 ====================================================
