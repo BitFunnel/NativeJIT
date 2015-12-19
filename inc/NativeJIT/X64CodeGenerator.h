@@ -4,7 +4,7 @@
 // http://ref.x86asm.net/coder64.html
 // http://felixcloutier.com/x86/
 
-#include <ostream>
+#include <iosfwd>
 
 #include "NativeJIT/CodeBuffer.h"       // Inherits from CodeBuffer.
 #include "NativeJIT/Register.h"         // Register parameter.

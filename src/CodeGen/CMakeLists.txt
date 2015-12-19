@@ -3,7 +3,8 @@
 set(CPPFILES
   CodeBuffer.cpp
   ExecutionBuffer.cpp
-  FunctionBuffer.cpp
+  FunctionBuffer_POSIX.cpp
+  FunctionBuffer_Windows.cpp
   JumpTable.cpp
   Register.cpp
   stdafx.cpp
@@ -22,6 +23,8 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer_POSIX.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer_Windows.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/JumpTable.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Register.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ValuePredicates.h

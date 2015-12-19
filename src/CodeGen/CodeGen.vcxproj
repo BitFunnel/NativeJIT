@@ -77,7 +77,8 @@
   <ItemGroup>
     <ClCompile Include="CodeBuffer.cpp" />
     <ClCompile Include="ExecutionBuffer.cpp" />
-    <ClCompile Include="FunctionBuffer.cpp" />
+    <ClCompile Include="FunctionBuffer_POSIX.cpp" />
+    <ClCompile Include="FunctionBuffer_Windows.cpp" />
     <ClCompile Include="JumpTable.cpp" />
     <ClCompile Include="Register.cpp" />
     <ClCompile Include="stdafx.cpp">
