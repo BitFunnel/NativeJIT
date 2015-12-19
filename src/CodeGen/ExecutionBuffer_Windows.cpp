@@ -9,6 +9,8 @@
 
 namespace NativeJIT
 {
+namespace Windows
+{
     //*************************************************************************
     //
     // ExecutionBuffer
@@ -116,4 +118,5 @@ namespace NativeJIT
     {
         memset(m_buffer, 0xcc, m_bufferSize);
     }
+}
 }

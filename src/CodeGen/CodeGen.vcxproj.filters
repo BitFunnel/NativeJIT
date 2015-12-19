@@ -29,9 +29,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ExecutionBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CodeBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -54,6 +51,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FunctionBuffer_Windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExecutionBuffer_POSIX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExecutionBuffer_Windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

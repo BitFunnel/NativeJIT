@@ -2,7 +2,8 @@
 
 set(CPPFILES
   CodeBuffer.cpp
-  ExecutionBuffer.cpp
+  ExecutionBuffer_POSIX.cpp
+  ExecutionBuffer_Windows.cpp
   FunctionBuffer_POSIX.cpp
   FunctionBuffer_Windows.cpp
   JumpTable.cpp
@@ -22,6 +23,8 @@ set(PRIVATE_HFILES
 set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionBuffer_POSIX.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionBuffer_Windows.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer_POSIX.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer_Windows.h
