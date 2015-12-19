@@ -9,7 +9,7 @@
 
 #include "NativeJIT/FunctionBuffer_Windows.h"
 #include "Temporary/IAllocator.h"
-#include "UnwindCode.h"
+#include "UnwindCode_Windows.h"
 
 
 namespace NativeJIT

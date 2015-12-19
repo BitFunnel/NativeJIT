@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _MSC_VER
+
 // TODO: what if some other file in the library includes <Windows.h>, but doesn't
 // define _AMD64_? Should probably define _AMD64_ in the .props file for the project.
 #ifndef _AMD64_
@@ -7,7 +9,7 @@
 #endif
 
 #include <ostream>
-#include <Windows.h>
+#include <windows.h>
 
 namespace NativeJIT
 {
@@ -67,3 +69,4 @@ namespace NativeJIT
         };
     }
 }
+#endif

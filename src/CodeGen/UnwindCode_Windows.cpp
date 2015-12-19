@@ -1,6 +1,8 @@
 #include "stdafx.h"
 
-#include "UnwindCode.h"
+#ifdef _MSC_VER
+
+#include "UnwindCode_Windows.h"
 
 
 namespace NativeJIT
@@ -68,3 +70,5 @@ namespace NativeJIT
         }
     }
 }
+
+#endif

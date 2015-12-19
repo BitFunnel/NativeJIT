@@ -9,7 +9,7 @@ set(CPPFILES
   JumpTable.cpp
   Register.cpp
   stdafx.cpp
-  UnwindCode.cpp
+  UnwindCode_Windows.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
   )
@@ -17,7 +17,7 @@ set(CPPFILES
 set(PRIVATE_HFILES
   stdafx.h
   targetver.h
-  UnwindCode.h
+  UnwindCode_Windows.h
   )
 
 set(PUBLIC_HFILES
