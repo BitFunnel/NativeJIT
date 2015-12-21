@@ -38,7 +38,7 @@ namespace NativeJIT
 
     void Allocator::Deallocate(void* block)
     {
-        Assert(static_cast<char*>(block) > m_buffer.get() &&
+        Assert(static_cast<char*>(block) >= m_buffer.get() &&
                static_cast<char*>(block) < m_buffer.get() + m_bytesAllocated,
                "Attempting to deallocate memory not owned by this allocator.");
 

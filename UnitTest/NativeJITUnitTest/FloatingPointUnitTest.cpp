@@ -6,44 +6,22 @@
 #include "NativeJIT/FunctionBuffer.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
-
+#include "TestSetup.h"
 
 
 namespace NativeJIT
 {
     namespace FloatingPointUnitTest3
     {
-        TestClass(FunctionTest)
+        TestClass(FunctionTest), private TestClassSetup
         {
         public:
-            FunctionTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
-
-            // TODO
-            //   float (vs double)
-            //   Sethi-Ullman register allocator works correctly with floats.
-
-            //
-            // Immediate values.
-            //
-
-            //
-            // Codebase needs some work before this test can be enabled.
-            //   TODO: Complete RIP relative addressing.
-            //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
-            //
-
             TestCase(ImmediateDouble)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<double> expression(m_allocator, *m_code);
+                    Function<double> expression(setup->GetAllocator(), setup->GetCode());
 
                     double value = 123.456;
                     auto & a = expression.Immediate(value);
@@ -60,10 +38,10 @@ namespace NativeJIT
 
             TestCase(ImmediateFloat)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<float> expression(m_allocator, *m_code);
+                    Function<float> expression(setup->GetAllocator(), setup->GetCode());
 
                     float value = 123.456f;
                     auto & a = expression.Immediate(value);
@@ -84,10 +62,10 @@ namespace NativeJIT
 
             TestCase(AddDouble)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<double, double, double> expression(m_allocator, *m_code);
+                    Function<double, double, double> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP2(), expression.GetP1());
                     auto function = expression.Compile(a);
@@ -103,18 +81,12 @@ namespace NativeJIT
             }
 
 
-            //
-            // Codebase needs some work before this test can be enabled.
-            //   TODO: Complete RIP relative addressing.
-            //   TODO: Remove or simplify ExpressionTree::Mov() overloads.
-            //
-
             TestCase(AddImmediateDouble)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<double, double> expression(m_allocator, *m_code);
+                    Function<double, double> expression(setup->GetAllocator(), setup->GetCode());
 
                     double immediate = 123.456;
                     auto & a = expression.Immediate(immediate);
@@ -131,37 +103,35 @@ namespace NativeJIT
             }
 
 
-// The following test won't compile.
-// Error	1	error C2664: 'void NativeJIT::X64CodeGenerator::Mov<8>(NativeJIT::Register<SIZE,ISFLOAT>,int,NativeJIT::Register<8,true>)' : cannot convert parameter 3 from 'NativeJIT::Register<SIZE,ISFLOAT>' to 'NativeJIT::Register<SIZE,ISFLOAT>'	c:\git\nativejit\nativejit\inc\nativejit\x64codegenerator.h	1011
-            //TestCase(AddTwoImmediateFloat)
-            //{
-            //    AutoResetAllocator reset(m_allocator);
+            TestCase(AddTwoImmediateFloat)
+            {
+                auto setup = GetSetup();
 
-            //    {
-            //        Function<float> expression(m_allocator, *m_code);
+                {
+                    Function<float> expression(setup->GetAllocator(), setup->GetCode());
 
-            //        float immediate1 = 123.0f;
-            //        float immediate2 = 0.456f;
-            //        auto & a = expression.Immediate(immediate1);
-            //        auto & b = expression.Immediate(immediate2);
-            //        auto & c = expression.Add(a, b);
-            //        auto function = expression.Compile(c);
+                    float immediate1 = 123.0f;
+                    float immediate2 = 0.456f;
+                    auto & a = expression.Immediate(immediate1);
+                    auto & b = expression.Immediate(immediate2);
+                    auto & c = expression.Add(a, b);
+                    auto function = expression.Compile(c);
 
 
-            //        auto expected = immediate1 + immediate2;
-            //        auto observed = function();
+                    auto expected = immediate1 + immediate2;
+                    auto observed = function();
 
-            //        TestAssert(observed == expected);
-            //    }
-            //}
+                    TestAssert(observed == expected);
+                }
+            }
 
 
             TestCase(AddTwoImmediateDouble)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<double> expression(m_allocator, *m_code);
+                    Function<double> expression(setup->GetAllocator(), setup->GetCode());
 
                     double immediate1 = 123.0;
                     double immediate2 = 0.456;
@@ -177,12 +147,6 @@ namespace NativeJIT
                     TestAssert(observed == expected);
                 }
             }
-
-
-        private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
         };
     }
 }

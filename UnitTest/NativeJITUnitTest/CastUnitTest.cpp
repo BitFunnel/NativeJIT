@@ -6,23 +6,15 @@
 #include "CastNode.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
-
+#include "TestSetup.h"
 
 namespace NativeJIT
 {
     namespace CastUnitTest
     {
-        TestClass(CastTest)
+        TestClass(CastTest), private TestClassSetup
         {
         public:
-            CastTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
-
             TestCase(FromInt8)
             {
                 TestCasts<__int8>(-1);
@@ -94,11 +86,6 @@ namespace NativeJIT
 
 
         private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
-
-
             template <typename FROM>
             void TestCasts(FROM testValue)
             {
@@ -129,9 +116,9 @@ namespace NativeJIT
             template <typename TO, typename FROM>
             void TestCastImmediate(FROM testValue)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
-                Function<TO> expression(m_allocator, *m_code);
+                Function<TO> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto & immediate = expression.Immediate(testValue);
                 auto & cast = expression.Cast<TO>(immediate);
@@ -151,9 +138,9 @@ namespace NativeJIT
             template <typename TO, typename FROM>
             void TestCastDirect(FROM testValue)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
-                Function<TO, FROM> expression(m_allocator, *m_code);
+                Function<TO, FROM> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto & cast = expression.Cast<TO>(expression.GetP1());
                 auto function = expression.Compile(cast);
@@ -172,7 +159,7 @@ namespace NativeJIT
             template <typename TO, typename FROM>
             void TestCastIndirect(FROM testValue)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 struct TestInput
                 {
@@ -181,7 +168,7 @@ namespace NativeJIT
                 };
 
                 TestInput input = { nullptr, testValue };
-                Function<TO, TestInput*> expression(m_allocator, *m_code);
+                Function<TO, TestInput*> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto & valueField = expression.FieldPointer(expression.GetP1(),
                                                             &TestInput::m_value);

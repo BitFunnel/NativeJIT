@@ -42,10 +42,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Temporary", "Temporary", "{
 	ProjectSection(SolutionItems) = preProject
 		inc\Temporary\Allocator.h = inc\Temporary\Allocator.h
 		inc\Temporary\Assert.h = inc\Temporary\Assert.h
+		inc\Temporary\IAllocator.h = inc\Temporary\IAllocator.h
 		inc\Temporary\NonCopyable.h = inc\Temporary\NonCopyable.h
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Assembler", "src\Assembler\Assembler.vcxproj", "{37A0B831-E996-431F-B1C4-1469B9250FB4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "UnitTest\Shared\Shared.vcxproj", "{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,6 +109,16 @@ Global
 		{37A0B831-E996-431F-B1C4-1469B9250FB4}.Release|Win32.ActiveCfg = Release|x64
 		{37A0B831-E996-431F-B1C4-1469B9250FB4}.Release|x64.ActiveCfg = Release|x64
 		{37A0B831-E996-431F-B1C4-1469B9250FB4}.Release|x64.Build.0 = Release|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Debug|Win32.ActiveCfg = Debug|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Debug|x64.ActiveCfg = Debug|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Debug|x64.Build.0 = Debug|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Release|Mixed Platforms.Build.0 = Release|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Release|Win32.ActiveCfg = Release|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Release|x64.ActiveCfg = Release|x64
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -121,5 +134,6 @@ Global
 		{C355777F-6688-4F80-A3A5-730D4CA7DA5C} = {7140DE4A-C728-48BF-B257-E3CFC753E12E}
 		{EC495CF0-077A-4995-919B-8E1667EC8E53} = {7140DE4A-C728-48BF-B257-E3CFC753E12E}
 		{37A0B831-E996-431F-B1C4-1469B9250FB4} = {F44ECE56-395F-44EE-A5EF-578056D92FB1}
+		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5} = {FEC8EF42-4E3E-4974-B368-806450FA517F}
 	EndGlobalSection
 EndGlobal

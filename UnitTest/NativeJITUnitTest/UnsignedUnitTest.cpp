@@ -6,28 +6,20 @@
 #include "NativeJIT/FunctionBuffer.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
-
+#include "TestSetup.h"
 
 
 namespace NativeJIT
 {
     namespace UnsignedUnitTest
     {
-        TestClass(FunctionTest)
+        TestClass(FunctionTest), private TestClassSetup
         {
         public:
-            FunctionTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
             //
             // TODO:
             //   Other boolean operators: shift, sub, mul, etc.
             //   Signed vs unsigned
-            //   Test throws from within generated code.
             //
 
             //
@@ -37,10 +29,10 @@ namespace NativeJIT
             // TODO: cases for (signed, unsigned) x (1, 2, 4, 8), float
             TestCase(ImmediateU64)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64> expression(m_allocator, *m_code);
+                    Function<unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     unsigned __int64 value = 0x1234ull;
                     auto & a = expression.Immediate(value);
@@ -79,10 +71,10 @@ namespace NativeJIT
 
             TestCase(FieldPointerPrimitive)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, InnerClass*> expression(m_allocator, *m_code);
+                    Function<unsigned __int64, InnerClass*> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.GetP1();
                     auto & b = expression.FieldPointer(a, &InnerClass::m_b);
@@ -103,10 +95,10 @@ namespace NativeJIT
 
             TestCase(FieldPointerEmbedded)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, OuterClass**> expression(m_allocator, *m_code);
+                    Function<unsigned __int64, OuterClass**> expression(setup->GetAllocator(), setup->GetCode());
 
                     const unsigned pointersIndex = 4;
 
@@ -135,10 +127,10 @@ namespace NativeJIT
 
             TestCase(FieldPointerEmbeddedCVE)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, OuterClass*> e(m_allocator, *m_code);
+                    Function<unsigned __int64, OuterClass*> e(setup->GetAllocator(), setup->GetCode());
 
                     // The inner variable has a single FieldPointer parent (the
                     // outer parameter) and it is a common parent to both innerA
@@ -174,10 +166,10 @@ namespace NativeJIT
 
             TestCase(AddUnsignedInt32)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int32, unsigned __int32, unsigned __int32> expression(m_allocator, *m_code);
+                    Function<unsigned __int32, unsigned __int32, unsigned __int32> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP2(), expression.GetP1());
                     auto function = expression.Compile(a);
@@ -199,10 +191,10 @@ namespace NativeJIT
 
             TestCase(ArrayOfIntAsPointer)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, unsigned __int64*> expression(m_allocator, *m_code);
+                    Function<unsigned __int64, unsigned __int64*> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(1ull));
                     auto & b = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(2ull));
@@ -225,7 +217,7 @@ namespace NativeJIT
 
             TestCase(ArrayOfInt)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
                     struct S
@@ -233,7 +225,7 @@ namespace NativeJIT
                         unsigned __int64 m_array[10];
                     };
 
-                    Function<unsigned __int64, S*> e(m_allocator, *m_code);
+                    Function<unsigned __int64, S*> e(setup->GetAllocator(), setup->GetCode());
 
                     auto & arrayPtr = e.FieldPointer(e.GetP1(), &S::m_array);
                     auto & left = e.Add(arrayPtr, e.Immediate(1));
@@ -255,10 +247,10 @@ namespace NativeJIT
 
             TestCase(ArrayOfClass)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64, OuterClass*, unsigned __int64> expression(m_allocator, *m_code);
+                    Function<__int64, OuterClass*, unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP1(), expression.GetP2());
                     auto & b = expression.FieldPointer(a, &OuterClass::m_q);
@@ -269,7 +261,7 @@ namespace NativeJIT
                     OuterClass* p1 = array;
                     unsigned __int64 p2 = 3ull;
 
-                    // TODO: First set p1[p2].m_q
+                    p1[p2].m_q = 0x0123456789ABCDEF;
 
                     auto expected = p1[p2].m_q;
                     auto observed = function(p1, p2);
@@ -285,10 +277,10 @@ namespace NativeJIT
 
             TestCase(CommonSubExpressions)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64, __int64> expression(m_allocator, *m_code);
+                    Function<__int64, __int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     // This tree has three common subexpressions: P1, P2, and node "a".
                     // Each common subexpression is referenced twice.
@@ -334,12 +326,6 @@ namespace NativeJIT
                     TestAssert(observed == expected);
                 }
             }
-
-
-        private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
         };
     }
 }

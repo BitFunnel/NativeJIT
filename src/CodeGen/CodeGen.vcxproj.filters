@@ -53,5 +53,11 @@
     <ClCompile Include="ValuePredicates.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BitOperations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

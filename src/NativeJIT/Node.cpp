@@ -112,7 +112,7 @@ namespace NativeJIT
     {
         if (leftTreeCount != rightTreeCount)
         {
-            return std::max(leftTreeCount, rightTreeCount);
+            return (std::max)(leftTreeCount, rightTreeCount);
         }
         else
         {

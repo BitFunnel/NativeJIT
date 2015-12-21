@@ -43,11 +43,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\src\CodeGen;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\src\CodeGen;$(SolutionDir)\UnitTest\Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\src\CodeGen;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\src\CodeGen;$(SolutionDir)\UnitTest\Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -83,6 +83,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BitOperationsUnitTest.cpp" />
     <ClCompile Include="CodeGenUnitTest.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
@@ -101,6 +102,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\CodeGen\CodeGen.vcxproj">
       <Project>{c90f7bfd-0236-4b1e-b6f6-cd3f4bbf6bba}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Shared\Shared.vcxproj">
+      <Project>{9c4018a4-0d5a-4f12-9666-e79ee2fecdf5}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

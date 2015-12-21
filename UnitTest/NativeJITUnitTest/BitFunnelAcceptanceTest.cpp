@@ -5,25 +5,21 @@
 #include "Function.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/Model.h"
 #include "NativeJIT/Packed.h"
 #include "SuiteCpp/UnitTest.h"
-#include "Temporary/Allocator.h"
-
-#include "NativeJIT/Model.h"
+#include "TestSetup.h"
 
 
 namespace NativeJIT
 {
     namespace BitFunnelAcceptance
     {
-        TestClass(AcceptanceUnitTest)
+        TestClass(AcceptanceUnitTest), private TestClassSetup
         {
         public:
-            AcceptanceUnitTest()
-                : m_allocator(64 * 1024),
-                  m_executionBuffer(5000)
+            AcceptanceUnitTest() : TestClassSetup(5000, 64 * 1024)
             {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 11, 0, false));
             }
 
 
@@ -926,9 +922,11 @@ namespace NativeJIT
             typedef float (*ScoringFunction)(Shard, DocumentHandle const *, void const *, QueryContext const *);
 
             ScoringFunction
-            BuildAndCompileScoringFunction(ParsedQuery const & parsedQuery, Allocator& allocator)
+            BuildAndCompileScoringFunction(ParsedQuery const & parsedQuery,
+                                           TestCaseSetup& setup)
             {
-                Function<float, Shard, DocumentHandle const *, void const *, QueryContext const *> e(allocator, *m_code);
+                Function<float, Shard, DocumentHandle const *, void const *, QueryContext const *>
+                    e(setup.GetAllocator(), setup.GetCode());
 
                 auto & shard = e.GetP1();
                 auto & docHandle = e.GetP2();
@@ -1199,7 +1197,7 @@ namespace NativeJIT
             void RunTestCase(DocumentDescriptor const & docDescriptor,
                              ParsedQuery const & parsedQuery)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
                     Assert(offsetof(WebRankerContext, m_commonContext) == 0,
@@ -1213,7 +1211,7 @@ namespace NativeJIT
                                                    &testData->m_rankerContext.m_commonContext,
                                                    &testData->m_queryContext);
 
-                    auto function = BuildAndCompileScoringFunction(parsedQuery, m_allocator);
+                    auto function = BuildAndCompileScoringFunction(parsedQuery, *setup);
                     auto actual = function(testData->m_shard,
                                            &testData->m_docHandle,
                                            &testData->m_rankerContext.m_commonContext,
@@ -1453,12 +1451,6 @@ namespace NativeJIT
 
                 RunTestCase(docDescriptor, query);
             }
-
-
-        private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
         };
 
         const AcceptanceUnitTest::TermFrequencies AcceptanceUnitTest::c_defaultTermFrequencies = AcceptanceUnitTest::MakeTermFrequencies(0, 1, 0, 0);

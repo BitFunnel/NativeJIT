@@ -43,11 +43,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)\src\NativeJIT;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\src\NativeJIT;$(SolutionDir)\UnitTest\Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)\src\NativeJIT;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\src\NativeJIT;$(SolutionDir)\UnitTest\Shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -83,7 +83,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitFunnelAcceptanceTest.cpp" />
-    <ClCompile Include="BitOperationsUnitTest.cpp" />
     <ClCompile Include="CastUnitTest.cpp" />
     <ClCompile Include="ConditionalUnitTest.cpp" />
     <ClCompile Include="dllmain.cpp">
@@ -107,6 +106,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\NativeJIT\NativeJIT.vcxproj">
       <Project>{9bfdff92-eafb-4e13-925b-60cf3c2dc70d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Shared\Shared.vcxproj">
+      <Project>{9c4018a4-0d5a-4f12-9666-e79ee2fecdf5}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

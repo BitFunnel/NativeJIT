@@ -64,7 +64,7 @@ namespace NativeJIT
         // is kept for the whole lifetime of the expression, which may be an issue
         // if something uses many short-lived stack variables. Consider making it
         // possible for one storage to extend the lifetime of another storage
-        // (for example, a concept of parent storage of similar).
+        // (for example, a concept of parent storage or similar).
         m_stackStorage = tree.Temporary<T>();
         auto storageCopy = m_stackStorage;
 

@@ -4,11 +4,11 @@
 #include "Function.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/Model.h"
 #include "NativeJIT/Packed.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
-
-#include "NativeJIT/Model.h"
+#include "TestSetup.h"
 
 
 namespace NativeJIT
@@ -22,26 +22,18 @@ namespace NativeJIT
     //*************************************************************************
     namespace PackedUnitTest
     {
-        TestClass(FunctionTest)
+        TestClass(FunctionTest), private TestClassSetup
         {
         public:
-            FunctionTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
-
             TestCase(ModelApply)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
                     typedef Packed<3, Packed<4, Packed<5>>> PackedType;
                     typedef Model<PackedType> ModelType;
 
-                    Function<float, ModelType*, PackedType> expression(m_allocator, *m_code);
+                    Function<float, ModelType*, PackedType> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.ApplyModel(expression.GetP1(), expression.GetP2());
 
@@ -60,13 +52,13 @@ namespace NativeJIT
 
             TestCase(PackedMax)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 PackedType packed1 = MakePacked((1 << 3) - 1, 1, (1 << 5) - 1);
                 PackedType packed2 = MakePacked(1, (1 << 4) - 1, 1);
                 PackedType expected = MakePacked((1 << 3) - 1, (1 << 4) - 1, (1 << 5) - 1);
 
-                Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
+                Function<PackedType, PackedType, PackedType> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto & a = expression.PackedMax(expression.GetP1(), expression.GetP2());;
                 auto function = expression.Compile(a);
@@ -79,11 +71,13 @@ namespace NativeJIT
 
             TestCase(PackedMin)
             {
+                auto setup = GetSetup();
+
                 PackedType packed1 = MakePacked((1 << 3) - 1, 1, (1 << 5) - 1);
                 PackedType packed2 = MakePacked(1, (1 << 4) - 1, 1);
                 PackedType expected = MakePacked(1, 1, 1);
 
-                Function<PackedType, PackedType, PackedType> expression(m_allocator, *m_code);
+                Function<PackedType, PackedType, PackedType> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto & a = expression.PackedMin(expression.GetP1(), expression.GetP2());;
                 auto function = expression.Compile(a);
@@ -96,10 +90,6 @@ namespace NativeJIT
 
         private:
             typedef Packed<3, Packed<4, Packed<5>>> PackedType;
-
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
 
             PackedType MakePacked(unsigned __int8 threeBitValue,
                                   unsigned __int8 fourBitValue,

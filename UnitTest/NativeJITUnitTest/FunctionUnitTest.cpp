@@ -7,31 +7,21 @@
 #include "NativeJIT/FunctionBuffer.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
+#include "TestSetup.h"
 
-#include "CallNode.h"
 
 namespace NativeJIT
 {
     namespace FunctionUnitTest
     {
-        TestClass(FunctionTest)
+        TestClass(FunctionTest), private TestClassSetup
         {
         public:
-            FunctionTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
-
             //
             // TODO:
             //   Test register save/restore across call.
             //      Caller save volatiles
-            //      Callee save non-volatiles
             //   Test call register indirect.
-            //   Test throws from within generated code.
             //   Test that tries all permutations of parameter from Function to Call.
 
 
@@ -41,10 +31,10 @@ namespace NativeJIT
 
             TestCase(FunctionZeroParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64> expression(m_allocator, *m_code);
+                    Function<__int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     __int64 expected = 1234ll;
                     auto & a = expression.Immediate(expected);
@@ -59,10 +49,10 @@ namespace NativeJIT
 
             TestCase(FunctionOneParameter)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64> expression(m_allocator, *m_code);
+                    Function<__int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.GetP1();
                     auto function = expression.Compile(a);
@@ -79,10 +69,10 @@ namespace NativeJIT
 
             TestCase(FunctionTwoParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64, __int64> expression(m_allocator, *m_code);
+                    Function<__int64, __int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP1(), expression.GetP2());
                     auto function = expression.Compile(a);
@@ -100,10 +90,10 @@ namespace NativeJIT
 
             TestCase(FunctionThreeParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<int, int, int, int> expression(m_allocator, *m_code);
+                    Function<int, int, int, int> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Sub(expression.GetP2(), expression.GetP1());
                     auto & b = expression.Add(expression.GetP3(), a);
@@ -123,10 +113,10 @@ namespace NativeJIT
 
             TestCase(FunctionFourParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<char, char, char, char, char> expression(m_allocator, *m_code);
+                    Function<char, char, char, char, char> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Sub(expression.GetP1(), expression.GetP2());
                     auto & b = expression.Sub(expression.GetP3(), expression.GetP4());
@@ -208,10 +198,10 @@ namespace NativeJIT
 
             TestCase(CallZeroParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<int> expression(m_allocator, *m_code);
+                    Function<int> expression(setup->GetAllocator(), setup->GetCode());
 
                     typedef int (*F)();
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction0);
@@ -231,10 +221,10 @@ namespace NativeJIT
 
             TestCase(CallOneParameter)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<int, char> expression(m_allocator, *m_code);
+                    Function<int, char> expression(setup->GetAllocator(), setup->GetCode());
 
                     typedef int (*F)(char);
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction1);
@@ -258,10 +248,10 @@ namespace NativeJIT
 
             TestCase(CallTwoParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<int, int, int> expression(m_allocator, *m_code);
+                    Function<int, int, int> expression(setup->GetAllocator(), setup->GetCode());
 
                     typedef int (*F)(int, int);
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction2);
@@ -288,10 +278,10 @@ namespace NativeJIT
 
             TestCase(CallThreeParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64, int, char> expression(m_allocator, *m_code);
+                    Function<__int64, __int64, int, char> expression(setup->GetAllocator(), setup->GetCode());
 
                     typedef __int64 (*F)(char, int, __int64);
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction3);
@@ -322,10 +312,10 @@ namespace NativeJIT
 
             TestCase(CallFourParameters)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<__int64, bool, __int64, int, char> expression(m_allocator, *m_code);
+                    Function<__int64, bool, __int64, int, char> expression(setup->GetAllocator(), setup->GetCode());
 
                     typedef __int64 (*F)(char, int, __int64, bool);
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction3);
@@ -394,8 +384,8 @@ namespace NativeJIT
 
             TestCase(StackVariableAddressRange)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<int> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<int> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & sampleFunction = e.Immediate(VerifyStackVariableAddresses);
 
@@ -424,8 +414,8 @@ namespace NativeJIT
 
             TestCase(PointerToReferenceConversion)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<int> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<int> e(setup->GetAllocator(), setup->GetCode());
 
                 unsigned __int32 testValue = 7;
 
@@ -454,8 +444,8 @@ namespace NativeJIT
 
             TestCase(ReturnReference)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<int&> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<int&> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & return10 = e.Immediate(Return10ByReference);
                 auto & call = e.Call(return10);
@@ -538,8 +528,8 @@ namespace NativeJIT
 
             TestCase(PreserveReturnRegisterInt)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<int> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<int> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & return7 = e.Call(e.Immediate(ReturnInt<7>));
                 auto & return8 = e.Call(e.Immediate(ReturnInt<8>));
@@ -556,8 +546,8 @@ namespace NativeJIT
 
             TestCase(PreserveReturnRegisterFloat)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<float> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<float> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & return7Point7 = e.Call(e.Immediate(Return7Point7));
                 auto & return3Point3 = e.Call(e.Immediate(Return3Point3));
@@ -579,8 +569,8 @@ namespace NativeJIT
             {
                 s_regPreserveTestFuncCallCount = 0;
 
-                AutoResetAllocator reset(m_allocator);
-                Function<int> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<int> e(setup->GetAllocator(), setup->GetCode());
 
                 // Call the function returning 10 in EAX first, followed by
                 // a function returning 1.3 in XMM0s. Since EAX will be referenced
@@ -614,8 +604,8 @@ namespace NativeJIT
             {
                 s_regPreserveTestFuncCallCount = 0;
 
-                AutoResetAllocator reset(m_allocator);
-                Function<float> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<float> e(setup->GetAllocator(), setup->GetCode());
 
                 // Call the function returning 1.3 in XMM0s first, followed by
                 // a function returning 10 in EAX. Since XMM0s will be referenced
@@ -688,8 +678,8 @@ namespace NativeJIT
 
             TestCase(VerifyFunctionParameterReuseInt)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<int, int> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<int, int> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & zeroRcxAndReturnArg = e.Immediate(ZeroRcxAndReturnArg);
 
@@ -713,8 +703,8 @@ namespace NativeJIT
 
             TestCase(VerifyFunctionParameterReuseFloat)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<float, float, float> e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<float, float, float> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & zeroXmm1AndReturnArg1 = e.Immediate(ZeroXmm1AndReturnArg1);
 
@@ -740,8 +730,8 @@ namespace NativeJIT
             // reference some of its parameters.
             TestCase(FunctionWithUnusedParameter)
             {
-                AutoResetAllocator reset(m_allocator);
-                Function<__int64, __int64, __int64> expression(m_allocator, *m_code);
+                auto setup = GetSetup();
+                Function<__int64, __int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto function = expression.Compile(expression.GetP2());
 
@@ -756,9 +746,9 @@ namespace NativeJIT
 
             TestCase(ExecuteOnlyIf)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
-                Function<float, unsigned __int64> e(m_allocator, *m_code);
+                Function<float, unsigned __int64> e(setup->GetAllocator(), setup->GetCode());
 
                 // Regular value is argument + 2.5.
                 auto & regularValue = e.Add(e.Cast<float>(e.GetP1()),
@@ -780,12 +770,6 @@ namespace NativeJIT
 
                 TestEqual(0.0f, observed);
             }
-
-
-        private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
         };
 
         int FunctionTest::s_sampleFunctionCalls;

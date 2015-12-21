@@ -75,6 +75,8 @@
     <ClInclude Include="UnwindCode.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Allocator.cpp" />
+    <ClCompile Include="BitOperations.cpp" />
     <ClCompile Include="CodeBuffer.cpp" />
     <ClCompile Include="ExecutionBuffer.cpp" />
     <ClCompile Include="FunctionBuffer.cpp" />

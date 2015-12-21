@@ -5,6 +5,7 @@
 #include "NativeJIT/FunctionBuffer.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
+#include "TestSetup.h"
 
 
 namespace NativeJIT
@@ -78,23 +79,15 @@ namespace NativeJIT
         #undef AssertSizeAndType
 
 
-        TestClass(ExpressionTreeTest)
+        TestClass(ExpressionTreeTest), private TestClassSetup
         {
         public:
-            ExpressionTreeTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
-
             // Verify that the sole owner of an indirect storage will reuse the
             // base register for the direct register after dereferencing.
             TestCase(BaseRegisterReuse)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 // Create indirect storage to reference an integer.
                 struct Test { int m_dummy; };
@@ -120,8 +113,8 @@ namespace NativeJIT
 
             TestCase(NoBaseRegisterReuseRIPRelative)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 auto storage = e.RIPRelative<int>(16);
                 TestAssert(storage.GetBaseRegister().IsRIP());
@@ -132,8 +125,8 @@ namespace NativeJIT
 
             TestCase(NoBaseRegisterReuseBasePointer)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 auto storage = e.Temporary<int>();
                 auto baseRegister = storage.GetBaseRegister();
@@ -144,8 +137,8 @@ namespace NativeJIT
 
             TestCase(NoBaseRegisterReuseFloat)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 // Create indirect storage to reference a float.
                 struct Test { float m_dummy; };
@@ -170,8 +163,8 @@ namespace NativeJIT
 
             TestCase(MultipleReferencesToBasePointer)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 auto temp1 = e.Temporary<int>();
                 auto temp2 = e.Temporary<int>();
@@ -183,8 +176,8 @@ namespace NativeJIT
 
             TestCase(MultipleReferencesToRIP)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 auto temp1 = e.RIPRelative<int>(0);
                 auto temp2 = e.RIPRelative<int>(16);
@@ -223,8 +216,8 @@ namespace NativeJIT
 
             TestCase(RegisterSpillingInteger)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
                 std::vector<Storage<int>> storages;
                 const unsigned totalRegisterCount = RegisterBase::c_maxIntegerRegisterID + 1;
 
@@ -283,8 +276,8 @@ namespace NativeJIT
 
             TestCase(RegisterSpillingFloat)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
                 std::vector<Storage<float>> storages;
                 const unsigned totalRegisterCount = RegisterBase::c_maxFloatRegisterID + 1;
 
@@ -327,8 +320,8 @@ namespace NativeJIT
             template <typename T>
             void TestRegisterPinning()
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 // Get a direct register and pin it.
                 Storage<T> storage = e.Direct<T>();
@@ -375,8 +368,8 @@ namespace NativeJIT
 
             TestCase(SoleDataOwner)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 Storage<int> empty;
                 TestAssert(empty.IsSoleDataOwner());
@@ -403,8 +396,8 @@ namespace NativeJIT
 
             TestCase(TakeSoleOwnershipOfDirect)
             {
-                AutoResetAllocator reset(m_allocator);
-                ExpressionNodeFactory e(m_allocator, *m_code);
+                auto setup = GetSetup();
+                ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
                 auto s = e.Direct<int>(eax);
                 TestAssert(s.IsSoleDataOwner());
@@ -427,12 +420,6 @@ namespace NativeJIT
                 TestAssert(s2.GetStorageClass() == StorageClass::Direct);
                 TestAssert(!(s2.GetDirectRegister() == eax));
             }
-
-
-        private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
         };
     }
 }

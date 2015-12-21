@@ -6,26 +6,18 @@
 #include "NativeJIT/FunctionBuffer.h"
 #include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
-
+#include "TestSetup.h"
 
 
 namespace NativeJIT
 {
     namespace ConditionalUnitTest
     {
-        TestClass(FunctionTest)
+        TestClass(FunctionTest), private TestClassSetup
         {
         public:
-            FunctionTest()
-                : m_allocator(5000),
-                  m_executionBuffer(5000)
-            {
-                m_code.reset(new FunctionBuffer(m_executionBuffer, 5000, 10, 10, 3, 0, false));
-            }
-
 
             // TODO: Test all comparision operators.
-            // TODO: Factor out unit test environment base class.
 
             //
             // Conditionals
@@ -33,10 +25,10 @@ namespace NativeJIT
 
             TestCase(GreaterThan)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<bool, unsigned __int64, unsigned __int64> expression(m_allocator, *m_code);
+                    Function<bool, unsigned __int64, unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & test = expression.GreaterThan(expression.GetP1(), expression.GetP2());
                     auto greaterThan = expression.Compile(test);
@@ -49,10 +41,10 @@ namespace NativeJIT
 
             TestCase(Conditional)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, unsigned __int64, unsigned __int64> expression(m_allocator, *m_code);
+                    Function<unsigned __int64, unsigned __int64, unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
 
                     unsigned __int64 trueValue = 5;
                     unsigned __int64 falseValue = 6;
@@ -82,12 +74,12 @@ namespace NativeJIT
 
             TestCase(IfNotZero)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 Function<unsigned __int64,
                          unsigned __int32,
                          unsigned __int64,
-                         unsigned __int64> e(m_allocator, *m_code);
+                         unsigned __int64> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & test = e.IfNotZero(e.GetP1(), e.GetP2(), e.GetP3());
                 auto function = e.Compile(test);
@@ -112,12 +104,12 @@ namespace NativeJIT
 
             TestCase(If)
             {
-                AutoResetAllocator reset(m_allocator);
+                auto setup = GetSetup();
 
                 Function<unsigned __int64,
                          bool,
                          unsigned __int64,
-                         unsigned __int64> e(m_allocator, *m_code);
+                         unsigned __int64> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & test = e.If(e.GetP1(), e.GetP2(), e.GetP3());
                 auto function = e.Compile(test);
@@ -138,12 +130,6 @@ namespace NativeJIT
 
                 TestEqual(expected, observed);
             }
-
-
-        private:
-            Allocator m_allocator;
-            ExecutionBuffer m_executionBuffer;
-            std::unique_ptr<FunctionBuffer> m_code;
         };
     }
 }
