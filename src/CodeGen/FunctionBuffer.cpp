@@ -1,44 +1,39 @@
 #include "stdafx.h"
 
-#ifdef _MSC_VER
-
-#include <iosfwd>           // TODO: Remove - temporary for debugging.
+#include <iostream>         // TODO: Remove - temporary for debugging.
 
 #include <stdexcept>
 #include <Windows.h>
 
-#include "NativeJIT/FunctionBuffer_Windows.h"
+#include "NativeJIT/FunctionBuffer.h"
 #include "Temporary/IAllocator.h"
-#include "UnwindCode_Windows.h"
+#include "UnwindCode.h"
 
 
 namespace NativeJIT
 {
-namespace Windows
-{
     //*************************************************************************
     //
-    // FunctionBuffer_Windows
+    // FunctionBuffer
     //
     //*************************************************************************
-    FunctionBuffer::FunctionBuffer(
-        Allocators::IAllocator& allocator,
-        unsigned capacity,
-        unsigned maxLabels,
-        unsigned maxCallSites,
-        unsigned slotCount,
-        unsigned registerSaveMask,
-        bool isLeaf)
+    FunctionBuffer::FunctionBuffer(Allocators::IAllocator& allocator,
+                                           unsigned capacity,
+                                           unsigned maxLabels,
+                                           unsigned maxCallSites,
+                                           unsigned slotCount,
+                                           unsigned registerSaveMask,
+                                           bool isLeaf)
         : X64CodeGenerator(allocator, capacity, maxLabels, maxCallSites)
     {
 #ifdef _DEBUG
         FillWithBreakCode(0, BufferSize());
 #endif
-        //        m_isLeaf = isLeaf;
+//        m_isLeaf = isLeaf;
 
-                //
-                // Newer initialization sequence.
-                //
+        //
+        // Newer initialization sequence.
+        //
         EmitUnwindInfo(static_cast<unsigned char>(slotCount), registerSaveMask, isLeaf);
         CreatePrologue();
         RegisterUnwindInfo();
@@ -62,7 +57,7 @@ namespace Windows
     void FunctionBuffer::EmitPrologue()
     {
         m_entryPoint = BufferStart() + CurrentPosition();
-        for (unsigned i = 0; i < m_prologueCode.size(); ++i)
+        for (unsigned i = 0 ; i < m_prologueCode.size(); ++i)
         {
             Emit8(m_prologueCode[i]);
         }
@@ -71,7 +66,7 @@ namespace Windows
 
     void FunctionBuffer::EmitEpilogue()
     {
-        for (unsigned i = 0; i < m_epilogueCode.size(); ++i)
+        for (unsigned i = 0 ; i < m_epilogueCode.size(); ++i)
         {
             Emit8(m_epilogueCode[i]);
         }
@@ -79,8 +74,8 @@ namespace Windows
 
 
     void FunctionBuffer::EmitUnwindInfo(unsigned char slotCount,
-                                        unsigned registerSaveMask,
-                                        bool isLeaf)
+                                            unsigned registerSaveMask,
+                                            bool isLeaf)
     {
         // TODO: Is the leaf functionality worthwhile or would it be better to require the user
         // to allocate the space before calling out? The current functionality isn't useful for
@@ -150,7 +145,7 @@ namespace Windows
         // Push non-volatile registers
         // TODO: investigate whether pushing volatiles causes problems for stack unwinding.
         r = registerSaveMask;
-        for (unsigned char i = 0; i < 16; ++i)
+        for (unsigned char i = 0 ; i < 16; ++i)
         {
             if (r & 1)
             {
@@ -193,7 +188,7 @@ namespace Windows
         unsigned start = CurrentPosition();
 
         // Generate prologue code from unwind information.
-        for (int i = m_unwindInfo->m_countOfCodes - 1; i >= 0; --i)
+        for (int i = m_unwindInfo->m_countOfCodes - 1; i >= 0 ; --i)
         {
             UnwindCode code = m_unwindInfo->m_unwindCodes[i];
             switch (code.m_unwindOp)
@@ -290,8 +285,8 @@ namespace Windows
     {
         // TODO: Review this static_cast. Is there a better way to do this?
         EmitUnwindCode(UnwindCode(static_cast<unsigned char>(CurrentPosition() - m_prologueStart),
-                                    UWOP_PUSH_NONVOL,
-                                    static_cast<unsigned char>(r.GetId())));
+                                  UWOP_PUSH_NONVOL,
+                                  static_cast<unsigned char>(r.GetId())));
         ++m_slotsAllocated;
     }
 
@@ -310,8 +305,8 @@ namespace Windows
 
         // TODO: Review this static_cast. Is there a bette way to do this?
         EmitUnwindCode(UnwindCode(static_cast<unsigned char>(CurrentPosition() - m_prologueStart),
-                                    UWOP_ALLOC_SMALL,
-                                    slots - 1));
+                                  UWOP_ALLOC_SMALL,
+                                  slots - 1));
         m_slotsAllocated += slots;
     }
 
@@ -319,7 +314,7 @@ namespace Windows
     void FunctionBuffer::PrologueSetFrameRegister(unsigned __int8 slots)
     {
         unsigned desiredOffset = slots / 2;     // Want offset to put frame pointer in the middle of the slots.
-        if (desiredOffset % 2 == 1)              // Need an offset that is divisible by 16.
+        if (desiredOffset %2 == 1)              // Need an offset that is divisible by 16.
         {
             --desiredOffset;
         }
@@ -380,9 +375,9 @@ namespace Windows
 
         if (m_unwindInfo->m_countOfCodes > 1)
         {
-            for (int i = 1; i < m_unwindInfo->m_countOfCodes; ++i)
+            for (int i = 1 ; i < m_unwindInfo->m_countOfCodes; ++i)
             {
-                if (m_unwindInfo->m_unwindCodes[i].m_codeOffset >= m_unwindInfo->m_unwindCodes[i - 1].m_codeOffset)
+                if (m_unwindInfo->m_unwindCodes[i].m_codeOffset >= m_unwindInfo->m_unwindCodes[i-1].m_codeOffset)
                 {
                     out << "Error: unwind code offsets must be in decreasing order.\n";
                     success = false;
@@ -411,6 +406,3 @@ namespace Windows
         Fill(start, length, 0xcc);
     }
 }
-}
-#endif
-

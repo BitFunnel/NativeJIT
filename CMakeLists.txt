@@ -8,7 +8,7 @@ project (NativeJIT_CMake)
 # From http://crascit.com/2015/07/25/cmake-gtest/
 
 # Download and unpack googletest at configure time
-configure_file(CMakeLists.txt.in
+configure_file(CMakeLists-googletest.txt.in
                googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
@@ -30,7 +30,7 @@ include_directories(
 
 
 if(MSVC)
-  SET(VS_COMMON_CXX_FLAGS "/W4 /DUSING_GTEST")
+  SET( VS_COMMON_CXX_FLAGS "/W4 /WX /DUSING_GTEST" )
   SET( CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} ${VS_COMMON_CXX_FLAGS} /MTd" )
   SET( CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} ${VS_COMMON_CXX_FLAGS} /MT" )
 endif()
@@ -40,14 +40,16 @@ set_property( GLOBAL PROPERTY USE_FOLDERS ON)
 
 include_directories(inc)
 add_subdirectory(src/CodeGen)
+add_subdirectory(src/NativeJIT)
 add_subdirectory(UnitTest/CodeGenUnitTest)
+add_subdirectory(UnitTest/NativeJITUnitTest)
 
 add_custom_target(TOPLEVEL SOURCES
-  ToDo.txt
-  CMakeLists.txt.in
+  CMakeLists-googletest.txt.in
   Configure_OSX_Make.sh
   Configure_OSX_XCode.sh
   Configure_Windows.bat
   LICENSE.txt
   README.md
-  )
+  ToDo.txt
+)

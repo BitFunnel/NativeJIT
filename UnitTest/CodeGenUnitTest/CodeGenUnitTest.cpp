@@ -4,18 +4,10 @@
 #include <iostream>             // TODO: Temporary - for debugging.
 #include <vector>
 
-#ifdef USING_GTEST
-#include "gtest/gtest.h"
-#endif
-
 #include "ML64Verifier.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
-
-#ifndef USING_GTEST
 #include "SuiteCpp/UnitTest.h"
-#define TEST(a, b) TestCase(b)
-#endif
 
 
 namespace NativeJIT
@@ -25,7 +17,7 @@ namespace NativeJIT
         // TODO: JMP
         // TODO: JCC - all cases.
 
-        TEST(CodeGenUnitTest, JCC)
+        TestCase(JCC)
         {
             ExecutionBuffer allocator(1000);
             FunctionBuffer buffer(allocator, 200, 10, 10, 3, 0, false);
@@ -36,7 +28,7 @@ namespace NativeJIT
         }
 
 
-        TEST(CodeGenUnitTest, OpCodes)
+        TestCase(OpCodes)
         {
             ExecutionBuffer allocator(5000);
             FunctionBuffer buffer(allocator, 2000, 10, 10, 3, 0, false);
