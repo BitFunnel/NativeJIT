@@ -42,17 +42,17 @@ namespace NativeJIT
 
         // Returns whether the node has been evaluated through the Node<T>::CodeGen
         // method.
-        bool IsEvaluated() const;
+        bool HasBeenEvaluated() const;
         void MarkEvaluated();
 
-        // Returns whether node is inside the tree. Node is considered to be
-        // inside the tree if it has parents which will call its CodeGen() method
+        // Returns whether the node is referenced. Node is considered to be
+        // referenced if it has parents which will call its CodeGen() method
         // or through some alternate method. The IncrementParentCount() call
-        // which implies the CodeGen() call will implicitly mark the node as part
-        // of the tree. Parents that use the node through some other means
-        // need to call MarkInsideTree() explicitly.
-        bool IsInsideTree() const;
-        void MarkInsideTree();
+        // which implies the CodeGen() call will implicitly mark the node as
+        // referenced. Parents that use the node through some other means
+        // need to call MarkReferenced() explicitly.
+        bool IsReferenced() const;
+        void MarkReferenced();
 
         //
         // Non-pure virtual methods.
@@ -113,9 +113,11 @@ namespace NativeJIT
 
     private:
         unsigned m_id;
+
+        // See the comments for the related accessor methods above for more information.
         unsigned m_parentCount;
-        bool m_isEvaluated;
-        bool m_isInsideTree;
+        bool m_isReferenced;
+        bool m_hasBeenEvaluated;
     };
 
 
@@ -265,16 +267,16 @@ namespace NativeJIT
     template <typename T>
     void Node<T>::CodeGenCache(ExpressionTree& tree)
     {
-        Assert(!IsEvaluated(),
+        Assert(GetParentCount() > 0,
+               "Cannot evaluate node %u with no parents",
+               GetId());
+        Assert(!HasBeenEvaluated(),
                "Tried to CodeGenValue() node with ID %u more than once",
                GetId());
         MarkEvaluated();
 
-        if (GetParentCount() > 0)
-        {
-            LabelSubtree(true);
-            SetCache(CodeGenValue(tree));
-        }
+        LabelSubtree(true);
+        SetCache(CodeGenValue(tree));
     }
 
 
@@ -319,10 +321,6 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T> Node<T>::CodeGen(ExpressionTree& tree)
     {
-        Assert(GetParentCount() > 0,
-               "Cannot evaluate node %u with no parents",
-               GetId());
-
         if (!IsCached())
         {
             CodeGenCache(tree);

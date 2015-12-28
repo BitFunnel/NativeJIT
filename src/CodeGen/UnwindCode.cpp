@@ -38,7 +38,8 @@ namespace NativeJIT
     {
         DWORD64 MakeFunctionTableIdentifier(void* objectAddress)
         {
-            // The lowest 3 bits must be set.
+            // Per MSDN RtlInstallFunctionTableCallback() documentation:
+            // "The two low-order bits must be set. For example, BaseAddress|0x3."
             return reinterpret_cast<DWORD64>(objectAddress) | 3;
         }
     }

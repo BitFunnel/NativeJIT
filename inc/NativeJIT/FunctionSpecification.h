@@ -17,7 +17,10 @@ namespace NativeJIT
     class FunctionSpecification
     {
     public:
-        // Specifies whether/how to set-up the base register.
+        // Specifies whether/how to set-up the base register. Unused means
+        // that no base register will be set up. SetRbpToOriginalRsp will make
+        // RBP reserved and set its value to the value that RSP had before the
+        // first instruction of the prolog started executing.
         enum class BaseRegisterType { Unused, SetRbpToOriginalRsp };
 
         // The maximum size for the unwind buffer that needs to be reserved

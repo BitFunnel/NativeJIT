@@ -14,7 +14,7 @@ namespace NativeJIT
 {
     namespace FunctionUnitTest
     {
-        TestClass(FunctionTest), private TestClassSetup
+        TestClass(FunctionTest), private TestFixture
         {
         public:
             //
@@ -361,11 +361,11 @@ namespace NativeJIT
                 // value between _AddressOfReturnAddress() as returned here
                 // and _AddressOfReturnAddress() as returned by the caller of the
                 // jitted function (that value would be passed as an argument).
-                auto const bufferStart = static_cast<unsigned __int8 *>(_AddressOfReturnAddress());
-                auto bufferLimit = bufferStart + 96;
+                auto const bufferStart = static_cast<unsigned __int8 const *>(_AddressOfReturnAddress());
+                auto const bufferLimit = bufferStart + 96;
 
-                auto intPtr = reinterpret_cast<unsigned char*>(&intRef);
-                auto floatPtr = reinterpret_cast<unsigned char*>(&floatRef);
+                auto const intPtr = reinterpret_cast<unsigned char const *>(&intRef);
+                auto const floatPtr = reinterpret_cast<unsigned char const *>(&floatRef);
 
                 TestAssert(intPtr >= bufferStart && intPtr < bufferLimit,
                            "Expected range: [%I64x, %I64x), found: %I64x",

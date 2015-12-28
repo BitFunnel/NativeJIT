@@ -13,7 +13,7 @@ namespace NativeJIT
 {
     namespace ConditionalUnitTest
     {
-        TestClass(FunctionTest), private TestClassSetup
+        TestClass(FunctionTest), private TestFixture
         {
         public:
 

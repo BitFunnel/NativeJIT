@@ -14,7 +14,9 @@ namespace NativeJIT
     class ExecutionPreconditionTest : private NonCopyable
     {
     public:
-        // Executes the test and returns a
+        // Executes its test and allows the regular flow to continue if test's
+        // condition is satisfied. Otherwise, places an alternative fixed value
+        // into the return register and jumps to function's epilog.
         virtual void Evaluate(ExpressionTree& tree) = 0;
     };
 

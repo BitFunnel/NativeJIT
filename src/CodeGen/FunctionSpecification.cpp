@@ -25,6 +25,7 @@ namespace NativeJIT
           - sizeof(UnwindCode) // Included in UnwindInfo.
           + c_maxUnwindCodes * sizeof(UnwindCode);
 
+
     FunctionSpecification::FunctionSpecification(Allocators::IAllocator& allocator,
                                                  int maxFunctionCallParameters,
                                                  unsigned localStackSlotCount,
@@ -235,7 +236,7 @@ namespace NativeJIT
                    "Logic error, alloc small slot count %u",
                    totalStackSlotCount);
 
-            // The values 1-16 are encoded as 0-15, so subtract one.
+            // The slot count values 1-16 are encoded as 0-15, so subtract one.
             AddCodeAndBackDown(unwindCodes,
                                currUnwindCode,
                                prologCode.CurrentPosition() - codeStartPos,

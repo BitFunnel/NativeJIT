@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <cstring>
 #include <stdexcept>
 
 #include "NativeJIT/CodeBuffer.h"
@@ -86,7 +87,7 @@ namespace NativeJIT
                startPosition,
                startPosition + length);
 
-        memcpy(&m_bufferStart[startPosition], data, length);
+        memmove(&m_bufferStart[startPosition], data, length);
     }
 
 
@@ -150,15 +151,5 @@ namespace NativeJIT
 #else
         Advance(size);
 #endif
-    }
-
-
-    void CodeBuffer::VerifyNoBufferOverflow(unsigned length)
-    {
-        Assert(m_current + length - 1 < m_bufferEnd,
-               "CodeBuffer overflow, wanted %u bytes, only %Iu out of %u bytes available",
-               length,
-               m_bufferEnd - m_current,
-               m_capacity);
     }
 }

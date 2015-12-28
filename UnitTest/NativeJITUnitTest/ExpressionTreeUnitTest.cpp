@@ -79,7 +79,37 @@ namespace NativeJIT
         #undef AssertSizeAndType
 
 
-        TestClass(ExpressionTreeTest), private TestClassSetup
+        #define AssertImmediateCategory(TYPE, EXPECTED_CATEGORY) \
+            static_assert(ImmediateCategoryOf<TYPE>::value == EXPECTED_CATEGORY, \
+                          #TYPE " should be in " #EXPECTED_CATEGORY)
+
+        TestCase(ImmediateTypes)
+        {
+            AssertImmediateCategory(void, ImmediateCategory::NonImmediate);
+
+            AssertImmediateCategory(char, ImmediateCategory::InlineImmediate);
+            AssertImmediateCategory(const char, ImmediateCategory::InlineImmediate);
+            AssertImmediateCategory(__int32, ImmediateCategory::InlineImmediate);
+            AssertImmediateCategory(unsigned __int32, ImmediateCategory::InlineImmediate);
+
+            AssertImmediateCategory(unsigned __int64, ImmediateCategory::RIPRelativeImmediate);
+            AssertImmediateCategory(float, ImmediateCategory::RIPRelativeImmediate);
+            AssertImmediateCategory(double, ImmediateCategory::RIPRelativeImmediate);
+            AssertImmediateCategory(void*, ImmediateCategory::RIPRelativeImmediate);
+            AssertImmediateCategory(void(*)(int), ImmediateCategory::RIPRelativeImmediate);
+
+            // These decay to pointers when passed as arguments.
+            typedef char ArrayLargerThanQuadword[123];
+            struct StructLargerThanQuadword { ArrayLargerThanQuadword m_x;};
+
+            AssertImmediateCategory(ArrayLargerThanQuadword, ImmediateCategory::RIPRelativeImmediate);
+            AssertImmediateCategory(StructLargerThanQuadword, ImmediateCategory::RIPRelativeImmediate);
+        }
+
+        #undef AssertImmediateCategory
+
+
+        TestClass(ExpressionTreeTest), private TestFixture
         {
         public:
             // Verify that the sole owner of an indirect storage will reuse the
@@ -290,7 +320,7 @@ namespace NativeJIT
 
                 // There are no reserved registers for floats, so no register
                 // should have been bumped.
-                for (const auto & s : storages)
+                for (auto const & s : storages)
                 {
                     TestAssert(s.GetStorageClass() == StorageClass::Direct);
                 }

@@ -15,10 +15,10 @@ namespace NativeJIT
 {
     namespace BitFunnelAcceptance
     {
-        TestClass(AcceptanceUnitTest), private TestClassSetup
+        TestClass(AcceptanceUnitTest), private TestFixture
         {
         public:
-            AcceptanceUnitTest() : TestClassSetup(5000, 64 * 1024)
+            AcceptanceUnitTest() : TestFixture(5000, 64 * 1024)
             {
             }
 
@@ -574,7 +574,7 @@ namespace NativeJIT
                                              unsigned __int32 queryLocationHash,
                                              TermHash clickPhrase)
             {
-                const auto clickHash = ComputeClickHash(queryLanguageHash,
+                auto const clickHash = ComputeClickHash(queryLanguageHash,
                                                         queryLocationHash,
                                                         clickPhrase);
                 unsigned __int64 clickFeatureRaw;
@@ -602,8 +602,8 @@ namespace NativeJIT
                                         void const * rankerContextRaw,
                                         QueryContext const * queryContext)
             {
-                auto const * rankerContext = static_cast<WebRankerContext const *>(rankerContextRaw);
-                auto const & commonRankerContext = rankerContext->m_commonContext;
+                auto const rankerContext = static_cast<WebRankerContext const *>(rankerContextRaw);
+                auto & commonRankerContext = rankerContext->m_commonContext;
 
                 // Get WebDocData with static score and advance prefer score.
                 auto getFixedSizedBlobFunc = commonRankerContext.m_getFixedSizeBlobFunc;
@@ -645,7 +645,7 @@ namespace NativeJIT
                 }
 
                 auto getVarSizedBlobFunc = commonRankerContext.m_getVariableSizeBlobFunc;
-                auto const & queryWords = parsedQuery.m_queryWords;
+                auto & queryWords = parsedQuery.m_queryWords;
 
                 // Prepare to evaluate term and click models.
                 if (!queryWords.m_components.empty())
@@ -708,7 +708,7 @@ namespace NativeJIT
                                                 Node<float>& currentScore)
                 {
                     Node<float>* updatedScore = &currentScore;
-                    auto const & components = queryWords.m_components;
+                    auto & components = queryWords.m_components;
 
                     for(unsigned __int8 position = 0;
                         position < components.size();
@@ -787,7 +787,7 @@ namespace NativeJIT
                                              QueryNGram const & nGram,
                                              float & estimatedIdf)
                 {
-                    auto const & termInfos = nGram.m_terms;
+                    auto & termInfos = nGram.m_terms;
 
                     Assert(termInfos.size() > 0, "Cannot process n-gram with zero words");
 
@@ -821,7 +821,7 @@ namespace NativeJIT
                                                       QueryComponent const & component,
                                                       float & estimatedIdf)
                 {
-                    auto const & candidates = component.m_candidates;
+                    auto & candidates = component.m_candidates;
                     Assert(candidates.size() > 0, "Cannot process an empty query component");
 
                     float currentIdf;
@@ -981,7 +981,7 @@ namespace NativeJIT
                 totalScore = &e.Add(*totalScore,
                                     e.If(marketMatches, advPreferScore, floatZero));
 
-                auto const & queryWords = parsedQuery.m_queryWords;
+                auto & queryWords = parsedQuery.m_queryWords;
 
                 // Prepare to evaluate term and click models.
                 if (!queryWords.m_components.empty()
@@ -1076,7 +1076,7 @@ namespace NativeJIT
                     m_termFreqMap[c_houseHash] = MakeTermFrequencies(0, 2, 0, 0);
                     m_termFreqMap[c_housesHash] = MakeTermFrequencies(1, 2, 1, 0);
 
-                    const auto clickHash
+                    auto const clickHash
                         = ComputeClickHash(c_clickPhraseMarketData.m_languageHash,
                                            c_clickPhraseMarketData.m_locationHash,
                                            c_dogHouseHash);

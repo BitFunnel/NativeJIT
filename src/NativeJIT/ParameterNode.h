@@ -13,6 +13,8 @@ namespace NativeJIT
     public:
         ParameterNode(ExpressionTree& tree, unsigned position);
 
+        unsigned GetPosition() const;
+
         //
         // Overrides of NodeBase methods.
         //
@@ -68,10 +70,18 @@ namespace NativeJIT
         : Node(tree),
           m_position(position)
     {
-        // Parameter nodes are always considered to be inside the tree (as a
-        // part of the function being compiled) even when they are not referenced.
-        MarkInsideTree();
-        tree.AddParameter(*this);
+        // Parameter nodes are always considered to be referenced (as a part of
+        // the function being compiled) even when they are not referenced
+        // explicitly.
+        MarkReferenced();
+        tree.AddParameter(*this, m_position);
+    }
+
+
+    template <typename T>
+    unsigned ParameterNode<T>::GetPosition() const
+    {
+        return m_position;
     }
 
 

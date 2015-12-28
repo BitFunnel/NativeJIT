@@ -12,7 +12,7 @@ namespace NativeJIT
 {
     namespace CastUnitTest
     {
-        TestClass(CastTest), private TestClassSetup
+        TestClass(CastTest), private TestFixture
         {
         public:
             TestCase(FromInt8)

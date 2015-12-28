@@ -18,8 +18,8 @@ namespace NativeJIT
     RUNTIME_FUNCTION*
     FunctionBuffer::WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context)
     {
-        auto const pc = reinterpret_cast<unsigned __int8*>(controlPc);
-        auto const fb = reinterpret_cast<FunctionBuffer*>(context);
+        auto const pc = reinterpret_cast<unsigned __int8 const *>(controlPc);
+        auto const fb = reinterpret_cast<FunctionBuffer /* const */ *>(context);
         auto const runtime = &fb->m_runtimeFunction;
 
         // Check whether program counter is inside function's code.

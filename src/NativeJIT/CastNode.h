@@ -484,14 +484,14 @@ namespace NativeJIT
         // Template definitions for FromImmediate::CastGenerator.
         //
 
-        // Target can be represented as a core immediate so an immediate Storage
+        // Target can be represented as a inline immediate so an immediate Storage
         // can be used.
         template <>
         template <>
         template <typename TO, typename FROM>
         Storage<TO>
-        FromImmediate<ImmediateCategory::CoreImmediate>
-            ::CastGenerator<Cast::IntToInt, ImmediateCategory::CoreImmediate>
+        FromImmediate<ImmediateCategory::InlineImmediate>
+            ::CastGenerator<Cast::IntToInt, ImmediateCategory::InlineImmediate>
             ::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {
             return tree.Immediate(ForcedCast<TO, FROM>(source.GetImmediate()));
@@ -504,7 +504,7 @@ namespace NativeJIT
         template <>
         template <typename TO, typename FROM>
         Storage<TO>
-        FromImmediate<ImmediateCategory::CoreImmediate>
+        FromImmediate<ImmediateCategory::InlineImmediate>
             ::CastGenerator<Cast::IntToInt, ImmediateCategory::RIPRelativeImmediate>
             ::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {
@@ -527,7 +527,7 @@ namespace NativeJIT
         template <>
         template <typename TO, typename FROM>
         Storage<TO>
-        FromImmediate<ImmediateCategory::CoreImmediate>
+        FromImmediate<ImmediateCategory::InlineImmediate>
             ::CastGenerator<Cast::IntToFloat, ImmediateCategory::RIPRelativeImmediate>
             ::Generate(ExpressionTree& tree, Storage<FROM>& source)
         {

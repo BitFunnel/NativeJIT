@@ -55,8 +55,8 @@ namespace NativeJIT
     //    (floating point values) or most x64 instructions don't support them as
     //    immediates (quadwords, including function pointers, things that decay
     //    to pointers such as arrays etc).
-    // 3. CoreImmediate types can be used directly as immediates in x64 instructions.
-    enum class ImmediateCategory { NonImmediate, RIPRelativeImmediate, CoreImmediate };
+    // 3. InlineImmediate types can be used directly as immediates in x64 instructions.
+    enum class ImmediateCategory { NonImmediate, RIPRelativeImmediate, InlineImmediate };
 
     // Classifies types that belong to the RIPRelativeImmediate category.
     template <typename T>
@@ -68,19 +68,24 @@ namespace NativeJIT
     {
     };
 
+    template <>
+    struct MustBeEncodedAsRIPRelative<void> : std::false_type {};
 
-    // Classifies types that belong to the CoreImmediate category in the list above.
+
+    // Classifies types that belong to the InlineImmediate category in the list above.
     template <typename T>
     struct CanBeInImmediateStorage
         : std::integral_constant<
             bool,
-            !std::is_void<T>::value
-                && std::is_same<typename RegisterStorage<T>::UnderlyingType,
-                                typename std::remove_cv<T>::type>::value
+            std::is_same<typename RegisterStorage<T>::UnderlyingType,
+                         typename std::remove_cv<T>::type>::value
                 && !MustBeEncodedAsRIPRelative<T>::value
           >
     {
     };
+
+    template <>
+    struct CanBeInImmediateStorage<void> : std::false_type {};
 
 
     // Classifies types by ImmediateCategory.
@@ -88,7 +93,7 @@ namespace NativeJIT
     struct ImmediateCategoryOf
         : std::integral_constant<ImmediateCategory,
                                  CanBeInImmediateStorage<T>::value
-                                    ? ImmediateCategory::CoreImmediate
+                                    ? ImmediateCategory::InlineImmediate
                                     : (MustBeEncodedAsRIPRelative<T>::value
                                         ? ImmediateCategory::RIPRelativeImmediate
                                         : ImmediateCategory::NonImmediate)

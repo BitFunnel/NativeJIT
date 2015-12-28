@@ -13,7 +13,7 @@ namespace NativeJIT
 {
     namespace FloatingPointUnitTest3
     {
-        TestClass(FunctionTest), private TestClassSetup
+        TestClass(FunctionTest), private TestFixture
         {
         public:
             TestCase(ImmediateDouble)

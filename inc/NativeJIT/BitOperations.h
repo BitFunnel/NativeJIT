@@ -41,7 +41,7 @@ namespace NativeJIT
             static_assert(std::is_integral<T>::value, "The type must be integral");
 
             unsigned __int8 numBitsSet = 0;
-            const auto valueBytes = reinterpret_cast<unsigned __int8 const *>(&value);
+            auto const valueBytes = reinterpret_cast<unsigned __int8 const *>(&value);
 
             for (unsigned i = 0; i < sizeof(T); ++i)
             {

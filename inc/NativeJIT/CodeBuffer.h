@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NativeJIT/JumpTable.h"    // Label parameter and return value.
+#include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"  // Base class.
 
 
@@ -116,9 +117,19 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template definitions for CodeBuffer.
+    // Template and inline definitions for CodeBuffer.
     //
     //*************************************************************************
+    inline void CodeBuffer::VerifyNoBufferOverflow(unsigned length)
+    {
+        Assert(m_current + length - 1 < m_bufferEnd,
+               "CodeBuffer overflow, wanted %u bytes, only %Iu out of %u bytes available",
+               length,
+               m_bufferEnd - m_current,
+               m_capacity);
+    }
+
+
     template <typename T>
     void CodeBuffer::EmitBytes(T x)
     {

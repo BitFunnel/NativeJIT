@@ -37,6 +37,8 @@ namespace NativeJIT
         // as an optimization. In such cases, m_collapsedBase/Offset will point
         // to such base object. Otherwise, they will match the base object/offset
         // from the constructor.
+        // IMPORTANT: the constructor depends on collapsed base/offset being
+        // listed after the original base/offset.
         NodeBase* m_collapsedBase;
         __int32 m_collapsedOffset;
     };
@@ -54,6 +56,7 @@ namespace NativeJIT
         : Node(tree),
           m_base(base),
           m_originalOffset(Offset(field)),
+          // Note: there is constructor order dependency for these two.
           m_collapsedBase(&m_base),
           m_collapsedOffset(m_originalOffset)
     {
@@ -66,7 +69,7 @@ namespace NativeJIT
         {
             m_collapsedBase = grandparent;
             m_collapsedOffset += parentOffset;
-            base.MarkInsideTree();
+            base.MarkReferenced();
         }
 
         m_collapsedBase->IncrementParentCount();

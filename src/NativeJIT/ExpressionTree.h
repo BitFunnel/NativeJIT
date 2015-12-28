@@ -89,7 +89,14 @@ namespace NativeJIT
         // Tree construction
         //
         unsigned AddNode(NodeBase& node);
-        void AddParameter(NodeBase& parameter);
+
+        // TODO: This should take ParameterNode<T> (and get position from it)
+        // to ensure that other nodes can't be passed to AddParameter. To make
+        // that possible, a circular include dependency between ExpressionTree.h
+        // and Node.h (through ParameterNode.h) needs to be broken. Then forward
+        // declaring ParameterNode<T> and using #include further below would work.
+        void AddParameter(NodeBase& parameter, unsigned position);
+
         void AddRIPRelative(RIPRelativeImmediate& node);
         void ReportFunctionCallNode(unsigned parameterCount);
         void Compile();
@@ -136,8 +143,8 @@ namespace NativeJIT
         //
         //
         //
-        unsigned GetRXXUsageMask() const;
-        unsigned GetXMMUsageMask() const;
+        unsigned GetRXXUsedMask() const;
+        unsigned GetXMMUsedMask() const;
 
         Label GetStartOfEpilogue() const;
 
@@ -171,7 +178,7 @@ namespace NativeJIT
         {
         public:
             // The bit-mask signifying that all valid registers have been allocated.
-            static const unsigned c_fullUsageMask = (1ul << SIZE) - 1;
+            static const unsigned c_fullUsedMask = (1ul << SIZE) - 1;
 
             FreeList();
 
@@ -226,11 +233,11 @@ namespace NativeJIT
             void AssertValidData(unsigned id, Data* data) const;
 
             // The mask tracking registers which are currently allocated.
-            unsigned m_usageMask;
+            unsigned m_usedMask;
 
             // The mask tracking registers which were touched at any point of
             // time, regardless of whether they were later released or not.
-            unsigned m_lifetimeUsageMask;
+            unsigned m_lifetimeUsedMask;
 
             // See the class description for more details.
             std::array<Data*, SIZE> m_data;
@@ -300,11 +307,6 @@ namespace NativeJIT
         std::vector<Storage<double>> m_reservedXmmRegisterStorages;
         std::vector<ReferenceCounter> m_reservedRegistersPins;
 
-        // Use at most 80% stack space for temporaries.
-        static const unsigned c_maxTemporaries = FunctionSpecification::c_maxStackSize
-                                                 / sizeof(void*)
-                                                 * 4
-                                                 / 5;
         unsigned m_temporaryCount;
         // TODO: Use StlAllocator for the vector.
         std::vector<__int32> m_temporaries;
@@ -403,7 +405,7 @@ namespace NativeJIT
     public:
         // All Storages need to be treated as the same class, regardless of
         // the template parameter.
-        template <typename T> friend class Storage;
+        template <typename U> friend class Storage;
 
         typedef typename RegisterStorage<T>::RegisterType DirectRegister;
         typedef PointerRegister BaseRegister;
@@ -488,7 +490,7 @@ namespace NativeJIT
         // has invalid declaration otherwise.
         template <typename U = T,
                   typename ENABLED = typename std::enable_if<ImmediateCategoryOf<U>::value
-                                                             == ImmediateCategory::CoreImmediate>::type>
+                                                             == ImmediateCategory::InlineImmediate>::type>
         U GetImmediate() const;
 
         DirectRegister ConvertToDirect(bool forModification);
@@ -703,10 +705,7 @@ namespace NativeJIT
         }
         else
         {
-            Assert(m_temporaryCount < c_maxTemporaries,
-                   "Not enough space for temporary #%u",
-                   m_temporaryCount + 1);
-
+            // Note: FunctionSpecification will throw if too much stack gets allocated.
             slot = m_temporaryCount++;
         }
 
@@ -965,8 +964,8 @@ namespace NativeJIT
         Storage<T> target;
 
         // Source information.
-        const auto base = indirect.GetBaseRegister();
-        const auto offset = indirect.GetOffset();
+        auto const base = indirect.GetBaseRegister();
+        auto const offset = indirect.GetOffset();
 
         auto & tree = indirect.m_data->GetTree();
         auto & code = tree.GetCodeGenerator();
@@ -1413,8 +1412,8 @@ namespace NativeJIT
     //*************************************************************************
     template <unsigned SIZE>
     ExpressionTree::FreeList<SIZE>::FreeList()
-        : m_usageMask(0),
-          m_lifetimeUsageMask(0),
+        : m_usedMask(0),
+          m_lifetimeUsedMask(0),
           m_data(),
           m_pinCount()
     {
@@ -1495,20 +1494,18 @@ namespace NativeJIT
 
         m_allocatedRegisters.push_back(static_cast<unsigned __int8>(id));
 
-        BitOp::SetBit(&m_usageMask, id);
-        BitOp::SetBit(&m_lifetimeUsageMask, id);
+        BitOp::SetBit(&m_usedMask, id);
+        BitOp::SetBit(&m_lifetimeUsedMask, id);
     }
 
 
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::Release(unsigned id)
     {
-        AssertValidID(id);
+        AssertValidData(id);
         Assert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated", id);
         Assert(!IsPinned(id), "Register %u must be unpinned before release", id);
-        Assert(m_data[id] != nullptr, "Data for register %u must not be null", id);
         Assert(m_data[id]->GetRefCount() == 0, "Reference count for register %u must be zero", id);
-        AssertValidData(id);
 
         auto it = std::find(m_allocatedRegisters.begin(),
                             m_allocatedRegisters.end(),
@@ -1517,7 +1514,7 @@ namespace NativeJIT
         m_allocatedRegisters.erase(it);
 
         m_data[id] = nullptr; 
-        BitOp::ClearBit(&m_usageMask, id);
+        BitOp::ClearBit(&m_usedMask, id);
     }
 
 
@@ -1555,28 +1552,28 @@ namespace NativeJIT
     template <unsigned SIZE>
     unsigned ExpressionTree::FreeList<SIZE>::GetUsedMask() const
     {
-        return m_usageMask;
+        return m_usedMask;
     }
 
 
     template <unsigned SIZE>
     unsigned ExpressionTree::FreeList<SIZE>::GetLifetimeUsedMask() const
     {
-        return m_lifetimeUsageMask;
+        return m_lifetimeUsedMask;
     }
 
 
     template <unsigned SIZE>
     unsigned ExpressionTree::FreeList<SIZE>::GetFreeMask() const
     {
-        return ~m_usageMask & c_fullUsageMask;
+        return ~m_usedMask & c_fullUsedMask;
     }
 
 
     template <unsigned SIZE>
     unsigned ExpressionTree::FreeList<SIZE>::GetAllocatedSpillable() const
     {
-        unsigned numPinned = 0;
+        unsigned pinnedCount = 0;
 
         // Start looking from the oldest allocated register. This is expected
         // to give best results as recently allocated registers are more likely
@@ -1585,7 +1582,7 @@ namespace NativeJIT
         {
             if (IsPinned(id))
             {
-                numPinned++;
+                pinnedCount++;
             }
             else
             {
@@ -1597,7 +1594,7 @@ namespace NativeJIT
         throw std::runtime_error("Couldn't find any registers for spilling: "
                                  + std::to_string(m_allocatedRegisters.size())
                                  + " registers allocated, "
-                                 + std::to_string(numPinned)
+                                 + std::to_string(pinnedCount)
                                  + " of those are pinned");
     }
 

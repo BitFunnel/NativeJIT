@@ -13,11 +13,11 @@ namespace NativeJIT
 
     //*************************************************************************
     //
-    // Template specializations for ImmediateNode for CoreImmediate types.
+    // Template specializations for ImmediateNode for InlineImmediate types.
     //
     //*************************************************************************
     template <typename T>
-    class ImmediateNode<T, ImmediateCategory::CoreImmediate> : public Node<T>
+    class ImmediateNode<T, ImmediateCategory::InlineImmediate> : public Node<T>
     {
     public:
         ImmediateNode(ExpressionTree& tree, T value)

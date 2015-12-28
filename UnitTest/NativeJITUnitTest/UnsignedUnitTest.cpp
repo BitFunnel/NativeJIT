@@ -13,7 +13,7 @@ namespace NativeJIT
 {
     namespace UnsignedUnitTest
     {
-        TestClass(FunctionTest), private TestClassSetup
+        TestClass(FunctionTest), private TestFixture
         {
         public:
             //
@@ -125,7 +125,7 @@ namespace NativeJIT
             }
 
 
-            TestCase(FieldPointerEmbeddedCVE)
+            TestCase(FieldPointerEmbeddedWithCommonSubexpression)
             {
                 auto setup = GetSetup();
 
@@ -152,7 +152,8 @@ namespace NativeJIT
                     outerClass.m_innerEmbedded.m_a = 10;
                     outerClass.m_innerEmbedded.m_b = 1;
 
-                    auto expected = 11;
+                    auto expected = outerClass.m_innerEmbedded.m_a
+                                    + outerClass.m_innerEmbedded.m_b;
                     auto observed = function(&outerClass);
 
                     TestEqual(expected, observed);

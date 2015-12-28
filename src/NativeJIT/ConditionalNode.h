@@ -115,6 +115,8 @@ namespace NativeJIT
     template <JccType JCC>
     bool FlagExpressionNode<JCC>::CanBeOptimizedAway() const
     {
+        // The node can be optimized away only if it's unused in both contexts
+        // it can be referrenced from (through CodeGenValue() and CodeGenFlags()).
         return Node<bool>::CanBeOptimizedAway() && m_flagsParentCount == 0;
     }
 
@@ -123,7 +125,7 @@ namespace NativeJIT
     void FlagExpressionNode<JCC>::IncrementFlagsParentCount()
     {
         ++m_flagsParentCount;
-        MarkInsideTree();
+        MarkReferenced();
     }
 
 

@@ -30,7 +30,7 @@ namespace NativeJIT
         // the call itself.
         return CallingConvention::c_rxxVolatileRegistersMask
                & CallingConvention::c_rxxWritableRegistersMask
-               & tree.GetRXXUsageMask()
+               & tree.GetRXXUsedMask()
                & ~m_rxxCallExclusiveRegisterMask;
     }
 
@@ -42,7 +42,7 @@ namespace NativeJIT
         // the call itself.
         return CallingConvention::c_xmmVolatileRegistersMask
                & CallingConvention::c_xmmWritableRegistersMask
-               & tree.GetXMMUsageMask()
+               & tree.GetXMMUsedMask()
                & ~m_xmmCallExclusiveRegisterMask;
     }
 

@@ -17,8 +17,8 @@ namespace NativeJIT
     NodeBase::NodeBase(ExpressionTree& tree)
         : m_id(tree.AddNode(*this)),
           m_parentCount(0),
-          m_isEvaluated(false),
-          m_isInsideTree(false)
+          m_isReferenced(false),
+          m_hasBeenEvaluated(false)
     {
     }
 
@@ -31,48 +31,50 @@ namespace NativeJIT
 
     void NodeBase::IncrementParentCount()
     {
-        Assert(!IsEvaluated(), "Cannot change the parent count after the node was evaluated");
+        Assert(!HasBeenEvaluated(), "Cannot change the parent count after the node was evaluated");
 
         ++m_parentCount;
-        MarkInsideTree();
+        MarkReferenced();
     }
 
 
     void NodeBase::DecrementParentCount()
     {
-        Assert(!IsEvaluated(), "Cannot change the parent count after the node was evaluated");
+        Assert(!HasBeenEvaluated(), "Cannot change the parent count after the node was evaluated");
         Assert(m_parentCount > 0,
                "Cannot decrement parent count of node %u with zero parents",
                GetId());
 
         --m_parentCount;
-        // Note: m_isInsideTree is not affected by this, decrementing the parent
+        // Note: m_isReferenced is not affected by this, decrementing the parent
         // count is optimization-related call which doesn't change the
-        // fact that a node at least conceptually belongs inside the tree.
+        // fact that a node is referenced at least conceptually. This is because
+        // currently having a non-referenced node is considered to be an error,
+        // and not a chance for removing such nodes.
     }
 
 
-    bool NodeBase::IsEvaluated() const
+    bool NodeBase::HasBeenEvaluated() const
     {
-        return m_isEvaluated;
+        return m_hasBeenEvaluated;
     }
 
 
     void NodeBase::MarkEvaluated()
     {
-        m_isEvaluated = true;
+        m_hasBeenEvaluated = true;
     }
 
 
-    bool NodeBase::IsInsideTree() const
+    bool NodeBase::IsReferenced() const
     {
-        return m_isInsideTree;
+        return m_isReferenced;
     }
 
 
-    void NodeBase::MarkInsideTree()
+    void NodeBase::MarkReferenced()
     {
-        m_isInsideTree = true;
+        m_isReferenced = true;
     }
 
 

@@ -6,16 +6,16 @@
 namespace NativeJIT
 {
     //
-    // TestClassSetup
+    // TestFixture
     //
 
-    TestClassSetup::TestClassSetup()
-        : TestClassSetup(c_defaultCodeAllocatorCapacity, c_defaultGeneralAllocatorCapacity)
+    TestFixture::TestFixture()
+        : TestFixture(c_defaultCodeAllocatorCapacity, c_defaultGeneralAllocatorCapacity)
     {
     }
 
 
-    TestClassSetup::TestClassSetup(unsigned codeAllocatorCapacity,
+    TestFixture::TestFixture(unsigned codeAllocatorCapacity,
                                    unsigned generalAllocatorCapacity)
         : m_codeAllocator(codeAllocatorCapacity),
           m_generalAllocator(generalAllocatorCapacity),
@@ -25,7 +25,7 @@ namespace NativeJIT
     }
 
 
-    std::unique_ptr<TestCaseSetup> TestClassSetup::GetSetup()
+    std::unique_ptr<TestCaseSetup> TestFixture::GetSetup()
     {
         return std::make_unique<TestCaseSetup>(m_code, m_testCaseAllocator);
     }

@@ -86,13 +86,13 @@ namespace NativeJIT
     }
 
 
-    unsigned ExpressionTree::GetRXXUsageMask() const
+    unsigned ExpressionTree::GetRXXUsedMask() const
     {
         return m_rxxFreeList.GetUsedMask();
     }
 
 
-    unsigned ExpressionTree::GetXMMUsageMask() const
+    unsigned ExpressionTree::GetXMMUsedMask() const
     {
         return m_xmmFreeList.GetUsedMask();
     }
@@ -122,8 +122,13 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::AddParameter(NodeBase& parameter)
+    void ExpressionTree::AddParameter(NodeBase& parameter, unsigned position)
     {
+        Assert(position == m_parameters.size(),
+               "Parameters must be added in order. Previously added %Iu parameters, "
+               "adding parameter with index %u",
+               m_parameters.size(),
+               position);
         m_parameters.push_back(&parameter);
     }
 
@@ -187,13 +192,13 @@ namespace NativeJIT
         m_reservedRxxRegisterStorages.clear();
         Print();
 
-        Assert(GetRXXUsageMask() == 0,
+        Assert(GetRXXUsedMask() == 0,
                "Some integer registers have not been released: 0x%x",
-               GetRXXUsageMask());
+               GetRXXUsedMask());
 
-        Assert(GetXMMUsageMask() == 0,
+        Assert(GetXMMUsedMask() == 0,
                "Some floating point registers have not been released: 0x%x",
-               GetXMMUsageMask());
+               GetXMMUsedMask());
     }
 
 
@@ -263,14 +268,19 @@ namespace NativeJIT
         {
             auto node = *nodeIt;
 
-            if (!node->IsInsideTree())
+            if (!node->IsReferenced())
             {
                 Print();
-                Assert(node->IsInsideTree(),
-                       "Node with ID %u has been created but not placed inside the tree",
+                Assert(node->IsReferenced(),
+                       "Node with ID %u has been created but not referenced by nodes in the tree",
                        node->GetId());
             }
 
+            // If there's a way for node's children to be evaluated without
+            // evaluating this node first (f. ex. collapsing of pointers to the
+            // same base object), release the references that will be unused.
+            // Otherwise, the lifetime of the Storage returned by this node's
+            // CodeGenValue() will be too long.
             if (node->CanBeOptimizedAway())
             {
                 node->ReleaseReferencesToChildren();
@@ -284,9 +294,12 @@ namespace NativeJIT
         std::cout << "=== Pass1 ===" << std::endl;
 
         // Reserve registers used to pass in parameters.
-        for (const auto param : m_parameters)
+        for (auto param : m_parameters)
         {
-            param->CodeGenCache(*this);
+            if (param->GetParentCount() > 0)
+            {
+                param->CodeGenCache(*this);
+            }
         }
 
         // Execute any return-early tests before compiling the expression further.
@@ -305,7 +318,7 @@ namespace NativeJIT
         {
             NodeBase& node = *m_topologicalSort[i];
 
-            if (node.GetParentCount() > 1 && !node.IsEvaluated())
+            if (node.GetParentCount() > 1 && !node.HasBeenEvaluated())
             {
                 node.CodeGenCache(*this);
             }

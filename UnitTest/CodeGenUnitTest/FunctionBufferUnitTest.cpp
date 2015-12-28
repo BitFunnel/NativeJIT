@@ -39,7 +39,7 @@ namespace NativeJIT
 {
     namespace CodeGenUnitTest
     {
-        TestClass(FunctionBufferTest), TestClassSetup
+        TestClass(FunctionBufferTest), TestFixture
         {
         public:
             TestCase(Trivial)
@@ -69,8 +69,8 @@ namespace NativeJIT
                 VerifyProlog(spec, code);
 
                 // Verify unwind info.
-                auto const & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto const * unwindCodes = &unwindInfo.m_firstUnwindCode;
+                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
                 TestEqual(1, unwindInfo.m_countOfCodes);
                 TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 1 - 1),
@@ -109,8 +109,8 @@ namespace NativeJIT
                 VerifyProlog(spec, code);
 
                 // Verify unwind info.
-                auto const & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto const * unwindCodes = &unwindInfo.m_firstUnwindCode;
+                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
                 TestEqual(1, unwindInfo.m_countOfCodes);
                 TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 5 - 1),
@@ -149,8 +149,8 @@ namespace NativeJIT
                 VerifyProlog(spec, code);
 
                 // Verify unwind info.
-                auto const & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto const * unwindCodes = &unwindInfo.m_firstUnwindCode;
+                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
                 TestEqual(2, unwindInfo.m_countOfCodes);
                 TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_LARGE, 0),
@@ -202,8 +202,8 @@ namespace NativeJIT
                 VerifyProlog(spec, code);
 
                 // Verify unwind info.
-                auto const & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto const * unwindCodes = &unwindInfo.m_firstUnwindCode;
+                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
                 // Reverse the offsets to match the epilog order.
                 std::reverse(offsets.begin(), offsets.end());
@@ -279,8 +279,8 @@ namespace NativeJIT
                 VerifyProlog(spec, code);
 
                 // Verify unwind info.
-                auto const & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto const * unwindCodes = &unwindInfo.m_firstUnwindCode;
+                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
                 // Reverse the offsets to match the epilog order.
                 std::reverse(offsets.begin(), offsets.end());
@@ -456,8 +456,8 @@ namespace NativeJIT
         private:
             void ValidateUnwindInfo(FunctionSpecification const & spec)
             {
-                auto const & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                unsigned unwindByteLen = spec.GetUnwindInfoByteLength();
+                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+                const unsigned unwindByteLen = spec.GetUnwindInfoByteLength();
 
                 TestAssert(unwindByteLen >= sizeof(UnwindInfo), "Invalid UnwindInfo length %u", unwindByteLen);
 

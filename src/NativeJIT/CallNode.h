@@ -303,7 +303,7 @@ namespace NativeJIT
     ExpressionTree::Storage<R> CallNodeBase<R, PARAMETERCOUNT>::CodeGenValue(ExpressionTree& tree)
     {
         // Make sure that the result register is not pinned at this point.
-        const auto resultRegister = tree.GetResultRegister<R>();
+        auto const resultRegister = tree.GetResultRegister<R>();
         Assert(!tree.IsPinned(resultRegister), "The result register must not be pinned before the call");
 
         // Evaluate the function pointer and each parameter.

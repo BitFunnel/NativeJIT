@@ -22,7 +22,7 @@ namespace NativeJIT
     //*************************************************************************
     namespace PackedUnitTest
     {
-        TestClass(FunctionTest), private TestClassSetup
+        TestClass(FunctionTest), private TestFixture
         {
         public:
             TestCase(ModelApply)
