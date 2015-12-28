@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "ExpressionTree.h"                 // ExpressionTree::Storage<T> parameter.
 #include "NativeJIT/X64CodeGenerator.h"     // Emit<OP> referenced by template definition.
 #include "Temporary/Assert.h"               // Assert() referenced by template definition.
@@ -175,7 +177,7 @@ namespace NativeJIT
         {
             static_assert(std::is_floating_point<T>::value, "The immediate must be a float.");
             static_assert(sizeof(T) == SIZE, "The size of the immediate must match the register size.");
-            typedef std::conditional<SIZE == 4, unsigned __int32, unsigned __int64>::type TemporaryType;
+            typedef std::conditional<SIZE == 4, uint32_t, uint64_t>::type TemporaryType;
 
             auto & code = tree.GetCodeGenerator();
             auto temp = tree.Direct<TemporaryType>();

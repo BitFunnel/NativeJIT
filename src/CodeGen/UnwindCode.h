@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <ostream>
 #include <type_traits>
-#include <Windows.h>
+#include <windows.h>
 
 // TODO: What's the underlying reason for this requirement in this file?
 #ifndef _AMD64_
@@ -39,8 +40,8 @@ namespace NativeJIT
     struct UnwindCode 
     {
         UnwindCode();
-        UnwindCode(unsigned __int8 codeOffset, UnwindCodeOp op, unsigned __int8 info);
-        UnwindCode(unsigned __int16 frameOffset);
+        UnwindCode(uint8_t codeOffset, UnwindCodeOp op, uint8_t info);
+        UnwindCode(uint16_t frameOffset);
 
         union
         {
@@ -51,13 +52,13 @@ namespace NativeJIT
                 // MSDN: Offset from the beginning of the prolog of the end of
                 // the instruction that performs this operation, plus 1 (that is,
                 // the offset of the start of the next instruction).
-                unsigned __int8 m_codeOffset;
+                uint8_t m_codeOffset;
 
-                unsigned __int8 m_unwindOp : 4;
-                unsigned __int8 m_opInfo   : 4;
+                uint8_t m_unwindOp : 4;
+                uint8_t m_opInfo   : 4;
             } m_operation;
 
-            unsigned __int16 m_frameOffset;
+            uint16_t m_frameOffset;
         };
     };
 
@@ -74,12 +75,12 @@ namespace NativeJIT
     {
         UnwindInfo();
 
-        unsigned __int8 m_version       : 3;
-        unsigned __int8 m_flags         : 5;
-        unsigned __int8 m_sizeOfProlog;
-        unsigned __int8 m_countOfCodes;
-        unsigned __int8 m_frameRegister : 4;
-        unsigned __int8 m_frameOffset   : 4;
+        uint8_t m_version       : 3;
+        uint8_t m_flags         : 5;
+        uint8_t m_sizeOfProlog;
+        uint8_t m_countOfCodes;
+        uint8_t m_frameRegister : 4;
+        uint8_t m_frameOffset   : 4;
 
         // Additional codes follow after the end of the structure.
         UnwindCode m_firstUnwindCode;

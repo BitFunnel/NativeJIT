@@ -18,7 +18,7 @@ namespace NativeJIT
     RUNTIME_FUNCTION*
     FunctionBuffer::WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context)
     {
-        auto const pc = reinterpret_cast<unsigned __int8 const *>(controlPc);
+        auto const pc = reinterpret_cast<uint8_t const *>(controlPc);
         auto const fb = reinterpret_cast<FunctionBuffer /* const */ *>(context);
         auto const runtime = &fb->m_runtimeFunction;
 

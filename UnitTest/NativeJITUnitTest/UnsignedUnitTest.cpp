@@ -32,9 +32,9 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                    unsigned __int64 value = 0x1234ull;
+                    uint64_t value = 0x1234ull;
                     auto & a = expression.Immediate(value);
                     auto function = expression.Compile(a);
 
@@ -54,15 +54,15 @@ namespace NativeJIT
             class InnerClass
             {
             public:
-                unsigned __int32 m_a;
-                unsigned __int64 m_b;
+                uint32_t m_a;
+                uint64_t m_b;
             };
 
 
             class OuterClass
             {
             public:
-                unsigned __int16 m_p;
+                uint16_t m_p;
                 InnerClass* m_innerPointer;
                 InnerClass m_innerEmbedded;
                 long long m_q;
@@ -74,7 +74,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, InnerClass*> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t, InnerClass*> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.GetP1();
                     auto & b = expression.FieldPointer(a, &InnerClass::m_b);
@@ -98,7 +98,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, OuterClass**> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t, OuterClass**> expression(setup->GetAllocator(), setup->GetCode());
 
                     const unsigned pointersIndex = 4;
 
@@ -130,7 +130,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, OuterClass*> e(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t, OuterClass*> e(setup->GetAllocator(), setup->GetCode());
 
                     // The inner variable has a single FieldPointer parent (the
                     // outer parameter) and it is a common parent to both innerA
@@ -143,7 +143,7 @@ namespace NativeJIT
                     auto & innerA = e.Deref(e.FieldPointer(inner, &InnerClass::m_a));
                     auto & innerB = e.Deref(e.FieldPointer(inner, &InnerClass::m_b));
 
-                    auto & sum = e.Add(e.Cast<unsigned __int64>(innerA),
+                    auto & sum = e.Add(e.Cast<uint64_t>(innerA),
                                        innerB);
 
                     auto function = e.Compile(sum);
@@ -170,13 +170,13 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int32, unsigned __int32, unsigned __int32> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP2(), expression.GetP1());
                     auto function = expression.Compile(a);
 
-                    unsigned __int32 p1 = 12340000ul;
-                    unsigned __int32 p2 = 5678ul;
+                    uint32_t p1 = 12340000ul;
+                    uint32_t p2 = 5678ul;
 
                     auto expected = p1 + p2;
                     auto observed = function(p1, p2);
@@ -195,18 +195,18 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, unsigned __int64*> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t, uint64_t*> expression(setup->GetAllocator(), setup->GetCode());
 
-                    auto & a = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(1ull));
-                    auto & b = expression.Add(expression.GetP1(), expression.Immediate<unsigned __int64>(2ull));
+                    auto & a = expression.Add(expression.GetP1(), expression.Immediate<uint64_t>(1ull));
+                    auto & b = expression.Add(expression.GetP1(), expression.Immediate<uint64_t>(2ull));
                     auto & c = expression.Add(expression.Deref(a), expression.Deref(b));
                     auto function = expression.Compile(c);
 
-                    unsigned __int64 array[10];
+                    uint64_t array[10];
                     array[1] = 456;
                     array[2] = 123000;
 
-                    unsigned __int64 * p1 = array;
+                    uint64_t * p1 = array;
 
                     auto expected = array[1] + array[2];
                     auto observed = function(p1);
@@ -223,10 +223,10 @@ namespace NativeJIT
                 {
                     struct S
                     {
-                        unsigned __int64 m_array[10];
+                        uint64_t m_array[10];
                     };
 
-                    Function<unsigned __int64, S*> e(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t, S*> e(setup->GetAllocator(), setup->GetCode());
 
                     auto & arrayPtr = e.FieldPointer(e.GetP1(), &S::m_array);
                     auto & left = e.Add(arrayPtr, e.Immediate(1));
@@ -251,7 +251,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64, OuterClass*, unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t, OuterClass*, uint64_t> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP1(), expression.GetP2());
                     auto & b = expression.FieldPointer(a, &OuterClass::m_q);
@@ -260,7 +260,7 @@ namespace NativeJIT
 
                     OuterClass array[10];
                     OuterClass* p1 = array;
-                    unsigned __int64 p2 = 3ull;
+                    uint64_t p2 = 3ull;
 
                     p1[p2].m_q = 0x0123456789ABCDEF;
 
@@ -281,7 +281,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t, int64_t, int64_t> expression(setup->GetAllocator(), setup->GetCode());
 
                     // This tree has three common subexpressions: P1, P2, and node "a".
                     // Each common subexpression is referenced twice.
@@ -307,8 +307,8 @@ namespace NativeJIT
                     auto & j = expression.Add(h, i);
                     auto function = expression.Compile(j);
 
-                    __int64 p1 = 1ll;
-                    __int64 p2 = 10ll;
+                    int64_t p1 = 1ll;
+                    int64_t p2 = 10ll;
 
                     auto expectedA = p1 + p2;
                     auto expectedB = expectedA + p1;

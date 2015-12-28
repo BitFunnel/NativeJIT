@@ -3,6 +3,8 @@
 // Disable warning: 'function' : unreferenced local function has been removed
 #pragma warning(disable:4505)
 
+#include <cstdint>
+
 #include "ExpressionTree.h"             // ExpressionTree::Storage<T> return type.
 #include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"
@@ -79,7 +81,7 @@ namespace NativeJIT
         // in the chain together.
         // Callers that override this method also need to override
         // ReleaseReferencesToChildren().
-        virtual bool GetBaseAndOffset(NodeBase*& base, __int32& offset) const;
+        virtual bool GetBaseAndOffset(NodeBase*& base, int32_t& offset) const;
 
         //
         // Pure virtual methods.

@@ -28,7 +28,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<bool, unsigned __int64, unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<bool, uint64_t, uint64_t> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & test = expression.GreaterThan(expression.GetP1(), expression.GetP2());
                     auto greaterThan = expression.Compile(test);
@@ -44,17 +44,17 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<unsigned __int64, unsigned __int64, unsigned __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<uint64_t, uint64_t, uint64_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                    unsigned __int64 trueValue = 5;
-                    unsigned __int64 falseValue = 6;
+                    uint64_t trueValue = 5;
+                    uint64_t falseValue = 6;
 
                     auto & a = expression.GreaterThan(expression.GetP1(), expression.GetP2());
                     auto & b = expression.Conditional(a, expression.Immediate(trueValue), expression.Immediate(falseValue));
                     auto function = expression.Compile(b);
 
-                    unsigned __int64 p1 = 3;
-                    unsigned __int64 p2 = 4;
+                    uint64_t p1 = 3;
+                    uint64_t p2 = 4;
 
                     auto expected = (p1 > p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
@@ -76,17 +76,17 @@ namespace NativeJIT
             {
                 auto setup = GetSetup();
 
-                Function<unsigned __int64,
-                         unsigned __int32,
-                         unsigned __int64,
-                         unsigned __int64> e(setup->GetAllocator(), setup->GetCode());
+                Function<uint64_t,
+                         uint32_t,
+                         uint64_t,
+                         uint64_t> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & test = e.IfNotZero(e.GetP1(), e.GetP2(), e.GetP3());
                 auto function = e.Compile(test);
 
-                unsigned __int32 p1 = 0;
-                unsigned __int64 p2 = 0xFFFFFFFFFFFFFFFF;
-                unsigned __int64 p3 = 0;
+                uint32_t p1 = 0;
+                uint64_t p2 = 0xFFFFFFFFFFFFFFFF;
+                uint64_t p3 = 0;
 
                 auto expected = p1 != 0 ? p2 : p3;
                 auto observed = function(p1, p2, p3);
@@ -106,17 +106,17 @@ namespace NativeJIT
             {
                 auto setup = GetSetup();
 
-                Function<unsigned __int64,
+                Function<uint64_t,
                          bool,
-                         unsigned __int64,
-                         unsigned __int64> e(setup->GetAllocator(), setup->GetCode());
+                         uint64_t,
+                         uint64_t> e(setup->GetAllocator(), setup->GetCode());
 
                 auto & test = e.If(e.GetP1(), e.GetP2(), e.GetP3());
                 auto function = e.Compile(test);
 
                 bool p1 = true;
-                unsigned __int64 p2 = 0xFFFFFFFFFFFFFFFF;
-                unsigned __int64 p3 = 0;
+                uint64_t p2 = 0xFFFFFFFFFFFFFFFF;
+                uint64_t p3 = 0;
 
                 auto expected = p1 ? p2 : p3;
                 auto observed = function(p1, p2, p3);

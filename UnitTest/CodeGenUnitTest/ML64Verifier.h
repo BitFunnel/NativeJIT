@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 
 namespace NativeJIT
 {
@@ -7,7 +9,7 @@ namespace NativeJIT
     class ML64Verifier
     {
     public:
-        ML64Verifier(char const * ml64Output, unsigned __int8 const * testOutput);
+        ML64Verifier(char const * ml64Output, uint8_t const * testOutput);
 
     private:
         void ProcessLine();
@@ -16,7 +18,7 @@ namespace NativeJIT
         void SkipOffset();
         void SkipDelimiters();
         void AdvanceToNextLine();
-        bool ReadHexNumber(unsigned __int64& value, unsigned& size);
+        bool ReadHexNumber(uint64_t& value, unsigned& size);
         unsigned ReadHexByte();
         unsigned ReadHexDigit();
 
@@ -31,6 +33,6 @@ namespace NativeJIT
         char const * m_currentLineStart;
 
         unsigned m_bytesVerified;
-        unsigned __int8 const * m_testOutput;
+        uint8_t const * m_testOutput;
     };
 }

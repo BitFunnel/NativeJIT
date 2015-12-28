@@ -83,7 +83,7 @@ namespace NativeJIT
         CodePrinter printer(*this);
 
         Emit8(0xe9);
-        Emit64(reinterpret_cast<unsigned __int64>(functionPtr));
+        Emit64(reinterpret_cast<uint64_t>(functionPtr));
 
         printer.PrintJump(functionPtr);
     }
@@ -275,7 +275,7 @@ namespace NativeJIT
         X64CodeGenerator& code,
         Register<8, false> dest,
         Register<8, false> src,
-        __int32 srcOffset)
+        int32_t srcOffset)
     {
         const Register<4, false> dest4(dest);
 
@@ -352,8 +352,8 @@ namespace NativeJIT
     {
         // TODO: Support for printing '/' after REX prefixes?
         // Alternative is unit test function can strip out white space and '/'.
-        unsigned __int8* startPtr = m_code.BufferStart() + start;
-        unsigned __int8* endPtr = m_code.BufferStart() + end;
+        uint8_t* startPtr = m_code.BufferStart() + start;
+        uint8_t* endPtr = m_code.BufferStart() + end;
 
         *m_out << " ";
         m_out->width(8);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>                // For arrays in FreeList.
+#include <cstdint>
 #include <iostream>             // TODO: Remove this temp debug include.
 #include <vector>
 
@@ -112,7 +113,7 @@ namespace NativeJIT
         Storage<T> Direct(typename Storage<T>::DirectRegister r);
 
         template <typename T>
-        Storage<T> RIPRelative(__int32 offset);
+        Storage<T> RIPRelative(int32_t offset);
 
         // Returns indirect storage relative to the base pointer for a variable
         // of type T. It is guaranteed that it's legal to access the whole quadword
@@ -134,7 +135,7 @@ namespace NativeJIT
         // if so, releases the corresponding temporary slot. Some valid offsets
         // off the base register that don't refer to temporaries include offsets
         // referring to compiled function's parameters.
-        void ReleaseIfTemporary(__int32 offset);
+        void ReleaseIfTemporary(int32_t offset);
 
         // Returns whether a register is pinned.
         template <unsigned SIZE, bool ISFLOAT>
@@ -247,7 +248,7 @@ namespace NativeJIT
             // pattern in general (elements always added at the back, mostly pulled
             // out from the front). However, given the small number of elements
             // and the simplicitly of the vector, it is likely to perform better.
-            std::vector<unsigned __int8> m_allocatedRegisters;
+            std::vector<uint8_t> m_allocatedRegisters;
 
             // Number of active references to a pinned register. The register
             // cannot be spilled while it's pinned.
@@ -267,12 +268,12 @@ namespace NativeJIT
         bool IsAnySharedBaseRegister(Register<SIZE, true> r) const;
 
         // Converts a valid temporary slot index into an offset off base register.
-        __int32 TemporarySlotToOffset(unsigned temporarySlot);
+        int32_t TemporarySlotToOffset(unsigned temporarySlot);
 
         // If the temporary offset off base register describes a valid allocated
         // temporary slot, returns true and fills in the temporary slot out
         // parameter. Returns false otherwise.
-        bool TemporaryOffsetToSlot(__int32 temporaryOffset, unsigned& temporarySlot);
+        bool TemporaryOffsetToSlot(int32_t temporaryOffset, unsigned& temporarySlot);
 
         void Pass0();
         void Pass1();
@@ -309,7 +310,7 @@ namespace NativeJIT
 
         unsigned m_temporaryCount;
         // TODO: Use StlAllocator for the vector.
-        std::vector<__int32> m_temporaries;
+        std::vector<int32_t> m_temporaries;
 
         // Maximum number of parameters used in function calls done by the tree.
         // Negative value signifies no function calls made.
@@ -331,7 +332,7 @@ namespace NativeJIT
         // points to, otherwise access violation can happen if larger, non-owned
         // memory area is dereferenced.
         // Also applies to ConvertDirectToIndirect and Storage::Direct(Register).
-        Data(ExpressionTree& tree, PointerRegister r, __int32 offset);
+        Data(ExpressionTree& tree, PointerRegister r, int32_t offset);
 
         // Note: attempt to create an immediate storage will static_assert for
         // invalid immediates.
@@ -343,13 +344,13 @@ namespace NativeJIT
         StorageClass GetStorageClass() const;
 
         unsigned GetRegisterId() const;
-        __int32 GetOffset() const;
+        int32_t GetOffset() const;
 
         // Note: attempt to GetImmediate() will static_assert for invalid immediates.
         template <typename T>
         T GetImmediate() const;
 
-        void ConvertDirectToIndirect(__int32 offset);
+        void ConvertDirectToIndirect(int32_t offset);
         void ConvertIndirectToDirect();
 
         unsigned GetRefCount() const;
@@ -387,7 +388,7 @@ namespace NativeJIT
         // Which register.
         bool m_isFloat;
         unsigned m_registerId;
-        __int32 m_offset;
+        int32_t m_offset;
 
         // Holds the immediate value for Data whose storage class is Immediate.
         size_t m_immediate;
@@ -428,7 +429,7 @@ namespace NativeJIT
         // Takes ownership of a base storage, adds the offset to it and
         // dereferences it to produce a Storage<T>. Equivalent to
         // *static_cast<T*>(base + byteOffset).
-        Storage(Storage<void*>&& base, __int32 byteOffset);
+        Storage(Storage<void*>&& base, int32_t byteOffset);
 
         // Creates another storage referencing a register. The register must
         // already be allocated. For shared base registers, the Storage will
@@ -450,7 +451,7 @@ namespace NativeJIT
         // Creates an indirect storage against a shared base register.
         static Storage<T> ForSharedBaseRegister(ExpressionTree& tree,
                                                 BaseRegister base,
-                                                __int32 offset);
+                                                int32_t offset);
 
         // Creates an immediate storage with the specified value.
         static Storage<T> ForImmediate(ExpressionTree& tree, T value);
@@ -483,7 +484,7 @@ namespace NativeJIT
         DirectRegister GetDirectRegister() const;
 
         BaseRegister GetBaseRegister() const;
-        __int32 GetOffset() const;
+        int32_t GetOffset() const;
 
         // Note: The method must be removed for invalid immediates rather than
         // static_assert triggered because for some of them (arrays) the method
@@ -684,7 +685,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    ExpressionTree::Storage<T> ExpressionTree::RIPRelative(__int32 offset)
+    ExpressionTree::Storage<T> ExpressionTree::RIPRelative(int32_t offset)
     {
         return Storage<T>::ForSharedBaseRegister(*this, rip, offset);
     }
@@ -696,7 +697,7 @@ namespace NativeJIT
         static_assert(sizeof(T) <= sizeof(void*),
                       "The size of the variable is too large.");
 
-        __int32 slot;
+        int32_t slot;
 
         if (m_temporaries.size() > 0)
         {
@@ -709,7 +710,7 @@ namespace NativeJIT
             slot = m_temporaryCount++;
         }
 
-        const __int32 offset = TemporarySlotToOffset(slot);
+        const int32_t offset = TemporarySlotToOffset(slot);
 
         return Storage<T>::ForSharedBaseRegister(*this, GetBasePointer(), offset);
     }
@@ -875,7 +876,7 @@ namespace NativeJIT
 
     template <typename T>
     ExpressionTree::Storage<T>::Storage(Storage<void*>&& base,
-                                        __int32 byteOffset)
+                                        int32_t byteOffset)
         : m_data(nullptr)
     {
         // Load the base pointer into a register.
@@ -935,7 +936,7 @@ namespace NativeJIT
     Storage<T> ExpressionTree::Storage<T>::ForSharedBaseRegister(
         ExpressionTree& tree,
         BaseRegister base,
-        __int32 offset)
+        int32_t offset)
     {
         Assert(tree.IsAnySharedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
 
@@ -1076,7 +1077,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    __int32 ExpressionTree::Storage<T>::GetOffset() const
+    int32_t ExpressionTree::Storage<T>::GetOffset() const
     {
         Assert(m_data->GetStorageClass() == StorageClass::Indirect, "GetOffset(): storage class must be indirect.");
         return m_data->GetOffset();
@@ -1492,7 +1493,7 @@ namespace NativeJIT
         Assert(!IsPinned(id), "Register %u must be unpined when free", id);
         Assert(m_data[id] == nullptr, "Data for register %u must be null", id);
 
-        m_allocatedRegisters.push_back(static_cast<unsigned __int8>(id));
+        m_allocatedRegisters.push_back(static_cast<uint8_t>(id));
 
         BitOp::SetBit(&m_usedMask, id);
         BitOp::SetBit(&m_lifetimeUsedMask, id);
@@ -1509,7 +1510,7 @@ namespace NativeJIT
 
         auto it = std::find(m_allocatedRegisters.begin(),
                             m_allocatedRegisters.end(),
-                            static_cast<unsigned __int8>(id));
+                            static_cast<uint8_t>(id));
         Assert(it != m_allocatedRegisters.end(), "Couldn't find allocation record for %u", id);
         m_allocatedRegisters.erase(it);
 

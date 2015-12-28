@@ -19,7 +19,7 @@ namespace NativeJIT
           m_capacity(capacity),
           m_localJumpTable(generalAllocator)
     {
-        m_bufferStart = static_cast<unsigned __int8*>(codeAllocator.Allocate(capacity));
+        m_bufferStart = static_cast<uint8_t*>(codeAllocator.Allocate(capacity));
         m_bufferEnd = m_bufferStart + capacity;
         m_current = m_bufferStart;
     }
@@ -43,7 +43,7 @@ namespace NativeJIT
     }
 
 
-    void CodeBuffer::EmitBytes(unsigned __int8 const *data, unsigned length)
+    void CodeBuffer::EmitBytes(uint8_t const *data, unsigned length)
     {
         VerifyNoBufferOverflow(length);
 
@@ -52,32 +52,32 @@ namespace NativeJIT
     }
 
 
-    void CodeBuffer::Emit8(unsigned __int8 x)
+    void CodeBuffer::Emit8(uint8_t x)
     {
         EmitBytes(x);
     }
 
 
-    void CodeBuffer::Emit16(unsigned __int16 x)
+    void CodeBuffer::Emit16(uint16_t x)
     {
         EmitBytes(x);
     }
 
 
-    void CodeBuffer::Emit32(unsigned __int32 x)
+    void CodeBuffer::Emit32(uint32_t x)
     {
         EmitBytes(x);
     }
 
 
-    void CodeBuffer::Emit64(unsigned __int64 x)
+    void CodeBuffer::Emit64(uint64_t x)
     {
         EmitBytes(x);
     }
 
 
     void CodeBuffer::ReplaceBytes(unsigned startPosition,
-                                  unsigned __int8 const *data,
+                                  uint8_t const *data,
                                   unsigned length)
     {
         Assert(startPosition + length <= CurrentPosition(),
@@ -97,7 +97,7 @@ namespace NativeJIT
     }
 
 
-    unsigned __int8* CodeBuffer::BufferStart() const
+    uint8_t* CodeBuffer::BufferStart() const
     {
         return m_bufferStart;
     }
@@ -116,17 +116,17 @@ namespace NativeJIT
     }
 
 
-    unsigned __int8* CodeBuffer::Advance(int byteCount)
+    uint8_t* CodeBuffer::Advance(int byteCount)
     {
         VerifyNoBufferOverflow(byteCount);
 
-        unsigned __int8* start = m_current;
+        uint8_t* start = m_current;
         m_current += byteCount;
         return start;
     }
 
 
-    void CodeBuffer::Fill(unsigned start, unsigned length, unsigned __int8 value)
+    void CodeBuffer::Fill(unsigned start, unsigned length, uint8_t value)
     {
         VerifyNoBufferOverflow(length);
         memset(m_bufferStart + start, value, length);

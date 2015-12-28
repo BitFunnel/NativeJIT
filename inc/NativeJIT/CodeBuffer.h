@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "NativeJIT/JumpTable.h"    // Label parameter and return value.
 #include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"  // Base class.
@@ -42,19 +44,19 @@ namespace NativeJIT
         virtual void PlaceLabel(Label label);
 
         // Writes a byte to the current position in the buffer.
-        void Emit8(unsigned __int8 x);
+        void Emit8(uint8_t x);
 
         // WARNING: Non portable. Assumes little endian machine architecture.
-        void Emit16(unsigned __int16 x);
+        void Emit16(uint16_t x);
 
         // WARNING: Non portable. Assumes little endian machine architecture.
-        void Emit32(unsigned __int32 x);
+        void Emit32(uint32_t x);
 
         // WARNING: Non portable. Assumes little endian machine architecture.
-        void Emit64(unsigned __int64 x);
+        void Emit64(uint64_t x);
 
         // Copies the provided data to the current position in the buffer.
-        void EmitBytes(unsigned __int8 const *data, unsigned length);
+        void EmitBytes(uint8_t const *data, unsigned length);
 
         // Writes the bits of the argument to the current position in the buffer.
         // WARNING: Non portable. Assumes little endian machine architecture.
@@ -66,7 +68,7 @@ namespace NativeJIT
         // will be changed with this call must already have been filled in
         // (i.e. CurrentPosition() <= startPosition + length). Besides the buffer
         // contents, no other CodeBuffer properties get modified. 
-        void ReplaceBytes(unsigned startPosition, unsigned __int8 const *data, unsigned length);
+        void ReplaceBytes(unsigned startPosition, uint8_t const *data, unsigned length);
 
         // Return the size of the buffer, in bytes.
         // TODO: Rename GetCapacity()?
@@ -77,7 +79,7 @@ namespace NativeJIT
         // entry point to a function that's being built inside the buffer.
         // F. ex. FunctionBuffer provides the GetEntryPoint() method to retrieve
         // the function pointer.
-        unsigned __int8* BufferStart() const;
+        uint8_t* BufferStart() const;
 
         // Return the offset of the current write position in the buffer.
         unsigned CurrentPosition() const;
@@ -86,12 +88,12 @@ namespace NativeJIT
 
         // Advances the current write position by byteCount and returns a pointer to the write position
         // before advancing.
-        unsigned __int8* Advance(int byteCount);
+        uint8_t* Advance(int byteCount);
 
         template <typename T>
         void AdvanceToAlignment();
 
-        void Fill(unsigned start, unsigned length, unsigned __int8 value);
+        void Fill(unsigned start, unsigned length, uint8_t value);
 
         // Patches each call site with the correct offset derived from its resolved label.
         void PatchCallSites();
@@ -103,9 +105,9 @@ namespace NativeJIT
         Allocators::IAllocator& m_codeAllocator;
         unsigned m_capacity;
 
-        unsigned __int8* m_bufferStart;
-        unsigned __int8* m_bufferEnd;
-        unsigned __int8* m_current;
+        uint8_t* m_bufferStart;
+        uint8_t* m_bufferEnd;
+        uint8_t* m_current;
 
         JumpTable m_localJumpTable;    // Jumps within a single CodeBuffer.
 

@@ -34,9 +34,9 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                    __int64 expected = 1234ll;
+                    int64_t expected = 1234ll;
                     auto & a = expression.Immediate(expected);
                     auto function = expression.Compile(a);
 
@@ -52,12 +52,12 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t, int64_t> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.GetP1();
                     auto function = expression.Compile(a);
 
-                    __int64 p1 = 1234ll;
+                    int64_t p1 = 1234ll;
 
                     auto expected = p1;
                     auto observed = function(p1);
@@ -72,13 +72,13 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t, int64_t, int64_t> expression(setup->GetAllocator(), setup->GetCode());
 
                     auto & a = expression.Add(expression.GetP1(), expression.GetP2());
                     auto function = expression.Compile(a);
 
-                    __int64 p1 = 12340000ll;
-                    __int64 p2 = 5678ll;
+                    int64_t p1 = 12340000ll;
+                    int64_t p2 = 5678ll;
 
                     auto expected = p1 + p2;
                     auto observed = function(p1, p2);
@@ -146,7 +146,7 @@ namespace NativeJIT
 
             static char s_charParameter1;
 
-            static __int64 s_int64Parameter3;
+            static int64_t s_int64Parameter3;
 
             static bool s_boolParameter4;
 
@@ -175,7 +175,7 @@ namespace NativeJIT
             }
 
 
-            static __int64 SampleFunction3(char p1, int p2, __int64 p3)
+            static int64_t SampleFunction3(char p1, int p2, int64_t p3)
             {
                 TestAssert(p1 == s_charParameter1);
                 TestAssert(p2 == s_intParameter2);
@@ -185,7 +185,7 @@ namespace NativeJIT
             }
 
 
-            static __int64 SampleFunction3(char p1, int p2, __int64 p3, bool p4)
+            static int64_t SampleFunction3(char p1, int p2, int64_t p3, bool p4)
             {
                 TestAssert(p1 == s_charParameter1);
                 TestAssert(p2 == s_intParameter2);
@@ -281,9 +281,9 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64, __int64, int, char> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t, int64_t, int, char> expression(setup->GetAllocator(), setup->GetCode());
 
-                    typedef __int64 (*F)(char, int, __int64);
+                    typedef int64_t (*F)(char, int, int64_t);
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction3);
                     auto & a = expression.Call(sampleFunction,
                                                expression.GetP3(),
@@ -293,7 +293,7 @@ namespace NativeJIT
 
                     char& p1 = s_charParameter1;
                     int& p2 = s_intParameter2;
-                    __int64& p3 = s_int64Parameter3;
+                    int64_t& p3 = s_int64Parameter3;
 
                     p1 = 0x73;
                     p2 = 5678;
@@ -315,9 +315,9 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Function<__int64, bool, __int64, int, char> expression(setup->GetAllocator(), setup->GetCode());
+                    Function<int64_t, bool, int64_t, int, char> expression(setup->GetAllocator(), setup->GetCode());
 
-                    typedef __int64 (*F)(char, int, __int64, bool);
+                    typedef int64_t (*F)(char, int, int64_t, bool);
                     auto & sampleFunction = expression.Immediate<F>(SampleFunction3);
                     auto & a = expression.Call(sampleFunction,
                                                expression.GetP4(),
@@ -328,7 +328,7 @@ namespace NativeJIT
 
                     char& p1 = s_charParameter1;
                     int& p2 = s_intParameter2;
-                    __int64& p3 = s_int64Parameter3;
+                    int64_t& p3 = s_int64Parameter3;
                     bool& p4 = s_boolParameter4;
 
                     p1 = 0x73;
@@ -349,7 +349,7 @@ namespace NativeJIT
 
             // Verifies that the references to stack variables are in a sane
             // memory range.
-            static int VerifyStackVariableAddresses(unsigned __int32& intRef, float& floatRef)
+            static int VerifyStackVariableAddresses(uint32_t& intRef, float& floatRef)
             {
                 // Since the stack pointer moves downwards, the upper limit of
                 // this function's stack range represents the lower limit of
@@ -361,7 +361,7 @@ namespace NativeJIT
                 // value between _AddressOfReturnAddress() as returned here
                 // and _AddressOfReturnAddress() as returned by the caller of the
                 // jitted function (that value would be passed as an argument).
-                auto const bufferStart = static_cast<unsigned __int8 const *>(_AddressOfReturnAddress());
+                auto const bufferStart = static_cast<uint8_t const *>(_AddressOfReturnAddress());
                 auto const bufferLimit = bufferStart + 96;
 
                 auto const intPtr = reinterpret_cast<unsigned char const *>(&intRef);
@@ -389,7 +389,7 @@ namespace NativeJIT
 
                 auto & sampleFunction = e.Immediate(VerifyStackVariableAddresses);
 
-                auto & intVariable = e.StackVariable<unsigned __int32>();
+                auto & intVariable = e.StackVariable<uint32_t>();
                 auto & floatVariable = e.StackVariable<float>();
 
                 auto & call = e.Call(sampleFunction, intVariable, floatVariable);
@@ -401,8 +401,8 @@ namespace NativeJIT
 
             // Verifies that pointer and reference arguments refer to the same
             // memory location and that it contains the expected value.
-            static int VerifyPointerVsReference(unsigned __int32* intPtr,
-                                                unsigned __int32& intRef,
+            static int VerifyPointerVsReference(uint32_t* intPtr,
+                                                uint32_t& intRef,
                                                 unsigned int expectedValue)
             {
                 TestEqual(intPtr, &intRef, "Pointer and reference should have referred to the same address");
@@ -417,7 +417,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
                 Function<int> e(setup->GetAllocator(), setup->GetCode());
 
-                unsigned __int32 testValue = 7;
+                uint32_t testValue = 7;
 
                 auto & testFunction = e.Immediate(VerifyPointerVsReference);
                 auto & intPtrArgument = e.Immediate(&testValue);
@@ -731,12 +731,12 @@ namespace NativeJIT
             TestCase(FunctionWithUnusedParameter)
             {
                 auto setup = GetSetup();
-                Function<__int64, __int64, __int64> expression(setup->GetAllocator(), setup->GetCode());
+                Function<int64_t, int64_t, int64_t> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto function = expression.Compile(expression.GetP2());
 
-                __int64 p1Unused = 0;
-                __int64 p2 = 123;
+                int64_t p1Unused = 0;
+                int64_t p2 = 123;
 
                 auto observed = function(p1Unused, p2);
 
@@ -748,7 +748,7 @@ namespace NativeJIT
             {
                 auto setup = GetSetup();
 
-                Function<float, unsigned __int64> e(setup->GetAllocator(), setup->GetCode());
+                Function<float, uint64_t> e(setup->GetAllocator(), setup->GetCode());
 
                 // Regular value is argument + 2.5.
                 auto & regularValue = e.Add(e.Cast<float>(e.GetP1()),
@@ -779,7 +779,7 @@ namespace NativeJIT
 
         char FunctionTest::s_charParameter1;
 
-        __int64 FunctionTest::s_int64Parameter3;
+        int64_t FunctionTest::s_int64Parameter3;
 
         bool FunctionTest::s_boolParameter4;
 

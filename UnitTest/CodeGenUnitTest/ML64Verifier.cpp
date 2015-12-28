@@ -10,7 +10,7 @@ namespace NativeJIT
 {
     // TODO: Add testLength parameter and verify that ml64Output has same length.
     // TODO: Print out helpful diagnostics on failure.
-    ML64Verifier::ML64Verifier(char const * ml64Output, unsigned __int8 const * testOutput)
+    ML64Verifier::ML64Verifier(char const * ml64Output, uint8_t const * testOutput)
         : m_current(ml64Output),
             m_currentLine(0),
             m_currentLineStart(ml64Output),
@@ -32,7 +32,7 @@ namespace NativeJIT
             {
                 if (isxdigit(PeekChar()))
                 {
-                    unsigned __int64 value;
+                    uint64_t value;
                     unsigned size;
 
                     TestAssert(ReadHexNumber(value, size));
@@ -40,7 +40,7 @@ namespace NativeJIT
 
                     for (unsigned i = 0 ; i < size; ++i)
                     {
-                        unsigned __int8 x = static_cast<unsigned __int8>(value & 0xffull);
+                        uint8_t x = static_cast<uint8_t>(value & 0xffull);
                         std::cout.width(2);
                         std::cout.fill('0');
                         std::cout << std::hex << static_cast<unsigned>(x) << " ";
@@ -143,7 +143,7 @@ namespace NativeJIT
             GetChar();
             if (!AtEOL() && isxdigit(PeekChar()))
             {
-                unsigned __int64 value;
+                uint64_t value;
                 unsigned size;
                 TestAssert(ReadHexNumber(value, size));
                 TestAssert(size == 4);
@@ -193,7 +193,7 @@ namespace NativeJIT
     }
 
 
-    bool ML64Verifier::ReadHexNumber(unsigned __int64& value, unsigned& size)
+    bool ML64Verifier::ReadHexNumber(uint64_t& value, unsigned& size)
     {
         bool foundHexNumber = false;
 

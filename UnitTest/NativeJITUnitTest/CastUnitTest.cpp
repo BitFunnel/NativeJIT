@@ -17,29 +17,29 @@ namespace NativeJIT
         public:
             TestCase(FromInt8)
             {
-                TestCasts<__int8>(-1);
-                TestCasts<unsigned __int8>(0xFF);
+                TestCasts<int8_t>(-1);
+                TestCasts<uint8_t>(0xFF);
             }
 
 
             TestCase(FromInt16)
             {
-                TestCasts<__int16>(-1);
-                TestCasts<unsigned __int16>(0xFFFF);
+                TestCasts<int16_t>(-1);
+                TestCasts<uint16_t>(0xFFFF);
             }
 
 
             TestCase(FromInt32)
             {
-                TestCasts<__int32>(-1);
-                TestCasts<unsigned __int32>(0xFFFFFFFF);
+                TestCasts<int32_t>(-1);
+                TestCasts<uint32_t>(0xFFFFFFFF);
             }
 
 
             TestCase(FromInt64)
             {
-                TestCasts<__int64>(-1);
-                TestCasts<unsigned __int64>(0xFFFFFFFFFFFFFFFFul);
+                TestCasts<int64_t>(-1);
+                TestCasts<uint64_t>(0xFFFFFFFFFFFFFFFFul);
             }
 
 
@@ -49,7 +49,7 @@ namespace NativeJIT
                 TestCasts<float>(123.7f);
 
                 // Special case, target is an UInt64 that has the MSB bit set.
-                TestCast<unsigned __int64>(static_cast<float>(0xA000000000000000));
+                TestCast<uint64_t>(static_cast<float>(0xA000000000000000));
             }
 
 
@@ -59,7 +59,7 @@ namespace NativeJIT
                 TestCasts<double>(123.7);
 
                 // Special case, target is an UInt64 that has the MSB bit set.
-                TestCast<unsigned __int64>(static_cast<double>(0xA000000000000000));
+                TestCast<uint64_t>(static_cast<double>(0xA000000000000000));
             }
 
 
@@ -67,14 +67,14 @@ namespace NativeJIT
             {
                 auto packed = Packed<>::Push<5>(31).Push<4>(15).Push<3>(7);
 
-                TestCast<unsigned __int64, decltype(packed)>(packed);
-                TestCast<decltype(packed), unsigned __int64>(123456);
+                TestCast<uint64_t, decltype(packed)>(packed);
+                TestCast<decltype(packed), uint64_t>(123456);
             }
 
 
             TestCase(VoidPointer)
             {
-                TestCast<unsigned __int64, void*>(this);
+                TestCast<uint64_t, void*>(this);
             }
 
 
@@ -89,15 +89,15 @@ namespace NativeJIT
             template <typename FROM>
             void TestCasts(FROM testValue)
             {
-                TestCast<__int8>(testValue);
-                TestCast<__int16>(testValue);
-                TestCast<__int32>(testValue);
-                TestCast<__int64>(testValue);
+                TestCast<int8_t>(testValue);
+                TestCast<int16_t>(testValue);
+                TestCast<int32_t>(testValue);
+                TestCast<int64_t>(testValue);
 
-                TestCast<unsigned __int8>(testValue);
-                TestCast<unsigned __int16>(testValue);
-                TestCast<unsigned __int32>(testValue);
-                TestCast<unsigned __int64>(testValue);
+                TestCast<uint8_t>(testValue);
+                TestCast<uint16_t>(testValue);
+                TestCast<uint32_t>(testValue);
+                TestCast<uint64_t>(testValue);
 
                 TestCast<float>(testValue);
                 TestCast<double>(testValue);
@@ -188,7 +188,7 @@ namespace NativeJIT
 
 
             // Dummy function, to test casting from/to function pointers.
-            static unsigned __int64 DummyFunc(unsigned __int64 x)
+            static uint64_t DummyFunc(uint64_t x)
             {
                 return x * 2;
             }

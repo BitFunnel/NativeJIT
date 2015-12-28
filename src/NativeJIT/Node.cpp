@@ -104,7 +104,7 @@ namespace NativeJIT
     }
 
 
-    bool NodeBase::GetBaseAndOffset(NodeBase*& /* base */, __int32& /* offset */) const
+    bool NodeBase::GetBaseAndOffset(NodeBase*& /* base */, int32_t& /* offset */) const
     {
         return false;
     }

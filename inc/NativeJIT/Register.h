@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "Temporary/Assert.h"
 
 
@@ -71,7 +73,7 @@ namespace NativeJIT
 
         // Returns the lower three bits of the ID. Equivalent to GetId() for
         // non-extended registers.
-        unsigned __int8 GetId8() const
+        uint8_t GetId8() const
         {
             return m_id & 7;
         }

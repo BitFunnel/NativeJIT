@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <type_traits>
 
 #include "NativeJIT/Register.h"
@@ -106,17 +107,17 @@ namespace NativeJIT
     template <typename T>
     struct CanonicalRegisterType;
 
-    template <> struct CanonicalRegisterType<Register<1, false>> { typedef unsigned __int8 Type; };
-    template <> struct CanonicalRegisterType<Register<2, false>> { typedef unsigned __int16 Type; };
-    template <> struct CanonicalRegisterType<Register<4, false>> { typedef unsigned __int32 Type; };
-    template <> struct CanonicalRegisterType<Register<8, false>> { typedef unsigned __int64 Type; };
+    template <> struct CanonicalRegisterType<Register<1, false>> { typedef uint8_t Type; };
+    template <> struct CanonicalRegisterType<Register<2, false>> { typedef uint16_t Type; };
+    template <> struct CanonicalRegisterType<Register<4, false>> { typedef uint32_t Type; };
+    template <> struct CanonicalRegisterType<Register<8, false>> { typedef uint64_t Type; };
 
     template <> struct CanonicalRegisterType<Register<4, true>> { typedef float Type; };
     template <> struct CanonicalRegisterType<Register<8, true>> { typedef double Type; };
 
 
     // Determines the canonical C++ type that maps to a register storage needed
-    // for a type. F. ex. void*, a function pointer etc. map to unsigned __int64.
+    // for a type. F. ex. void*, a function pointer etc. map to uint64_t.
     template <typename T>
     struct CanonicalRegisterStorageType
     {

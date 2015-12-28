@@ -75,7 +75,7 @@ namespace NativeJIT
     }
 
 
-    void ExpressionTree::ReleaseIfTemporary(__int32 offset)
+    void ExpressionTree::ReleaseIfTemporary(int32_t offset)
     {
         unsigned slot;
 
@@ -208,7 +208,7 @@ namespace NativeJIT
     }
 
 
-    __int32 ExpressionTree::TemporarySlotToOffset(unsigned temporarySlot)
+    int32_t ExpressionTree::TemporarySlotToOffset(unsigned temporarySlot)
     {
         Assert(temporarySlot < m_temporaryCount,
                "Invalid temporary slot %u (total slots %u)",
@@ -218,12 +218,12 @@ namespace NativeJIT
         // Expression tree asks for BaseRegisterType::SetRbpToOriginalRsp. That
         // means that [rbp] holds return address, [rbp + 8] home for function's
         // first argument etc, whereas [rbp - 8] holds the first temporary etc.
-        return -static_cast<__int32>(temporarySlot + 1)
+        return -static_cast<int32_t>(temporarySlot + 1)
                * sizeof(void*);
     }
 
 
-    bool ExpressionTree::TemporaryOffsetToSlot(__int32 temporaryOffset, unsigned& temporarySlot)
+    bool ExpressionTree::TemporaryOffsetToSlot(int32_t temporaryOffset, unsigned& temporarySlot)
     {
         bool isTemporary = false;
 
@@ -389,7 +389,7 @@ namespace NativeJIT
     //*************************************************************************
     ExpressionTree::Data::Data(ExpressionTree& tree,
                                PointerRegister base,
-                               __int32 offset)
+                               int32_t offset)
         : m_tree(tree),
           m_storageClass(StorageClass::Indirect),
           m_isFloat(base.c_isFloat),
@@ -419,14 +419,14 @@ namespace NativeJIT
     }
 
 
-    __int32 ExpressionTree::Data::GetOffset() const
+    int32_t ExpressionTree::Data::GetOffset() const
     {
         Assert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect, found %u", m_storageClass);
         return m_offset;
     }
 
 
-    void ExpressionTree::Data::ConvertDirectToIndirect(__int32 offset)
+    void ExpressionTree::Data::ConvertDirectToIndirect(int32_t offset)
     {
         Assert(m_storageClass == StorageClass::Direct,
                "StorageClass must be Direct, found %u",

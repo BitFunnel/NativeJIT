@@ -91,9 +91,9 @@ namespace NativeJIT
         private:
             typedef Packed<3, Packed<4, Packed<5>>> PackedType;
 
-            PackedType MakePacked(unsigned __int8 threeBitValue,
-                                  unsigned __int8 fourBitValue,
-                                  unsigned __int8 fiveBitValue)
+            PackedType MakePacked(uint8_t threeBitValue,
+                                  uint8_t fourBitValue,
+                                  uint8_t fiveBitValue)
             {
                 return Packed<>::Push<5>(fiveBitValue).Push<4>(fourBitValue).Push<3>(threeBitValue);
             }

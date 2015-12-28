@@ -27,20 +27,20 @@ namespace NativeJIT
         {
             struct SmallerThanQuadword
             {
-                unsigned __int8 m_x1;
-                unsigned __int8 m_x2;
+                uint8_t m_x1;
+                uint8_t m_x2;
             };
 
             struct LargerThanQuadword
             {
-                unsigned __int64 m_x1;
-                unsigned __int16 m_x2;
+                uint64_t m_x1;
+                uint16_t m_x2;
             };
 
             // Direct register for primitive and small types.
             AssertSizeAndType(DirectRegister<char>, 1, false);
             AssertSizeAndType(DirectRegister<const char>, 1, false);
-            AssertSizeAndType(DirectRegister<unsigned __int64>, 8, false);
+            AssertSizeAndType(DirectRegister<uint64_t>, 8, false);
 
             AssertSizeAndType(DirectRegister<float>, 4, true);
             AssertSizeAndType(DirectRegister<double>, 8, true);
@@ -71,7 +71,7 @@ namespace NativeJIT
 
             // Base register for various types.
             AssertSizeAndType(BaseRegister<char>, 8, false);
-            AssertSizeAndType(BaseRegister<unsigned __int64>, 8, false);
+            AssertSizeAndType(BaseRegister<uint64_t>, 8, false);
             AssertSizeAndType(BaseRegister<float>, 8, false);
             AssertSizeAndType(BaseRegister<float[1024]>, 8, false);
         }
@@ -89,10 +89,10 @@ namespace NativeJIT
 
             AssertImmediateCategory(char, ImmediateCategory::InlineImmediate);
             AssertImmediateCategory(const char, ImmediateCategory::InlineImmediate);
-            AssertImmediateCategory(__int32, ImmediateCategory::InlineImmediate);
-            AssertImmediateCategory(unsigned __int32, ImmediateCategory::InlineImmediate);
+            AssertImmediateCategory(int32_t, ImmediateCategory::InlineImmediate);
+            AssertImmediateCategory(uint32_t, ImmediateCategory::InlineImmediate);
 
-            AssertImmediateCategory(unsigned __int64, ImmediateCategory::RIPRelativeImmediate);
+            AssertImmediateCategory(uint64_t, ImmediateCategory::RIPRelativeImmediate);
             AssertImmediateCategory(float, ImmediateCategory::RIPRelativeImmediate);
             AssertImmediateCategory(double, ImmediateCategory::RIPRelativeImmediate);
             AssertImmediateCategory(void*, ImmediateCategory::RIPRelativeImmediate);

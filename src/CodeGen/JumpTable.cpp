@@ -35,7 +35,7 @@ namespace NativeJIT
     }
 
 
-    void JumpTable::PlaceLabel(Label label, const unsigned __int8* address)
+    void JumpTable::PlaceLabel(Label label, const uint8_t* address)
     {
         if (LabelIsDefined(label))
         {
@@ -46,7 +46,7 @@ namespace NativeJIT
     }
 
 
-    void JumpTable::AddCallSite(Label label, unsigned __int8* site, unsigned size)
+    void JumpTable::AddCallSite(Label label, uint8_t* site, unsigned size)
     {
         m_callSites.push_back(CallSite(label, size, site));
     }
@@ -58,7 +58,7 @@ namespace NativeJIT
     }
 
 
-    const unsigned __int8* JumpTable::AddressOfLabel(Label label) const
+    const uint8_t* JumpTable::AddressOfLabel(Label label) const
     {
         if (!LabelIsDefined(label))
         {
@@ -76,27 +76,27 @@ namespace NativeJIT
         for (int i=0; i < m_callSites.size(); ++i)
         {
             const CallSite& site = m_callSites[i];
-            const unsigned __int8* labelAddress = AddressOfLabel(site.GetLabel());
-            unsigned __int8* siteAddress = site.Site();
+            const uint8_t* labelAddress = AddressOfLabel(site.GetLabel());
+            uint8_t* siteAddress = site.Site();
             size_t delta = labelAddress - siteAddress - site.Size();
 
             // TODO: Evaluate whether special cases for size == 2 and size == 4 actually improve performance.
             int size = site.Size();
             if (size == 2)
             {
-                *((signed __int16*)siteAddress) = (signed __int16)delta;
+                *((int16_t*)siteAddress) = (int16_t)delta;
                 siteAddress += size;
             }
             else if (size == 4)
             {
-                *((signed __int32*)siteAddress) = (signed __int32)delta;
+                *((int32_t*)siteAddress) = (int32_t)delta;
                 siteAddress += size;
             }
             else
             {
                 while (size > 0)
                 {
-                    *siteAddress++ = (unsigned __int8)delta;
+                    *siteAddress++ = (uint8_t)delta;
                     delta = delta >> 8;
                     size--;
                 }
@@ -115,7 +115,7 @@ namespace NativeJIT
         m_site = NULL;
     }
 
-    CallSite::CallSite(Label label, unsigned size, unsigned __int8* site)
+    CallSite::CallSite(Label label, unsigned size, uint8_t* site)
         : m_label(label)
     {
         m_size = size;
@@ -132,7 +132,7 @@ namespace NativeJIT
         return m_size;
     }
 
-    unsigned __int8* CallSite::Site() const
+    uint8_t* CallSite::Site() const
     {
         return m_site;
     }

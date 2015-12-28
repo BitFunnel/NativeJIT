@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "Temporary/StlAllocator.h"
@@ -36,24 +37,24 @@ namespace NativeJIT
         Label AllocateLabel();
 
         // Binds a label to a memory address.
-        void PlaceLabel(Label label, const unsigned __int8* address);
+        void PlaceLabel(Label label, const uint8_t* address);
 
         // Records a position in memory containing call site (offset set portion of a JCC/JMP/CALL instruction)
         // that will need to be patch once all labels have been placed.
-        void AddCallSite(Label label, unsigned __int8* site, unsigned size);
+        void AddCallSite(Label label, uint8_t* site, unsigned size);
 
         // Patches each call site with the correct offset derived from its resolved label.
         void PatchCallSites();
 
         bool LabelIsDefined(Label label) const;
-        const unsigned __int8* AddressOfLabel(Label label) const;
+        const uint8_t* AddressOfLabel(Label label) const;
 
     private:
         template <typename T>
         using AllocatorVector = std::vector<T, Allocators::StlAllocator<T>>;
 
         Allocators::StlAllocator<void*> m_stlAllocator;     // STL adapter for IAllocator.
-        AllocatorVector<const unsigned __int8*> m_labels;   // Storage for jump labels.
+        AllocatorVector<const uint8_t*> m_labels;   // Storage for jump labels.
         AllocatorVector<CallSite> m_callSites;              // Call sites to be patched.
     };
 
@@ -64,16 +65,16 @@ namespace NativeJIT
     {
     public:
         CallSite();
-        CallSite(Label label, unsigned size, unsigned __int8* site);
+        CallSite(Label label, unsigned size, uint8_t* site);
 
         Label GetLabel() const;
 
         unsigned Size() const;
-        unsigned __int8* Site() const;
+        uint8_t* Site() const;
 
     private:
         Label m_label;              // The jump label used to find the jump target address for this site.
         unsigned m_size;            // The number of bytes to be patched at this site.
-        unsigned __int8* m_site;    // The address to be patched.
+        uint8_t* m_site;    // The address to be patched.
     };
 }

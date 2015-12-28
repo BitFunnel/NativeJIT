@@ -118,12 +118,12 @@ namespace NativeJIT
             // Emit the value using a canonical type since the EmitValueBytes
             // method intentionally has a limited number of input types. Basic
             // types will be unchanged, but f. ex. function pointers will be
-            // emitted as unsigned __int64.
+            // emitted as uint64_t.
             code.EmitBytes(Casting::ForcedCast<typename CanonicalRegisterStorageType<T>::Type>(m_value));
         }
 
     private:
         T m_value;
-        __int32 m_offset;
+        int32_t m_offset;
     };
 }

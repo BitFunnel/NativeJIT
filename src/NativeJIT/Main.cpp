@@ -43,8 +43,8 @@ unsigned fooMain;
 //    class InnerClass
 //    {
 //    public:
-//        unsigned __int64 m_a;
-//        unsigned __int64 m_b;
+//        uint64_t m_a;
+//        uint64_t m_b;
 //    };
 //
 //
@@ -64,7 +64,7 @@ unsigned fooMain;
 //    //    AutoResetAllocator reset(allocator);
 //
 //    //    {
-//    //        Function<unsigned __int64> function(allocator, code);
+//    //        Function<uint64_t> function(allocator, code);
 //
 //    //        auto & a = function.Immediate(0x1234ull);
 //    //        auto f = function.Compile(a);
@@ -115,8 +115,8 @@ unsigned fooMain;
 //    //    FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
 //    //    ExpressionNodeFactory factory(allocator, code);
 //
-//    //    auto & a = factory.Parameter<unsigned __int64>();
-//    //    auto & b = factory.Parameter<unsigned __int64*>();
+//    //    auto & a = factory.Parameter<uint64_t>();
+//    //    auto & b = factory.Parameter<uint64_t*>();
 //    //    auto & c = factory.Deref(b);
 //    //    auto & d = factory.Add(a, c);
 //
@@ -154,7 +154,7 @@ unsigned fooMain;
 //    //    ExpressionNodeFactory factory(allocator, code);
 //
 //    //    auto & a = factory.Parameter<OuterClass*>();
-//    //    auto & b = factory.Parameter<unsigned __int64>();
+//    //    auto & b = factory.Parameter<uint64_t>();
 //    //    auto & c = factory.Add(a, b);
 //    //    auto & d = factory.FieldPointer(c, &OuterClass::m_q);
 //    //    auto & e = factory.Deref(d);
@@ -229,7 +229,7 @@ unsigned fooMain;
 //
 //    //    auto & c = factory.Immediate(12345ull);
 //
-//    //    IsTrue<unsigned __int64> d(factory, c);     // What is this line for?
+//    //    IsTrue<uint64_t> d(factory, c);     // What is this line for?
 //
 //    //    auto & e = factory.GreaterThan(a, b);
 //    //    auto & f = factory.Conditional(e, a, b);
@@ -259,8 +259,8 @@ unsigned fooMain;
 ////////        auto r = tree.AllocateRegister<Register<8, false>>();
 //////
 //////        {
-//////            //Storage<unsigned __int64> x(tree, r, 1234ull);
-//////            auto x = GetStorage<unsigned __int64>(tree);
+//////            //Storage<uint64_t> x(tree, r, 1234ull);
+//////            auto x = GetStorage<uint64_t>(tree);
 //////
 //////            {
 //////                auto y = x;
@@ -273,7 +273,7 @@ unsigned fooMain;
 ////
 ////        tree.Pass1();
 ////        auto r = tree.AllocateRegister<Register<8, false>>();
-//////        Storage<unsigned __int64> x(tree, r, 1234ull);
+//////        Storage<uint64_t> x(tree, r, 1234ull);
 ////        Storage<double> x(tree, r, 1234ull);
 ////
 ////        //auto y = x;
@@ -289,8 +289,8 @@ unsigned fooMain;
 //        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
 //        ExpressionNodeFactory factory(allocator, code);
 //
-//        auto & a = factory.Immediate<unsigned __int64>(5);
-//        auto & b = factory.Immediate<unsigned __int64>(6);
+//        auto & a = factory.Immediate<uint64_t>(5);
+//        auto & b = factory.Immediate<uint64_t>(6);
 //        auto & c = factory.Add(a, b);
 //        factory.Return(c);
 //
@@ -305,12 +305,12 @@ unsigned fooMain;
 //        FunctionBuffer code(allocator, 2000, 10, 10, 3, 0, false);
 //        ExpressionNodeFactory factory(allocator, code);
 //
-//        auto & a = factory.Immediate<unsigned __int64>(5);
-//        auto & b = factory.Immediate<unsigned __int64>(6);
+//        auto & a = factory.Immediate<uint64_t>(5);
+//        auto & b = factory.Immediate<uint64_t>(6);
 //        auto & c = factory.Add(a, b);
 //
-//        auto & d = factory.Immediate<unsigned __int64>(7);
-//        auto & e = factory.Immediate<unsigned __int64>(8);
+//        auto & d = factory.Immediate<uint64_t>(7);
+//        auto & e = factory.Immediate<uint64_t>(8);
 //        auto & f = factory.Add(d, e);
 //
 //        auto & g = factory.Add(c, f);
@@ -326,9 +326,9 @@ unsigned fooMain;
 //    //    AutoResetAllocator reset(allocator);
 //
 //    //    {
-//    //        Function<__int64, __int64> function(allocator, code);
+//    //        Function<int64_t, int64_t> function(allocator, code);
 //
-//    //        auto & a = function.Add(function.GetP1(), function.Immediate<unsigned __int64>(5ull));
+//    //        auto & a = function.Add(function.GetP1(), function.Immediate<uint64_t>(5ull));
 //    //        auto f = function.Compile(a);
 //
 //    //        auto x = f(1);
@@ -342,7 +342,7 @@ unsigned fooMain;
 //    //    AutoResetAllocator reset(allocator);
 //
 //    //    {
-//    //        Function<__int64, __int64, __int64> function(allocator, code);
+//    //        Function<int64_t, int64_t, int64_t> function(allocator, code);
 //
 //    //        auto & a = function.Add(function.GetP2(), function.GetP1());
 //    //        auto f = function.Compile(a);

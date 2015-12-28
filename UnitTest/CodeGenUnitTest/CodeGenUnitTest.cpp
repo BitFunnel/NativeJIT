@@ -36,7 +36,7 @@ namespace NativeJIT
             Allocator allocator(2000);
             X64CodeGenerator buffer(codeAllocator, 2000, allocator);
 
-            unsigned __int8 const * start =  buffer.BufferStart() + buffer.CurrentPosition();
+            uint8_t const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
             // Another special case
             std::cout << "Another special case." << std::endl;
@@ -93,9 +93,9 @@ namespace NativeJIT
 
             // direct-immediate register 0 case
             std::cout << "direct-immediate register 0 case" << std::endl;
-            buffer.EmitImmediate<OpCode::Or>(al, static_cast<unsigned __int8>(0x34));
-            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<unsigned __int16>(0x56));
-            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<unsigned __int16>(0x5678));
+            buffer.EmitImmediate<OpCode::Or>(al, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<uint16_t>(0x56));
+            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<uint16_t>(0x5678));
             buffer.EmitImmediate<OpCode::Or>(eax, 0x12);
             buffer.EmitImmediate<OpCode::Or>(eax, 0x1234);
             buffer.EmitImmediate<OpCode::Or>(eax, 0x12345678);
@@ -105,10 +105,10 @@ namespace NativeJIT
 
             // direct-immediate general purpose register case
             std::cout << "direct-immediate general purpose register case" << std::endl;
-            buffer.EmitImmediate<OpCode::And>(bl, static_cast<unsigned __int8>(0x34));
-            buffer.EmitImmediate<OpCode::And>(r13b, static_cast<unsigned __int8>(0x34));
-            buffer.EmitImmediate<OpCode::And>(cx, static_cast<unsigned __int16>(0x56));
-            buffer.EmitImmediate<OpCode::And>(dx, static_cast<unsigned __int16>(0x5678));
+            buffer.EmitImmediate<OpCode::And>(bl, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::And>(r13b, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::And>(cx, static_cast<uint16_t>(0x56));
+            buffer.EmitImmediate<OpCode::And>(dx, static_cast<uint16_t>(0x5678));
             buffer.EmitImmediate<OpCode::And>(ebp, 0x12);
             buffer.EmitImmediate<OpCode::And>(ebp, 0x1234);
             buffer.EmitImmediate<OpCode::And>(ebp, 0x12345678);
@@ -127,16 +127,16 @@ namespace NativeJIT
             // buffer.EmitImmediate<OpCode::Or>(rcx, 0x80000000);
             buffer.EmitImmediate<OpCode::Or>(rax, -0x7fffffff);
             buffer.EmitImmediate<OpCode::Or>(rcx, -0x7fffffff);
-            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<__int8>(-0x7f));
-            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<unsigned __int8>(0x80));
-            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<__int8>(-0x7f));
-            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<__int8>(-0x7f));
-            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<__int8>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<int8_t>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<int8_t>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<int8_t>(-0x7f));
+            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<int8_t>(-0x7f));
 
             // The immediates that will not be sign extended.
-            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<unsigned __int8>(0x80));
-            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<unsigned __int8>(0x80));
-            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<unsigned __int8>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<uint8_t>(0x80));
 
             // call
 
@@ -190,10 +190,10 @@ namespace NativeJIT
 
             // mov r, imm
             std::cout << "mov r, imm" << std::endl;
-            buffer.EmitImmediate<OpCode::Mov>(al, static_cast<unsigned __int8>(0));
-            buffer.EmitImmediate<OpCode::Mov>(al, static_cast<unsigned __int8>(0x34));
-            buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<unsigned __int16>(0x56));
-            buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<unsigned __int16>(0x5678));
+            buffer.EmitImmediate<OpCode::Mov>(al, static_cast<uint8_t>(0));
+            buffer.EmitImmediate<OpCode::Mov>(al, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<uint16_t>(0x56));
+            buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<uint16_t>(0x5678));
             buffer.EmitImmediate<OpCode::Mov>(eax, 0x12);
             buffer.EmitImmediate<OpCode::Mov>(eax, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(eax, 0x12345678);
@@ -205,11 +205,11 @@ namespace NativeJIT
 
 
             std::cout << "direct-immediate general purpose register case" << std::endl;
-            buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<unsigned __int8>(0));
-            buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<unsigned __int8>(0x34));
-            buffer.EmitImmediate<OpCode::Mov>(r13b, static_cast<unsigned __int8>(0x34));
-            buffer.EmitImmediate<OpCode::Mov>(cx, static_cast<unsigned __int16>(0x56));
-            buffer.EmitImmediate<OpCode::Mov>(dx, static_cast<unsigned __int16>(0x5678));
+            buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<uint8_t>(0));
+            buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Mov>(r13b, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Mov>(cx, static_cast<uint16_t>(0x56));
+            buffer.EmitImmediate<OpCode::Mov>(dx, static_cast<uint16_t>(0x5678));
             buffer.EmitImmediate<OpCode::Mov>(ebp, 0x12);
             buffer.EmitImmediate<OpCode::Mov>(ebp, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(ebp, 0x12345678);
@@ -282,9 +282,9 @@ namespace NativeJIT
             buffer.Emit<OpCode::IMul>(rbp, rsi, 0x1234);
             buffer.Emit<OpCode::IMul>(r10, rdi, 0x12345678);
 
-            buffer.EmitImmediate<OpCode::IMul>(cx, static_cast<unsigned __int8>(0x56));
-            buffer.EmitImmediate<OpCode::IMul>(cx, static_cast<unsigned __int8>(0x80));
-            buffer.EmitImmediate<OpCode::IMul>(dx, static_cast<unsigned __int16>(0x5678));
+            buffer.EmitImmediate<OpCode::IMul>(cx, static_cast<uint8_t>(0x56));
+            buffer.EmitImmediate<OpCode::IMul>(cx, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::IMul>(dx, static_cast<uint16_t>(0x5678));
             buffer.EmitImmediate<OpCode::IMul>(ebp, 0x12);
             buffer.EmitImmediate<OpCode::IMul>(ebp, 0x1234);
             buffer.EmitImmediate<OpCode::IMul>(ebp, 0x12345678);
@@ -523,14 +523,14 @@ namespace NativeJIT
             buffer.Emit<OpCode::Sal>(ebx);
             buffer.Emit<OpCode::Shr>(r12);
 
-            buffer.EmitImmediate<OpCode::Rol>(rax, static_cast<unsigned __int8>(3));
-            buffer.EmitImmediate<OpCode::Sal>(bl, static_cast<unsigned __int8>(4));
-            buffer.EmitImmediate<OpCode::Shr>(r12d, static_cast<unsigned __int8>(5));
+            buffer.EmitImmediate<OpCode::Rol>(rax, static_cast<uint8_t>(3));
+            buffer.EmitImmediate<OpCode::Sal>(bl, static_cast<uint8_t>(4));
+            buffer.EmitImmediate<OpCode::Shr>(r12d, static_cast<uint8_t>(5));
 
-            buffer.EmitImmediate<OpCode::Shld>(ax, bx, static_cast<unsigned __int8>(11));
-            buffer.EmitImmediate<OpCode::Shld>(edx, esi, static_cast<unsigned __int8>(24));
-            buffer.EmitImmediate<OpCode::Shld>(r12, rbp, static_cast<unsigned __int8>(43));
-            buffer.EmitImmediate<OpCode::Shld>(rbp, r12, static_cast<unsigned __int8>(43));
+            buffer.EmitImmediate<OpCode::Shld>(ax, bx, static_cast<uint8_t>(11));
+            buffer.EmitImmediate<OpCode::Shld>(edx, esi, static_cast<uint8_t>(24));
+            buffer.EmitImmediate<OpCode::Shld>(r12, rbp, static_cast<uint8_t>(43));
+            buffer.EmitImmediate<OpCode::Shld>(rbp, r12, static_cast<uint8_t>(43));
 
             buffer.Emit<OpCode::Shld>(ax, bx);
             buffer.Emit<OpCode::Shld>(edx, esi);

@@ -17,26 +17,26 @@ unsigned fooExamples;
 //{
 //    struct C
 //    {
-//        unsigned __int64 m_x;
-//        unsigned __int64 m_y;
+//        uint64_t m_x;
+//        uint64_t m_y;
 //    };
 //
 //    struct B
 //    {
-//        unsigned __int64 m_p;
+//        uint64_t m_p;
 //        C* m_objectPointer;
-//        unsigned __int64 m_q;
+//        uint64_t m_q;
 //    };
 //
 //    struct A
 //    {
-//        unsigned __int64 m_a;
+//        uint64_t m_a;
 //        B m_embeddedObject;
-//        unsigned __int64 m_b;
+//        uint64_t m_b;
 //    };
 //
 //
-//    unsigned __int64 Example1(A *arrayOfA, unsigned __int64 index, unsigned __int64* pointer, unsigned __int64 value)
+//    uint64_t Example1(A *arrayOfA, uint64_t index, uint64_t* pointer, uint64_t value)
 //    {
 //        return 0x7890ull + value + *pointer + arrayOfA[index].m_embeddedObject.m_objectPointer->m_y;
 //    }
@@ -49,9 +49,9 @@ unsigned fooExamples;
 //        ExpressionNodeFactory factory(allocator, code);
 //
 //        auto & arrayOfA = factory.Parameter<A*>();
-//        auto & index = factory.Parameter<unsigned __int64>();
-//        auto & pointer = factory.Parameter<unsigned __int64*>();
-//        auto & value = factory.Parameter<unsigned __int64>();
+//        auto & index = factory.Parameter<uint64_t>();
+//        auto & pointer = factory.Parameter<uint64_t*>();
+//        auto & value = factory.Parameter<uint64_t>();
 //
 //        auto & a = factory.Immediate(0x7890ull);
 //        auto & b = factory.Add(value, a);
@@ -72,24 +72,24 @@ unsigned fooExamples;
 //
 //        factory.Compile();
 //
-//        typedef unsigned __int64 (*F)(A *, unsigned __int64, unsigned __int64*, unsigned __int64);
+//        typedef uint64_t (*F)(A *, uint64_t, uint64_t*, uint64_t);
 //
 //        F entry = reinterpret_cast<F>(code.GetEntryPoint());
 //
 //        struct C structC;
 //        structC.m_y = 0x560000;
 //
-//        unsigned __int64 index2 = 3;
+//        uint64_t index2 = 3;
 //
 //        struct A arrayOfA2[5];
 //        arrayOfA2[index2].m_embeddedObject.m_objectPointer = &structC;
 //
-//        unsigned __int64 int64Value = 0x34000000;
-//        unsigned __int64* pointer2 = &int64Value;
+//        uint64_t int64Value = 0x34000000;
+//        uint64_t* pointer2 = &int64Value;
 //
-//        unsigned __int64 value2 = 0x1200000000;
+//        uint64_t value2 = 0x1200000000;
 //
-//        unsigned __int64 result = entry(arrayOfA2, index2, pointer2, value2);
+//        uint64_t result = entry(arrayOfA2, index2, pointer2, value2);
 //
 //        std::cout << "Result = 0x" << std::hex << result << std::endl;
 //    }

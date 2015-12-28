@@ -11,7 +11,7 @@ namespace NativeJIT
     class ShldNode : public Node<T>
     {
     public:
-        ShldNode(ExpressionTree& tree, Node<T>& shiftee, Node<T>& filler, unsigned __int8 bitCount);
+        ShldNode(ExpressionTree& tree, Node<T>& shiftee, Node<T>& filler, uint8_t bitCount);
 
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
@@ -21,7 +21,7 @@ namespace NativeJIT
     private:
         Node<T>& m_shiftee;
         Node<T>& m_filler;
-        const unsigned __int8 m_bitCount;
+        const uint8_t m_bitCount;
     };
 
 
@@ -34,7 +34,7 @@ namespace NativeJIT
     ShldNode<T>::ShldNode(ExpressionTree& tree,
                           Node<T>& shiftee,
                           Node<T>& filler,
-                          unsigned __int8 bitCount)
+                          uint8_t bitCount)
         : Node(tree),
           m_shiftee(shiftee),
           m_filler(filler),

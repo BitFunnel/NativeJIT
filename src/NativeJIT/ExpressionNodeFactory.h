@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "BinaryImmediateNode.h"
 #include "BinaryNode.h"
 #include "CallNode.h"
@@ -48,7 +50,7 @@ namespace NativeJIT
         template <typename T> Node<T&>& AsReference(Node<T*>& pointer);
         template <typename TO, typename FROM> Node<TO>& Cast(Node<FROM>& value);
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
-        template <typename T> Node<T>& Deref(Node<T*>& pointer, __int32 index);
+        template <typename T> Node<T>& Deref(Node<T*>& pointer, int32_t index);
         template <typename T> Node<T>& Deref(Node<T&>& reference);
 
         // Note: OBJECT1 is there to allow for template deduction in all cases
@@ -83,7 +85,7 @@ namespace NativeJIT
         //
         // Ternary arithmetic operators
         template <typename T>
-        Node<T>& Shld(Node<T>& shiftee, Node<T>& filler, unsigned __int8 bitCount);
+        Node<T>& Shld(Node<T>& shiftee, Node<T>& filler, uint8_t bitCount);
 
         //
         // Model related.
@@ -227,7 +229,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer, __int32 index)
+    Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer, int32_t index)
     {
         return * new (m_allocator.Allocate(sizeof(IndirectNode<T>))) IndirectNode<T>(*this, pointer, index);
     }
@@ -312,7 +314,7 @@ namespace NativeJIT
             unsigned bitIndex;
             BitOp::GetLowestBitSet(right, &bitIndex);
 
-            result = &Sal(left, static_cast<unsigned __int8>(bitIndex));
+            result = &Sal(left, static_cast<uint8_t>(bitIndex));
         }
         else
         {
@@ -338,7 +340,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    Node<T>& ExpressionNodeFactory::Shld(Node<T>& shiftee, Node<T>& filler, unsigned __int8 bitCount)
+    Node<T>& ExpressionNodeFactory::Shld(Node<T>& shiftee, Node<T>& filler, uint8_t bitCount)
     {
         return * new (m_allocator.Allocate(sizeof(ShldNode<T>))) 
             ShldNode<T>(*this, shiftee, filler, bitCount);
@@ -352,12 +354,12 @@ namespace NativeJIT
         // will not overflow. This will also make it possible to use OpCode::Add
         // on the result regardless of sizeof(INDEX) since both T* and UInt64
         // use the same register size.
-        auto & index64 = Cast<unsigned __int64>(index);
+        auto & index64 = Cast<uint64_t>(index);
 
         // The IMul instruction doesn't suport 64-bit immediates, but there's
         // also no need to support types whose size is larger than UINT32_MAX.
         static_assert(sizeof(T) <= UINT32_MAX, "Unsupported type");
-        auto & offset = MulImmediate(index64, static_cast<unsigned __int32>(sizeof(T)));
+        auto & offset = MulImmediate(index64, static_cast<uint32_t>(sizeof(T)));
 
         return Binary<OpCode::Add>(array, offset);
     }

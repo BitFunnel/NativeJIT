@@ -41,19 +41,19 @@ namespace NativeJIT
             typedef Model<BoolFeature> LanguageModel;
             typedef Model<BoolFeature> LocationModel;
 
-            typedef unsigned __int64 TermHash;
-            typedef unsigned __int64 DocId;
-            typedef unsigned __int32 Shard;
+            typedef uint64_t TermHash;
+            typedef uint64_t DocId;
+            typedef uint32_t Shard;
 
-            typedef unsigned __int32 DocIndex;
+            typedef uint32_t DocIndex;
 
             // TODO: Add a warning to all structures used for the ComputeScore
             // call that they must be backwards and forwards compatible since
             // they are accessed both from MLA and OS.
             struct MarketData
             {
-                unsigned __int32 m_languageHash;
-                unsigned __int32 m_locationHash;
+                uint32_t m_languageHash;
+                uint32_t m_locationHash;
             };
 
 
@@ -63,7 +63,7 @@ namespace NativeJIT
             };
 
 
-            typedef bool (*HashLookupFunc)(void const * buffer, unsigned slotCount, unsigned __int64 key, unsigned __int64& value);
+            typedef bool (*HashLookupFunc)(void const * buffer, unsigned slotCount, uint64_t key, uint64_t& value);
 
 #pragma pack(push, 1)
             struct WebDocData
@@ -74,7 +74,7 @@ namespace NativeJIT
                 MarketData m_documentMarket;
 
                 // Extracted from a metaword used to store the FILETIME of document's discovery.
-                unsigned __int64 m_discoveryTimeTicks;
+                uint64_t m_discoveryTimeTicks;
 
                 unsigned m_termSlotCount;
                 unsigned m_clickSlotCount;
@@ -178,10 +178,10 @@ namespace NativeJIT
 
 
             // Creates term frequencies out of its components.
-            static TermFrequencies MakeTermFrequencies(unsigned __int64 anchorFrequency,
-                                                       unsigned __int64 bodyFrequency,
-                                                       unsigned __int64 titleFrequency,
-                                                       unsigned __int64 urlFrequency)
+            static TermFrequencies MakeTermFrequencies(uint64_t anchorFrequency,
+                                                       uint64_t bodyFrequency,
+                                                       uint64_t titleFrequency,
+                                                       uint64_t urlFrequency)
             {
                 return Packed<>()
                     .Push<c_bitsForAnchor>(anchorFrequency)
@@ -193,7 +193,7 @@ namespace NativeJIT
 
             // Creates term features out of frequencies and position and shard.
             static TermFeatures MakeTermFeatures(TermFrequencies const & frequencies,
-                                                 unsigned __int8 position,
+                                                 uint8_t position,
                                                  Shard shard)
             {
                 return frequencies
@@ -353,7 +353,7 @@ namespace NativeJIT
                 }
 
 
-                ParsedQuery& RequireDiscoveryTimeTicksLessThan(unsigned __int64 value)
+                ParsedQuery& RequireDiscoveryTimeTicksLessThan(uint64_t value)
                 {
                     m_discoveryTimeTicksLessThanConstraint.Set(value);
 
@@ -369,7 +369,7 @@ namespace NativeJIT
                 // Used in rangeconstraint operator simulation: if non-null then
                 // DocData::m_discoveryTimeTicks must match the constraint (its value
                 // must be lower than the value inside the nullable).
-                Nullable<unsigned __int64> m_discoveryTimeTicksLessThanConstraint;
+                Nullable<uint64_t> m_discoveryTimeTicksLessThanConstraint;
             };
 
 
@@ -398,7 +398,7 @@ namespace NativeJIT
                     auto const & components = queryWords.m_components;
                     float score = 0;
 
-                    for(unsigned __int8 position = 0;
+                    for(uint8_t position = 0;
                         position < components.size();
                         ++position)
                     {
@@ -422,8 +422,8 @@ namespace NativeJIT
                 // specified function.
                 TermFrequencies Aggregate(TermFrequencies f1ABTU,
                                           TermFrequencies f2ABTU,
-                                          unsigned __int64 (*aggFunc)(unsigned __int64,
-                                                                      unsigned __int64))
+                                          uint64_t (*aggFunc)(uint64_t,
+                                                                      uint64_t))
                 {
                     auto url = aggFunc(f1ABTU.Back(), f2ABTU.Back());
                     auto f1ABT = f1ABTU.Pop();
@@ -447,7 +447,7 @@ namespace NativeJIT
                 {
                     return Aggregate(f1ABTU,
                                      f2ABTU,
-                                     [](unsigned __int64 a, unsigned __int64 b)
+                                     [](uint64_t a, uint64_t b)
                                      {
                                          return (std::min)(a, b);
                                      });
@@ -458,7 +458,7 @@ namespace NativeJIT
                 {
                     return Aggregate(f1ABTU,
                                      f2ABTU,
-                                     [](unsigned __int64 a, unsigned __int64 b)
+                                     [](uint64_t a, uint64_t b)
                                      {
                                          return (std::max)(a, b);
                                      });
@@ -467,7 +467,7 @@ namespace NativeJIT
 
                 TermFrequencies LookupTermFrequencies(TermHash termHash)
                 {
-                    unsigned __int64 termFrequenciesRaw;
+                    uint64_t termFrequenciesRaw;
                     const bool lookupSuccessful = m_termLookupFunc(m_termFreqTable,
                                                                    m_termSlotCount,
                                                                    termHash,
@@ -548,21 +548,21 @@ namespace NativeJIT
             };
 
 
-            static unsigned __int16 ComputeClickHash(unsigned __int32 queryLanguageHash,
-                                                     unsigned __int32 queryLocationHash,
+            static uint16_t ComputeClickHash(uint32_t queryLanguageHash,
+                                                     uint32_t queryLocationHash,
                                                      TermHash clickPhrase)
             {
-                const unsigned __int64 lang64 = queryLanguageHash;
-                const unsigned __int64 loc64 = queryLocationHash;
+                const uint64_t lang64 = queryLanguageHash;
+                const uint64_t loc64 = queryLocationHash;
 
                 // (language64 | (location64 << 32)) + clickPhrase)
-                const unsigned __int64 clickHash64
+                const uint64_t clickHash64
                     = (lang64 | (loc64 << 32)) + clickPhrase;
 
                 // Keep only the lowest 16 bits.
                 // Note: the original calculation uses % 65521 (the largest
                 // prime 16-bit number) to calculate the value.
-                return static_cast<unsigned __int16>(clickHash64);
+                return static_cast<uint16_t>(clickHash64);
             }
 
 
@@ -570,14 +570,14 @@ namespace NativeJIT
                                              ClickModel* clickModel,
                                              WebDocData const * docData,
                                              void const * clickFreqTable,
-                                             unsigned __int32 queryLanguageHash,
-                                             unsigned __int32 queryLocationHash,
+                                             uint32_t queryLanguageHash,
+                                             uint32_t queryLocationHash,
                                              TermHash clickPhrase)
             {
                 auto const clickHash = ComputeClickHash(queryLanguageHash,
                                                         queryLocationHash,
                                                         clickPhrase);
-                unsigned __int64 clickFeatureRaw;
+                uint64_t clickFeatureRaw;
 
                 const bool lookupSuccessful
                     = rankerContext->m_clickLookupFunc(clickFreqTable,
@@ -697,8 +697,8 @@ namespace NativeJIT
                       m_termLookupFunc(e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_termLookupFunc))),
                       m_defaultTermFrequencies(e.Immediate(c_defaultTermFrequencies)),
                       m_termModel(termModel),
-                      m_shardShiftedToMSB(e.Sal(e.Cast<unsigned __int64>(shard),
-                                                static_cast<unsigned __int8>(64 - c_bitsForShard)))
+                      m_shardShiftedToMSB(e.Sal(e.Cast<uint64_t>(shard),
+                                                static_cast<uint8_t>(64 - c_bitsForShard)))
                 {
                 }
 
@@ -710,7 +710,7 @@ namespace NativeJIT
                     Node<float>* updatedScore = &currentScore;
                     auto & components = queryWords.m_components;
 
-                    for(unsigned __int8 position = 0;
+                    for(uint8_t position = 0;
                         position < components.size();
                         ++position)
                     {
@@ -742,7 +742,7 @@ namespace NativeJIT
                     // TODO: For a query with a lot of words, this can allocate
                     // a lot of stack given the current behavior of StackVariable
                     // (see the TODO comment in StackVariable::CodeGenValue()).
-                    auto & termFrequenciesRaw = e.StackVariable<unsigned __int64>();
+                    auto & termFrequenciesRaw = e.StackVariable<uint64_t>();
                     auto & termHash = e.Immediate(term);
                     auto & termLookupSuccessful = e.Call(m_termLookupFunc,
                                                          m_termFreqTable,
@@ -760,15 +760,15 @@ namespace NativeJIT
 
                 Node<TermFeatures>& GetTermFeatures(ExpressionNodeFactory& e,
                                                     Node<TermFrequencies>& frequencies,
-                                                    unsigned __int8 position)
+                                                    uint8_t position)
                 {
-                    const unsigned __int64 positionShiftedToMSB
-                        = static_cast<unsigned __int64>(position) << (64 - c_bitsForPosition);
+                    const uint64_t positionShiftedToMSB
+                        = static_cast<uint64_t>(position) << (64 - c_bitsForPosition);
 
                     // Shift the position from the MSB position into the
                     // LSB position in the target variable.
                     auto & frequenciesAndShard
-                        = e.Shld(e.Cast<unsigned __int64>(frequencies),
+                        = e.Shld(e.Cast<uint64_t>(frequencies),
                                  e.Immediate(positionShiftedToMSB),
                                  c_bitsForPosition);
 
@@ -867,28 +867,28 @@ namespace NativeJIT
 
                 Node<TermModel*>& m_termModel;
 
-                Node<unsigned __int64>& m_shardShiftedToMSB;
+                Node<uint64_t>& m_shardShiftedToMSB;
             };
 
 
-            Node<unsigned __int16>& ComputeClickHash(
+            Node<uint16_t>& ComputeClickHash(
                 ExpressionNodeFactory& e,
-                Node<unsigned __int32>& queryLanguageHash,
-                Node<unsigned __int32>& queryLocationHash,
+                Node<uint32_t>& queryLanguageHash,
+                Node<uint32_t>& queryLocationHash,
                 TermHash clickPhrase)
             {
-                auto & lang64 = e.Cast<unsigned __int64>(queryLanguageHash);
-                auto & loc64 = e.Cast<unsigned __int64>(queryLocationHash);
+                auto & lang64 = e.Cast<uint64_t>(queryLanguageHash);
+                auto & loc64 = e.Cast<uint64_t>(queryLocationHash);
 
                 // (language64 | (location64 << 32)) + clickPhrase)
                 auto & clickHash64 = e.Add(e.Or(lang64,
-                                                e.Sal(loc64, static_cast<unsigned __int8>(32))),
+                                                e.Sal(loc64, static_cast<uint8_t>(32))),
                                            e.Immediate(clickPhrase));
 
                 // Keep only the lowest 16 bits.
                 // Note: the original calculation uses % 65521 (the largest
                 // prime 16-bit number) to calculate the value.
-                return e.Cast<unsigned __int16>(clickHash64);
+                return e.Cast<uint16_t>(clickHash64);
             }
 
 
@@ -898,17 +898,17 @@ namespace NativeJIT
                                 Node<ClickModel*>& clickModel,
                                 Node<WebDocData const *>& docData,
                                 Node<void const *>& clickFreqTable,
-                                Node<unsigned __int32>& queryLanguageHash,
-                                Node<unsigned __int32>& queryLocationHash,
+                                Node<uint32_t>& queryLanguageHash,
+                                Node<uint32_t>& queryLocationHash,
                                 TermHash clickPhrase)
             {
                 auto & clickHash = ComputeClickHash(e, queryLanguageHash, queryLocationHash, clickPhrase);
-                auto & clickFeatureRaw = e.StackVariable<unsigned __int64>();
+                auto & clickFeatureRaw = e.StackVariable<uint64_t>();
 
                 auto & clickLookupSuccessful = e.Call(e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_clickLookupFunc)),
                                                       clickFreqTable,
                                                       e.Deref(e.FieldPointer(docData, &WebDocData::m_clickSlotCount)),
-                                                      e.Cast<unsigned __int64>(clickHash),
+                                                      e.Cast<uint64_t>(clickHash),
                                                       clickFeatureRaw);
 
                 auto & clickFeature = e.If(clickLookupSuccessful,
@@ -961,7 +961,7 @@ namespace NativeJIT
                 // Evaluate the language model.
                 totalScore = &e.Add(*totalScore,
                                     e.ApplyModel(languageModel,
-                                                 e.Cast<BoolFeature>(e.Cast<unsigned __int64>(languageMatches))));
+                                                 e.Cast<BoolFeature>(e.Cast<uint64_t>(languageMatches))));
 
                 // Do the same for the location.
                 auto & docLocation = e.Deref(e.FieldPointer(docMarket, &MarketData::m_locationHash));
@@ -972,7 +972,7 @@ namespace NativeJIT
 
                 totalScore = &e.Add(*totalScore,
                                     e.ApplyModel(locationModel,
-                                                 e.Cast<BoolFeature>(e.Cast<unsigned __int64>(locationMatches))));
+                                                 e.Cast<BoolFeature>(e.Cast<uint64_t>(locationMatches))));
 
                 // If both language and location match, add the advanced prefer score.
                 auto & marketMatches = e.And(languageMatches, locationMatches);
@@ -1051,7 +1051,7 @@ namespace NativeJIT
                 {
                 }
 
-                DocumentDescriptor& SetDiscoveryTimeTicks(unsigned __int64 value)
+                DocumentDescriptor& SetDiscoveryTimeTicks(uint64_t value)
                 {
                     m_discoveryTimeTicks = value;
 
@@ -1059,7 +1059,7 @@ namespace NativeJIT
                 }
 
                 const MarketData m_documentMarket;
-                unsigned __int64 m_discoveryTimeTicks;
+                uint64_t m_discoveryTimeTicks;
             };
 
 
@@ -1140,8 +1140,8 @@ namespace NativeJIT
                 std::map<FixedSizeBlobId, void*> m_fixedSizeBlobs;
                 std::map<VariableSizeBlobId, void*> m_variableSizeBlobs;
 
-                std::map<unsigned __int64, TermFrequencies> m_termFreqMap;
-                std::map<unsigned  __int64, ClickFeature> m_clickFreqMap;
+                std::map<uint64_t, TermFrequencies> m_termFreqMap;
+                std::map<uint64_t, ClickFeature> m_clickFreqMap;
 
 
                 static void* GetFixedSizeBlobFunc(DocumentHandle const * handle,
@@ -1161,12 +1161,12 @@ namespace NativeJIT
                 template <typename VALUE>
                 static bool HashLookupFunc(void const * buffer,
                                            unsigned slotCount,
-                                           unsigned __int64 key,
-                                           unsigned __int64& value)
+                                           uint64_t key,
+                                           uint64_t& value)
                 {
                     TestEqual(c_expectedSlotCount, slotCount);
 
-                    auto map = reinterpret_cast<std::map<unsigned __int64, VALUE> const *>(buffer);
+                    auto map = reinterpret_cast<std::map<uint64_t, VALUE> const *>(buffer);
 
                     auto it = map->find(key);
                     bool found = it != map->end();

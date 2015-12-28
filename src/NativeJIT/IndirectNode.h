@@ -11,7 +11,7 @@ namespace NativeJIT
     class IndirectNode : public Node<T>
     {
     public:
-        IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 index);
+        IndirectNode(ExpressionTree& tree, Node<T*>& base, int32_t index);
 
         //
         // Overrides of Node methods.
@@ -27,7 +27,7 @@ namespace NativeJIT
 
     private:
         NodeBase& m_base;
-        const __int32 m_index;
+        const int32_t m_index;
 
         // Multiple accesses to the same base object can sometimes be collapsed
         // as an optimization. In such cases, m_collapsedBase/Offset will point
@@ -36,7 +36,7 @@ namespace NativeJIT
         // IMPORTANT: the constructor depends on collapsed base/offset being
         // listed after the original base/offset.
         NodeBase* m_collapsedBase;
-        __int32 m_collapsedOffset;
+        int32_t m_collapsedOffset;
     };
 
 
@@ -46,7 +46,7 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <typename T>
-    IndirectNode<T>::IndirectNode(ExpressionTree& tree, Node<T*>& base, __int32 index)
+    IndirectNode<T>::IndirectNode(ExpressionTree& tree, Node<T*>& base, int32_t index)
         : Node(tree),
           m_base(base),
           m_index(index),
@@ -55,7 +55,7 @@ namespace NativeJIT
           m_collapsedOffset(sizeof(T) * m_index)
     {
         NodeBase* grandparent;
-        __int32 parentOffset;
+        int32_t parentOffset;
 
         // If base can be represented off of another object with an added offset,
         // make the reference off of that object and adjust the offset.

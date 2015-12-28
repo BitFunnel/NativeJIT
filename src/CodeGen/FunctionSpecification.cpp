@@ -72,13 +72,13 @@ namespace NativeJIT
                                 UnwindCode*& currUnwindCode,
                                 unsigned codeOffset,
                                 UnwindCodeOp op,
-                                unsigned __int8 info)
+                                uint8_t info)
         {
             Assert(currUnwindCode >= unwindCodesStart, "Unwind codes overflow");
-            Assert(codeOffset <= (std::numeric_limits<unsigned __int8>::max)(),
+            Assert(codeOffset <= (std::numeric_limits<uint8_t>::max)(),
                    "Code offset overflow: %u",
                    codeOffset);
-            *currUnwindCode-- = UnwindCode(static_cast<unsigned __int8>(codeOffset),
+            *currUnwindCode-- = UnwindCode(static_cast<uint8_t>(codeOffset),
                                            op,
                                            info);
         }
@@ -90,8 +90,8 @@ namespace NativeJIT
                                 UnwindCode*& currUnwindCode,
                                 unsigned codeOffset,
                                 UnwindCodeOp op,
-                                unsigned __int8 info,
-                                unsigned __int16 frameOffset)
+                                uint8_t info,
+                                uint16_t frameOffset)
         {
             // Since the codes are filled in reverse (epilog) order, place the
             // second operand first.
@@ -109,8 +109,8 @@ namespace NativeJIT
                                                          unsigned savedXmmNonvolatilesMask,
                                                          BaseRegisterType baseRegisterType,
                                                          X64CodeGenerator& prologCode,
-                                                         AllocatorVector<unsigned __int8>& unwindInfoBuffer,
-                                                        __int32& offsetToOriginalRsp)
+                                                         AllocatorVector<uint8_t>& unwindInfoBuffer,
+                                                        int32_t& offsetToOriginalRsp)
     {
         Assert((savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
                "Saving/restoring of non-writable RXX registers is not allowed: 0x%Ix",
@@ -241,12 +241,12 @@ namespace NativeJIT
                                currUnwindCode,
                                prologCode.CurrentPosition() - codeStartPos,
                                UnwindCodeOp::UWOP_ALLOC_SMALL,
-                               static_cast<unsigned __int8>(totalStackSlotCount - 1));
+                               static_cast<uint8_t>(totalStackSlotCount - 1));
         }
         else
         {
             Assert(totalStackSlotCount >= 17
-                   && totalStackSlotCount <= (std::numeric_limits<unsigned __int16>::max)(),
+                   && totalStackSlotCount <= (std::numeric_limits<uint16_t>::max)(),
                    "Logic error, alloc large slot count %u",
                    totalStackSlotCount);
 
@@ -257,8 +257,8 @@ namespace NativeJIT
                                currUnwindCode,
                                prologCode.CurrentPosition() - codeStartPos,
                                UnwindCodeOp::UWOP_ALLOC_LARGE,
-                               static_cast<unsigned __int8>(0),
-                               static_cast<unsigned __int16>(totalStackSlotCount));
+                               static_cast<uint8_t>(0),
+                               static_cast<uint16_t>(totalStackSlotCount));
         }
 
         // Save registers into the reserved area. The area comes right after
@@ -279,8 +279,8 @@ namespace NativeJIT
                                currUnwindCode,
                                prologCode.CurrentPosition() - codeStartPos,
                                UnwindCodeOp::UWOP_SAVE_NONVOL,
-                               static_cast<unsigned __int8>(regId),
-                               static_cast<unsigned __int16>(currStackSlotOffset));
+                               static_cast<uint8_t>(regId),
+                               static_cast<uint16_t>(currStackSlotOffset));
 
             BitOp::ClearBit(&registersMask, regId);
             currStackSlotOffset++;
@@ -311,8 +311,8 @@ namespace NativeJIT
                                    currUnwindCode,
                                    prologCode.CurrentPosition() - codeStartPos,
                                    UnwindCodeOp::UWOP_SAVE_XMM128,
-                                   static_cast<unsigned __int8>(regId),
-                                   static_cast<unsigned __int16>(currStackSlotOffset / 2));
+                                   static_cast<uint8_t>(regId),
+                                   static_cast<uint16_t>(currStackSlotOffset / 2));
 
                 BitOp::ClearBit(&registersMask, regId);
                 currStackSlotOffset += 2;
@@ -349,7 +349,7 @@ namespace NativeJIT
             // Note: the cast is safe, the code buffer is length limited to
             // max size for prolog/epilog.
             unwindCodes[0].m_operation.m_codeOffset
-                = static_cast<unsigned __int8>(prologCode.CurrentPosition() - codeStartPos);
+                = static_cast<uint8_t>(prologCode.CurrentPosition() - codeStartPos);
         }
 
         // Code offset points to the next instruction after the end of prolog,
@@ -421,7 +421,7 @@ namespace NativeJIT
                 Assert(codeCount == 2, "Unexpected %u-code UWOP_ALLOC_LARGE", codeCount);
                 // The second code contains the offset in quadwords.
                 epilogCode.EmitImmediate<OpCode::Add>(rsp,
-                                                      static_cast<__int32>(code2Offset
+                                                      static_cast<int32_t>(code2Offset
                                                                            * sizeof(void*)));
                 break;
 
@@ -430,7 +430,7 @@ namespace NativeJIT
                 // decreased by one.
                 epilogCode.EmitImmediate<OpCode::Add>(
                     rsp,
-                    static_cast<__int32>((unwindCode.m_operation.m_opInfo + 1)
+                    static_cast<int32_t>((unwindCode.m_operation.m_opInfo + 1)
                                          * sizeof(void*)));
                 break;
 
@@ -462,13 +462,13 @@ namespace NativeJIT
     }
 
 
-    __int32 FunctionSpecification::GetOffsetToOriginalRsp() const
+    int32_t FunctionSpecification::GetOffsetToOriginalRsp() const
     {
         return m_offsetToOriginalRsp;
     }
 
 
-    unsigned __int8 const * FunctionSpecification::GetUnwindInfoBuffer() const
+    uint8_t const * FunctionSpecification::GetUnwindInfoBuffer() const
     {
         return m_unwindInfoBuffer.data();
     }
@@ -480,7 +480,7 @@ namespace NativeJIT
     }
 
 
-    unsigned __int8 const * FunctionSpecification::GetProlog() const
+    uint8_t const * FunctionSpecification::GetProlog() const
     {
         return m_prologCode.data();
     }
@@ -492,7 +492,7 @@ namespace NativeJIT
     }
 
     
-    unsigned __int8 const * FunctionSpecification::GetEpilog() const
+    uint8_t const * FunctionSpecification::GetEpilog() const
     {
         return m_epilogCode.data();
     }

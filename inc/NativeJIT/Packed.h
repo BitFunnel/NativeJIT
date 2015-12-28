@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <type_traits>
 
 
@@ -50,7 +51,7 @@ namespace NativeJIT
 
         static_assert(c_totalBitCount <= 64, "Too many bits in the packed.");
 
-        static Packed Create(unsigned __int64 value)
+        static Packed Create(uint64_t value)
         {
             Packed result;
             result.m_fields = value;
@@ -61,9 +62,9 @@ namespace NativeJIT
         // the existing bits are moved to the left. Thus the final order of
         // bits inside Packed<C, Packed<B, Packed<A>>> is ABC.
         template <unsigned X>
-        Packed<X, Packed> Push(unsigned __int64 value) const
+        Packed<X, Packed> Push(uint64_t value) const
         {
-            unsigned __int64 fields = (m_fields << X) | value;
+            uint64_t fields = (m_fields << X) | value;
             return Packed<X, Packed>::Create(fields);
         }
 
@@ -72,22 +73,22 @@ namespace NativeJIT
             return REST::Create(m_fields >> W);
         }
 
-        unsigned __int64 Back() const
+        uint64_t Back() const
         {
             return m_fields & ((1 << W) - 1);
         }
 
-        unsigned __int64 GetBits() const
+        uint64_t GetBits() const
         {
             return m_fields;
         }
 
-        operator unsigned __int64() const
+        operator uint64_t() const
         {
             return m_fields;
         }
 
-        unsigned __int64 m_fields;
+        uint64_t m_fields;
     };
 
 
@@ -102,7 +103,7 @@ namespace NativeJIT
 
         static_assert(c_totalBitCount <= 64, "Too many bits in the packed.");
 
-        static Packed Create(unsigned __int64 value)
+        static Packed Create(uint64_t value)
         {
             Packed result;
             result.m_fields = value;
@@ -110,28 +111,28 @@ namespace NativeJIT
         }
 
         template <unsigned X>
-        Packed<X, Packed> Push(unsigned __int64 value)
+        Packed<X, Packed> Push(uint64_t value)
         {
-            unsigned __int64 fields = (m_fields << X) | value;
+            uint64_t fields = (m_fields << X) | value;
             return Packed<X, Packed>::Create(fields);
         }
 
-        unsigned __int64 Back() const
+        uint64_t Back() const
         {
             return m_fields & ((1 << W) - 1);
         }
 
-        unsigned __int64 GetBits() const
+        uint64_t GetBits() const
         {
             return m_fields;
         }
 
-        operator unsigned __int64() const
+        operator uint64_t() const
         {
             return m_fields;
         }
 
-        unsigned __int64 m_fields;
+        uint64_t m_fields;
     };
 
 
@@ -145,9 +146,9 @@ namespace NativeJIT
         typedef void Rest;
 
         template <unsigned X>
-        static Packed<X, void> Push(unsigned __int64 value)
+        static Packed<X, void> Push(uint64_t value)
         {
-            unsigned __int64 fields = value;
+            uint64_t fields = value;
             return Packed<X>::Create(fields);
         }
     };

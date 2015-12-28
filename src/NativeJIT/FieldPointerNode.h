@@ -22,16 +22,16 @@ namespace NativeJIT
         virtual void ReleaseReferencesToChildren() override;
 
     protected:
-        virtual bool GetBaseAndOffset(NodeBase*& base, __int32& offset) const override;
+        virtual bool GetBaseAndOffset(NodeBase*& base, int32_t& offset) const override;
 
     private:
-        static __int32 Offset(FIELD OBJECT::*field)
+        static int32_t Offset(FIELD OBJECT::*field)
         {
-            return reinterpret_cast<__int32>(&((static_cast<OBJECT*>(nullptr))->*field));
+            return reinterpret_cast<int32_t>(&((static_cast<OBJECT*>(nullptr))->*field));
         }
 
         NodeBase& m_base;
-        const __int32 m_originalOffset;
+        const int32_t m_originalOffset;
 
         // Multiple accesses to the same base object can sometimes be collapsed
         // as an optimization. In such cases, m_collapsedBase/Offset will point
@@ -40,7 +40,7 @@ namespace NativeJIT
         // IMPORTANT: the constructor depends on collapsed base/offset being
         // listed after the original base/offset.
         NodeBase* m_collapsedBase;
-        __int32 m_collapsedOffset;
+        int32_t m_collapsedOffset;
     };
 
 
@@ -61,7 +61,7 @@ namespace NativeJIT
           m_collapsedOffset(m_originalOffset)
     {
         NodeBase* grandparent;
-        __int32 parentOffset;
+        int32_t parentOffset;
 
         // If base can be represented off of another object with an added offset,
         // make the reference off of that object and adjust the offset.
@@ -98,7 +98,7 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    bool FieldPointerNode<OBJECT, FIELD>::GetBaseAndOffset(NodeBase*& base, __int32& offset) const
+    bool FieldPointerNode<OBJECT, FIELD>::GetBaseAndOffset(NodeBase*& base, int32_t& offset) const
     {
         base = m_collapsedBase;
         offset = m_collapsedOffset;

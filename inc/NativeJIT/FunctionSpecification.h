@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
-#include <Windows.h>                        // RUNTIME_FUNCTION embedded.
+#include <windows.h>                        // RUNTIME_FUNCTION embedded.
 
 #include "Temporary/StlAllocator.h"         // Embeds STL allocator for vector.
 
@@ -66,18 +67,18 @@ namespace NativeJIT
         // This offset can then be used to access the return address as
         // [rsp + offset], function parameters as [rsp + offset + 8] etc. or
         // stack variables as [rsp + offset - 8] etc.
-        __int32 GetOffsetToOriginalRsp() const;
+        int32_t GetOffsetToOriginalRsp() const;
 
         // Returns a pointer to the unwind info data and its length.
-        unsigned __int8 const * GetUnwindInfoBuffer() const;
+        uint8_t const * GetUnwindInfoBuffer() const;
         unsigned GetUnwindInfoByteLength() const;
 
         // Returns a pointer to the prolog code and its length.
-        unsigned __int8 const * GetProlog() const;
+        uint8_t const * GetProlog() const;
         unsigned GetPrologLength() const;
 
         // Returns a pointer to the epilog code and its length.
-        unsigned __int8 const * GetEpilog() const;
+        uint8_t const * GetEpilog() const;
         unsigned GetEpilogLength() const;
 
     private:
@@ -101,8 +102,8 @@ namespace NativeJIT
                                              BaseRegisterType baseRegisterType,
                                              // Out parameters:
                                              X64CodeGenerator& prologCode,
-                                             AllocatorVector<unsigned __int8>& unwindInfoBuffer,
-                                             __int32& m_offsetToOriginalRsp);
+                                             AllocatorVector<uint8_t>& unwindInfoBuffer,
+                                             int32_t& m_offsetToOriginalRsp);
 
         // Uses the unwind information to generate epilog code into the current
         // position of the provided code generator.
@@ -118,12 +119,12 @@ namespace NativeJIT
 
         // Offset to add to RSP after it's modified in prolog to get the value
         // of RSP before prolog started executing.
-        __int32 m_offsetToOriginalRsp;
+        int32_t m_offsetToOriginalRsp;
 
-        Allocators::StlAllocator<unsigned __int8> m_stlAllocator;
-        AllocatorVector<unsigned __int8> m_unwindInfoBuffer;
-        AllocatorVector<unsigned __int8> m_prologCode;
-        AllocatorVector<unsigned __int8> m_epilogCode;
+        Allocators::StlAllocator<uint8_t> m_stlAllocator;
+        AllocatorVector<uint8_t> m_unwindInfoBuffer;
+        AllocatorVector<uint8_t> m_prologCode;
+        AllocatorVector<uint8_t> m_epilogCode;
     };
 }
 

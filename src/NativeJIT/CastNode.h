@@ -107,15 +107,15 @@ namespace NativeJIT
             // conversion instruction.
             static const bool c_isOneStepIntToFloatCast
                 = c_castType == Cast::IntToFloat
-                  && (std::is_same<std::remove_cv<FROM>::type, __int32>::value
-                      || std::is_same<std::remove_cv<FROM>::type, __int64>::value);
+                  && (std::is_same<std::remove_cv<FROM>::type, int32_t>::value
+                      || std::is_same<std::remove_cv<FROM>::type, int64_t>::value);
 
             // Check whether a float to int cast can be done using a single x64
             // conversion instruction.
             static const bool c_isOneStepFloatToIntCast
                 = c_castType == Cast::FloatToInt
-                  && (std::is_same<std::remove_cv<TO>::type, __int32>::value
-                      || std::is_same<std::remove_cv<TO>::type, __int64>::value);
+                  && (std::is_same<std::remove_cv<TO>::type, int32_t>::value
+                      || std::is_same<std::remove_cv<TO>::type, int64_t>::value);
 
         public:
             static const bool c_isOneStepCast
@@ -584,23 +584,23 @@ namespace NativeJIT
 
             if (sizeof(FROM) <= 2)
             {
-                // Two one-step casts: [unsigned] __int8/16 -> __int32 -> float.
-                // Note that both unsigned __int8/16 can fully fit into a signed
-                // __int32.
-                result = &TwoStepCast<TO, __int32, FROM>(tree, from);
+                // Two one-step casts: [unsigned] int8_t/16 -> int32_t -> float.
+                // Note that both uint8_t/16 can fully fit into a signed
+                // int32_t.
+                result = &TwoStepCast<TO, int32_t, FROM>(tree, from);
             }
             else if (sizeof(FROM) == 4)
             {
-                // This path can only be reached for unsigned __int32 (cast from
-                // a signed __int32 is a one-step cast). Cast using two one-step
-                // casts: unsigned __int32 -> __int64 -> float.
-                result = &TwoStepCast<TO, __int64, FROM>(tree, from);
+                // This path can only be reached for uint32_t (cast from
+                // a int32_t is a one-step cast). Cast using two one-step
+                // casts: uint32_t -> int64_t -> float.
+                result = &TwoStepCast<TO, int64_t, FROM>(tree, from);
             }
             else
             {
-                // This path can only be reached for unsigned __int64 (cast from
-                // a signed __int64 is a one-step cast). Cast it to float as if it
-                // was a signed __int64. If the number observed as signed __int64
+                // This path can only be reached for uint64_t (cast from
+                // a int64_t is a one-step cast). Cast it to float as if it
+                // was a int64_t. If the number observed as int64_t
                 // was negative, such a conversion would have produced a number
                 // that's 2^64 smaller than expected. Add 2^64 back case to adjust
                 // in that case. This is how VC++ does the conversion as well.
@@ -609,7 +609,7 @@ namespace NativeJIT
                 // in case it was available.
                 auto & isNegative = tree.Compare<JccType::JS>(from, tree.Immediate<FROM>(0));
 
-                auto & floatNode = TwoStepCast<TO, __int64, FROM>(tree, from);
+                auto & floatNode = TwoStepCast<TO, int64_t, FROM>(tree, from);
                 auto & twoToThePowerOf64 = tree.Immediate<TO>(1.8446744073709551616e19f);
 
                 result = &tree.Conditional(isNegative,
@@ -640,22 +640,22 @@ namespace NativeJIT
             // integer or if the float is too large.
             if (sizeof(TO) <= 2)
             {
-                // Two one-step casts: float -> __int32 -> [unsigned] __int8/16.
-                result = &TwoStepCast<TO, __int32, FROM>(tree, from);
+                // Two one-step casts: float -> int32_t -> [unsigned] int8_t/16.
+                result = &TwoStepCast<TO, int32_t, FROM>(tree, from);
             }
             else if (sizeof(TO) == 4)
             {
-                // Two one-step casts: float -> __int64 -> unsigned __int32.
-                result = &TwoStepCast<TO, __int64, FROM>(tree, from);
+                // Two one-step casts: float -> int64_t -> uint32_t.
+                result = &TwoStepCast<TO, int64_t, FROM>(tree, from);
             }
             else
             {
-                // When converting unsigned __int64 to float, there are two
+                // When converting uint64_t to float, there are two
                 // branches: if the float is smaller than 2^63 and it will fit
-                // into a signed __int64, use essentially a one-step cast.
+                // into a int64_t, use essentially a one-step cast.
                 // Otherwise, subtract 2^63 from the floating point, convert
-                // to signed __int64 and add (integer) 2^63 to the result.
-                unsigned __int64 twoToThePowerOf63 = 1ull << 63;
+                // to int64_t and add (integer) 2^63 to the result.
+                uint64_t twoToThePowerOf63 = 1ull << 63;
                 auto & twoToThePowerOf63Float
                     = tree.Immediate(static_cast<FROM>(twoToThePowerOf63));
 
@@ -667,11 +667,11 @@ namespace NativeJIT
                 // by the same value after the conversion.
                 auto & reducedFloat = tree.Sub(from, twoToThePowerOf63Float);
                 auto & adjustedConvertedInt
-                    = tree.Add(TwoStepCast<TO, __int64, FROM>(tree, reducedFloat),
+                    = tree.Add(TwoStepCast<TO, int64_t, FROM>(tree, reducedFloat),
                                tree.Immediate(static_cast<TO>(twoToThePowerOf63)));
 
                 result = &tree.Conditional(isSourceWithoutOverflow,
-                                           TwoStepCast<TO, __int64, FROM>(tree, from),
+                                           TwoStepCast<TO, int64_t, FROM>(tree, from),
                                            adjustedConvertedInt);
             }
 

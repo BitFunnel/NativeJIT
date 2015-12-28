@@ -34,7 +34,7 @@ namespace NativeJIT
         }
 
 
-        void VerifyLowestBitSet(unsigned __int64 testValue, unsigned expected)
+        void VerifyLowestBitSet(uint64_t testValue, unsigned expected)
         {
             TestNotEqual(0, testValue);
 
@@ -57,7 +57,7 @@ namespace NativeJIT
         }
 
 
-        void VerifyHighestBitSet(unsigned __int64 testValue, unsigned expected)
+        void VerifyHighestBitSet(uint64_t testValue, unsigned expected)
         {
             TestNotEqual(0, testValue);
 
@@ -82,15 +82,15 @@ namespace NativeJIT
 
         TestCase(TestBit)
         {
-            const unsigned __int64 bits62and63 = 0xC000000000000000;
+            const uint64_t bits62and63 = 0xC000000000000000;
 
             TestEqual(false, BitOp::TestBit(bits62and63, 0));
             TestEqual(false, BitOp::TestBit(bits62and63, 1));
             TestEqual(true, BitOp::TestBit(bits62and63, 62));
             TestEqual(true, BitOp::TestBit(bits62and63, 63));
 
-            const unsigned __int64 allZeros = 0;
-            const unsigned __int64 allOnes = 0xFFFFFFFFFFFFFFFF;
+            const uint64_t allZeros = 0;
+            const uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
@@ -102,8 +102,8 @@ namespace NativeJIT
 
         TestCase(TestAndSetBit)
         {
-            unsigned __int64 currentValue = 0;
-            unsigned __int64 allOnes = 0xFFFFFFFFFFFFFFFF;
+            uint64_t currentValue = 0;
+            uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
@@ -122,8 +122,8 @@ namespace NativeJIT
 
         TestCase(TestAndClearBit)
         {
-            unsigned __int64 currentValue = 0xFFFFFFFFFFFFFFFF;
-            unsigned __int64 allZeros = 0;
+            uint64_t currentValue = 0xFFFFFFFFFFFFFFFF;
+            uint64_t allZeros = 0;
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
