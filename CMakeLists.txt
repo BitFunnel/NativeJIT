@@ -43,6 +43,7 @@ add_subdirectory(src/CodeGen)
 add_subdirectory(src/NativeJIT)
 add_subdirectory(UnitTest/CodeGenUnitTest)
 add_subdirectory(UnitTest/NativeJITUnitTest)
+add_subdirectory(UnitTest/Shared)
 
 add_custom_target(TOPLEVEL SOURCES
   CMakeLists-googletest.txt.in

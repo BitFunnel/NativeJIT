@@ -19,7 +19,7 @@ namespace NativeJIT
 
         TestFixture();
         TestFixture(unsigned codeAllocatorCapacity,
-                       unsigned generalAllocatorCapacity);
+                    unsigned generalAllocatorCapacity);
 
         std::unique_ptr<TestCaseSetup> GetSetup();
 

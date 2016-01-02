@@ -16,7 +16,7 @@ namespace NativeJIT
 
 
     TestFixture::TestFixture(unsigned codeAllocatorCapacity,
-                                   unsigned generalAllocatorCapacity)
+                             unsigned generalAllocatorCapacity)
         : m_codeAllocator(codeAllocatorCapacity),
           m_generalAllocator(generalAllocatorCapacity),
           m_code(m_codeAllocator, codeAllocatorCapacity, m_generalAllocator),

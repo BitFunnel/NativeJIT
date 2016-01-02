@@ -2,7 +2,6 @@
 
 set(CPPFILES
   BitFunnelAcceptanceTest.cpp
-  BitOperationsUnitTest.cpp
   CastUnitTest.cpp
   ConditionalUnitTest.cpp
   ExpressionTreeUnitTest.cpp
@@ -20,9 +19,9 @@ set(PRIVATE_HFILES
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
 
-include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT)
+include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT ${PROJECT_SOURCE_DIR}/UnitTest/Shared)
 
 add_executable(NativeJITUnitTest ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
-target_link_libraries (NativeJITUnitTest NativeJIT CodeGen gtest gtest_main)
+target_link_libraries (NativeJITUnitTest UnitTestShared NativeJIT CodeGen gtest gtest_main)
 
 set_property(TARGET NativeJITUnitTest PROPERTY FOLDER "UnitTest")

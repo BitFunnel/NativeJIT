@@ -1,14 +1,11 @@
 # NativeJIT/src/NativeJIT
 
 set(CPPFILES
-  Allocator.cpp
-  BitOperations.cpp
   CallNode.cpp
   Examples.cpp
   ExpressionNodeFactory.cpp
   ExpressionTree.cpp
   Node.cpp
-  ParameterNode.cpp
   stdafx.cpp
 )
 
@@ -20,6 +17,7 @@ set(PRIVATE_HFILES
   CodeGenHelpers.h
   ConditionalNode.h
   Examples.h
+  ExecutionPreconditionTest.h
   ExpressionNodeFactory.h
   ExpressionTree.h
   FieldPointerNode.h
@@ -29,8 +27,6 @@ set(PRIVATE_HFILES
   Node.h
   PackedMinMaxNode.h
   ParameterNode.h
-  PointerNode.h
-  ReferenceNode.h
   ReturnNode.h
   ShldNode.h
   StackVariableNode.h
@@ -40,7 +36,6 @@ set(PRIVATE_HFILES
 )
 
 set(PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/BitOperations.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Model.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Packed.h
 )

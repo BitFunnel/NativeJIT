@@ -1,7 +1,9 @@
 # NativeJIT/UnitTest/CodeGenUnitTest
 
 set(CPPFILES
+  BitOperationsUnitTest.cpp
   CodeGenUnitTest.cpp
+  FunctionBufferUnitTest.cpp
   ML64Verifier.cpp
   stdafx.cpp
   )
@@ -19,7 +21,9 @@ set(PUBLIC_HFILES
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
 
+include_directories(${PROJECT_SOURCE_DIR}/src/CodeGen ${PROJECT_SOURCE_DIR}/UnitTest/Shared)
+
 add_executable(CodeGenUnitTest ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
-target_link_libraries (CodeGenUnitTest CodeGen gtest gtest_main)
+target_link_libraries (CodeGenUnitTest UnitTestShared CodeGen gtest gtest_main)
 
 set_property(TARGET CodeGenUnitTest PROPERTY FOLDER "UnitTest")
