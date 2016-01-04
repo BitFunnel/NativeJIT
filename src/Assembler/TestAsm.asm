@@ -385,15 +385,15 @@ movsd xmm5, xmm3
 movsd xmm13, xmm5
 movsd xmm0, xmm15
 
-movsd xmm0, mmword ptr [r12]
-movsd xmm4, mmword ptr [rcx + 12h]
-movsd xmm5, mmword ptr [rsi + 1234h]
-movsd xmm12, mmword ptr [rdi + 12345678h]
+movsd xmm0, qword ptr [r12]
+movsd xmm4, qword ptr [rcx + 12h]
+movsd xmm5, qword ptr [rsi + 1234h]
+movsd xmm12, qword ptr [rdi + 12345678h]
 
-movsd mmword ptr [r12], xmm0
-movsd mmword ptr [rcx + 12h], xmm4
-movsd mmword ptr [rsi + 1234h], xmm5
-movsd mmword ptr [rdi + 12345678h], xmm12
+movsd qword ptr [r12], xmm0
+movsd qword ptr [rcx + 12h], xmm4
+movsd qword ptr [rsi + 1234h], xmm5
+movsd qword ptr [rdi + 12345678h], xmm12
 
 addsd xmm1, xmm2
 addsd xmm0, xmm12
@@ -402,10 +402,10 @@ mulsd xmm5, xmm3
 subsd xmm13, xmm5
 subsd xmm0, xmm15
 
-addsd xmm0, mmword ptr [r12]
-addsd xmm4, mmword ptr [rcx + 12h]
-mulsd xmm5, mmword ptr [rsi + 1234h]
-subsd xmm12, mmword ptr [rdi + 12345678h]
+addsd xmm0, qword ptr [r12]
+addsd xmm4, qword ptr [rcx + 12h]
+mulsd xmm5, qword ptr [rsi + 1234h]
+subsd xmm12, qword ptr [rdi + 12345678h]
 
 addss xmm1, xmm2
 addss xmm0, xmm12
@@ -506,6 +506,26 @@ movsxd rbx, dword ptr [rcx + 12h]
 movsxd rbx, dword ptr [r9 + 34h]
 
 ;
+; Aligned 128-bit floating point move: movaps and movapd
+;
+
+movaps xmm1, xmm1
+movaps xmm2, xmm9
+movaps xmm2, dword ptr [rcx + 20h]
+movaps xmm2, dword ptr [r9 + 200h]
+movaps dword ptr [rcx + 20h], xmm2
+movaps dword ptr [r9 + 20h], xmm2
+movaps dword ptr [r9 + 200h], xmm11
+
+movapd xmm1, xmm1
+movapd xmm2, xmm9
+movapd xmm2, qword ptr [rcx + 20h]
+movapd xmm2, qword ptr [r9 + 200h]
+movapd qword ptr [rcx + 20h], xmm2
+movapd qword ptr [r9 + 20h], xmm2
+movapd qword ptr [r9 + 200h], xmm11
+
+;
 ; CvtSI2SD/CvtSI2SS
 ;
 
@@ -541,9 +561,9 @@ cvttsd2si eax, xmm1
 cvttsd2si rax, xmm1
 cvttsd2si rbx, xmm9
 cvttsd2si r8, xmm1
-cvttsd2si ebx, mmword ptr [rcx + 12h]
-cvttsd2si ebx, mmword ptr [r9 + 34h]
-cvttsd2si rbx, mmword ptr [rcx + 56h]
+cvttsd2si ebx, qword ptr [rcx + 12h]
+cvttsd2si ebx, qword ptr [r9 + 34h]
+cvttsd2si rbx, qword ptr [rcx + 56h]
 
 ;
 ; Conversion, float - cvtss2sd and cvtsd2ss

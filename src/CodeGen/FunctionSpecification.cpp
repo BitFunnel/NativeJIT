@@ -300,10 +300,10 @@ namespace NativeJIT
 
             while (BitOp::GetLowestBitSet(registersMask, &regId))
             {
-                // TODO: Implement movaps and use it to save all 128 bits (upcoming change).
-                prologCode.Emit<OpCode::Mov>(rsp,
-                                             currStackSlotOffset * sizeof(void*),
-                                             Register<8, true>(regId));
+                prologCode.Emit<OpCode::MovAligned128>(
+                    rsp,
+                    currStackSlotOffset * sizeof(void*),
+                    Register<4, true>(regId));
 
                 // The offset specifies 16-byte slots, thus the divide by two.
                 // The offset was previously verified to be even.
@@ -443,10 +443,10 @@ namespace NativeJIT
 
             case UnwindCodeOp::UWOP_SAVE_XMM128:
                 // The second code contains the halved offset in quadwords.
-                // TODO: Implement movaps and use it to restore all 128 bits of register (upcoming change).
-                epilogCode.Emit<OpCode::Mov>(Register<8, true>(unwindCode.m_operation.m_opInfo),
-                                             rsp,
-                                             code2Offset * 2 * sizeof(void*));
+                epilogCode.Emit<OpCode::MovAligned128>(
+                    Register<4, true>(unwindCode.m_operation.m_opInfo),
+                    rsp,
+                    code2Offset * 2 * sizeof(void*));
                 break;
 
             default:

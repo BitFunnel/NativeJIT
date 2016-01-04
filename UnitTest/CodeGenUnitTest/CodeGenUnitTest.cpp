@@ -462,6 +462,23 @@ namespace NativeJIT
             buffer.Emit<OpCode::MovSX, 8, false, 4, false>(rbx, rcx, 0x12);
             buffer.Emit<OpCode::MovSX, 8, false, 4, false>(rbx, r9, 0x34);
 
+            // Aligned 128-bit floating point move: movaps and movapd.
+            buffer.Emit<OpCode::MovAligned128>(xmm1s, xmm1s);
+            buffer.Emit<OpCode::MovAligned128>(xmm2s, xmm9s);
+            buffer.Emit<OpCode::MovAligned128>(xmm2s, rcx, 0x20);
+            buffer.Emit<OpCode::MovAligned128>(xmm2s, r9, 0x200);
+            buffer.Emit<OpCode::MovAligned128>(rcx, 0x20, xmm2s);
+            buffer.Emit<OpCode::MovAligned128>(r9, 0x20, xmm2s);
+            buffer.Emit<OpCode::MovAligned128>(r9, 0x200, xmm11s);
+
+            buffer.Emit<OpCode::MovAligned128>(xmm1, xmm1);
+            buffer.Emit<OpCode::MovAligned128>(xmm2, xmm9);
+            buffer.Emit<OpCode::MovAligned128>(xmm2, rcx, 0x20);
+            buffer.Emit<OpCode::MovAligned128>(xmm2, r9, 0x200);
+            buffer.Emit<OpCode::MovAligned128>(rcx, 0x20, xmm2);
+            buffer.Emit<OpCode::MovAligned128>(r9, 0x20, xmm2);
+            buffer.Emit<OpCode::MovAligned128>(r9, 0x200, xmm11);
+
             // Conversion, signed integer to floating point cvtsi2ss/cvtsi2sd.
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, eax);
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, rax);
@@ -1075,6 +1092,33 @@ namespace NativeJIT
                 " 0000060A  49/ 63 59 34         movsxd rbx, dword ptr [r9 + 34h]                                   \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"
+                "                                ; Aligned 128-bit floating point move: movaps and movapd           \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                " 0000063E  0F 28 C9             movaps xmm1, xmm1                                                  \n"
+                " 00000641  41/ 0F 28 D1         movaps xmm2, xmm9                                                  \n"
+                " 00000645  0F 28 51 20          movaps xmm2, dword ptr [rcx + 20h]                                 \n"
+                " 00000649  41/ 0F 28 91         movaps xmm2, dword ptr [r9 + 200h]                                 \n"
+                "           00000200                                                                                \n"
+                " 00000651  0F 29 51 20          movaps dword ptr [rcx + 20h], xmm2                                 \n"
+                " 00000655  41/ 0F 29 51         movaps dword ptr [r9 + 20h], xmm2                                  \n"
+                "           20                                                                                      \n"
+                " 0000065A  45/ 0F 29 99         movaps dword ptr [r9 + 200h], xmm11                                \n"
+                "           00000200                                                                                \n"
+                "                                                                                                   \n"
+                " 00000662  66| 0F 28 C9         movapd xmm1, xmm1                                                  \n"
+                " 00000666  66| 41/ 0F 28 D1     movapd xmm2, xmm9                                                  \n"
+                " 0000066B  66| 0F 28 51         movapd xmm2, qword ptr [rcx + 20h]                                 \n"
+                "           20                                                                                      \n"
+                " 00000670  66| 41/ 0F 28 91     movapd xmm2, qword ptr [r9 + 200h]                                 \n"
+                "           00000200                                                                                \n"
+                " 00000679  66| 0F 29 51         movapd qword ptr [rcx + 20h], xmm2                                 \n"
+                "           20                                                                                      \n"
+                " 0000067E  66| 41/ 0F 29 51     movapd qword ptr [r9 + 20h], xmm2                                  \n"
+                "           20                                                                                      \n"
+                " 00000684  66| 45/ 0F 29 99     movapd qword ptr [r9 + 200h], xmm11                                \n"
+                "           00000200                                                                                \n"
+                "                                                                                                   \n"                "                                ;                                                                  \n"
                 "                                ; CvtSI2SD/CvtSI2SS                                                \n"
                 "                                ;                                                                  \n"
                 "                                                                                                   \n"

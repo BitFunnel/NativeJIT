@@ -65,6 +65,7 @@ namespace NativeJIT
         Mov,
         MovSX,
         MovZX,
+        MovAligned128, // Aligned 128-bit FPU move.
         Nop,
         Or,
         Pop,
@@ -1972,13 +1973,28 @@ namespace NativeJIT
         code.##emitMethod##<opcode, SIZE, true, SIZE, true>(dest, src, srcOffset);      \
     }                                                                                   \
 
-    DEFINE_SSE_ARGS1(Add,  ScalarSSE, 0x58);  // AddSS/AddSD.
-    DEFINE_SSE_ARGS1(Cmp,  SSEx66,    0x2f);  // ComISS/ComISD.
-    DEFINE_SSE_ARGS1(IMul, ScalarSSE, 0x59);  // MulSS/MulSD.
-    DEFINE_SSE_ARGS1(Mov,  ScalarSSE, 0x10);  // MovSS/MovSD.
-    DEFINE_SSE_ARGS1(Sub,  ScalarSSE, 0x5c);  // SubSS/SubSD.
+    DEFINE_SSE_ARGS1(Add,            ScalarSSE, 0x58);  // AddSS/AddSD.
+    DEFINE_SSE_ARGS1(Cmp,            SSEx66,    0x2f);  // ComISS/ComISD.
+    DEFINE_SSE_ARGS1(IMul,           ScalarSSE, 0x59);  // MulSS/MulSD.
+    DEFINE_SSE_ARGS1(Mov,            ScalarSSE, 0x10);  // MovSS/MovSD.
+    DEFINE_SSE_ARGS1(MovAligned128,  SSEx66,    0x28);  // MovAPS/MovAPD.
+    DEFINE_SSE_ARGS1(Sub,            ScalarSSE, 0x5c);  // SubSS/SubSD.
 
 #undef DEFINE_SSE_ARGS1
+
+    // Unlike others, MovAPS/MovAPD also have the "mov [rxx + 16], xmm" form
+    // of the instruction with a different opcode.
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::MovAligned128>::ArgTypes1<true>::Emit(
+        X64CodeGenerator& code,
+        Register<8, false> dest,
+        int32_t destOffset,
+        Register<SIZE, true> src)
+    {
+        code.SSEx66<0x29, SIZE, true, SIZE, true>(dest, destOffset, src);
+    }
 
 
 // SSE instruction, arguments of different type or size.

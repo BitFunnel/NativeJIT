@@ -104,6 +104,7 @@ namespace NativeJIT
             "mov",
             "movsx",
             "movzx",
+            "movap",
             "nop",
             "or",
             "pop",
