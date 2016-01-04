@@ -7,22 +7,21 @@
 #include "NativeJIT/FunctionBuffer.h"
 #include "NativeJIT/Model.h"
 #include "NativeJIT/Packed.h"
-#include "SuiteCpp/UnitTest.h"
 #include "TestSetup.h"
 
 
 namespace NativeJIT
 {
-    namespace BitFunnelAcceptance
+    namespace BitFunnelAcceptanceTest
     {
-        TestClass(AcceptanceUnitTest), private TestFixture
-        {
+        TEST_FIXTURE_START(Acceptance)
+
         public:
-            AcceptanceUnitTest() : TestFixture(5000, 64 * 1024)
+            Acceptance() : TestFixture(5000, 64 * 1024)
             {
             }
 
-
+        protected:
             static const unsigned c_bitsForAnchor = 4;
             static const unsigned c_bitsForBody = 4;
             static const unsigned c_bitsForTitle = 1;
@@ -1164,7 +1163,10 @@ namespace NativeJIT
                                            uint64_t key,
                                            uint64_t& value)
                 {
-                    TestEqual(c_expectedSlotCount, slotCount);
+                    Assert(c_expectedSlotCount == slotCount,
+                           "Mismatched slot count, %u vs %u",
+                           c_expectedSlotCount,
+                           slotCount);
 
                     auto map = reinterpret_cast<std::map<uint64_t, VALUE> const *>(buffer);
 
@@ -1200,8 +1202,8 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    Assert(offsetof(WebRankerContext, m_commonContext) == 0,
-                           "Invalid WebRankerContext structure layout");
+                    TestEqual(0, offsetof(WebRankerContext, m_commonContext),
+                             "Invalid WebRankerContext structure layout");
 
                     // TestData is large, allocate from heap to avoid stack overflow.
                     auto testData = std::make_unique<TestData>(docDescriptor, parsedQuery);
@@ -1225,246 +1227,250 @@ namespace NativeJIT
             }
 
 
-            TestCase(SingleWord)
+        TEST_FIXTURE_END_TEST_CASES_BEGIN
+
+        TEST_CASE_F(Acceptance, SingleWord)
+        {
+            // house
+            QueryWords queryWords
             {
-                // house
-                QueryWords queryWords
                 {
+                    QueryComponent
                     {
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
-                        }
+                        QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
                     }
-                };
-
-                const MarketData market = c_anyMarketData;
-
-                DocumentDescriptor docDescriptor(market);
-                ParsedQuery query(queryWords, market);
-
-                RunTestCase(docDescriptor, query);
-            }
-
-
-            TestCase(MultipleWords)
-            {
-                // red dog house
-                QueryWords queryWords
-                {
-                    {
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_redHash, c_anyIdf1) }
-                        },
-
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_dogHash, c_anyIdf2) }
-                        },
-
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_houseHash, c_anyIdf3) }
-                        }
-                    }
-                };
-
-                const MarketData market = c_anyMarketData;
-
-                DocumentDescriptor docDescriptor(market);
-                ParsedQuery query(queryWords, market);
-
-                RunTestCase(docDescriptor, query);
-            }
-
-
-            TestCase(Phrase)
-            {
-                // red "dog house"
-                QueryWords queryWords
-                {
-                    {
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_redHash, c_anyIdf1) }
-                        },
-
-                        QueryComponent
-                        {
-                            QueryNGram
-                            {
-                                TermInfo(c_dogHash, c_anyIdf1),
-                                TermInfo(c_houseHash, c_anyIdf2)
-                            }
-                        }
-                    }
-                };
-
-                const MarketData market = c_anyMarketData;
-
-                DocumentDescriptor docDescriptor(market);
-                ParsedQuery query(queryWords, market);
-
-                RunTestCase(docDescriptor, query);
-            }
-
-
-            TestCase(WordCandidates)
-            {
-                // red word:("dog house" houses)
-                QueryWords queryWords
-                {
-                    {
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_redHash, c_anyIdf4) },
-                        },
-
-                        QueryComponent
-                        {
-                            QueryNGram
-                            {
-                                TermInfo(c_dogHash, c_anyIdf1),
-                                TermInfo(c_houseHash, c_anyIdf3)
-                            },
-                            QueryNGram { TermInfo(c_housesHash, c_anyIdf4) }
-                        }
-                    }
-                };
-
-                const MarketData market = c_anyMarketData;
-
-                DocumentDescriptor docDescriptor(market);
-                ParsedQuery query(queryWords, market);
-
-                RunTestCase(docDescriptor, query);
-            }
-
-
-            TestCase(ClickPhrase)
-            {
-                QueryWords queryWords
-                {
-                    {
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_dogHash, c_anyIdf1) },
-                            QueryNGram { TermInfo(c_dogsHash, c_anyIdf2) }
-                        },
-
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_houseHash, c_anyIdf3) },
-                        }
-                    }
-                };
-
-                DocumentDescriptor docDescriptor(c_anyMarketData);
-
-                // Click phrase in the click table.
-                {
-                    ParsedQuery query(queryWords, c_clickPhraseMarketData);
-
-                    query.SetClickPhrase(c_dogHouseHash);
-                    RunTestCase(docDescriptor, query);
                 }
+            };
 
-                // Click phrase not in the click table.
-                {
-                    ParsedQuery query(queryWords, c_clickPhraseMarketData);
+            const MarketData market = c_anyMarketData;
 
-                    query.SetClickPhrase(c_nonExistentPhraseHash);
-                    RunTestCase(docDescriptor, query);
-                }
-            }
+            DocumentDescriptor docDescriptor(market);
+            ParsedQuery query(queryWords, market);
+
+            RunTestCase(docDescriptor, query);
+        }
 
 
-            TestCase(ConstraintDiscard)
+        TEST_CASE_F(Acceptance, MultipleWords)
+        {
+            // red dog house
+            QueryWords queryWords
             {
-                QueryWords queryWords
                 {
+                    QueryComponent
                     {
-                        QueryComponent
+                        QueryNGram { TermInfo(c_redHash, c_anyIdf1) }
+                    },
+
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_dogHash, c_anyIdf2) }
+                    },
+
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_houseHash, c_anyIdf3) }
+                    }
+                }
+            };
+
+            const MarketData market = c_anyMarketData;
+
+            DocumentDescriptor docDescriptor(market);
+            ParsedQuery query(queryWords, market);
+
+            RunTestCase(docDescriptor, query);
+        }
+
+
+        TEST_CASE_F(Acceptance, Phrase)
+        {
+            // red "dog house"
+            QueryWords queryWords
+            {
+                {
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_redHash, c_anyIdf1) }
+                    },
+
+                    QueryComponent
+                    {
+                        QueryNGram
                         {
-                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                            TermInfo(c_dogHash, c_anyIdf1),
+                            TermInfo(c_houseHash, c_anyIdf2)
                         }
                     }
-                };
-
-                const MarketData market = c_anyMarketData;
-
-                ParsedQuery query(queryWords, market);
-                query.RequireDiscoveryTimeTicksLessThan(10);
-
-                // The following document should not be discarded.
-                {
-                    DocumentDescriptor docDescriptorNoDiscard(market);
-                    docDescriptorNoDiscard.SetDiscoveryTimeTicks(9);
-
-                    RunTestCase(docDescriptorNoDiscard, query);
                 }
+            };
 
-                // The following document should be discarded.
-                {
-                    DocumentDescriptor docDescriptorDiscard(market);
-                    docDescriptorDiscard.SetDiscoveryTimeTicks(10);
+            const MarketData market = c_anyMarketData;
 
-                    RunTestCase(docDescriptorDiscard, query);
-                }
-            }
+            DocumentDescriptor docDescriptor(market);
+            ParsedQuery query(queryWords, market);
+
+            RunTestCase(docDescriptor, query);
+        }
 
 
-            TestCase(CompletelyDifferentMarket)
+        TEST_CASE_F(Acceptance, WordCandidates)
+        {
+            // red word:("dog house" houses)
+            QueryWords queryWords
             {
-                QueryWords queryWords
                 {
+                    QueryComponent
                     {
-                        QueryComponent
+                        QueryNGram { TermInfo(c_redHash, c_anyIdf4) },
+                    },
+
+                    QueryComponent
+                    {
+                        QueryNGram
                         {
-                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
-                        }
+                            TermInfo(c_dogHash, c_anyIdf1),
+                            TermInfo(c_houseHash, c_anyIdf3)
+                        },
+                        QueryNGram { TermInfo(c_housesHash, c_anyIdf4) }
                     }
-                };
+                }
+            };
 
-                DocumentDescriptor docDescriptor(c_anyMarketData);
-                ParsedQuery query(queryWords, c_anyOtherFullyDifferentMarketData);
+            const MarketData market = c_anyMarketData;
 
+            DocumentDescriptor docDescriptor(market);
+            ParsedQuery query(queryWords, market);
+
+            RunTestCase(docDescriptor, query);
+        }
+
+
+        TEST_CASE_F(Acceptance, ClickPhrase)
+        {
+            QueryWords queryWords
+            {
+                {
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_dogHash, c_anyIdf1) },
+                        QueryNGram { TermInfo(c_dogsHash, c_anyIdf2) }
+                    },
+
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_houseHash, c_anyIdf3) },
+                    }
+                }
+            };
+
+            DocumentDescriptor docDescriptor(c_anyMarketData);
+
+            // Click phrase in the click table.
+            {
+                ParsedQuery query(queryWords, c_clickPhraseMarketData);
+
+                query.SetClickPhrase(c_dogHouseHash);
                 RunTestCase(docDescriptor, query);
             }
 
-
-            TestCase(DifferentMarketWithSameLanguage)
+            // Click phrase not in the click table.
             {
-                QueryWords queryWords
-                {
-                    {
-                        QueryComponent
-                        {
-                            QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
-                        }
-                    }
-                };
+                ParsedQuery query(queryWords, c_clickPhraseMarketData);
 
-                DocumentDescriptor docDescriptor(c_anyMarketData);
-                ParsedQuery query(queryWords, c_anyOtherMarketDataWithSameLanguage);
-
+                query.SetClickPhrase(c_nonExistentPhraseHash);
                 RunTestCase(docDescriptor, query);
             }
-        };
+        }
 
-        const AcceptanceUnitTest::TermFrequencies AcceptanceUnitTest::c_defaultTermFrequencies = AcceptanceUnitTest::MakeTermFrequencies(0, 1, 0, 0);
 
-        const float AcceptanceUnitTest::c_discardedDocumentScore = std::numeric_limits<float>::lowest();
+        TEST_CASE_F(Acceptance, ConstraintDiscard)
+        {
+            QueryWords queryWords
+            {
+                {
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                    }
+                }
+            };
 
-        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_anyMarketData = {0x01234567, 0x11112222};
-        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_anyOtherMarketDataWithSameLanguage = {0x01234567, 0x22222222};
-        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_anyOtherFullyDifferentMarketData = {0x89ABCDEF, 0x33334444};
-        const AcceptanceUnitTest::MarketData AcceptanceUnitTest::c_clickPhraseMarketData = {0xC11CC, 0xDA7ADA7A};
+            const MarketData market = c_anyMarketData;
 
-        const float AcceptanceUnitTest::c_anyIdf1 = 0.1f;
-        const float AcceptanceUnitTest::c_anyIdf2 = 0.23f;
-        const float AcceptanceUnitTest::c_anyIdf3 = 0.67f;
-        const float AcceptanceUnitTest::c_anyIdf4 = 1.5f;
+            ParsedQuery query(queryWords, market);
+            query.RequireDiscoveryTimeTicksLessThan(10);
+
+            // The following document should not be discarded.
+            {
+                DocumentDescriptor docDescriptorNoDiscard(market);
+                docDescriptorNoDiscard.SetDiscoveryTimeTicks(9);
+
+                RunTestCase(docDescriptorNoDiscard, query);
+            }
+
+            // The following document should be discarded.
+            {
+                DocumentDescriptor docDescriptorDiscard(market);
+                docDescriptorDiscard.SetDiscoveryTimeTicks(10);
+
+                RunTestCase(docDescriptorDiscard, query);
+            }
+        }
+
+
+        TEST_CASE_F(Acceptance, CompletelyDifferentMarket)
+        {
+            QueryWords queryWords
+            {
+                {
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                    }
+                }
+            };
+
+            DocumentDescriptor docDescriptor(c_anyMarketData);
+            ParsedQuery query(queryWords, c_anyOtherFullyDifferentMarketData);
+
+            RunTestCase(docDescriptor, query);
+        }
+
+
+        TEST_CASE_F(Acceptance, DifferentMarketWithSameLanguage)
+        {
+            QueryWords queryWords
+            {
+                {
+                    QueryComponent
+                    {
+                        QueryNGram { TermInfo(c_houseHash, c_anyIdf2) }
+                    }
+                }
+            };
+
+            DocumentDescriptor docDescriptor(c_anyMarketData);
+            ParsedQuery query(queryWords, c_anyOtherMarketDataWithSameLanguage);
+
+            RunTestCase(docDescriptor, query);
+        }
+
+
+        TEST_CASES_END
+
+        const Acceptance::TermFrequencies Acceptance::c_defaultTermFrequencies = Acceptance::MakeTermFrequencies(0, 1, 0, 0);
+
+        const float Acceptance::c_discardedDocumentScore = std::numeric_limits<float>::lowest();
+
+        const Acceptance::MarketData Acceptance::c_anyMarketData = {0x01234567, 0x11112222};
+        const Acceptance::MarketData Acceptance::c_anyOtherMarketDataWithSameLanguage = {0x01234567, 0x22222222};
+        const Acceptance::MarketData Acceptance::c_anyOtherFullyDifferentMarketData = {0x89ABCDEF, 0x33334444};
+        const Acceptance::MarketData Acceptance::c_clickPhraseMarketData = {0xC11CC, 0xDA7ADA7A};
+
+        const float Acceptance::c_anyIdf1 = 0.1f;
+        const float Acceptance::c_anyIdf2 = 0.23f;
+        const float Acceptance::c_anyIdf3 = 0.67f;
+        const float Acceptance::c_anyIdf4 = 1.5f;
     }
 }

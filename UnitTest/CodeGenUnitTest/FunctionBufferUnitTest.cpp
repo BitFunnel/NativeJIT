@@ -8,7 +8,6 @@
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
 #include "NativeJIT/FunctionSpecification.h"
-#include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 #include "UnwindCode.h"
@@ -39,421 +38,9 @@ namespace NativeJIT
 {
     namespace CodeGenUnitTest
     {
-        TestClass(FunctionBufferTest), TestFixture
-        {
-        public:
-            TestCase(Trivial)
-            {
-                auto setup = GetSetup();
-                auto & code = setup->GetCode();
+        TEST_FIXTURE_START(FunctionBufferTest)
 
-                // A function with no stack requirements, which would not even
-                // need unwind information.
-                FunctionSpecification spec(setup->GetAllocator(), -1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
-                ValidateUnwindInfo(spec);
-
-                // We impose a stricter requirement that stack must be aligned
-                // for all functions, so there's at least one code to perform
-                // the alignment even if the function makes no calls or uses
-                // no stack. So, 1 quadword slot allocated for the alignment:
-                TestEqual(8, spec.GetOffsetToOriginalRsp());
-
-                // Verify prolog.
-                std::vector<uint8_t> offsets;
-
-                code.Reset();
-                EmitAndRecordOffset(code,
-                                    [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 8); },
-                                    offsets);
-
-                VerifyProlog(spec, code);
-
-                // Verify unwind info.
-                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
-
-                TestEqual(1, unwindInfo.m_countOfCodes);
-                TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 1 - 1),
-                                    unwindCodes[0]);
-                
-                // Verify epilog.
-                code.Reset();
-
-                code.EmitImmediate<OpCode::Add>(rsp, 8);
-                code.Emit<OpCode::Ret>();
-
-                VerifyEpilog(spec, code);
-            }
-
-
-            TestCase(FunctionWithCalls)
-            {
-                auto setup = GetSetup();
-                auto & code = setup->GetCode();
-
-                // A function that calls functions with at most 1 argument.
-                FunctionSpecification spec(setup->GetAllocator(), 1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
-                ValidateUnwindInfo(spec);
-
-                // 4 slots for parameter homes, 1 slot to align stack.
-                TestEqual(40, spec.GetOffsetToOriginalRsp());
-
-                // Verify prolog.
-                std::vector<uint8_t> offsets;
-
-                code.Reset();
-                EmitAndRecordOffset(code,
-                                    [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 40); },
-                                    offsets);
-
-                VerifyProlog(spec, code);
-
-                // Verify unwind info.
-                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
-
-                TestEqual(1, unwindInfo.m_countOfCodes);
-                TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 5 - 1),
-                                    unwindCodes[0]);
-                
-                // Verify epilog.
-                code.Reset();
-
-                code.EmitImmediate<OpCode::Add>(rsp, 40);
-                code.Emit<OpCode::Ret>();
-
-                VerifyEpilog(spec, code);
-            }
-
-
-            TestCase(LargeStackAlloc)
-            {
-                auto setup = GetSetup();
-                auto & code = setup->GetCode();
-
-                // A function that allocates 17 stack slots.
-                FunctionSpecification spec(setup->GetAllocator(), -1, 17, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
-                ValidateUnwindInfo(spec);
-
-                // 17 quadword slots exactly (already aligned).
-                TestEqual(136, spec.GetOffsetToOriginalRsp());
-
-                // Verify prolog.
-                std::vector<uint8_t> offsets;
-
-                code.Reset();
-                EmitAndRecordOffset(code,
-                                    [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 136); },
-                                    offsets);
-
-                VerifyProlog(spec, code);
-
-                // Verify unwind info.
-                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
-
-                TestEqual(2, unwindInfo.m_countOfCodes);
-                TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_LARGE, 0),
-                                     UnwindCode(17),
-                                     unwindCodes[0],
-                                     unwindCodes[1]);
-                
-                // Verify epilog.
-                code.Reset();
-
-                code.EmitImmediate<OpCode::Add>(rsp, 136);
-                code.Emit<OpCode::Ret>();
-
-                VerifyEpilog(spec, code);
-            }
-
-
-            TestCase(RbpSetToOldRsp)
-            {
-                auto setup = GetSetup();
-                auto & code = setup->GetCode();
-
-                // Max 6 arguments for a call, no explicit register saves, but RBP saved implicitly.
-                FunctionSpecification spec(setup->GetAllocator(), 6, 0, 0, 0, FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
-                ValidateUnwindInfo(spec);
-
-                // 6 slots for parameters, one for RBP, which also aligns the stack.
-                TestEqual(56, spec.GetOffsetToOriginalRsp());
-
-                // Verify prolog.
-                std::vector<uint8_t> offsets;
-
-                code.Reset();
-
-                EmitAndRecordOffset(code,
-                                    [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 56); },
-                                    offsets);
-
-                EmitAndRecordOffset(code,
-                                    [](FunctionBuffer& f)
-                                    {
-                                        // Parameters must be right after rsp,
-                                        // storage for saving rbp follows.
-                                        f.Emit<OpCode::Mov>(rsp, 48, rbp);
-                                        f.Emit<OpCode::Lea>(rbp, rsp, 56);
-                                    },
-                                    offsets);
-
-                VerifyProlog(spec, code);
-
-                // Verify unwind info.
-                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
-
-                // Reverse the offsets to match the epilog order.
-                std::reverse(offsets.begin(), offsets.end());
-
-                TestEqual(3, unwindInfo.m_countOfCodes);
-                TestEqualUnwindCode(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_ALLOC_SMALL, 7 - 1),
-                                     unwindCodes[2]);
-                TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
-                                     UnwindCode(6), // Quardword offset off rsp.
-                                     unwindCodes[0],
-                                     unwindCodes[1]);
-                
-                // Verify epilog.
-                code.Reset();
-
-                code.Emit<OpCode::Mov>(rbp, rsp, 48);
-                code.EmitImmediate<OpCode::Add>(rsp, 56);
-                code.Emit<OpCode::Ret>();
-
-                VerifyEpilog(spec, code);
-            }
-
-
-            TestCase(Complex)
-            {
-                auto setup = GetSetup();
-                auto & code = setup->GetCode();
-
-                // Calls functions with max 1 argument, 2 local slots for variables,
-                // RBP (implicitly) saved, XMM10/11 explicitly saved.
-                // Total: 4 slots for calls, 1 for RXX saves, 1 to make the next
-                // 4 slots for XMM10/11 16-byte aligned, 2 for variables, 1 empty
-                // for ensuring the whole stack is 16-byte aligned. Sum: 13.
-                FunctionSpecification spec(setup->GetAllocator(),
-                                           1,
-                                           2,
-                                           0, // RBP implicit due to SetRbpToOriginalRsp.
-                                           xmm10.GetMask() | xmm11.GetMask(),
-                                           FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
-                ValidateUnwindInfo(spec);
-
-                TestEqual(104, spec.GetOffsetToOriginalRsp());
-
-                // Verify prolog.
-                std::vector<uint8_t> offsets;
-
-                code.Reset();
-
-                EmitAndRecordOffset(code,
-                                    [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 104); },
-                                    offsets);
-                EmitAndRecordOffset(code,
-                                    // 4 slots skipped for parameters, fifth used to save RBP.
-                                    [](FunctionBuffer& f) { f.Emit<OpCode::Mov>(rsp, 32, rbp); },
-                                    offsets);
-                EmitAndRecordOffset(code,
-                                    // Skip offset 40 as it's not 16-byte aligned.
-                                    // TODO: Use movaps instead of mov here and below.
-                                    [](FunctionBuffer& f) { f.Emit<OpCode::Mov>(rsp, 48, xmm10); },
-                                    offsets);
-                EmitAndRecordOffset(code,
-                                    // 16 bytes needed for xmm10, advance to offset 64 for xmm11.
-                                    [](FunctionBuffer& f)
-                                    {
-                                        f.Emit<OpCode::Mov>(rsp, 64, xmm11);
-                                        // Note: offsets [80, 96) are used for the
-                                        // 2 variable slots, [96, 104) to align
-                                        // the beginning of the stack.
-                                        f.Emit<OpCode::Lea>(rbp, rsp, 104);
-                                    },
-                                    offsets);
-
-                VerifyProlog(spec, code);
-
-                // Verify unwind info.
-                auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
-                auto unwindCodes = &unwindInfo.m_firstUnwindCode;
-
-                // Reverse the offsets to match the epilog order.
-                std::reverse(offsets.begin(), offsets.end());
-
-                TestEqual(7, unwindInfo.m_countOfCodes);
-                TestEqualUnwindCode(UnwindCode(offsets.at(3), UnwindCodeOp::UWOP_ALLOC_SMALL, 13 - 1),
-                                    unwindCodes[6]);
-                TestEqualUnwindCode2(UnwindCode(offsets.at(2), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
-                                     UnwindCode(4), // Quadword offset off rsp.
-                                     unwindCodes[4],
-                                     unwindCodes[5]);
-                TestEqualUnwindCode2(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm10.GetId())),
-                                     UnwindCode(3), // 16-byte offset off rsp.
-                                     unwindCodes[2],
-                                     unwindCodes[3]);
-                TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm11.GetId())),
-                                     UnwindCode(4), // 16-byte offset off rsp.
-                                     unwindCodes[0],
-                                     unwindCodes[1]);
-                
-                // Verify epilog.
-                code.Reset();
-
-                // TODO: Use movaps instead of mov for the next two.
-                code.Emit<OpCode::Mov>(xmm11, rsp, 64);
-                code.Emit<OpCode::Mov>(xmm10, rsp, 48);
-                code.Emit<OpCode::Mov>(rbp, rsp, 32);
-                code.EmitImmediate<OpCode::Add>(rsp, 104);
-                code.Emit<OpCode::Ret>();
-
-                VerifyEpilog(spec, code);
-            }
-
-
-            static void ThrowTestException()
-            {
-                throw std::runtime_error("Test");
-            }
-
-
-            TestCase(Exception)
-            {
-                auto setup = GetSetup();
-
-                // A function that preserves all non-volatiles.
-                FunctionSpecification spec(setup->GetAllocator(),
-                                           -1,
-                                           12, // Stack slots
-                                           c_rxxWritableNonvolatilesMask,
-                                           c_xmmWritableNonvolatilesMask,
-                                           FunctionSpecification::BaseRegisterType::Unused);
-                ValidateUnwindInfo(spec);
-
-                auto & code = setup->GetCode();
-
-                code.BeginFunctionBodyGeneration(spec);
-
-                // Erase all writable registers. An exception will be thrown
-                // later on and the code would crash due to garbage in registers
-                // if unwind information wasn't correct.
-                FillAllWritableRegistersWithGarbage(code);
-
-                // Call a function that will trigger an exception.
-                code.EmitImmediate<OpCode::Mov>(rax, &ThrowTestException);
-                code.Emit<OpCode::Call>(rax);
-
-                code.EndFunctionBodyGeneration(spec);
-
-                auto func = reinterpret_cast<void (*)()>(code.GetEntryPoint());
-                bool exceptionCaught = false;
-
-                try
-                {
-                    TestAssert(!exceptionCaught);
-                    func();
-                    TestFail("Should not have reached here");
-                }
-                catch (std::exception const &e)
-                {
-                    TestAssert(!exceptionCaught);
-                    TestEqual("Test", e.what());
-
-                    exceptionCaught = true;
-                }
-                catch (...)
-                {
-                    TestFail("Unexpected exception caught");
-                }
-
-                TestAssert(exceptionCaught);
-            }
-
-
-            // This structure must be 128-bit aligned to be able to use its
-            // m_xmm members as targets for movaps.
-            typedef ALIGNAS(16) struct
-            {
-                // Need to save all 128 bits.
-                ALIGNAS(16) uint64_t m_xmm[2 * (RegisterBase::c_maxFloatRegisterID + 1)];
-
-                // 64 bits for RXX registers.
-                uint64_t m_rxx[RegisterBase::c_maxIntegerRegisterID + 1];
-            } RegInfo;
-
-
-            TestCase(RegisterPreservation)
-            {
-                RegInfo before;
-                RegInfo after;
-
-                // Make sure that the test fails if these don't get filled in.
-                memset(&before, 1, sizeof(before));
-                memset(&after, 2, sizeof(after));
-
-                auto setup = GetSetup();
-                auto & code = setup->GetCode();
-
-                void (*saveBeforeFunc)() = EmitSaveNonvolatilesCode(code, before);
-                void (*saveAfterFunc)() = EmitSaveNonvolatilesCode(code, after);
-
-                // A function that perserves all non-volatiles.
-                FunctionSpecification spec(setup->GetAllocator(),
-                                           -1,
-                                           12, // Allocate some slots to increase entropy.
-                                           c_rxxWritableNonvolatilesMask,
-                                           c_xmmWritableNonvolatilesMask,
-                                           FunctionSpecification::BaseRegisterType::Unused);
-                ValidateUnwindInfo(spec);
-
-                // Erase all writable registers to show that epilog indeed restores
-                // nonvolatiles.
-                code.BeginFunctionBodyGeneration(spec);
-                FillAllWritableRegistersWithGarbage(code);
-                code.EndFunctionBodyGeneration(spec);
-
-                auto mainFunc = reinterpret_cast<void (*)()>(code.GetEntryPoint());
-
-                // Note: there's an assumption that no nonvolatiles will be
-                // modified after saveBeforeFunc() completes and before mainFunc()
-                // starts. There's a similar assumption between mainFunc() and
-                // saveAfterFunc().
-                saveBeforeFunc();
-                mainFunc();
-                saveAfterFunc();
-
-                // Verify whether nonvolatiles in before and after storages are the same.
-                unsigned regMask = c_rxxWritableNonvolatilesMask;
-                unsigned regId;
-
-                while (BitOp::GetLowestBitSet(regMask, &regId))
-                {
-                    TestEqual(before.m_rxx[regId],
-                              after.m_rxx[regId],
-                              "Mismatch for register %s",
-                              Register<8, false>(regId).GetName());
-                    BitOp::ClearBit(&regMask, regId);
-                }
-
-                regMask = c_xmmWritableNonvolatilesMask;
-
-                while (BitOp::GetLowestBitSet(regMask, &regId))
-                {
-                    // TODO: Compare both quadwords after movaps is used.
-                    TestEqual(before.m_xmm[2 * regId],
-                              after.m_xmm[2 * regId],
-                              "Mismatch for register %s",
-                              Register<8, true>(regId).GetName());
-                    BitOp::ClearBit(&regMask, regId);
-                }
-            }
-
-
-        private:
+        protected:
             void ValidateUnwindInfo(FunctionSpecification const & spec)
             {
                 auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -487,7 +74,7 @@ namespace NativeJIT
                 unsigned regId;
 
                 // Using RAX explicitly in a few places below.
-                Assert((regMask & rax.GetMask()) != 0, "This test assumes RAX is writable");
+                TestAssert((regMask & rax.GetMask()) != 0, "This test assumes RAX is writable");
 
                 while (BitOp::GetLowestBitSet(regMask, &regId))
                 {
@@ -508,6 +95,18 @@ namespace NativeJIT
                     BitOp::ClearBit(&regMask, regId);
                 }
             }
+
+
+            // This structure must be 128-bit aligned to be able to use its
+            // m_xmm members as targets for movaps.
+            typedef ALIGNAS(16) struct
+            {
+                // Need to save all 128 bits.
+                ALIGNAS(16) uint64_t m_xmm[2 * (RegisterBase::c_maxFloatRegisterID + 1)];
+
+                // 64 bits for RXX registers.
+                uint64_t m_rxx[RegisterBase::c_maxIntegerRegisterID + 1];
+            } RegInfo;
 
 
             // Emits the code to save all nonvolatiles into the regInfo structure
@@ -593,7 +192,7 @@ namespace NativeJIT
                                  spec.GetEpilogLength()));
             }
 
-        private:
+
             static const unsigned c_rxxWritableNonvolatilesMask
                 = CallingConvention::c_rxxNonvolatileRegistersMask
                   & CallingConvention::c_rxxWritableRegistersMask;
@@ -605,7 +204,413 @@ namespace NativeJIT
             std::default_random_engine m_rng;
             std::uniform_int_distribution<uint64_t> m_uniformUInt64;
 
-        };
+        TEST_FIXTURE_END_TEST_CASES_BEGIN
+
+
+        TEST_CASE_F(FunctionBufferTest, Trivial)
+        {
+            auto setup = GetSetup();
+            auto & code = setup->GetCode();
+
+            // A function with no stack requirements, which would not even
+            // need unwind information.
+            FunctionSpecification spec(setup->GetAllocator(), -1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            // We impose a stricter requirement that stack must be aligned
+            // for all functions, so there's at least one code to perform
+            // the alignment even if the function makes no calls or uses
+            // no stack. So, 1 quadword slot allocated for the alignment:
+            TestEqual(8, spec.GetOffsetToOriginalRsp());
+
+            // Verify prolog.
+            std::vector<uint8_t> offsets;
+
+            code.Reset();
+            EmitAndRecordOffset(code,
+                                [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 8); },
+                                offsets);
+
+            VerifyProlog(spec, code);
+            ASSERT_NO_FATAL_FAILURES();
+
+            // Verify unwind info.
+            auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+            auto unwindCodes = &unwindInfo.m_firstUnwindCode;
+
+            TestEqual(1, unwindInfo.m_countOfCodes);
+            TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 1 - 1),
+                                unwindCodes[0]);
+                
+            // Verify epilog.
+            code.Reset();
+
+            code.EmitImmediate<OpCode::Add>(rsp, 8);
+            code.Emit<OpCode::Ret>();
+
+            VerifyEpilog(spec, code);
+        }
+
+
+        TEST_CASE_F(FunctionBufferTest, FunctionWithCalls)
+        {
+            auto setup = GetSetup();
+            auto & code = setup->GetCode();
+
+            // A function that calls functions with at most 1 argument.
+            FunctionSpecification spec(setup->GetAllocator(), 1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            // 4 slots for parameter homes, 1 slot to align stack.
+            TestEqual(40, spec.GetOffsetToOriginalRsp());
+
+            // Verify prolog.
+            std::vector<uint8_t> offsets;
+
+            code.Reset();
+            EmitAndRecordOffset(code,
+                                [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 40); },
+                                offsets);
+
+            VerifyProlog(spec, code);
+            ASSERT_NO_FATAL_FAILURES();
+
+            // Verify unwind info.
+            auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+            auto unwindCodes = &unwindInfo.m_firstUnwindCode;
+
+            TestEqual(1, unwindInfo.m_countOfCodes);
+            TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 5 - 1),
+                                unwindCodes[0]);
+                
+            // Verify epilog.
+            code.Reset();
+
+            code.EmitImmediate<OpCode::Add>(rsp, 40);
+            code.Emit<OpCode::Ret>();
+
+            VerifyEpilog(spec, code);
+        }
+
+
+        TEST_CASE_F(FunctionBufferTest, LargeStackAlloc)
+        {
+            auto setup = GetSetup();
+            auto & code = setup->GetCode();
+
+            // A function that allocates 17 stack slots.
+            FunctionSpecification spec(setup->GetAllocator(), -1, 17, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            // 17 quadword slots exactly (already aligned).
+            TestEqual(136, spec.GetOffsetToOriginalRsp());
+
+            // Verify prolog.
+            std::vector<uint8_t> offsets;
+
+            code.Reset();
+            EmitAndRecordOffset(code,
+                                [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 136); },
+                                offsets);
+
+            VerifyProlog(spec, code);
+            ASSERT_NO_FATAL_FAILURES();
+
+            // Verify unwind info.
+            auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+            auto unwindCodes = &unwindInfo.m_firstUnwindCode;
+
+            TestEqual(2, unwindInfo.m_countOfCodes);
+            TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_LARGE, 0),
+                                 UnwindCode(17),
+                                 unwindCodes[0],
+                                 unwindCodes[1]);
+                
+            // Verify epilog.
+            code.Reset();
+
+            code.EmitImmediate<OpCode::Add>(rsp, 136);
+            code.Emit<OpCode::Ret>();
+
+            VerifyEpilog(spec, code);
+        }
+
+
+        TEST_CASE_F(FunctionBufferTest, RbpSetToOldRsp)
+        {
+            auto setup = GetSetup();
+            auto & code = setup->GetCode();
+
+            // Max 6 arguments for a call, no explicit register saves, but RBP saved implicitly.
+            FunctionSpecification spec(setup->GetAllocator(), 6, 0, 0, 0, FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            // 6 slots for parameters, one for RBP, which also aligns the stack.
+            TestEqual(56, spec.GetOffsetToOriginalRsp());
+
+            // Verify prolog.
+            std::vector<uint8_t> offsets;
+
+            code.Reset();
+
+            EmitAndRecordOffset(code,
+                                [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 56); },
+                                offsets);
+
+            EmitAndRecordOffset(code,
+                                [](FunctionBuffer& f)
+                                {
+                                    // Parameters must be right after rsp,
+                                    // storage for saving rbp follows.
+                                    f.Emit<OpCode::Mov>(rsp, 48, rbp);
+                                    f.Emit<OpCode::Lea>(rbp, rsp, 56);
+                                },
+                                offsets);
+
+            VerifyProlog(spec, code);
+            ASSERT_NO_FATAL_FAILURES();
+
+            // Verify unwind info.
+            auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+            auto unwindCodes = &unwindInfo.m_firstUnwindCode;
+
+            // Reverse the offsets to match the epilog order.
+            std::reverse(offsets.begin(), offsets.end());
+
+            TestEqual(3, unwindInfo.m_countOfCodes);
+            TestEqualUnwindCode(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_ALLOC_SMALL, 7 - 1),
+                                unwindCodes[2]);
+            TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
+                                 UnwindCode(6), // Quardword offset off rsp.
+                                 unwindCodes[0],
+                                 unwindCodes[1]);
+                
+            // Verify epilog.
+            code.Reset();
+
+            code.Emit<OpCode::Mov>(rbp, rsp, 48);
+            code.EmitImmediate<OpCode::Add>(rsp, 56);
+            code.Emit<OpCode::Ret>();
+
+            VerifyEpilog(spec, code);
+        }
+
+
+        TEST_CASE_F(FunctionBufferTest, Complex)
+        {
+            auto setup = GetSetup();
+            auto & code = setup->GetCode();
+
+            // Calls functions with max 1 argument, 2 local slots for variables,
+            // RBP (implicitly) saved, XMM10/11 explicitly saved.
+            // Total: 4 slots for calls, 1 for RXX saves, 1 to make the next
+            // 4 slots for XMM10/11 16-byte aligned, 2 for variables, 1 empty
+            // for ensuring the whole stack is 16-byte aligned. Sum: 13.
+            FunctionSpecification spec(setup->GetAllocator(),
+                                        1,
+                                        2,
+                                        0, // RBP implicit due to SetRbpToOriginalRsp.
+                                        xmm10.GetMask() | xmm11.GetMask(),
+                                        FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            TestEqual(104, spec.GetOffsetToOriginalRsp());
+
+            // Verify prolog.
+            std::vector<uint8_t> offsets;
+
+            code.Reset();
+
+            EmitAndRecordOffset(code,
+                                [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 104); },
+                                offsets);
+            EmitAndRecordOffset(code,
+                                // 4 slots skipped for parameters, fifth used to save RBP.
+                                [](FunctionBuffer& f) { f.Emit<OpCode::Mov>(rsp, 32, rbp); },
+                                offsets);
+            EmitAndRecordOffset(code,
+                                // Skip offset 40 as it's not 16-byte aligned.
+                                // TODO: Use movaps instead of mov here and below.
+                                [](FunctionBuffer& f) { f.Emit<OpCode::Mov>(rsp, 48, xmm10); },
+                                offsets);
+            EmitAndRecordOffset(code,
+                                // 16 bytes needed for xmm10, advance to offset 64 for xmm11.
+                                [](FunctionBuffer& f)
+                                {
+                                    f.Emit<OpCode::Mov>(rsp, 64, xmm11);
+                                    // Note: offsets [80, 96) are used for the
+                                    // 2 variable slots, [96, 104) to align
+                                    // the beginning of the stack.
+                                    f.Emit<OpCode::Lea>(rbp, rsp, 104);
+                                },
+                                offsets);
+
+            VerifyProlog(spec, code);
+            ASSERT_NO_FATAL_FAILURES();
+
+            // Verify unwind info.
+            auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
+            auto unwindCodes = &unwindInfo.m_firstUnwindCode;
+
+            // Reverse the offsets to match the epilog order.
+            std::reverse(offsets.begin(), offsets.end());
+
+            TestEqual(7, unwindInfo.m_countOfCodes);
+            TestEqualUnwindCode(UnwindCode(offsets.at(3), UnwindCodeOp::UWOP_ALLOC_SMALL, 13 - 1),
+                                unwindCodes[6]);
+            TestEqualUnwindCode2(UnwindCode(offsets.at(2), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
+                                 UnwindCode(4), // Quadword offset off rsp.
+                                 unwindCodes[4],
+                                 unwindCodes[5]);
+            TestEqualUnwindCode2(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm10.GetId())),
+                                 UnwindCode(3), // 16-byte offset off rsp.
+                                 unwindCodes[2],
+                                 unwindCodes[3]);
+            TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm11.GetId())),
+                                 UnwindCode(4), // 16-byte offset off rsp.
+                                 unwindCodes[0],
+                                 unwindCodes[1]);
+                
+            // Verify epilog.
+            code.Reset();
+
+            // TODO: Use movaps instead of mov for the next two.
+            code.Emit<OpCode::Mov>(xmm11, rsp, 64);
+            code.Emit<OpCode::Mov>(xmm10, rsp, 48);
+            code.Emit<OpCode::Mov>(rbp, rsp, 32);
+            code.EmitImmediate<OpCode::Add>(rsp, 104);
+            code.Emit<OpCode::Ret>();
+
+            VerifyEpilog(spec, code);
+        }
+
+
+        static void ThrowTestException()
+        {
+            throw std::runtime_error("Test");
+        }
+
+
+        TEST_CASE_F(FunctionBufferTest, Exception)
+        {
+            auto setup = GetSetup();
+
+            // A function that preserves all non-volatiles.
+            FunctionSpecification spec(setup->GetAllocator(),
+                                        -1,
+                                        12, // Stack slots
+                                        c_rxxWritableNonvolatilesMask,
+                                        c_xmmWritableNonvolatilesMask,
+                                        FunctionSpecification::BaseRegisterType::Unused);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            auto & code = setup->GetCode();
+
+            code.BeginFunctionBodyGeneration(spec);
+
+            // Erase all writable registers. An exception will be thrown
+            // later on and the code would crash due to garbage in registers
+            // if unwind information wasn't correct.
+            ASSERT_NO_FATAL_FAILURE(FillAllWritableRegistersWithGarbage(code));
+
+            // Call a function that will trigger an exception.
+            code.EmitImmediate<OpCode::Mov>(rax, &ThrowTestException);
+            code.Emit<OpCode::Call>(rax);
+
+            code.EndFunctionBodyGeneration(spec);
+
+            auto func = reinterpret_cast<void (*)()>(code.GetEntryPoint());
+            bool exceptionCaught = false;
+
+            try
+            {
+                TestAssert(!exceptionCaught);
+                func();
+                TestFail("Should not have reached here");
+            }
+            catch (std::exception const &e)
+            {
+                TestAssert(!exceptionCaught);
+                TestEqualCharPtrs("Test", e.what());
+
+                exceptionCaught = true;
+            }
+            catch (...)
+            {
+                TestFail("Unexpected exception caught");
+            }
+
+            TestAssert(exceptionCaught);
+        }
+
+
+        TEST_CASE_F(FunctionBufferTest, RegisterPreservation)
+        {
+            RegInfo before;
+            RegInfo after;
+
+            // Make sure that the test fails if these don't get filled in.
+            memset(&before, 1, sizeof(before));
+            memset(&after, 2, sizeof(after));
+
+            auto setup = GetSetup();
+            auto & code = setup->GetCode();
+
+            void (*saveBeforeFunc)() = EmitSaveNonvolatilesCode(code, before);
+            void (*saveAfterFunc)() = EmitSaveNonvolatilesCode(code, after);
+
+            // A function that perserves all non-volatiles.
+            FunctionSpecification spec(setup->GetAllocator(),
+                                        -1,
+                                        12, // Allocate some slots to increase entropy.
+                                        c_rxxWritableNonvolatilesMask,
+                                        c_xmmWritableNonvolatilesMask,
+                                        FunctionSpecification::BaseRegisterType::Unused);
+            ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
+
+            // Erase all writable registers to show that epilog indeed restores
+            // nonvolatiles.
+            code.BeginFunctionBodyGeneration(spec);
+            ASSERT_NO_FATAL_FAILURE(FillAllWritableRegistersWithGarbage(code));
+            code.EndFunctionBodyGeneration(spec);
+
+            auto mainFunc = reinterpret_cast<void (*)()>(code.GetEntryPoint());
+
+            // Note: there's an assumption that no nonvolatiles will be
+            // modified after saveBeforeFunc() completes and before mainFunc()
+            // starts. There's a similar assumption between mainFunc() and
+            // saveAfterFunc().
+            saveBeforeFunc();
+            mainFunc();
+            saveAfterFunc();
+
+            // Verify whether nonvolatiles in before and after storages are the same.
+            unsigned regMask = c_rxxWritableNonvolatilesMask;
+            unsigned regId;
+
+            while (BitOp::GetLowestBitSet(regMask, &regId))
+            {
+                TestEqual(before.m_rxx[regId],
+                            after.m_rxx[regId],
+                            "Mismatch for register %s",
+                            Register<8, false>(regId).GetName());
+                BitOp::ClearBit(&regMask, regId);
+            }
+
+            regMask = c_xmmWritableNonvolatilesMask;
+
+            while (BitOp::GetLowestBitSet(regMask, &regId))
+            {
+                // TODO: Compare both quadwords after movaps is used.
+                TestEqual(before.m_xmm[2 * regId],
+                            after.m_xmm[2 * regId],
+                            "Mismatch for register %s",
+                            Register<8, true>(regId).GetName());
+                BitOp::ClearBit(&regMask, regId);
+            }
+        }
+
+        TEST_CASES_END
     }
 }
 

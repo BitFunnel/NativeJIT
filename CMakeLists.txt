@@ -1,7 +1,7 @@
 # NativeJIT
 
-cmake_minimum_required (VERSION 2.6)
-project (NativeJIT_CMake)
+cmake_minimum_required(VERSION 2.6)
+project(NativeJIT_CMake)
 
 
 ###############################################################################
@@ -30,13 +30,13 @@ include_directories(
 
 
 if(MSVC)
-  SET( VS_COMMON_CXX_FLAGS "/W4 /WX /DUSING_GTEST" )
+  SET( VS_COMMON_CXX_FLAGS "/W4 /WX" )
   SET( CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} ${VS_COMMON_CXX_FLAGS} /MTd" )
   SET( CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} ${VS_COMMON_CXX_FLAGS} /MT" )
 endif()
 
 # This allows the solution to group projects into folders like src and UnitTest.
-set_property( GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 include_directories(inc)
 add_subdirectory(src/CodeGen)
@@ -54,3 +54,7 @@ add_custom_target(TOPLEVEL SOURCES
   README.md
   ToDo.txt
 )
+
+enable_testing()
+add_test(NAME CodeGenUnitTest COMMAND CodeGenUnitTest)
+add_test(NAME NativeJITUnitTest COMMAND NativeJITUnitTest)

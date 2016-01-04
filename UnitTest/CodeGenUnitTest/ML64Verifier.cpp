@@ -3,7 +3,7 @@
 #include <iostream>             // TODO: Temporary - for debugging.
 
 #include "ML64Verifier.h"
-#include "SuiteCpp/UnitTest.h"
+#include "TestSetup.h"
 
 
 namespace NativeJIT
@@ -35,8 +35,8 @@ namespace NativeJIT
                     uint64_t value;
                     unsigned size;
 
-                    TestAssert(ReadHexNumber(value, size));
-                    TestAssert(size <= 8 && size > 0);
+                    Assert(ReadHexNumber(value, size), "Failed to read hex number");
+                    Assert(size <= 8 && size > 0, "Invalid size %u", size);
 
                     for (unsigned i = 0 ; i < size; ++i)
                     {
@@ -51,7 +51,7 @@ namespace NativeJIT
                             ReportError(x, m_testOutput[m_bytesVerified]);
                         }
 
-                        TestAssert(x == m_testOutput[m_bytesVerified]);
+                        Assert(x == m_testOutput[m_bytesVerified], "Code mismatch");
                         ++m_bytesVerified;
                     }
 
@@ -145,8 +145,8 @@ namespace NativeJIT
             {
                 uint64_t value;
                 unsigned size;
-                TestAssert(ReadHexNumber(value, size));
-                TestAssert(size == 4);
+                Assert(ReadHexNumber(value, size), "Failed to read hex number");
+                Assert(size == 4, "Invalid size %u", size);
             }
         }
     }
@@ -230,7 +230,8 @@ namespace NativeJIT
 
     unsigned ML64Verifier::ReadHexDigit()
     {
-        TestAssert(isxdigit(PeekChar()) != 0);
+        Assert(isxdigit(PeekChar()) != 0, "Non-hex character");
+
         char c = GetChar();
         if (c >= '0' && c <= '9')
         {
@@ -246,10 +247,8 @@ namespace NativeJIT
         }
         else
         {
-            TestFail();
-#ifdef _DEBUG
+            Assert(false, "Unexpected character, code: %u", c);
             throw std::runtime_error("Unreachable code");
-#endif
         }
     }
 

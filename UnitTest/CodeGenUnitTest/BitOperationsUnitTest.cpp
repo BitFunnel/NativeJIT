@@ -1,15 +1,15 @@
 #include "stdafx.h"
 
 #include "NativeJIT/BitOperations.h"
-#include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
+#include "TestSetup.h"
 
 
 namespace NativeJIT
 {
     namespace BitOperationsUnitTest
     {
-        TestCase(NonZeroBitCount)
+        TEST_CASE(BitOperations, NonZeroBitCount)
         {
             TestEqual(0, BitOp::GetNonZeroBitCount(0u));
             TestEqual(0, BitOp::GetNonZeroBitCountFallback(0u));
@@ -46,7 +46,7 @@ namespace NativeJIT
         }
 
 
-        TestCase(LowestBitSet)
+        TEST_CASE(BitOperations, LowestBitSet)
         {
             unsigned unused;
             TestEqual(false, BitOp::GetLowestBitSet(0, &unused));
@@ -69,7 +69,7 @@ namespace NativeJIT
         }
 
 
-        TestCase(HighestBitSet)
+        TEST_CASE(BitOperations, HighestBitSet)
         {
             unsigned unused;
             TestEqual(false, BitOp::GetHighestBitSet(0, &unused));
@@ -80,7 +80,7 @@ namespace NativeJIT
         }
 
 
-        TestCase(TestBit)
+        TEST_CASE(BitOperations, TestBit)
         {
             const uint64_t bits62and63 = 0xC000000000000000;
 
@@ -100,7 +100,7 @@ namespace NativeJIT
         }
 
 
-        TestCase(TestAndSetBit)
+        TEST_CASE(BitOperations, TestAndSetBit)
         {
             uint64_t currentValue = 0;
             uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
@@ -120,7 +120,7 @@ namespace NativeJIT
         // return value ignored.
 
 
-        TestCase(TestAndClearBit)
+        TEST_CASE(BitOperations, TestAndClearBit)
         {
             uint64_t currentValue = 0xFFFFFFFFFFFFFFFF;
             uint64_t allZeros = 0;

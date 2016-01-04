@@ -17,11 +17,9 @@ set(PRIVATE_HFILES
   targetver.h
 )
 
-source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
-
 include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT ${PROJECT_SOURCE_DIR}/UnitTest/Shared)
 
-add_executable(NativeJITUnitTest ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
+add_executable(NativeJITUnitTest ${CPPFILES} ${PRIVATE_HFILES})
 target_link_libraries (NativeJITUnitTest UnitTestShared NativeJIT CodeGen gtest gtest_main)
 
 set_property(TARGET NativeJITUnitTest PROPERTY FOLDER "UnitTest")

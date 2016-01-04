@@ -7,8 +7,8 @@
 #include "ML64Verifier.h"
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/X64CodeGenerator.h"
-#include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
+#include "TestSetup.h"
 
 
 namespace NativeJIT
@@ -18,7 +18,7 @@ namespace NativeJIT
         // TODO: JMP
         // TODO: JCC - all cases.
 
-        TestCase(JCC)
+        TEST_CASE(CodeGen, JCC)
         {
             ExecutionBuffer codeAllocator(200);
             Allocator allocator(2000);
@@ -30,7 +30,7 @@ namespace NativeJIT
         }
 
 
-        TestCase(OpCodes)
+        TEST_CASE(CodeGen, OpCodes)
         {
             ExecutionBuffer codeAllocator(2000);
             Allocator allocator(2000);

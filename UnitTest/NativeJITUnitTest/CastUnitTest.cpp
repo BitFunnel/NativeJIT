@@ -4,7 +4,6 @@
 #include "NativeJIT/ExecutionBuffer.h"
 #include "NativeJIT/FunctionBuffer.h"
 #include "CastNode.h"
-#include "SuiteCpp/UnitTest.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 
@@ -12,80 +11,9 @@ namespace NativeJIT
 {
     namespace CastUnitTest
     {
-        TestClass(CastTest), private TestFixture
-        {
-        public:
-            TestCase(FromInt8)
-            {
-                TestCasts<int8_t>(-1);
-                TestCasts<uint8_t>(0xFF);
-            }
+        TEST_FIXTURE_START(CastTest)
 
-
-            TestCase(FromInt16)
-            {
-                TestCasts<int16_t>(-1);
-                TestCasts<uint16_t>(0xFFFF);
-            }
-
-
-            TestCase(FromInt32)
-            {
-                TestCasts<int32_t>(-1);
-                TestCasts<uint32_t>(0xFFFFFFFF);
-            }
-
-
-            TestCase(FromInt64)
-            {
-                TestCasts<int64_t>(-1);
-                TestCasts<uint64_t>(0xFFFFFFFFFFFFFFFFul);
-            }
-
-
-            TestCase(FromFloat)
-            {
-                TestCasts<float>(-123.7f);
-                TestCasts<float>(123.7f);
-
-                // Special case, target is an UInt64 that has the MSB bit set.
-                TestCast<uint64_t>(static_cast<float>(0xA000000000000000));
-            }
-
-
-            TestCase(FromDouble)
-            {
-                TestCasts<double>(-123.7);
-                TestCasts<double>(123.7);
-
-                // Special case, target is an UInt64 that has the MSB bit set.
-                TestCast<uint64_t>(static_cast<double>(0xA000000000000000));
-            }
-
-
-            TestCase(Packed)
-            {
-                auto packed = Packed<>::Push<5>(31).Push<4>(15).Push<3>(7);
-
-                TestCast<uint64_t, decltype(packed)>(packed);
-                TestCast<decltype(packed), uint64_t>(123456);
-            }
-
-
-            TestCase(VoidPointer)
-            {
-                TestCast<uint64_t, void*>(this);
-            }
-
-
-            TestCase(FuncPointer)
-            {
-                auto funcPtr = &DummyFunc;
-                TestCast<decltype(funcPtr), void*>(funcPtr);
-            }
-
-
-        private:
+        protected:
             template <typename FROM>
             void TestCasts(FROM testValue)
             {
@@ -192,6 +120,80 @@ namespace NativeJIT
             {
                 return x * 2;
             }
-        };
+
+        TEST_FIXTURE_END_TEST_CASES_BEGIN
+
+
+        TEST_CASE_F(CastTest, FromInt8)
+        {
+            TestCasts<int8_t>(-1);
+            TestCasts<uint8_t>(0xFF);
+        }
+
+
+        TEST_CASE_F(CastTest, FromInt16)
+        {
+            TestCasts<int16_t>(-1);
+            TestCasts<uint16_t>(0xFFFF);
+        }
+
+
+        TEST_CASE_F(CastTest, FromInt32)
+        {
+            TestCasts<int32_t>(-1);
+            TestCasts<uint32_t>(0xFFFFFFFF);
+        }
+
+
+        TEST_CASE_F(CastTest, FromInt64)
+        {
+            TestCasts<int64_t>(-1);
+            TestCasts<uint64_t>(0xFFFFFFFFFFFFFFFFul);
+        }
+
+
+        TEST_CASE_F(CastTest, FromFloat)
+        {
+            TestCasts<float>(-123.7f);
+            TestCasts<float>(123.7f);
+
+            // Special case, target is an UInt64 that has the MSB bit set.
+            TestCast<uint64_t>(static_cast<float>(0xA000000000000000));
+        }
+
+
+        TEST_CASE_F(CastTest, FromDouble)
+        {
+            TestCasts<double>(-123.7);
+            TestCasts<double>(123.7);
+
+            // Special case, target is an UInt64 that has the MSB bit set.
+            TestCast<uint64_t>(static_cast<double>(0xA000000000000000));
+        }
+
+
+        TEST_CASE_F(CastTest, Packed)
+        {
+            auto packed = Packed<>::Push<5>(31).Push<4>(15).Push<3>(7);
+
+            TestCast<uint64_t, decltype(packed)>(packed);
+            TestCast<decltype(packed), uint64_t>(123456);
+        }
+
+
+        TEST_CASE_F(CastTest, VoidPointer)
+        {
+            TestCast<uint64_t, void*>(this);
+        }
+
+
+        TEST_CASE_F(CastTest, FuncPointer)
+        {
+            auto funcPtr = &DummyFunc;
+            TestCast<decltype(funcPtr), void*>(funcPtr);
+        }
+
+
+        TEST_CASES_END
     }
 }

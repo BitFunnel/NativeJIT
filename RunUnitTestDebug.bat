@@ -1,1 +1,1 @@
-%NativeJITRoot%\Packages\SuiteCpp.Tools\bin\retail\amd64\SuiteCppConsole.exe -p NativeJIT:: -s UnitTest %NativeJITRoot%\x64\Debug
+%NativeJITRoot%\Packages\SuiteCpp.Tools\bin\retail\amd64\SuiteCppConsole.exe -p NativeJIT:: -s Test %NativeJITRoot%\x64\Debug
