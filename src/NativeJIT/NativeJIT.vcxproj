@@ -100,7 +100,6 @@
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="ExpressionNodeFactory.cpp" />
     <ClCompile Include="ExpressionTree.cpp" />
-    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

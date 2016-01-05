@@ -65,8 +65,8 @@ namespace NativeJIT
     class TestFixture : public TestFixtureBase
     {
     public:
-        static const unsigned c_defaultCodeAllocatorCapacity = 5000;
-        static const unsigned c_defaultGeneralAllocatorCapacity = 5000;
+        static const unsigned c_defaultCodeAllocatorCapacity = 8192;
+        static const unsigned c_defaultGeneralAllocatorCapacity = 8192;
 
         TestFixture();
         TestFixture(unsigned codeAllocatorCapacity,

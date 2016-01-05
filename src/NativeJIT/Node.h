@@ -114,6 +114,11 @@ namespace NativeJIT
                                             Node<T2>& n2, Storage<T2>& s2);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        /* virtual */ ~NodeBase();
+
         unsigned m_id;
 
         // See the comments for the related accessor methods above for more information.
@@ -148,6 +153,11 @@ namespace NativeJIT
         void PrintCoreProperties(char const *nodeName) const;
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~Node();
+
         unsigned m_cacheReferenceCount;
         ExpressionTree::Storage<T> m_cache;
 

@@ -25,6 +25,11 @@ namespace NativeJIT
         virtual bool GetBaseAndOffset(NodeBase*& base, int32_t& offset) const override;
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~FieldPointerNode();
+
         static int32_t Offset(FIELD OBJECT::*field)
         {
             return reinterpret_cast<int32_t>(&((static_cast<OBJECT*>(nullptr))->*field));

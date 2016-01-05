@@ -110,7 +110,7 @@ namespace NativeJIT
                                                          BaseRegisterType baseRegisterType,
                                                          X64CodeGenerator& prologCode,
                                                          AllocatorVector<uint8_t>& unwindInfoBuffer,
-                                                        int32_t& offsetToOriginalRsp)
+                                                         int32_t& offsetToOriginalRsp)
     {
         Assert((savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
                "Saving/restoring of non-writable RXX registers is not allowed: 0x%Ix",

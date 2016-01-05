@@ -26,6 +26,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CodeGenUnitTest", "UnitTest
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{C355777F-6688-4F80-A3A5-730D4CA7DA5C}"
 	ProjectSection(SolutionItems) = preProject
+		inc\NativeJIT\AllocatorVector.h = inc\NativeJIT\AllocatorVector.h
 		inc\NativeJIT\BitOperations.h = inc\NativeJIT\BitOperations.h
 		inc\NativeJIT\CallingConvention.h = inc\NativeJIT\CallingConvention.h
 		inc\NativeJIT\CodeBuffer.h = inc\NativeJIT\CodeBuffer.h
@@ -43,6 +44,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Temporary", "Temporary", "{EC495CF0-077A-4995-919B-8E1667EC8E53}"
 	ProjectSection(SolutionItems) = preProject
 		inc\Temporary\Allocator.h = inc\Temporary\Allocator.h
+		inc\Temporary\AllocatorOperations.h = inc\Temporary\AllocatorOperations.h
 		inc\Temporary\Assert.h = inc\Temporary\Assert.h
 		inc\Temporary\IAllocator.h = inc\Temporary\IAllocator.h
 		inc\Temporary\NonCopyable.h = inc\Temporary\NonCopyable.h

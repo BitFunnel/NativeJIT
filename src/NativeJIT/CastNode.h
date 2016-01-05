@@ -192,7 +192,12 @@ namespace NativeJIT
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
-    protected:
+    private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CastNode();
+
         typedef Casting::Traits<TO, FROM> Traits;
 
         Node<FROM>& m_from;
@@ -214,7 +219,12 @@ namespace NativeJIT
         virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print() const override;
 
-    protected:
+    private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CastNode();
+
         typedef Casting::Traits<TO, FROM> Traits;
 
         // The composite node used to perform the cast.

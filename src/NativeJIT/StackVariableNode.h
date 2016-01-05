@@ -24,6 +24,11 @@ namespace NativeJIT
         virtual Storage<T&> CodeGenValue(ExpressionTree& tree) override;
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~StackVariableNode();
+
         Storage<T> m_stackStorage;
     };
 

@@ -44,6 +44,11 @@ namespace NativeJIT
         }
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~ImmediateNode();
+
         T m_value;
     };
 }
@@ -123,6 +128,11 @@ namespace NativeJIT
         }
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~ImmediateNode();
+
         T m_value;
         int32_t m_offset;
     };

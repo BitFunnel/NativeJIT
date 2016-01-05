@@ -22,6 +22,7 @@ set(PRIVATE_HFILES
 )
 
 set(PUBLIC_HFILES
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/AllocatorVector.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/BitOperations.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CallingConvention.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeBuffer.h
@@ -33,6 +34,7 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ValuePredicates.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/X64CodeGenerator.h
   ${CMAKE_SOURCE_DIR}/inc/Temporary/Allocator.h
+  ${CMAKE_SOURCE_DIR}/inc/Temporary/AllocatorOperations.h
   ${CMAKE_SOURCE_DIR}/inc/Temporary/Assert.h
   ${CMAKE_SOURCE_DIR}/inc/Temporary/IAllocator.h
   ${CMAKE_SOURCE_DIR}/inc/Temporary/StlAllocator.h

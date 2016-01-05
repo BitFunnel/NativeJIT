@@ -178,21 +178,21 @@ namespace NativeJIT
     template <typename T>
     ImmediateNode<T>& ExpressionNodeFactory::Immediate(T value)
     {
-        return * new (m_allocator.Allocate(sizeof(ImmediateNode<T>))) ImmediateNode<T>(*this, value);
+        return PlacementConstruct<ImmediateNode<T>>(*this, value);
     }
 
 
     template <typename T>
     ParameterNode<T>& ExpressionNodeFactory::Parameter(unsigned position)
     {
-        return * new (m_allocator.Allocate(sizeof(ParameterNode<T>))) ParameterNode<T>(*this, position);
+        return PlacementConstruct<ParameterNode<T>>(*this, position);
     }
 
 
     template <typename T>
     Node<T&>& ExpressionNodeFactory::StackVariable()
     {
-        return * new (m_allocator.Allocate(sizeof(StackVariableNode<T>))) StackVariableNode<T>(*this);
+        return PlacementConstruct<StackVariableNode<T>>(*this);
     }
 
 
@@ -217,7 +217,7 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     Node<TO>& ExpressionNodeFactory::Cast(Node<FROM>& source)
     {
-        return * new (m_allocator.Allocate(sizeof(CastNode<TO, FROM>))) CastNode<TO, FROM>(*this, source);
+        return PlacementConstruct<CastNode<TO, FROM>>(*this, source);
     }
 
 
@@ -231,7 +231,7 @@ namespace NativeJIT
     template <typename T>
     Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer, int32_t index)
     {
-        return * new (m_allocator.Allocate(sizeof(IndirectNode<T>))) IndirectNode<T>(*this, pointer, index);
+        return PlacementConstruct<IndirectNode<T>>(*this, pointer, index);
     }
 
 
@@ -250,16 +250,14 @@ namespace NativeJIT
                                    typename std::remove_const<OBJECT1>::type>::value,
                       "Mismatch between the provided object type and field's parent object type");
 
-        return * new (m_allocator.Allocate(sizeof(FieldPointerNode<OBJECT, FIELD>)))
-                     FieldPointerNode<OBJECT, FIELD>(*this, object, field);
+        return PlacementConstruct<FieldPointerNode<OBJECT, FIELD>>(*this, object, field);
     }
 
 
     template <typename T>
     NodeBase& ExpressionNodeFactory::Return(Node<T>& value)
     {
-        return * new (m_allocator.Allocate(sizeof(ReturnNode<T>)))
-                     ReturnNode<T>(*this, value);
+        return PlacementConstruct<ReturnNode<T>>(*this, value);
     }
 
 
@@ -342,8 +340,7 @@ namespace NativeJIT
     template <typename T>
     Node<T>& ExpressionNodeFactory::Shld(Node<T>& shiftee, Node<T>& filler, uint8_t bitCount)
     {
-        return * new (m_allocator.Allocate(sizeof(ShldNode<T>))) 
-            ShldNode<T>(*this, shiftee, filler, bitCount);
+        return PlacementConstruct<ShldNode<T>>(*this, shiftee, filler, bitCount);
     }
 
 
@@ -398,10 +395,7 @@ namespace NativeJIT
     FlagExpressionNode<JCC>&
     ExpressionNodeFactory::Compare(Node<T>& left, Node<T>& right)
     {
-        typedef RelationalOperatorNode<T, JCC> NodeType;
-
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, left, right);
+        return PlacementConstruct<RelationalOperatorNode<T, JCC>>(*this, left, right);
     }
 
 
@@ -413,9 +407,7 @@ namespace NativeJIT
                                                 Node<T>& trueValue,
                                                 Node<T>& falseValue)
     {
-        typedef ConditionalNode<T, JCC> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, condition, trueValue, falseValue);
+        return PlacementConstruct<ConditionalNode<T, JCC>>(*this, condition, trueValue, falseValue);
     }
 
 
@@ -443,9 +435,7 @@ namespace NativeJIT
     template <typename R>
     Node<R>& ExpressionNodeFactory::Call(Node<R (*)()>& function)
     {
-        typedef CallNode<R> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, function);
+        return PlacementConstruct<CallNode<R>>(*this, function);
     }
 
 
@@ -453,9 +443,7 @@ namespace NativeJIT
     Node<R>& ExpressionNodeFactory::Call(Node<R (*)(P1)>& function,
                                          Node<P1>& param1)
     {
-        typedef CallNode<R, P1> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, function, param1);
+        return PlacementConstruct<CallNode<R, P1>>(*this, function, param1);
     }
 
 
@@ -464,9 +452,7 @@ namespace NativeJIT
                                          Node<P1>& param1,
                                          Node<P2>& param2)
     {
-        typedef CallNode<R, P1, P2> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, function, param1, param2);
+        return PlacementConstruct<CallNode<R, P1, P2>>(*this, function, param1, param2);
     }
 
 
@@ -476,9 +462,7 @@ namespace NativeJIT
                                          Node<P2>& param2,
                                          Node<P3>& param3)
     {
-        typedef CallNode<R, P1, P2, P3> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, function, param1, param2, param3);
+        return PlacementConstruct<CallNode<R, P1, P2, P3>>(*this, function, param1, param2, param3);
     }
 
 
@@ -489,9 +473,8 @@ namespace NativeJIT
                                          Node<P3>& param3,
                                          Node<P4>& param4)
     {
-        typedef CallNode<R, P1, P2, P3, P4> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, function, param1, param2, param3, param4);
+        return PlacementConstruct<CallNode<R, P1, P2, P3, P4>>(
+            *this, function, param1, param2, param3, param4);
     }
 
 
@@ -501,18 +484,14 @@ namespace NativeJIT
     template <typename PACKED>
     Node<PACKED>& ExpressionNodeFactory::PackedMax(Node<PACKED>& left, Node<PACKED>& right)
     {
-        typedef PackedMinMaxNode<PACKED, true> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, left, right);
+        return PlacementConstruct<PackedMinMaxNode<PACKED, true>>(*this, left, right);
     }
 
 
     template <typename PACKED>
     Node<PACKED>& ExpressionNodeFactory::PackedMin(Node<PACKED>& left, Node<PACKED>& right)
     {
-        typedef PackedMinMaxNode<PACKED, false> NodeType;
-        return * new (m_allocator.Allocate(sizeof(NodeType)))
-                     NodeType(*this, left, right);
+        return PlacementConstruct<PackedMinMaxNode<PACKED, false>>(*this, left, right);
     }
 
 
@@ -522,15 +501,13 @@ namespace NativeJIT
     template <OpCode OP, typename L, typename R>
     Node<L>& ExpressionNodeFactory::Binary(Node<L>& left, Node<R>& right)
     {
-        return * new (m_allocator.Allocate(sizeof(BinaryNode<OP, L, R>))) 
-                     BinaryNode<OP, L, R>(*this, left, right);
+        return PlacementConstruct<BinaryNode<OP, L, R>>(*this, left, right);
     }
 
 
     template <OpCode OP, typename L, typename R>
     Node<L>& ExpressionNodeFactory::Binary(Node<L>& left, R right)
     {
-        return * new (m_allocator.Allocate(sizeof(BinaryImmediateNode<OP, L, R>))) 
-                     BinaryImmediateNode<OP, L, R>(*this, left, right);
+        return PlacementConstruct<BinaryImmediateNode<OP, L, R>>(*this, left, right);
     }
 }

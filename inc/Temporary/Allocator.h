@@ -36,16 +36,4 @@ namespace NativeJIT
         size_t m_bytesAllocated;
         std::unique_ptr<char> m_buffer;
     };
-
-
-    class AutoResetAllocator : public NonCopyable
-    {
-    public:
-        AutoResetAllocator(Allocators::IAllocator& allocator);
-
-        ~AutoResetAllocator();
-
-    private:
-        Allocators::IAllocator& m_allocator;
-    };
 }

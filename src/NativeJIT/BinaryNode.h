@@ -19,6 +19,11 @@ namespace NativeJIT
         virtual void Print() const override;
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~BinaryNode();
+
         Node<L>& m_left;
         Node<R>& m_right;
     };

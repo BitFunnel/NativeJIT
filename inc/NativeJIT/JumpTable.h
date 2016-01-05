@@ -1,9 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 
-#include "Temporary/StlAllocator.h"
+#include "NativeJIT/AllocatorVector.h" // Embedded member.
 
 
 namespace NativeJIT
@@ -50,12 +49,9 @@ namespace NativeJIT
         const uint8_t* AddressOfLabel(Label label) const;
 
     private:
-        template <typename T>
-        using AllocatorVector = std::vector<T, Allocators::StlAllocator<T>>;
-
-        Allocators::StlAllocator<void*> m_stlAllocator;     // STL adapter for IAllocator.
-        AllocatorVector<const uint8_t*> m_labels;   // Storage for jump labels.
-        AllocatorVector<CallSite> m_callSites;              // Call sites to be patched.
+        Allocators::StlAllocator<void*> m_stlAllocator; // STL adapter for IAllocator.
+        AllocatorVector<const uint8_t*> m_labels;       // Storage for jump labels.
+        AllocatorVector<CallSite> m_callSites;          // Call sites to be patched.
     };
 
 

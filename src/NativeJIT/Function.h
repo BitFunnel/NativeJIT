@@ -143,10 +143,9 @@ namespace NativeJIT
     void FunctionBase<R>::AddExecuteOnlyIfStatement(FlagExpressionNode<JCC>& condition,
                                                     ImmediateNode<R>& otherwiseValue)
     {
-        typedef ExecuteOnlyIfStatement<R, JCC> Type;
-        
-        AddExecutionPreconditionTest(* new (m_allocator.Allocate(sizeof(Type)))
-                                           Type(condition, otherwiseValue));
+        auto & test = PlacementConstruct<ExecuteOnlyIfStatement<R, JCC>>(condition, otherwiseValue);
+
+        AddExecutionPreconditionTest(test);
     }
 
 

@@ -63,23 +63,4 @@ namespace NativeJIT
     {
         memset(m_buffer.get(), 0xcc, m_bufferSize);
     }
-
-
-    //*************************************************************************
-    //
-    // AutoResetAllocator
-    //
-    //*************************************************************************
-
-    AutoResetAllocator::AutoResetAllocator(Allocators::IAllocator& allocator)
-        : m_allocator(allocator)
-    {
-    }
-
-
-    AutoResetAllocator::~AutoResetAllocator()
-    {
-        m_allocator.Reset();
-    }
-
 }

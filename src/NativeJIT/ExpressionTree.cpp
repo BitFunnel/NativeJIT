@@ -21,8 +21,21 @@ namespace NativeJIT
     //*************************************************************************
     ExpressionTree::ExpressionTree(Allocators::IAllocator& allocator, FunctionBuffer& code)
         : m_allocator(allocator),
+          m_stlAllocator(allocator),
           m_code(code),
+          // Note: there is a member initialization order dependency on
+          // m_stlAllocator for multiple members below.
+          m_topologicalSort(m_stlAllocator),
+          m_parameters(m_stlAllocator),
+          m_ripRelatives(m_stlAllocator),
+          m_preconditionTests(m_stlAllocator),
+          m_rxxFreeList(allocator),
+          m_xmmFreeList(allocator),
+          m_reservedRxxRegisterStorages(m_stlAllocator),
+          m_reservedXmmRegisterStorages(m_stlAllocator),
+          m_reservedRegistersPins(m_stlAllocator),
           m_temporaryCount(0),
+          m_temporaries(m_stlAllocator),
           m_maxFunctionCallParameters(-1),
           m_basePointer(rbp)
           // m_startOfEpilogue intentionally left uninitialized, see Compile().

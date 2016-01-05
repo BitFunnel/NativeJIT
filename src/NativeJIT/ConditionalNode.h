@@ -34,6 +34,11 @@ namespace NativeJIT
         void IncrementFlagsParentCount();
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~FlagExpressionNode();
+
         unsigned m_flagsParentCount;
     };
 
@@ -60,6 +65,11 @@ namespace NativeJIT
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~ConditionalNode();
+
         FlagExpressionNode<JCC>& m_condition;
         Node<T>& m_trueExpression;
         Node<T>& m_falseExpression;
@@ -94,6 +104,11 @@ namespace NativeJIT
         virtual void CodeGenFlags(ExpressionTree& tree) override;
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~RelationalOperatorNode();
+
         Node<T>& m_left;
         Node<T>& m_right;
     };

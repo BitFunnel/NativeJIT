@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <windows.h>                        // RUNTIME_FUNCTION embedded.
 
-#include "Temporary/StlAllocator.h"         // Embeds STL allocator for vector.
+#include "NativeJIT/AllocatorVector.h"      // Embedded member.
 
 
 namespace NativeJIT
@@ -82,10 +81,6 @@ namespace NativeJIT
         unsigned GetEpilogLength() const;
 
     private:
-        // Alias for std::vector with IAllocator wrapped inside StlAllocator.
-        template <typename T>
-        using AllocatorVector = std::vector<T, Allocators::StlAllocator<T>>;
-
         // Builds unwind info and prolog code from the information about
         // function's behavior. The prolog code and unwind info are built into
         // the two provided buffers. 

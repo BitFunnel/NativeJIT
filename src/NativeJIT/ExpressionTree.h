@@ -3,13 +3,14 @@
 #include <array>                // For arrays in FreeList.
 #include <cstdint>
 #include <iostream>             // TODO: Remove this temp debug include.
-#include <vector>
 
+#include "NativeJIT/AllocatorVector.h"          // Embedded member.
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/FunctionSpecification.h"    // c_maxStackSize definition.
 #include "NativeJIT/JumpTable.h"                // ExpressionTree embeds Label.
 #include "NativeJIT/Register.h"
 #include "Temporary/NonCopyable.h"
+#include "Temporary/AllocatorOperations.h"
 #include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"
 #include "TypePredicates.h"
@@ -85,6 +86,11 @@ namespace NativeJIT
         Allocators::IAllocator& GetAllocator() const;
         FunctionBuffer& GetCodeGenerator() const;
 
+        // In-place constructs an object using the class allocator. The object's
+        // lifetime cannot be longer than that of the ExpressionTree.
+        template <typename T, typename... ConstructorArgs>
+        T&
+        PlacementConstruct(ConstructorArgs&&... constructorArgs);
 
         //
         // Tree construction
@@ -156,9 +162,6 @@ namespace NativeJIT
 
         void const * GetUntypedEntryPoint() const;
 
-        // TODO: Make private.
-        Allocators::IAllocator& m_allocator;
-
     private:
         // Keeps track of used and free registers and the Data* associated with
         // each register.
@@ -181,7 +184,7 @@ namespace NativeJIT
             // The bit-mask signifying that all valid registers have been allocated.
             static const unsigned c_fullUsedMask = (1ul << SIZE) - 1;
 
-            FreeList();
+            FreeList(Allocators::IAllocator& allocator);
 
             // Returns the number of unallocated registers.
             unsigned GetFreeCount() const;
@@ -248,7 +251,7 @@ namespace NativeJIT
             // pattern in general (elements always added at the back, mostly pulled
             // out from the front). However, given the small number of elements
             // and the simplicitly of the vector, it is likely to perform better.
-            std::vector<uint8_t> m_allocatedRegisters;
+            AllocatorVector<uint8_t> m_allocatedRegisters;
 
             // Number of active references to a pinned register. The register
             // cannot be spilled while it's pinned.
@@ -290,27 +293,30 @@ namespace NativeJIT
         template <typename T>
         using FreeListForType = typename FreeListForRegister<RegisterStorage<T>::c_isFloat>;
 
+        // The allocator and STL-compatible wrapper around it.
+        Allocators::IAllocator& m_allocator;
+        Allocators::StlAllocator<void*> m_stlAllocator;
+
         FunctionBuffer & m_code;
 
-        std::vector<NodeBase*> m_topologicalSort;
-        std::vector<NodeBase*> m_parameters;
-        std::vector<RIPRelativeImmediate*> m_ripRelatives;
+        AllocatorVector<NodeBase*> m_topologicalSort;
+        AllocatorVector<NodeBase*> m_parameters;
+        AllocatorVector<RIPRelativeImmediate*> m_ripRelatives;
 
         // Preconditions for evaluating the whole expression. The preconditions
         // are evaluated right after the parameters and will cause the function
         // to return early if any of them is not met.
-        std::vector<ExecutionPreconditionTest*> m_preconditionTests;
+        AllocatorVector<ExecutionPreconditionTest*> m_preconditionTests;
 
         FreeList<RegisterBase::c_maxIntegerRegisterID + 1> m_rxxFreeList;
         FreeList<RegisterBase::c_maxFloatRegisterID + 1> m_xmmFreeList;
 
-        std::vector<Storage<void*>> m_reservedRxxRegisterStorages;
-        std::vector<Storage<double>> m_reservedXmmRegisterStorages;
-        std::vector<ReferenceCounter> m_reservedRegistersPins;
+        AllocatorVector<Storage<void*>> m_reservedRxxRegisterStorages;
+        AllocatorVector<Storage<double>> m_reservedXmmRegisterStorages;
+        AllocatorVector<ReferenceCounter> m_reservedRegistersPins;
 
         unsigned m_temporaryCount;
-        // TODO: Use StlAllocator for the vector.
-        std::vector<int32_t> m_temporaries;
+        AllocatorVector<int32_t> m_temporaries;
 
         // Maximum number of parameters used in function calls done by the tree.
         // Negative value signifies no function calls made.
@@ -364,6 +370,11 @@ namespace NativeJIT
         void SwapContents(Data* other);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~Data();
+
         // The type of the register change that the free list gets notified about.
         enum class RegisterChangeType { Initialize, Update };
 
@@ -592,6 +603,14 @@ namespace NativeJIT
     typename Storage<T>::DirectRegister ExpressionTree::GetResultRegister()
     {
         return Storage<T>::DirectRegister(0);
+    }
+
+
+    template <typename T, typename... ConstructorArgs>
+    T& ExpressionTree::PlacementConstruct(ConstructorArgs&&... constructorArgs)
+    {
+        return Allocators::PlacementConstruct<T>(m_allocator,
+                                                 std::forward<ConstructorArgs>(constructorArgs)...);
     }
 
 
@@ -911,8 +930,7 @@ namespace NativeJIT
         auto & freeList = FreeListForType<T>::Get(tree);
         Storage<T>::DirectRegister r(freeList.Allocate());
 
-        // TODO: Use allocator.
-        Data* data = new Data(tree, r);
+        Data* data = &tree.PlacementConstruct<Data>(tree, r);
 
         return Storage<T>(data);
     }
@@ -925,8 +943,7 @@ namespace NativeJIT
         auto & freeList = FreeListForType<T>::Get(tree);
         freeList.Allocate(reg.GetId());
 
-        // TODO: Use allocator.
-        Data* data = new Data(tree, reg);
+        Data* data = &tree.PlacementConstruct<Data>(tree, reg);
 
         return Storage<T>(data);
     }
@@ -940,16 +957,14 @@ namespace NativeJIT
     {
         Assert(tree.IsAnySharedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
 
-        // TODO: Use allocator.
-        return Storage<T>(new Data(tree, base, offset));
+        return Storage<T>(&tree.PlacementConstruct<Data>(tree, base, offset));
     }
 
 
     template <typename T>
     Storage<T> ExpressionTree::Storage<T>::ForImmediate(ExpressionTree& tree, T value)
     {
-        // TODO: Use allocator.
-        return Storage<T>(new Data(tree, value));
+        return Storage<T>(&tree.PlacementConstruct<Data>(tree, value));
     }
 
 
@@ -1412,10 +1427,11 @@ namespace NativeJIT
     //
     //*************************************************************************
     template <unsigned SIZE>
-    ExpressionTree::FreeList<SIZE>::FreeList()
+    ExpressionTree::FreeList<SIZE>::FreeList(Allocators::IAllocator& allocator)
         : m_usedMask(0),
           m_lifetimeUsedMask(0),
           m_data(),
+          m_allocatedRegisters(Allocators::StlAllocator<uint8_t>(allocator)),
           m_pinCount()
     {
         m_allocatedRegisters.reserve(SIZE);

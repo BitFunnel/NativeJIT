@@ -1,10 +1,10 @@
 #pragma once
 
-#include <iostream>                 // Accessed by template definition for Print().
+#include <iostream>                    // Accessed by template definition for Print().
 
 #include "CodeGenHelpers.h"
-#include "Node.h"                   // Base class.
-#include "Temporary/StlAllocator.h" // Used as allocator for vector.
+#include "NativeJIT/AllocatorVector.h" // Embedded member.
+#include "Node.h"                      // Base class.
 
 // https://software.intel.com/en-us/articles/introduction-to-x64-assembly
 
@@ -30,6 +30,11 @@ namespace NativeJIT
         void RecordCallRegister(Register<SIZE, ISFLOAT> r, bool isSoleOwner);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~SaveRestoreVolatilesHelper();
+
         // Returns the mask for the registers it's necessary to preserve accross
         // the function call that's being made.
         template <bool ISFLOAT>
@@ -39,9 +44,6 @@ namespace NativeJIT
         // call and thus don't need to be preserved.
         unsigned m_rxxCallExclusiveRegisterMask;
         unsigned m_xmmCallExclusiveRegisterMask;
-
-        template <typename T>
-        using AllocatorVector = std::vector<T, Allocators::StlAllocator<T>>;
 
         // Temporary storage used to preserve volatile registers.
         AllocatorVector<Storage<void*>> m_preservationStorage;
@@ -171,6 +173,12 @@ namespace NativeJIT
         // Pointer to function's two base classes.
         FunctionChildBase* m_functionBase;
         Child* m_functionChild;
+
+    private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CallNodeBase();
     };
 
 
@@ -188,6 +196,11 @@ namespace NativeJIT
                  Node<FunctionPointer>& function);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CallNode();
+
         FunctionChild<FunctionPointer> m_f;
     };
 
@@ -203,6 +216,11 @@ namespace NativeJIT
                  Node<P1>& p1);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CallNode();
+
         FunctionChild<FunctionPointer> m_f;
         ParameterChild<P1> m_p1;
     };
@@ -220,6 +238,11 @@ namespace NativeJIT
                  Node<P2>& p2);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CallNode();
+
         FunctionChild<FunctionPointer> m_f;
         ParameterChild<P1> m_p1;
         ParameterChild<P2> m_p2;
@@ -239,6 +262,11 @@ namespace NativeJIT
                  Node<P3>& p3);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CallNode();
+
         FunctionChild<FunctionPointer> m_f;
         ParameterChild<P1> m_p1;
         ParameterChild<P2> m_p2;
@@ -260,6 +288,11 @@ namespace NativeJIT
                  Node<P4>& p4);
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~CallNode();
+
         FunctionChild<FunctionPointer> m_f;
         ParameterChild<P1> m_p1;
         ParameterChild<P2> m_p2;

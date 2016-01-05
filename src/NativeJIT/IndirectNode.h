@@ -26,6 +26,11 @@ namespace NativeJIT
         // dereferences the target object, preventing continuation of the chain.
 
     private:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        ~IndirectNode();
+
         NodeBase& m_base;
         const int32_t m_index;
 
