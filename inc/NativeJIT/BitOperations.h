@@ -1,9 +1,19 @@
 #pragma once
 
+#include <stdatomic.h>
 #include <cstdint>
-#include <intrin.h> // Intrinsic instructions.
+//#include <x86intrin.h> // Intrinsic instructions.
+//#include <intrin.h>
+#include <libkern/OSAtomic.h>   // For OSAtomicTestAndSet
+#include <nmmintrin.h>
+#include <smmintrin.h>
+#include <string.h>         // For ffsll()
 #include <type_traits>
 
+// http://stackoverflow.com/questions/2039861/how-to-get-gcc-to-generate-bts-instruction-for-x86-64-from-standard-c
+// https://developer.apple.com/library/ios/documentation/System/Conceptual/ManPages_iPhoneOS/man3/atomic.3.html
+// https://chessprogramming.wikispaces.com/x86-64
+// Consider converting all bit operations to work on std::atomic.
 
 namespace NativeJIT
 {
@@ -23,7 +33,7 @@ namespace NativeJIT
         // int have the same size. The cast doesn't verify that signedness is
         // the same since bit intrinsics work the same way regardless of sign.
         template <typename TO, typename FROM>
-        __forceinline
+        /* __forceinline */
         TO* SameTargetSizeCast(FROM* pointer)
         {
             static_assert(sizeof(FROM) == sizeof(TO),
@@ -59,7 +69,7 @@ namespace NativeJIT
         // Note that processors from around 2008 and onwards support POPCNT, the
         // fallback method is implemented only for unit test runs in potentially
         // old lab machines/virtual machines.
-        __forceinline
+        /* __forceinline */
         uint8_t GetNonZeroBitCount(uint32_t value)
         {
             return c_isPopCntSupported
@@ -71,7 +81,7 @@ namespace NativeJIT
         // Returns the count of 1 bits in the value.
         // Requires SSE4 support.
         // See https://en.wikipedia.org/wiki/SSE4#POPCNT_and_LZCNT
-        __forceinline
+        /* __forceinline */
         uint8_t GetNonZeroBitCount(uint64_t value)
         {
             return c_isPopCntSupported
@@ -84,124 +94,149 @@ namespace NativeJIT
         // false and leaves lowestBitSetIndex in an underterminate state
         // if the value has no bits set.
         // Uses BSF instruction. See http://felixcloutier.com/x86/BSF.html
-        __forceinline
+        /* __forceinline */
         bool GetLowestBitSet(uint64_t value, unsigned* lowestBitSetIndex)
         {
+#ifdef _MSC_VER
             return _BitScanForward64(SameTargetSizeCast<unsigned long>(lowestBitSetIndex),
                                      value)
                    ? true
                    : false;
+#else
+            *lowestBitSetIndex = ffsll(value);
+            return *lowestBitSetIndex == 0;
+#endif
         }
 
         // Stores the index of the highest 1 bit and returns true. Returns
         // false and leaves highestBitSetIndex in an underterminate state
         // if the value has no bits set.
         // Uses BSR instruction. See http://felixcloutier.com/x86/BSR.html
-        __forceinline
+        /* __forceinline */
         bool GetHighestBitSet(uint64_t value, unsigned* highestBitSetIndex)
         {
+#ifdef _MSC_VER
             return _BitScanReverse64(SameTargetSizeCast<unsigned long>(highestBitSetIndex),
                                      value)
                    ? true
                    : false;
+#else
+            *highestBitSetIndex = flsll(value);
+            return *highestBitSetIndex == 0;
+#endif
         }
 
 
         // Returns a boolean indicating whether the specified bit is set or not.
         // WARNING: Does not verify that bitIndex is in valid range.
-        __forceinline
+        /* __forceinline */
         bool TestBit(uint64_t value, unsigned bitIndex)
         {
+#ifdef _MSC_VER
             return _bittest64(SameTargetSizeCast<const long long>(&value),
                               bitIndex)
                    ? true
                    : false;
+#else
+            return (value & (1ULL << bitIndex)) ? true : false;
+#endif
         }
 
 
         // Returns a boolean indicating whether the specified bit is set or not.
         // WARNING: Does not verify that bitIndex is in valid range.
         template <typename T>
-        __forceinline
+        /* __forceinline */
         bool TestBit(T value, unsigned bitIndex)
         {
             static_assert(std::is_integral<T>::value, "Value must be integral");
             static_assert(sizeof(T) <= sizeof(uint32_t), "Value must not be larger than 32 bits");
 
             const uint32_t value32 = value;
+#ifdef _MSC_VER
             return _bittest(SameTargetSizeCast<const long>(&value32),
                             bitIndex)
                    ? true
                    : false;
+#else
+            return (value32 & (1UL << bitIndex)) ? true : false;
+#endif
         }
 
 
-        // Sets the specified bit to 1 and returns whether the bit was previously
-        // set or not.
-        // WARNING: Does not verify that bitIndex is in valid range.
-        __forceinline
-        bool TestAndSetBit(uint32_t* value, unsigned bitIndex)
-        {
-            return _bittestandset(SameTargetSizeCast<long>(value),
-                                  bitIndex)
-                   ? true
-                   : false;
-        }
+//        // Sets the specified bit to 1 and returns whether the bit was previously
+//        // set or not.
+//        // WARNING: Does not verify that bitIndex is in valid range.
+//        /* __forceinline */
+//        bool TestAndSetBit(uint32_t* value, unsigned bitIndex)
+//        {
+//#ifdef _MSV_VER
+//            return _bittestandset(SameTargetSizeCast<long>(value),
+//                                  bitIndex)
+//                   ? true
+//                   : false;
+//#else
+//            uint32_t mask = 1UL << bitIndex;
+//            return (atomic_fetch_or<uint32_t>(value, mask)
+//                   ? true : false;
+//#endif
+//        }
+//
+//
+//        // Sets the specified bit to 1 and returns whether the bit was previously
+//        // set or not.
+//        // WARNING: Does not verify that bitIndex is in valid range.
+//        /* __forceinline */
+//        bool TestAndSetBit(uint64_t* value, unsigned bitIndex)
+//        {
+//            return _bittestandset64(SameTargetSizeCast<long long>(value),
+//                                    bitIndex)
+//                   ? true
+//                   : false;
+//        }
 
-
-        // Sets the specified bit to 1 and returns whether the bit was previously
-        // set or not.
-        // WARNING: Does not verify that bitIndex is in valid range.
-        __forceinline
-        bool TestAndSetBit(uint64_t* value, unsigned bitIndex)
-        {
-            return _bittestandset64(SameTargetSizeCast<long long>(value),
-                                    bitIndex)
-                   ? true
-                   : false;
-        }
-
+        
 
         // A (naming) convenience wrapper for TestAndSetBit.
         // WARNING: Does not verify that bitIndex is in valid range.
         template <typename T>
-        __forceinline
+        /* __forceinline */
         void SetBit(T* value, unsigned bitIndex)
         {
             TestAndSetBit(value, bitIndex);
         }
 
 
-        // Sets the specified bit to 0 and returns whether the bit was previously
-        // set or not.
-        // WARNING: Does not verify that bitIndex is in valid range.
-        __forceinline
-        bool TestAndClearBit(uint32_t* value, unsigned bitIndex)
-        {
-            return _bittestandreset(SameTargetSizeCast<long>(value),
-                                    bitIndex)
-                   ? true
-                   : false;
-        }
-
-
-        // Sets the specified bit to 1 and returns whether the bit was previously
-        // set or not.
-        // WARNING: Does not verify that bitIndex is in valid range.
-        __forceinline
-        bool TestAndClearBit(uint64_t* value, unsigned bitIndex)
-        {
-            return _bittestandreset64(SameTargetSizeCast<long long>(value),
-                                      bitIndex)
-                   ? true
-                   : false;
-        }
+//        // Sets the specified bit to 0 and returns whether the bit was previously
+//        // set or not.
+//        // WARNING: Does not verify that bitIndex is in valid range.
+//        /* __forceinline */
+//        bool TestAndClearBit(uint32_t* value, unsigned bitIndex)
+//        {
+//            return _bittestandreset(SameTargetSizeCast<long>(value),
+//                                    bitIndex)
+//                   ? true
+//                   : false;
+//        }
+//
+//
+//        // Sets the specified bit to 1 and returns whether the bit was previously
+//        // set or not.
+//        // WARNING: Does not verify that bitIndex is in valid range.
+//        /* __forceinline */
+//        bool TestAndClearBit(uint64_t* value, unsigned bitIndex)
+//        {
+//            return _bittestandreset64(SameTargetSizeCast<long long>(value),
+//                                      bitIndex)
+//                   ? true
+//                   : false;
+//        }
 
 
         // A (naming) convenience wrapper for TestAndClearBit.
         // WARNING: Does not verify that bitIndex is in valid range.
         template <typename T>
-        __forceinline
+        /* __forceinline */
         void ClearBit(T* value, unsigned bitIndex)
         {
             TestAndClearBit(value, bitIndex);

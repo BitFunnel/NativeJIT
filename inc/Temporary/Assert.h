@@ -38,14 +38,19 @@ namespace NativeJIT
             va_list arguments;
             va_start(arguments, format);
 
+#ifdef _MSC_VER
             vsnprintf_s(message.data(), message.size(), _TRUNCATE, format, arguments);
+#else
+            vsnprintf(message.data(), message.size(), format, arguments);
+#endif
+
             va_end(arguments);
 
             std::stringstream sstream;
             sstream << "Assertion " << conditionText << " failed in " << function
                     << " at " << filename << ":" << lineNumber << ": " << message.data();
 
-            throw std::exception(sstream.str().c_str());
+            throw std::runtime_error(sstream.str().c_str());
         }
     }
 }

@@ -6,6 +6,7 @@ namespace NativeJIT
 {
     namespace
     {
+#ifdef _MSC_VER
         // Uses CPUID instruction to check whether POPCNT instruction is supported.
         bool IsPopCntSupported()
         {
@@ -47,7 +48,15 @@ namespace NativeJIT
 
             return supported;
         }
+#else
+        bool IsPopCntSupported()
+        {
+            return true;
+        }
+#endif
     }
+    
+    
 
     namespace BitOp
     {

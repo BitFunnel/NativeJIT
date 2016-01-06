@@ -606,7 +606,7 @@ namespace NativeJIT
                       "Floating point values cannot be used as immediates.");
 
         // Cast UInt8 to UInt64 to prevent it from being printed as char.
-        typedef std::conditional<std::is_same<T, uint8_t>::value,
+        typedef typename std::conditional<std::is_same<T, uint8_t>::value,
                                  uint64_t,
                                  T>::type ValueType;
 
@@ -632,7 +632,7 @@ namespace NativeJIT
                       "Floating point values cannot be used as immediates.");
 
         // Cast UInt8 to UInt64 to prevent it from being printed as char.
-        typedef std::conditional<std::is_same<T, uint8_t>::value,
+        typedef typename std::conditional<std::is_same<T, uint8_t>::value,
                                  uint64_t,
                                  T>::type ValueType;
 
@@ -683,7 +683,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest);
 
         printer.Print(OP, dest);
     }
@@ -694,7 +694,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, src);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, src);
 
         printer.Print(OP, dest, src);
     }
@@ -705,7 +705,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, src);
+        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, src);
 
         printer.Print(OP, dest, src);
     }
@@ -716,7 +716,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, src, srcOffset);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, src, srcOffset);
 
         printer.Print(OP, dest, src, srcOffset);
     }
@@ -727,7 +727,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, src, srcOffset);
+        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, src, srcOffset);
 
         printer.Print(OP, dest, src, srcOffset);
     }
@@ -738,7 +738,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, destOffset, src);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, destOffset, src);
 
         printer.Print(OP, dest, destOffset, src);
     }
@@ -749,7 +749,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, destOffset, src);
+        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, destOffset, src);
 
         printer.Print(OP, dest, destOffset, src);
     }
@@ -762,7 +762,7 @@ namespace NativeJIT
 
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes1<ISFLOAT>::EmitImmediate<SIZE, T>(*this, dest, value);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template EmitImmediate<SIZE, T>(*this, dest, value);
 
         printer.PrintImmediate(OP, dest, value);
     }
@@ -775,7 +775,7 @@ namespace NativeJIT
 
         CodePrinter printer(*this);
 
-        Helper<OP>::ArgTypes1<ISFLOAT>::EmitImmediate<SIZE, T>(*this, dest, src, value);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template EmitImmediate<SIZE, T>(*this, dest, src, value);
 
         printer.PrintImmediate(OP, dest, src, value);
     }
@@ -1875,7 +1875,7 @@ namespace NativeJIT
     template <>                                                                                 \
     template <>                                                                                 \
     template <unsigned SIZE>                                                                    \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<false>::Emit(                    \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::Emit(                        \
         X64CodeGenerator& code,                                                                 \
         Register<SIZE, false> dest,                                                             \
         Register<SIZE, false> src)                                                              \
@@ -1887,7 +1887,7 @@ namespace NativeJIT
     template <>                                                                                 \
     template <>                                                                                 \
     template <unsigned SIZE>                                                                    \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<false>::Emit(                    \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::Emit(                        \
         X64CodeGenerator& code,                                                                 \
         Register<SIZE, false> dest,                                                             \
         Register<8, false> src,                                                                 \
@@ -1900,7 +1900,7 @@ namespace NativeJIT
     template <>                                                                                 \
     template <>                                                                                 \
     template <unsigned SIZE, typename T>                                                        \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<false>::EmitImmediate(           \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::EmitImmediate(               \
         X64CodeGenerator& code,                                                                 \
         Register<SIZE, false> dest,                                                             \
         T value)                                                                                \
@@ -1921,7 +1921,7 @@ namespace NativeJIT
     template <>                                                                                 \
     template <>                                                                                 \
     template <unsigned SIZE>                                                                    \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<false>::Emit(                    \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::Emit(                        \
         X64CodeGenerator& code,                                                                 \
         Register<SIZE, false> dest)                                                             \
     {                                                                                           \
@@ -1932,7 +1932,7 @@ namespace NativeJIT
     template <>                                                                                 \
     template <>                                                                                 \
     template <unsigned SIZE, typename T>                                                        \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<false>::EmitImmediate(           \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::EmitImmediate(               \
         X64CodeGenerator& code,                                                                 \
         Register<SIZE, false> dest,                                                             \
         T value)                                                                                \
@@ -1952,25 +1952,25 @@ namespace NativeJIT
     template <>                                                                         \
     template <>                                                                         \
     template <unsigned SIZE>                                                            \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<true>::Emit(             \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<true>::Emit(                 \
         X64CodeGenerator& code,                                                         \
         Register<SIZE, true> dest,                                                      \
         Register<SIZE, true> src)                                                       \
     {                                                                                   \
-        code.##emitMethod##<opcode>(dest, src);                                         \
+        code.emitMethod<opcode>(dest, src);                                             \
     }                                                                                   \
                                                                                         \
                                                                                         \
     template <>                                                                         \
     template <>                                                                         \
     template <unsigned SIZE>                                                            \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes1<true>::Emit(             \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<true>::Emit(                 \
         X64CodeGenerator& code,                                                         \
         Register<SIZE, true> dest,                                                      \
         Register<8, false> src,                                                         \
         int32_t srcOffset)                                                              \
     {                                                                                   \
-        code.##emitMethod##<opcode, SIZE, true, SIZE, true>(dest, src, srcOffset);      \
+        code.emitMethod<opcode, SIZE, true, SIZE, true>(dest, src, srcOffset);          \
     }                                                                                   \
 
     DEFINE_SSE_ARGS1(Add,            ScalarSSE, 0x58);  // AddSS/AddSD.
@@ -1998,25 +1998,25 @@ namespace NativeJIT
 
 
 // SSE instruction, arguments of different type or size.
-#define DEFINE_SSE_ARGS2(name, emitMethod, opcode, type1, type2, validityCondition) \
+#define DEFINE_SSE_ARGS2(name, emitMethod, opcode, type1, type2, validityCondition)     \
     template <>                                                                         \
     template <>                                                                         \
     template <unsigned SIZE1, unsigned SIZE2>                                           \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes2<type1, type2>::Emit(     \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes2<type1, type2>::Emit(         \
         X64CodeGenerator& code,                                                         \
         Register<SIZE1, type1> dest,                                                    \
         Register<SIZE2, type2> src)                                                     \
     {                                                                                   \
         static_assert(validityCondition,                                                \
                       "Invalid " #name " instruction, must be " #validityCondition);    \
-        code.##emitMethod##<opcode, SIZE1, type1, SIZE2, type2>(dest, src);             \
+        code.emitMethod<opcode, SIZE1, type1, SIZE2, type2>(dest, src);                 \
     }                                                                                   \
                                                                                         \
                                                                                         \
     template <>                                                                         \
     template <>                                                                         \
     template <unsigned SIZE1, unsigned SIZE2>                                           \
-    void X64CodeGenerator::Helper<OpCode::##name##>::ArgTypes2<type1, type2>::Emit(     \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes2<type1, type2>::Emit(         \
         X64CodeGenerator& code,                                                         \
         Register<SIZE1, type1> dest,                                                    \
         Register<8, false> src,                                                         \
@@ -2024,7 +2024,7 @@ namespace NativeJIT
     {                                                                                   \
         static_assert(validityCondition,                                                \
                       "Invalid " #name " instruction, must be " #validityCondition);    \
-        code.##emitMethod##<opcode, SIZE1, type1, SIZE2, type2>(dest, src, srcOffset);  \
+        code.emitMethod<opcode, SIZE1, type1, SIZE2, type2>(dest, src, srcOffset);      \
     }                                                                                   \
 
     DEFINE_SSE_ARGS2(CvtSI2FP, ScalarSSE, 0x2A, true,  false, SIZE2 >= 4);       // CvtSI2SD/CvtSI2SS (convert signed int to floating point).

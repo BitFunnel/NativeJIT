@@ -15,8 +15,8 @@ namespace NativeJIT
                    unsigned capacity,
                    Allocators::IAllocator& generalAllocator)
         : m_codeAllocator(codeAllocator),
-          m_bufferStart(nullptr),
           m_capacity(capacity),
+          m_bufferStart(nullptr),
           m_localJumpTable(generalAllocator)
     {
         m_bufferStart = static_cast<uint8_t*>(codeAllocator.Allocate(capacity));

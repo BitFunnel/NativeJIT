@@ -1,7 +1,12 @@
 #include "stdafx.h"
 
 #include <stdexcept>
+
+#include <sys/mman.h>
+
+#ifdef _MSC_VER
 #include <Windows.h>
+#endif
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "Temporary/Assert.h"
@@ -23,6 +28,7 @@ namespace NativeJIT
 
 
     // http://stackoverflow.com/questions/570257/jit-compilation-and-dep
+#ifdef _MSC_VER
     ExecutionBuffer::ExecutionBuffer(size_t bufferSize)
         : m_buffer(nullptr),
           m_bytesAllocated(0)
@@ -34,7 +40,7 @@ namespace NativeJIT
 
         // Allocate m_bufferSize bytes plus one extra page that will act as 
         // a write-guard to detect buffer overruns.
-        m_buffer = (unsigned char*)VirtualAlloc(NULL, m_bufferSize + systemInfo.dwPageSize, 
+        m_buffer = (unsigned char*)VirtualAlloc(NULL, m_bufferSize + systemInfo.dwPageSize,
                                                 MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
         if (m_buffer == NULL)
@@ -54,8 +60,29 @@ namespace NativeJIT
 
         DebugInitialize();
     }
+#else
+    ExecutionBuffer::ExecutionBuffer(size_t bufferSize)
+        : m_bytesAllocated(0),
+          m_buffer(nullptr)
+    {
+        m_bufferSize = RoundUp(bufferSize, getpagesize());
+        m_buffer = (unsigned char*)mmap(nullptr,
+                                        m_bufferSize,
+                                        PROT_READ | PROT_WRITE | PROT_EXEC,
+                                        MAP_PRIVATE | MAP_ANON,
+                                        -1,
+                                        0);
+        if (m_buffer == MAP_FAILED) {
+            // TODO: Fix memory leaks by f. ex. using unique_ptr with custom deleter
+            // for m_buffer.
+            throw std::runtime_error("CodeBuffer: failed to set protection on guard page.");
+        }
+      
+    }
+#endif
 
 
+#ifdef _MSC_VER
     ExecutionBuffer::~ExecutionBuffer()
     {
         if (m_buffer != nullptr)
@@ -66,6 +93,19 @@ namespace NativeJIT
             }
         }
     }
+#else
+    ExecutionBuffer::~ExecutionBuffer()
+    {
+        if (m_buffer != nullptr)
+        {
+            if (munmap(m_buffer, m_bufferSize) != 0)
+            {
+                throw std::runtime_error("CodeBuffer: munmap failed.");
+            }
+        }
+    }
+    
+#endif
 
 
     //

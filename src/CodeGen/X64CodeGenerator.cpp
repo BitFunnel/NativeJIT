@@ -117,9 +117,9 @@ namespace NativeJIT
             "sub",
         };
 
-        static_assert(static_cast<unsigned>(OpCode::OpCodeCount) == _countof(names),
+        static_assert(static_cast<unsigned>(OpCode::OpCodeCount) == std::extent<decltype(names)>::value,
                       "Mismatched number of opcode names.");
-        LogThrowAssert(static_cast<unsigned>(op)  < _countof(names), "Invalid OpCode");
+        LogThrowAssert(static_cast<unsigned>(op)  < std::extent<decltype(names)>::value, "Invalid OpCode");
 
         return names[static_cast<unsigned>(op)];
     }
@@ -146,9 +146,9 @@ namespace NativeJIT
             "jnle"
         };
 
-        static_assert(static_cast<unsigned>(JccType::JccCount) == _countof(names),
+        static_assert(static_cast<unsigned>(JccType::JccCount) == std::extent<decltype(names)>::value,
                       "Mismatched number of JCC names.");
-        LogThrowAssert(static_cast<unsigned>(jcc)  < _countof(names), "Invalid JCC");
+        LogThrowAssert(static_cast<unsigned>(jcc)  < std::extent<decltype(names)>::value, "Invalid JCC");
 
         return names[static_cast<unsigned>(jcc)];
     }
@@ -235,7 +235,7 @@ namespace NativeJIT
     }
 
 
-    void X64CodeGenerator::Helper<OpCode::Ret>::Emit(X64CodeGenerator& code)
+    template <> void X64CodeGenerator::Helper<OpCode::Ret>::Emit(X64CodeGenerator& code)
     {
         code.Ret();
     }

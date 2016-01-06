@@ -1,6 +1,8 @@
-build
-Debug
-Release
+*~
+.DS_Store
+build/
+Debug/
+Release/
 ipch
 *.obj
 *.opensdf

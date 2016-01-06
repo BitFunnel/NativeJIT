@@ -5,12 +5,12 @@ set(CPPFILES
   BitOperations.cpp
   CodeBuffer.cpp
   ExecutionBuffer.cpp
-  FunctionBuffer.cpp
-  FunctionSpecification.cpp
+#  FunctionBuffer.cpp
+#  FunctionSpecification.cpp
   JumpTable.cpp
   Register.cpp
   stdafx.cpp
-  UnwindCode.cpp
+#  UnwindCode.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
 )

@@ -64,7 +64,7 @@ namespace Allocators
 
 
     private:
-        template <typename T>
+        template <typename S>
         friend class StlAllocator;
 
         // StlAllocator does not implement an assignment operator because
@@ -119,7 +119,7 @@ namespace Allocators
 
 
     template <typename T>
-    typename StlAllocator<T>::size_type StlAllocator<T>::max_size() const
+    typename StlAllocator<T>::size_type StlAllocator<T>::max_size() const throw()
     {
         return m_allocator.MaxSize();
     }
