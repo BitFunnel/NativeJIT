@@ -1,14 +1,19 @@
 #pragma once
 
-#include <stdatomic.h>
+//#include <stdatomic.h>
 #include <cstdint>
 //#include <x86intrin.h> // Intrinsic instructions.
 //#include <intrin.h>
-#include <libkern/OSAtomic.h>   // For OSAtomicTestAndSet
+//#include <libkern/OSAtomic.h>   // For OSAtomicTestAndSet
 #include <nmmintrin.h>
 #include <smmintrin.h>
 #include <string.h>         // For ffsll()
 #include <type_traits>
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#endif
 
 // http://stackoverflow.com/questions/2039861/how-to-get-gcc-to-generate-bts-instruction-for-x86-64-from-standard-c
 // https://developer.apple.com/library/ios/documentation/System/Conceptual/ManPages_iPhoneOS/man3/atomic.3.html
@@ -70,6 +75,7 @@ namespace NativeJIT
         // fallback method is implemented only for unit test runs in potentially
         // old lab machines/virtual machines.
         /* __forceinline */
+        inline
         uint8_t GetNonZeroBitCount(uint32_t value)
         {
             return c_isPopCntSupported
@@ -82,6 +88,7 @@ namespace NativeJIT
         // Requires SSE4 support.
         // See https://en.wikipedia.org/wiki/SSE4#POPCNT_and_LZCNT
         /* __forceinline */
+        inline
         uint8_t GetNonZeroBitCount(uint64_t value)
         {
             return c_isPopCntSupported
@@ -95,6 +102,7 @@ namespace NativeJIT
         // if the value has no bits set.
         // Uses BSF instruction. See http://felixcloutier.com/x86/BSF.html
         /* __forceinline */
+        inline
         bool GetLowestBitSet(uint64_t value, unsigned* lowestBitSetIndex)
         {
 #ifdef _MSC_VER
@@ -113,6 +121,7 @@ namespace NativeJIT
         // if the value has no bits set.
         // Uses BSR instruction. See http://felixcloutier.com/x86/BSR.html
         /* __forceinline */
+        inline
         bool GetHighestBitSet(uint64_t value, unsigned* highestBitSetIndex)
         {
 #ifdef _MSC_VER
@@ -130,6 +139,7 @@ namespace NativeJIT
         // Returns a boolean indicating whether the specified bit is set or not.
         // WARNING: Does not verify that bitIndex is in valid range.
         /* __forceinline */
+        inline
         bool TestBit(uint64_t value, unsigned bitIndex)
         {
 #ifdef _MSC_VER
@@ -203,7 +213,8 @@ namespace NativeJIT
         /* __forceinline */
         void SetBit(T* value, unsigned bitIndex)
         {
-            TestAndSetBit(value, bitIndex);
+            *value |= (1 << bitIndex);
+//            TestAndSetBit(value, bitIndex);
         }
 
 
@@ -239,7 +250,8 @@ namespace NativeJIT
         /* __forceinline */
         void ClearBit(T* value, unsigned bitIndex)
         {
-            TestAndClearBit(value, bitIndex);
+            *value &= ~static_cast<T>(1 << bitIndex);
+//            TestAndClearBit(value, bitIndex);
         }
     }
 }

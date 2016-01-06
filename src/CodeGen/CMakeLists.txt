@@ -4,21 +4,23 @@ set(CPPFILES
   Allocator.cpp
   BitOperations.cpp
   CodeBuffer.cpp
-  ExecutionBuffer.cpp
-#  FunctionBuffer.cpp
-#  FunctionSpecification.cpp
   JumpTable.cpp
   Register.cpp
   stdafx.cpp
-#  UnwindCode.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
+)
+
+set(WINDOWS_CPPFILES
+  Windows/ExecutionBuffer.cpp
+  Windows/FunctionBuffer.cpp
+  Windows/FunctionSpecification.cpp
+  Windows/UnwindCode.cpp
 )
 
 set(PRIVATE_HFILES
   stdafx.h
   targetver.h
-  UnwindCode.h
 )
 set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/AllocatorVector.h
@@ -38,6 +40,22 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/Temporary/IAllocator.h
   ${CMAKE_SOURCE_DIR}/inc/Temporary/StlAllocator.h
 )
+
+set(WINDOWS_PRIVATE_HFILES
+  Windows/UnwindCode.h
+)
+
+set(WINDOWS_PUBLIC_HFILES
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionSpecification.h
+)
+
+if (WIN32)
+set(CPPFILES ${CPPFILES} ${WINDOWS_CPPFILES})
+set(PUBLIC_HFILES ${PUBLIC_HFILES} ${WINDOWS_PUBLIC_HFILES})
+set(PRIVATE_HFILES ${PRIVATE_HFILES} ${WINDOWS_PRIVATE_HFILES})
+endif (WIN32)
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
 

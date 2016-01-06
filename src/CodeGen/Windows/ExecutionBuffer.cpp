@@ -2,10 +2,10 @@
 
 #include <stdexcept>
 
-#include <sys/mman.h>
-
 #ifdef _MSC_VER
 #include <Windows.h>
+#else
+#include <sys/mman.h>
 #endif
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"

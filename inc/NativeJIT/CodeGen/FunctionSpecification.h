@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <windows.h>                        // RUNTIME_FUNCTION embedded.
+//#include <windows.h>                        // RUNTIME_FUNCTION embedded.
 
 #include "NativeJIT/AllocatorVector.h"      // Embedded member.
 
