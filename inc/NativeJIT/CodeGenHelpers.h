@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-#include "ExpressionTree.h"                 // ExpressionTree::Storage<T> parameter.
-#include "NativeJIT/X64CodeGenerator.h"     // Emit<OP> referenced by template definition.
-#include "Temporary/Assert.h"               // Assert() referenced by template definition.
+#include "NativeJIT/CodeGen/X64CodeGenerator.h" // Emit<OP> referenced by template definition.
+#include "NativeJIT/ExpressionTree.h"           // ExpressionTree::Storage<T> parameter.
+#include "Temporary/Assert.h"                   // Assert() referenced by template definition.
 
 
 namespace NativeJIT

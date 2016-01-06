@@ -1,9 +1,9 @@
 #include "stdafx.h"
 
-#include "CallNode.h"
 #include "NativeJIT/BitOperations.h"
-#include "NativeJIT/CallingConvention.h"
-#include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/CallingConvention.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/Nodes/CallNode.h"
 
 
 namespace NativeJIT

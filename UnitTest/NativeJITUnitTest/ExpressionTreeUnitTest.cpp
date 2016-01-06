@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include "Function.h"
-#include "NativeJIT/ExecutionBuffer.h"
-#include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/ExecutionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/Function.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 

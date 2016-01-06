@@ -7,10 +7,10 @@
 #include <iosfwd>
 
 #include "NativeJIT/BitOperations.h"
-#include "NativeJIT/CodeBuffer.h"       // Inherits from CodeBuffer.
-#include "NativeJIT/Register.h"         // Register parameter.
-#include "NativeJIT/ValuePredicates.h"  // Called by template code.
-#include "Temporary/NonCopyable.h"      // Inherits from NonCopyable.
+#include "NativeJIT/CodeGen/CodeBuffer.h"       // Inherits from CodeBuffer.
+#include "NativeJIT/CodeGen/ValuePredicates.h"  // Called by template code.
+#include "NativeJIT/Register.h"                 // Register parameter.
+#include "Temporary/NonCopyable.h"              // Inherits from NonCopyable.
 
 
 // Supress warning about constant expression involving template parameters.

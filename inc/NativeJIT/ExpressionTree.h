@@ -4,16 +4,16 @@
 #include <cstdint>
 #include <iostream>             // TODO: Remove this temp debug include.
 
-#include "NativeJIT/AllocatorVector.h"          // Embedded member.
+#include "NativeJIT/AllocatorVector.h"                  // Embedded member.
 #include "NativeJIT/BitOperations.h"
-#include "NativeJIT/FunctionSpecification.h"    // c_maxStackSize definition.
-#include "NativeJIT/JumpTable.h"                // ExpressionTree embeds Label.
+#include "NativeJIT/CodeGen/FunctionSpecification.h"    // c_maxStackSize definition.
+#include "NativeJIT/CodeGen/JumpTable.h"                // ExpressionTree embeds Label.
 #include "NativeJIT/Register.h"
+#include "NativeJIT/TypePredicates.h"
 #include "Temporary/NonCopyable.h"
 #include "Temporary/AllocatorOperations.h"
 #include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"
-#include "TypePredicates.h"
 
 namespace Allocators
 {

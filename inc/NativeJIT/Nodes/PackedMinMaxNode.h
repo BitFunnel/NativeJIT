@@ -1,9 +1,9 @@
 #pragma once
 
 
+#include "NativeJIT/CodeGen/X64CodeGenerator.h"     // OpCode type.
+#include "NativeJIT/Nodes/Node.h"
 #include "NativeJIT/Packed.h"
-#include "NativeJIT/X64CodeGenerator.h"     // OpCode type.
-#include "Node.h"
 
 
 namespace NativeJIT

@@ -2,10 +2,10 @@
 
 #include <algorithm>    // For std::max
 
-#include "CodeGenHelpers.h"
-#include "ExpressionTree.h"
-#include "NativeJIT/X64CodeGenerator.h"
-#include "Node.h"
+#include "NativeJIT/CodeGen/X64CodeGenerator.h"
+#include "NativeJIT/CodeGenHelpers.h"
+#include "NativeJIT/ExpressionTree.h"
+#include "NativeJIT/Nodes/Node.h"
 
 
 namespace NativeJIT

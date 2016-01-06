@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "ML64Verifier.h"
-#include "NativeJIT/ExecutionBuffer.h"
-#include "NativeJIT/X64CodeGenerator.h"
+#include "NativeJIT/CodeGen/ExecutionBuffer.h"
+#include "NativeJIT/CodeGen/X64CodeGenerator.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 

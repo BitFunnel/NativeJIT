@@ -2,9 +2,9 @@
 
 #include <iostream>                    // Accessed by template definition for Print().
 
-#include "CodeGenHelpers.h"
 #include "NativeJIT/AllocatorVector.h" // Embedded member.
-#include "Node.h"                      // Base class.
+#include "NativeJIT/CodeGenHelpers.h"
+#include "NativeJIT/Nodes/Node.h"      // Base class.
 
 // https://software.intel.com/en-us/articles/introduction-to-x64-assembly
 

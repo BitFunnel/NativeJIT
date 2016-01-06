@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 
-#include "NativeJIT/FunctionBuffer.h"
-#include "NativeJIT/FunctionSpecification.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionSpecification.h"
 #include "UnwindCode.h"
 
 

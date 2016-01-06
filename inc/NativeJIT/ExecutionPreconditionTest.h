@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ConditionalNode.h"
-#include "ExpressionTree.h"
-#include "ImmediateNode.h"
-#include "NativeJIT/X64CodeGenerator.h"
+#include "NativeJIT/CodeGen/X64CodeGenerator.h"
+#include "NativeJIT/ExpressionTree.h"
+#include "NativeJIT/Nodes/ConditionalNode.h"
+#include "NativeJIT/Nodes/ImmediateNode.h"
 
 
 namespace NativeJIT

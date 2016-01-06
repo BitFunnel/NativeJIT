@@ -21,67 +21,7 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Node.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExpressionTree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExpressionNodeFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Examples.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BinaryNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ImmediateNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FieldPointerNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ParameterNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ReturnNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IndirectNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConditionalNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TypePredicates.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Function.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CallNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CodeGenHelpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PackedMinMaxNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CastNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StackVariableNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ShldNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BinaryImmediateNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExecutionPreconditionTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

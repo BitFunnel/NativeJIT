@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ExecutionPreconditionTest.h"
-#include "ExpressionNodeFactory.h"
+#include "NativeJIT/ExecutionPreconditionTest.h"
+#include "NativeJIT/ExpressionNodeFactory.h"
 
 
 namespace NativeJIT

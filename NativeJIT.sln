@@ -28,17 +28,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{
 	ProjectSection(SolutionItems) = preProject
 		inc\NativeJIT\AllocatorVector.h = inc\NativeJIT\AllocatorVector.h
 		inc\NativeJIT\BitOperations.h = inc\NativeJIT\BitOperations.h
-		inc\NativeJIT\CallingConvention.h = inc\NativeJIT\CallingConvention.h
-		inc\NativeJIT\CodeBuffer.h = inc\NativeJIT\CodeBuffer.h
-		inc\NativeJIT\ExecutionBuffer.h = inc\NativeJIT\ExecutionBuffer.h
-		inc\NativeJIT\FunctionBuffer.h = inc\NativeJIT\FunctionBuffer.h
-		inc\NativeJIT\FunctionSpecification.h = inc\NativeJIT\FunctionSpecification.h
-		inc\NativeJIT\JumpTable.h = inc\NativeJIT\JumpTable.h
+		inc\NativeJIT\CodeGenHelpers.h = inc\NativeJIT\CodeGenHelpers.h
+		inc\NativeJIT\ExecutionPreconditionTest.h = inc\NativeJIT\ExecutionPreconditionTest.h
+		inc\NativeJIT\ExpressionNodeFactory.h = inc\NativeJIT\ExpressionNodeFactory.h
+		inc\NativeJIT\ExpressionTree.h = inc\NativeJIT\ExpressionTree.h
+		inc\NativeJIT\Function.h = inc\NativeJIT\Function.h
 		inc\NativeJIT\Model.h = inc\NativeJIT\Model.h
 		inc\NativeJIT\Packed.h = inc\NativeJIT\Packed.h
 		inc\NativeJIT\Register.h = inc\NativeJIT\Register.h
-		inc\NativeJIT\ValuePredicates.h = inc\NativeJIT\ValuePredicates.h
-		inc\NativeJIT\X64CodeGenerator.h = inc\NativeJIT\X64CodeGenerator.h
+		inc\NativeJIT\TypePredicates.h = inc\NativeJIT\TypePredicates.h
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Temporary", "Temporary", "{EC495CF0-077A-4995-919B-8E1667EC8E53}"
@@ -54,6 +52,36 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Assembler", "src\Assembler\Assembler.vcxproj", "{37A0B831-E996-431F-B1C4-1469B9250FB4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "UnitTest\Shared\Shared.vcxproj", "{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeGen", "CodeGen", "{1B358EA3-F096-4890-908F-BA0426ACE0E5}"
+	ProjectSection(SolutionItems) = preProject
+		inc\NativeJIT\CodeGen\CallingConvention.h = inc\NativeJIT\CodeGen\CallingConvention.h
+		inc\NativeJIT\CodeGen\CodeBuffer.h = inc\NativeJIT\CodeGen\CodeBuffer.h
+		inc\NativeJIT\CodeGen\ExecutionBuffer.h = inc\NativeJIT\CodeGen\ExecutionBuffer.h
+		inc\NativeJIT\CodeGen\FunctionBuffer.h = inc\NativeJIT\CodeGen\FunctionBuffer.h
+		inc\NativeJIT\CodeGen\FunctionSpecification.h = inc\NativeJIT\CodeGen\FunctionSpecification.h
+		inc\NativeJIT\CodeGen\JumpTable.h = inc\NativeJIT\CodeGen\JumpTable.h
+		inc\NativeJIT\CodeGen\ValuePredicates.h = inc\NativeJIT\CodeGen\ValuePredicates.h
+		inc\NativeJIT\CodeGen\X64CodeGenerator.h = inc\NativeJIT\CodeGen\X64CodeGenerator.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nodes", "Nodes", "{80F7B398-809C-438C-BECA-98530F18F638}"
+	ProjectSection(SolutionItems) = preProject
+		inc\NativeJIT\Nodes\BinaryImmediateNode.h = inc\NativeJIT\Nodes\BinaryImmediateNode.h
+		inc\NativeJIT\Nodes\BinaryNode.h = inc\NativeJIT\Nodes\BinaryNode.h
+		inc\NativeJIT\Nodes\CallNode.h = inc\NativeJIT\Nodes\CallNode.h
+		inc\NativeJIT\Nodes\CastNode.h = inc\NativeJIT\Nodes\CastNode.h
+		inc\NativeJIT\Nodes\ConditionalNode.h = inc\NativeJIT\Nodes\ConditionalNode.h
+		inc\NativeJIT\Nodes\FieldPointerNode.h = inc\NativeJIT\Nodes\FieldPointerNode.h
+		inc\NativeJIT\Nodes\ImmediateNode.h = inc\NativeJIT\Nodes\ImmediateNode.h
+		inc\NativeJIT\Nodes\IndirectNode.h = inc\NativeJIT\Nodes\IndirectNode.h
+		inc\NativeJIT\Nodes\Node.h = inc\NativeJIT\Nodes\Node.h
+		inc\NativeJIT\Nodes\PackedMinMaxNode.h = inc\NativeJIT\Nodes\PackedMinMaxNode.h
+		inc\NativeJIT\Nodes\ParameterNode.h = inc\NativeJIT\Nodes\ParameterNode.h
+		inc\NativeJIT\Nodes\ReturnNode.h = inc\NativeJIT\Nodes\ReturnNode.h
+		inc\NativeJIT\Nodes\ShldNode.h = inc\NativeJIT\Nodes\ShldNode.h
+		inc\NativeJIT\Nodes\StackVariableNode.h = inc\NativeJIT\Nodes\StackVariableNode.h
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -140,5 +168,7 @@ Global
 		{EC495CF0-077A-4995-919B-8E1667EC8E53} = {7140DE4A-C728-48BF-B257-E3CFC753E12E}
 		{37A0B831-E996-431F-B1C4-1469B9250FB4} = {F44ECE56-395F-44EE-A5EF-578056D92FB1}
 		{9C4018A4-0D5A-4F12-9666-E79EE2FECDF5} = {FEC8EF42-4E3E-4974-B368-806450FA517F}
+		{1B358EA3-F096-4890-908F-BA0426ACE0E5} = {C355777F-6688-4F80-A3A5-730D4CA7DA5C}
+		{80F7B398-809C-438C-BECA-98530F18F638} = {C355777F-6688-4F80-A3A5-730D4CA7DA5C}
 	EndGlobalSection
 EndGlobal

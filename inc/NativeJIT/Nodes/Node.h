@@ -5,10 +5,10 @@
 
 #include <cstdint>
 
-#include "ExpressionTree.h"             // ExpressionTree::Storage<T> return type.
+#include "NativeJIT/ExpressionTree.h"             // ExpressionTree::Storage<T> return type.
+#include "NativeJIT/TypePredicates.h"
 #include "Temporary/Assert.h"
 #include "Temporary/NonCopyable.h"
-#include "TypePredicates.h"
 
 
 namespace NativeJIT

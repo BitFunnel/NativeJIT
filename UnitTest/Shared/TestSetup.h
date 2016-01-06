@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "NativeJIT/ExecutionBuffer.h"
-#include "NativeJIT/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/ExecutionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "Temporary/Allocator.h"
 #include "Temporary/NonCopyable.h"
 

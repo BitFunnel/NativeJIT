@@ -71,29 +71,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="BinaryImmediateNode.h" />
-    <ClInclude Include="BinaryNode.h" />
-    <ClInclude Include="CallNode.h" />
-    <ClInclude Include="CastNode.h" />
-    <ClInclude Include="CodeGenHelpers.h" />
-    <ClInclude Include="ExecutionPreconditionTest.h" />
-    <ClInclude Include="Function.h" />
-    <ClInclude Include="ConditionalNode.h" />
     <ClInclude Include="Examples.h" />
-    <ClInclude Include="ExpressionNodeFactory.h" />
-    <ClInclude Include="ExpressionTree.h" />
-    <ClInclude Include="FieldPointerNode.h" />
-    <ClInclude Include="ImmediateNode.h" />
-    <ClInclude Include="IndirectNode.h" />
-    <ClInclude Include="Node.h" />
-    <ClInclude Include="PackedMinMaxNode.h" />
-    <ClInclude Include="ParameterNode.h" />
-    <ClInclude Include="ReturnNode.h" />
-    <ClInclude Include="ShldNode.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="TypePredicates.h" />
-    <ClInclude Include="StackVariableNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CallNode.cpp" />

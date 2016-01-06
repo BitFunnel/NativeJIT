@@ -3,8 +3,8 @@
 #include <algorithm>    // For std::max
 #include <type_traits>
 
-#include "ExpressionNodeFactory.h"
-#include "Node.h"
+#include "NativeJIT/ExpressionNodeFactory.h"
+#include "NativeJIT/Nodes/Node.h"
 
 
 namespace NativeJIT

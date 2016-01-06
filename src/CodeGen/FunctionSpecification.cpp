@@ -5,9 +5,9 @@
 #include <Windows.h>
 
 #include "NativeJIT/BitOperations.h"
-#include "NativeJIT/CallingConvention.h"
-#include "NativeJIT/FunctionBuffer.h"
-#include "NativeJIT/FunctionSpecification.h"
+#include "NativeJIT/CodeGen/CallingConvention.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionSpecification.h"
 #include "Temporary/IAllocator.h"
 #include "UnwindCode.h"
 

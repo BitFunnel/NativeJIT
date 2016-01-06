@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Windows.h>                        // RUNTIME_FUNCTION embedded.
+#include <windows.h>                                // RUNTIME_FUNCTION embedded.
 
-#include "NativeJIT/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
+#include "NativeJIT/CodeGen/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
 
 
 namespace NativeJIT

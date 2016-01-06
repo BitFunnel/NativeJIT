@@ -2,8 +2,8 @@
 
 #include <type_traits>
 
-#include "NativeJIT/X64CodeGenerator.h"     // OpCode type.
-#include "Node.h"
+#include "NativeJIT/CodeGen/X64CodeGenerator.h"     // OpCode type.
+#include "NativeJIT/Nodes/Node.h"
 
 
 namespace NativeJIT

@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <Windows.h>
 
-#include "NativeJIT/ExecutionBuffer.h"
+#include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "Temporary/Assert.h"
 
 

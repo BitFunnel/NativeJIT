@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "ExpressionNodeFactory.h"
+#include "NativeJIT/ExpressionNodeFactory.h"
 
 
 namespace NativeJIT

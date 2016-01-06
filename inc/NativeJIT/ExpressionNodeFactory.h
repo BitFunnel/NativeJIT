@@ -2,23 +2,23 @@
 
 #include <cstdint>
 
-#include "BinaryImmediateNode.h"
-#include "BinaryNode.h"
-#include "CallNode.h"
-#include "CastNode.h"
-#include "ConditionalNode.h"
-#include "ExpressionTree.h"             // Base class.
-#include "FieldPointerNode.h"
-#include "ImmediateNode.h"
-#include "IndirectNode.h"
 #include "NativeJIT/BitOperations.h"
+#include "NativeJIT/ExpressionTree.h"             // Base class.
 #include "NativeJIT/Model.h"
-#include "Node.h"
-#include "PackedMinMaxNode.h"
-#include "ParameterNode.h"
-#include "ReturnNode.h"
-#include "ShldNode.h"
-#include "StackVariableNode.h"
+#include "NativeJIT/Nodes/BinaryImmediateNode.h"
+#include "NativeJIT/Nodes/BinaryNode.h"
+#include "NativeJIT/Nodes/CallNode.h"
+#include "NativeJIT/Nodes/CastNode.h"
+#include "NativeJIT/Nodes/ConditionalNode.h"
+#include "NativeJIT/Nodes/FieldPointerNode.h"
+#include "NativeJIT/Nodes/ImmediateNode.h"
+#include "NativeJIT/Nodes/IndirectNode.h"
+#include "NativeJIT/Nodes/Node.h"
+#include "NativeJIT/Nodes/PackedMinMaxNode.h"
+#include "NativeJIT/Nodes/ParameterNode.h"
+#include "NativeJIT/Nodes/ReturnNode.h"
+#include "NativeJIT/Nodes/ShldNode.h"
+#include "NativeJIT/Nodes/StackVariableNode.h"
 #include "Temporary/Allocator.h"
 
 

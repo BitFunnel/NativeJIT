@@ -3,13 +3,13 @@
 #include <iostream>             // TODO: Remove this temp debug include.
 
 #include "Assert.h"
-#include "ExecutionPreconditionTest.h"
-#include "ExpressionTree.h"
-#include "ImmediateNode.h"
-#include "NativeJIT/CallingConvention.h"
-#include "NativeJIT/FunctionBuffer.h"
-#include "NativeJIT/FunctionSpecification.h"
-#include "ParameterNode.h"
+#include "NativeJIT/CodeGen/CallingConvention.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionSpecification.h"
+#include "NativeJIT/ExecutionPreconditionTest.h"
+#include "NativeJIT/ExpressionTree.h"
+#include "NativeJIT/Nodes/ImmediateNode.h"
+#include "NativeJIT/Nodes/ParameterNode.h"
 
 
 namespace NativeJIT

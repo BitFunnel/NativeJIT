@@ -3,8 +3,8 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "NativeJIT/CodeBuffer.h"
-#include "NativeJIT/JumpTable.h"
+#include "NativeJIT/CodeGen/CodeBuffer.h"
+#include "NativeJIT/CodeGen/JumpTable.h"
 #include "Temporary/Assert.h"
 #include "Temporary/IAllocator.h"
 

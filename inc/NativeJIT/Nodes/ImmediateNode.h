@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "Node.h"
+#include "NativeJIT/Nodes/Node.h"
 
 
 namespace NativeJIT

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CodeGenHelpers.h"
-#include "Node.h"
+#include "NativeJIT/CodeGenHelpers.h"
+#include "NativeJIT/Nodes/Node.h"
 
 
 namespace NativeJIT

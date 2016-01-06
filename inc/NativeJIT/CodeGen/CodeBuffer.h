@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-#include "NativeJIT/JumpTable.h"    // Label parameter and return value.
+#include "NativeJIT/CodeGen/JumpTable.h"    // Label parameter and return value.
 #include "Temporary/Assert.h"
-#include "Temporary/NonCopyable.h"  // Base class.
+#include "Temporary/NonCopyable.h"          // Base class.
 
 
 namespace Allocators

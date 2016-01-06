@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "NativeJIT/JumpTable.h"
+#include "NativeJIT/CodeGen/JumpTable.h"
 
 
 namespace NativeJIT

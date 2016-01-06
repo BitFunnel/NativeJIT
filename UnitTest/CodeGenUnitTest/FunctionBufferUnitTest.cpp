@@ -4,10 +4,10 @@
 #include <functional>
 #include <random>
 
-#include "NativeJIT/CallingConvention.h"
-#include "NativeJIT/ExecutionBuffer.h"
-#include "NativeJIT/FunctionBuffer.h"
-#include "NativeJIT/FunctionSpecification.h"
+#include "NativeJIT/CodeGen/CallingConvention.h"
+#include "NativeJIT/CodeGen/ExecutionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionSpecification.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 #include "UnwindCode.h"

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "NativeJIT/ValuePredicates.h"
+#include "NativeJIT/CodeGen/ValuePredicates.h"
 
 
 namespace NativeJIT

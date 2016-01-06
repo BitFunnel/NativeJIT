@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Node.h"
+#include "NativeJIT/Nodes/Node.h"
 
 
 namespace NativeJIT

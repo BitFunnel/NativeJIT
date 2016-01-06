@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ExpressionTree.h"
-#include "Node.h"
+#include "NativeJIT/ExpressionTree.h"
+#include "NativeJIT/Nodes/Node.h"
 #include "Temporary/Assert.h"
 
 
