@@ -124,11 +124,11 @@ namespace NativeJIT
     //*************************************************************************
     inline void CodeBuffer::VerifyNoBufferOverflow(unsigned length)
     {
-        Assert(m_current + length - 1 < m_bufferEnd,
-               "CodeBuffer overflow, wanted %u bytes, only %Iu out of %u bytes available",
-               length,
-               m_bufferEnd - m_current,
-               m_capacity);
+        LogThrowAssert(m_current + length - 1 < m_bufferEnd,
+                       "CodeBuffer overflow, wanted %u bytes, only %Iu out of %u bytes available",
+                       length,
+                       m_bufferEnd - m_current,
+                       m_capacity);
     }
 
 

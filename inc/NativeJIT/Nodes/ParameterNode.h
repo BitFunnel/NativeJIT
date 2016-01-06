@@ -48,7 +48,7 @@ namespace NativeJIT
     {
         // For now we only support the four parameters that are passed in registers.
         // No support for memory parameters.
-        Assert(id < 4, "Exceeded maximum number of register parameters.");
+        LogThrowAssert(id < 4, "Exceeded maximum number of register parameters.");
 
         // Integer parameters are passed in RCX, RDX, R8, and R9.
         // TODO: Use constants to encode registers.
@@ -63,7 +63,7 @@ namespace NativeJIT
     {
         // For now we only support the four parameters that are passed in registers.
         // No support for memory parameters.
-        Assert(id < 4, "Exceeded maximum number of register parameters.");
+        LogThrowAssert(id < 4, "Exceeded maximum number of register parameters.");
 
         // Floating point parameters are passed in XMM0-XMM3.
         r = Register<SIZE, true>(id);

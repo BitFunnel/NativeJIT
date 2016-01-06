@@ -337,7 +337,7 @@ namespace NativeJIT
     {
         // Make sure that the result register is not pinned at this point.
         auto const resultRegister = tree.GetResultRegister<R>();
-        Assert(!tree.IsPinned(resultRegister), "The result register must not be pinned before the call");
+        LogThrowAssert(!tree.IsPinned(resultRegister), "The result register must not be pinned before the call");
 
         // Evaluate the function pointer and each parameter.
         for (Child* child : m_children)
@@ -459,7 +459,7 @@ namespace NativeJIT
     template <typename T>
     void CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::PinStorageRegister()
     {
-        Assert(!m_storage.IsNull(), "Storage must be initialized");
+        LogThrowAssert(!m_storage.IsNull(), "Storage must be initialized");
 
         if (m_storage.GetStorageClass() == StorageClass::Direct)
         {

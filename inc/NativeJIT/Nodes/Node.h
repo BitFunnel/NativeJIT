@@ -213,8 +213,8 @@ namespace NativeJIT
     template <typename T>
     void Node<T>::SetCache(ExpressionTree::Storage<T> s)
     {
-        Assert(!IsCached(), "Cache is already set for node with ID %u", GetId());
-        Assert(GetParentCount() > 0, "Cannot set cache for node %u with zero parents", GetId());
+        LogThrowAssert(!IsCached(), "Cache is already set for node with ID %u", GetId());
+        LogThrowAssert(GetParentCount() > 0, "Cannot set cache for node %u with zero parents", GetId());
 
         m_cacheReferenceCount = GetParentCount();
         m_cache = s;
@@ -224,7 +224,7 @@ namespace NativeJIT
     template <typename T>
     Storage<T> Node<T>::GetAndReleaseCache()
     {
-        Assert(IsCached(), "Cache has not been set for node ID %u", GetId());
+        LogThrowAssert(IsCached(), "Cache has not been set for node ID %u", GetId());
 
         auto result = m_cache;
         --m_cacheReferenceCount;
@@ -243,11 +243,11 @@ namespace NativeJIT
     {
         // If cache is present, reference count cannot be zero. Similarly, when
         // the cache is empty, reference count must be zero.
-        Assert(m_cache.IsNull() == (m_cacheReferenceCount == 0),
-               "Mismatch in cached storage and cache reference count: "
-               "have cache %u, reference count: %u",
-               m_cache.IsNull(),
-               m_cacheReferenceCount);
+        LogThrowAssert(m_cache.IsNull() == (m_cacheReferenceCount == 0),
+                       "Mismatch in cached storage and cache reference count: "
+                       "have cache %u, reference count: %u",
+                       m_cache.IsNull(),
+                       m_cacheReferenceCount);
 
         return !m_cache.IsNull();
     }
@@ -279,12 +279,12 @@ namespace NativeJIT
     template <typename T>
     void Node<T>::CodeGenCache(ExpressionTree& tree)
     {
-        Assert(GetParentCount() > 0,
-               "Cannot evaluate node %u with no parents",
-               GetId());
-        Assert(!HasBeenEvaluated(),
-               "Tried to CodeGenValue() node with ID %u more than once",
-               GetId());
+        LogThrowAssert(GetParentCount() > 0,
+                       "Cannot evaluate node %u with no parents",
+                       GetId());
+        LogThrowAssert(!HasBeenEvaluated(),
+                       "Tried to CodeGenValue() node with ID %u more than once",
+                       GetId());
         MarkEvaluated();
 
         LabelSubtree(true);
@@ -345,8 +345,8 @@ namespace NativeJIT
     template <typename T>
     ExpressionTree::Storage<void*> Node<T>::CodeGenAsBase(ExpressionTree& tree)
     {
-        Assert(!RegisterStorage<T>::c_isFloat && RegisterStorage<T>::c_size == sizeof(void*),
-               "Invalid call to CodeGenAsBase");
+        LogThrowAssert(!RegisterStorage<T>::c_isFloat && RegisterStorage<T>::c_size == sizeof(void*),
+                       "Invalid call to CodeGenAsBase");
 
         return ExpressionTree::Storage<void*>(CodeGen(tree));
     }

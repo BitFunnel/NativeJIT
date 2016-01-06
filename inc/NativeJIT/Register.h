@@ -52,9 +52,9 @@ namespace NativeJIT
         explicit Register(unsigned id)
             : m_id(id)
         {
-            Assert((!ISFLOAT && id <= c_maxIntegerRegisterID)
-                       || (ISFLOAT && id <= c_maxFloatRegisterID),
-                   "Invalid register id.");
+            LogThrowAssert((!ISFLOAT && id <= c_maxIntegerRegisterID)
+                            || (ISFLOAT && id <= c_maxFloatRegisterID),
+                           "Invalid register id.");
         }
 
 
@@ -96,7 +96,7 @@ namespace NativeJIT
         char const * GetName() const
         {
             char const * name = c_names[ISFLOAT ? 1 : 0][c_sizes[SIZE]][m_id];
-            Assert(name != nullptr, "Attempting to get name for invalid register.");
+            LogThrowAssert(name != nullptr, "Attempting to get name for invalid register.");
 
             return name;
         }

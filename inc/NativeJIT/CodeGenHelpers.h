@@ -4,7 +4,7 @@
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h" // Emit<OP> referenced by template definition.
 #include "NativeJIT/ExpressionTree.h"           // ExpressionTree::Storage<T> parameter.
-#include "Temporary/Assert.h"                   // Assert() referenced by template definition.
+#include "Temporary/Assert.h"                   // LogThrowAssert() referenced by template definition.
 
 
 namespace NativeJIT
@@ -83,7 +83,7 @@ namespace NativeJIT
                 code.Emit<OP>(dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                Assert(false, "Invalid storage class.");
+                LogThrowAssert(false, "Invalid storage class.");
             }
         }
 
@@ -105,7 +105,7 @@ namespace NativeJIT
                 code.Emit<OP>(dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                Assert(false, "Invalid storage class.");
+                LogThrowAssert(false, "Invalid storage class.");
             }
         }
 
@@ -135,7 +135,7 @@ namespace NativeJIT
                             dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                Assert(false, "Invalid storage class.");
+                LogThrowAssert(false, "Invalid storage class.");
             }
         }
 
@@ -162,7 +162,7 @@ namespace NativeJIT
                             dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                Assert(false, "Invalid storage class.");
+                LogThrowAssert(false, "Invalid storage class.");
             }
         }
 
@@ -230,7 +230,7 @@ namespace NativeJIT
                 code.Emit<OP>(dest.GetBaseRegister(), dest.GetOffset(), src);
                 break;
             default:
-                Assert(false, "Invalid storage class.");
+                LogThrowAssert(false, "Invalid storage class.");
             }
         }
 
@@ -257,7 +257,7 @@ namespace NativeJIT
                             dest.GetBaseRegister(), dest.GetOffset(), src);
                 break;
             default:
-                Assert(false, "Invalid storage class.");
+                LogThrowAssert(false, "Invalid storage class.");
             }
         }
     }

@@ -119,7 +119,7 @@ namespace NativeJIT
 
         static_assert(static_cast<unsigned>(OpCode::OpCodeCount) == _countof(names),
                       "Mismatched number of opcode names.");
-        Assert(static_cast<unsigned>(op)  < _countof(names), "Invalid OpCode");
+        LogThrowAssert(static_cast<unsigned>(op)  < _countof(names), "Invalid OpCode");
 
         return names[static_cast<unsigned>(op)];
     }
@@ -148,7 +148,7 @@ namespace NativeJIT
 
         static_assert(static_cast<unsigned>(JccType::JccCount) == _countof(names),
                       "Mismatched number of JCC names.");
-        Assert(static_cast<unsigned>(jcc)  < _countof(names), "Invalid JCC");
+        LogThrowAssert(static_cast<unsigned>(jcc)  < _countof(names), "Invalid JCC");
 
         return names[static_cast<unsigned>(jcc)];
     }

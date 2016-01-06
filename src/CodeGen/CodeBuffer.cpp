@@ -80,12 +80,12 @@ namespace NativeJIT
                                   uint8_t const *data,
                                   unsigned length)
     {
-        Assert(startPosition + length <= CurrentPosition(),
-               "Cannot replace parts of the buffer that have not been populated "
-               "(populated: [0, %u), wanted [%u, %u))",
-               CurrentPosition(),
-               startPosition,
-               startPosition + length);
+        LogThrowAssert(startPosition + length <= CurrentPosition(),
+                       "Cannot replace parts of the buffer that have not been populated "
+                       "(populated: [0, %u), wanted [%u, %u))",
+                       CurrentPosition(),
+                       startPosition,
+                       startPosition + length);
 
         memmove(&m_bufferStart[startPosition], data, length);
     }

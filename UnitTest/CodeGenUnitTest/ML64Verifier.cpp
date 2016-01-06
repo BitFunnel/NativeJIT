@@ -35,8 +35,8 @@ namespace NativeJIT
                     uint64_t value;
                     unsigned size;
 
-                    Assert(ReadHexNumber(value, size), "Failed to read hex number");
-                    Assert(size <= 8 && size > 0, "Invalid size %u", size);
+                    LogThrowAssert(ReadHexNumber(value, size), "Failed to read hex number");
+                    LogThrowAssert(size <= 8 && size > 0, "Invalid size %u", size);
 
                     for (unsigned i = 0 ; i < size; ++i)
                     {
@@ -51,7 +51,7 @@ namespace NativeJIT
                             ReportError(x, m_testOutput[m_bytesVerified]);
                         }
 
-                        Assert(x == m_testOutput[m_bytesVerified], "Code mismatch");
+                        LogThrowAssert(x == m_testOutput[m_bytesVerified], "Code mismatch");
                         ++m_bytesVerified;
                     }
 
@@ -145,8 +145,8 @@ namespace NativeJIT
             {
                 uint64_t value;
                 unsigned size;
-                Assert(ReadHexNumber(value, size), "Failed to read hex number");
-                Assert(size == 4, "Invalid size %u", size);
+                LogThrowAssert(ReadHexNumber(value, size), "Failed to read hex number");
+                LogThrowAssert(size == 4, "Invalid size %u", size);
             }
         }
     }
@@ -230,7 +230,7 @@ namespace NativeJIT
 
     unsigned ML64Verifier::ReadHexDigit()
     {
-        Assert(isxdigit(PeekChar()) != 0, "Non-hex character");
+        LogThrowAssert(isxdigit(PeekChar()) != 0, "Non-hex character");
 
         char c = GetChar();
         if (c >= '0' && c <= '9')
@@ -247,7 +247,7 @@ namespace NativeJIT
         }
         else
         {
-            Assert(false, "Unexpected character, code: %u", c);
+            LogThrowAssert(false, "Unexpected character, code: %u", c);
             throw std::runtime_error("Unreachable code");
         }
     }

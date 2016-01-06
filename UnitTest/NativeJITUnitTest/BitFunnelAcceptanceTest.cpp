@@ -102,9 +102,9 @@ namespace NativeJIT
                 {
                     auto blobIt = m_fixedSizeBlobs.find(blobId);
 
-                    Assert(blobIt != m_fixedSizeBlobs.end(),
-                           "Unknown fixed size blob ID %u",
-                           blobId);
+                    LogThrowAssert(blobIt != m_fixedSizeBlobs.end(),
+                                   "Unknown fixed size blob ID %u",
+                                   blobId);
 
                     return blobIt->second;
                 }
@@ -114,9 +114,9 @@ namespace NativeJIT
                 {
                     auto blobIt = m_variableSizeBlobs.find(blobId);
 
-                    Assert(blobIt != m_variableSizeBlobs.end(),
-                           "Unknown variable size blob ID %u",
-                           blobId);
+                    LogThrowAssert(blobIt != m_variableSizeBlobs.end(),
+                                   "Unknown variable size blob ID %u",
+                                   blobId);
 
                     return blobIt->second;
                 }
@@ -311,13 +311,13 @@ namespace NativeJIT
 
                 T& Get()
                 {
-                    Assert(m_hasValue, "Cannot Get() null value");
+                    LogThrowAssert(m_hasValue, "Cannot Get() null value");
                     return m_value;
                 }
 
                 T const & Get() const
                 {
-                    Assert(m_hasValue, "Cannot Get() null value");
+                    LogThrowAssert(m_hasValue, "Cannot Get() null value");
                     return m_value;
                 }
 
@@ -488,7 +488,7 @@ namespace NativeJIT
                 {
                     auto const & termInfos = nGram.m_terms;
 
-                    Assert(termInfos.size() > 0, "Cannot process n-gram with zero words");
+                    LogThrowAssert(termInfos.size() > 0, "Cannot process n-gram with zero words");
 
                     TermFrequencies currFrequencies = LookupTermFrequencies(termInfos[0].m_hash);
                     float currentIdf = termInfos[0].m_idf;
@@ -513,7 +513,7 @@ namespace NativeJIT
                                                       float & estimatedIdf)
                 {
                     auto const & candidates = component.m_candidates;
-                    Assert(candidates.size() > 0, "Cannot process an empty query component");
+                    LogThrowAssert(candidates.size() > 0, "Cannot process an empty query component");
 
                     float currentIdf;
                     TermFrequencies currFrequencies
@@ -788,7 +788,7 @@ namespace NativeJIT
                 {
                     auto & termInfos = nGram.m_terms;
 
-                    Assert(termInfos.size() > 0, "Cannot process n-gram with zero words");
+                    LogThrowAssert(termInfos.size() > 0, "Cannot process n-gram with zero words");
 
                     Node<TermFrequencies>* currFrequencies
                         = &LookupTermFrequencies(e, termInfos[0].m_hash);
@@ -821,7 +821,7 @@ namespace NativeJIT
                                                       float & estimatedIdf)
                 {
                     auto & candidates = component.m_candidates;
-                    Assert(candidates.size() > 0, "Cannot process an empty query component");
+                    LogThrowAssert(candidates.size() > 0, "Cannot process an empty query component");
 
                     float currentIdf;
                     Node<TermFrequencies>* currFrequencies
@@ -1163,7 +1163,7 @@ namespace NativeJIT
                                            uint64_t key,
                                            uint64_t& value)
                 {
-                    Assert(c_expectedSlotCount == slotCount,
+                    LogThrowAssert(c_expectedSlotCount == slotCount,
                            "Mismatched slot count, %u vs %u",
                            c_expectedSlotCount,
                            slotCount);

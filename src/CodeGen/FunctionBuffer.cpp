@@ -41,8 +41,8 @@ namespace NativeJIT
           m_prologLength(0),
           m_isCodeGenerationCompleted(false)
     {
-        Assert(reinterpret_cast<size_t>(&m_runtimeFunction) % sizeof(DWORD) == 0,
-               "RUNTIME_FUNCTION must be DWORD aligned");
+        LogThrowAssert(reinterpret_cast<size_t>(&m_runtimeFunction) % sizeof(DWORD) == 0,
+                       "RUNTIME_FUNCTION must be DWORD aligned");
 
         // Register a callback to return the RUNTIME_FUNCTION when Windows
         // asks for it during exception handling.
@@ -72,16 +72,16 @@ namespace NativeJIT
 
     void const * FunctionBuffer::GetEntryPoint() const
     {
-        Assert(m_isCodeGenerationCompleted,
-               "Cannot get entry point until code generation is finalized");
+        LogThrowAssert(m_isCodeGenerationCompleted,
+                       "Cannot get entry point until code generation is finalized");
 
         return BufferStart() + m_runtimeFunction.BeginAddress;
     }
 
     unsigned FunctionBuffer::GetFunctionCodeStartOffset() const
     {
-        Assert(m_isCodeGenerationCompleted,
-               "Cannot get start offset until code generation is finalized");
+        LogThrowAssert(m_isCodeGenerationCompleted,
+                       "Cannot get start offset until code generation is finalized");
 
         return m_runtimeFunction.BeginAddress;
     }
@@ -89,8 +89,8 @@ namespace NativeJIT
 
     unsigned FunctionBuffer::GetFunctionCodeEndOffset() const
     {
-        Assert(m_isCodeGenerationCompleted,
-               "Cannot get end offset until code generation is finalized");
+        LogThrowAssert(m_isCodeGenerationCompleted,
+                       "Cannot get end offset until code generation is finalized");
 
         return m_runtimeFunction.EndAddress;
     }
@@ -98,8 +98,8 @@ namespace NativeJIT
 
     unsigned FunctionBuffer::GetUnwindInfoStartOffset() const
     {
-        Assert(m_isCodeGenerationCompleted,
-               "Cannot get unwind info offset until code generation is finalized");
+        LogThrowAssert(m_isCodeGenerationCompleted,
+                       "Cannot get unwind info offset until code generation is finalized");
 
         return m_runtimeFunction.UnwindInfoAddress;
     }
@@ -124,11 +124,11 @@ namespace NativeJIT
     void FunctionBuffer::BeginFunctionBodyGeneration(unsigned reservedUnwindInfoLength,
                                                      unsigned reservedPrologLength)
     {
-        Assert(!m_isCodeGenerationCompleted, "Code generation has already been completed");
+        LogThrowAssert(!m_isCodeGenerationCompleted, "Code generation has already been completed");
 
-        Assert(reservedUnwindInfoLength % sizeof(DWORD) == 0,
-               "Unaligned reserved UnwindInfo length of %u bytes",
-               reservedUnwindInfoLength);
+        LogThrowAssert(reservedUnwindInfoLength % sizeof(DWORD) == 0,
+                       "Unaligned reserved UnwindInfo length of %u bytes",
+                       reservedUnwindInfoLength);
 
         // Begining of UnwindInfo must be DWORD-aligned.
         AdvanceToAlignment<DWORD>();
@@ -144,15 +144,15 @@ namespace NativeJIT
 
     void FunctionBuffer::EndFunctionBodyGeneration(FunctionSpecification const & spec)
     {
-        Assert(spec.GetUnwindInfoByteLength() <= m_unwindInfoByteLength,
-               "Unwind info length of %u bytes is larger than the reserved %u bytes",
-               spec.GetUnwindInfoByteLength(),
-               m_unwindInfoByteLength);
+        LogThrowAssert(spec.GetUnwindInfoByteLength() <= m_unwindInfoByteLength,
+                       "Unwind info length of %u bytes is larger than the reserved %u bytes",
+                       spec.GetUnwindInfoByteLength(),
+                       m_unwindInfoByteLength);
 
-        Assert(spec.GetPrologLength() <= m_prologLength,
-               "Prolog length of %u bytes is larger than the reserved %u bytes",
-               spec.GetPrologLength(),
-               m_prologLength);
+        LogThrowAssert(spec.GetPrologLength() <= m_prologLength,
+                       "Prolog length of %u bytes is larger than the reserved %u bytes",
+                       spec.GetPrologLength(),
+                       m_prologLength);
 
         // Write the unwind info to the buffer.
         // Note: alignment for start and max size of the target has already been

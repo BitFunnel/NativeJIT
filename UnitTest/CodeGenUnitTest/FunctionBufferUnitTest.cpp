@@ -124,7 +124,7 @@ namespace NativeJIT
                 unsigned regId;
 
                 // Using RAX as a scratch register.
-                Assert((regMask & rax.GetMask()) == 0, "This test assumes RAX is volatile");
+                LogThrowAssert((regMask & rax.GetMask()) == 0, "This test assumes RAX is volatile");
 
                 while (BitOp::GetLowestBitSet(regMask, &regId))
                 {

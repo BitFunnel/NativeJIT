@@ -27,7 +27,7 @@ namespace NativeJIT
 
     void* Allocator::Allocate(size_t size)
     {
-        Assert(m_bytesAllocated + size <= m_bufferSize, "Out of memory");
+        LogThrowAssert(m_bytesAllocated + size <= m_bufferSize, "Out of memory");
 
         void* result = static_cast<void*>(m_buffer.get() + m_bytesAllocated);
         m_bytesAllocated += size;
@@ -38,9 +38,9 @@ namespace NativeJIT
 
     void Allocator::Deallocate(void* block)
     {
-        Assert(static_cast<char*>(block) >= m_buffer.get() &&
-               static_cast<char*>(block) < m_buffer.get() + m_bytesAllocated,
-               "Attempting to deallocate memory not owned by this allocator.");
+        LogThrowAssert(static_cast<char*>(block) >= m_buffer.get() &&
+                       static_cast<char*>(block) < m_buffer.get() + m_bytesAllocated,
+                       "Attempting to deallocate memory not owned by this allocator.");
 
         // Intentional NOP
     }

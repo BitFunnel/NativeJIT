@@ -50,9 +50,9 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T> ReturnNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        Assert(GetParentCount() == 1,
-               "Unexpected parent count for the root node: %u",
-               GetParentCount());
+        LogThrowAssert(GetParentCount() == 1,
+                       "Unexpected parent count for the root node: %u",
+                       GetParentCount());
 
         return m_child.CodeGen(tree);
     }

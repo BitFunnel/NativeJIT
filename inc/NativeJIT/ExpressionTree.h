@@ -643,7 +643,7 @@ namespace NativeJIT
         auto & code = GetCodeGenerator();
         auto & freeList = FreeListForType<T>::Get(*this);
 
-        Assert(!IsPinned(r), "Attempted to obtain the pinned register %s", r.GetName());
+        LogThrowAssert(!IsPinned(r), "Attempted to obtain the pinned register %s", r.GetName());
 
         unsigned src = r.GetId();
 
@@ -687,11 +687,11 @@ namespace NativeJIT
                 // the register is not one of the base registers.
                 registerStorage.ConvertToDirect(false);
                 auto fullReg = registerStorage.GetDirectRegister();
-                Assert(fullReg.IsSameHardwareRegister(r),
-                       "Converting %s to direct without modification should "
-                       "not have moved into a different register (%s)",
-                       r.GetName(),
-                       fullReg.GetName());
+                LogThrowAssert(fullReg.IsSameHardwareRegister(r),
+                               "Converting %s to direct without modification should "
+                               "not have moved into a different register (%s)",
+                               r.GetName(),
+                               fullReg.GetName());
 
                 // Make registerStorage the only owner. After it goes out of
                 // scope, the register will be free.
@@ -824,7 +824,7 @@ namespace NativeJIT
     {
         static_assert(CanBeInImmediateStorage<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
-        Assert(m_storageClass == StorageClass::Immediate, "GetImmediate() called for non-immediate storage!");
+        LogThrowAssert(m_storageClass == StorageClass::Immediate, "GetImmediate() called for non-immediate storage!");
 
         return *(reinterpret_cast<T const *>(&m_immediate));
     }
@@ -833,7 +833,7 @@ namespace NativeJIT
     template <bool ISFLOAT>
     void ExpressionTree::Data::NotifyDataRegisterChange(RegisterChangeType type)
     {
-        Assert(m_storageClass != StorageClass::Immediate, "Invalid storage class");
+        LogThrowAssert(m_storageClass != StorageClass::Immediate, "Invalid storage class");
         auto & freeList = FreeListForRegister<ISFLOAT>::Get(m_tree);
 
         switch (type)
@@ -851,10 +851,10 @@ namespace NativeJIT
 
         case RegisterChangeType::Update:
             // Only initialization is allowed for the direct shared registers.
-            Assert(!(m_storageClass == StorageClass::Direct
-                     && IsSharedBaseRegister()),
-                   "Cannot update data for shared register %u",
-                   m_registerId);
+            LogThrowAssert(!(m_storageClass == StorageClass::Direct
+                             && IsSharedBaseRegister()),
+                           "Cannot update data for shared register %u",
+                           m_registerId);
 
             // At this point, any reference to shared register is indirect
             // and the free list doesn't need to know about such updates.
@@ -866,7 +866,7 @@ namespace NativeJIT
             break;
 
         default:
-            Assert(false, "Unknown register change type %u", type);
+            LogThrowAssert(false, "Unknown register change type %u", type);
             break;
         }
     }
@@ -916,9 +916,9 @@ namespace NativeJIT
             DirectRegister reg)
     {
         auto & freeList = FreeListForType<T>::Get(tree);
-        Assert(!freeList.IsAvailable(reg.GetId()),
-               "Register %s must already be allocated",
-               reg.GetName());
+        LogThrowAssert(!freeList.IsAvailable(reg.GetId()),
+                       "Register %s must already be allocated",
+                       reg.GetName());
 
         return Storage<T>(freeList.GetData(reg.GetId()));
     }
@@ -955,7 +955,7 @@ namespace NativeJIT
         BaseRegister base,
         int32_t offset)
     {
-        Assert(tree.IsAnySharedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
+        LogThrowAssert(tree.IsAnySharedBaseRegister(base), "Register %s is not a shared base register", base.GetName());
 
         return Storage<T>(&tree.PlacementConstruct<Data>(tree, base, offset));
     }
@@ -1078,7 +1078,7 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T>::DirectRegister ExpressionTree::Storage<T>::GetDirectRegister() const
     {
-        Assert(m_data->GetStorageClass() == StorageClass::Direct, "GetDirectRegister(): storage class must be direct.");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Direct, "GetDirectRegister(): storage class must be direct.");
         return DirectRegister(m_data->GetRegisterId());
     }
 
@@ -1086,7 +1086,7 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T>::BaseRegister ExpressionTree::Storage<T>::GetBaseRegister() const
     {
-        Assert(m_data->GetStorageClass() == StorageClass::Indirect, "GetBaseRegister(): storage class must be indirect.");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Indirect, "GetBaseRegister(): storage class must be indirect.");
         return BaseRegister(m_data->GetRegisterId());
     }
 
@@ -1094,7 +1094,7 @@ namespace NativeJIT
     template <typename T>
     int32_t ExpressionTree::Storage<T>::GetOffset() const
     {
-        Assert(m_data->GetStorageClass() == StorageClass::Indirect, "GetOffset(): storage class must be indirect.");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Indirect, "GetOffset(): storage class must be indirect.");
         return m_data->GetOffset();
     }
 
@@ -1104,7 +1104,7 @@ namespace NativeJIT
     U ExpressionTree::Storage<T>::GetImmediate() const
     {
         static_assert(std::is_same<T, U>::value, "U must not be specified explicitly");
-        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "GetImmediate(): storage class must be immediate.");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Immediate, "GetImmediate(): storage class must be immediate.");
 
         return m_data->GetImmediate<T>();
     }
@@ -1181,7 +1181,7 @@ namespace NativeJIT
             break;
 
         default:
-            Assert(false, "ConvertToDirect: invalid storage class.");
+            LogThrowAssert(false, "ConvertToDirect: invalid storage class.");
             break;
         }
 
@@ -1192,7 +1192,7 @@ namespace NativeJIT
     template <typename T>
     void ExpressionTree::Storage<T>::ConvertImmediateToDirect(bool forModification, ValidImmediateStorage)
     {
-        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
 
         auto & tree = m_data->GetTree();
         auto & code = tree.GetCodeGenerator();
@@ -1213,8 +1213,8 @@ namespace NativeJIT
     {
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.
-        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
-        Assert(false, "Unexpected occurrence of an invalid immediate storage");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
+        LogThrowAssert(false, "Unexpected occurrence of an invalid immediate storage");
     }
 
 
@@ -1233,7 +1233,7 @@ namespace NativeJIT
             break;
 
         default:
-            Assert(false, "Unknown swap type %u", type);
+            LogThrowAssert(false, "Unknown swap type %u", type);
             break;
         }
     }
@@ -1246,12 +1246,12 @@ namespace NativeJIT
         // in Direct(reg) method for more information.
         auto & tree = m_data->GetTree();
 
-        Assert(GetStorageClass() == StorageClass::Direct,
-               "Unexpected storage class %u",
-               GetStorageClass());
-        Assert(!tree.IsAnySharedBaseRegister(GetDirectRegister()),
-               "Cannot take sole ownership of %s",
-               GetDirectRegister().GetName());
+        LogThrowAssert(GetStorageClass() == StorageClass::Direct,
+                       "Unexpected storage class %u",
+                       GetStorageClass());
+        LogThrowAssert(!tree.IsAnySharedBaseRegister(GetDirectRegister()),
+                       "Cannot take sole ownership of %s",
+                       GetDirectRegister().GetName());
 
         if (!IsSoleDataOwner())
         {
@@ -1284,8 +1284,8 @@ namespace NativeJIT
     template <typename T>
     ReferenceCounter ExpressionTree::Storage<T>::GetPin()
     {
-        Assert(GetStorageClass() != StorageClass::Immediate,
-               "Cannot pin a register for immediate storage");
+        LogThrowAssert(GetStorageClass() != StorageClass::Immediate,
+                       "Cannot pin a register for immediate storage");
 
         if (GetStorageClass() == StorageClass::Direct)
         {
@@ -1416,8 +1416,8 @@ namespace NativeJIT
     {
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.
-        Assert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
-        Assert(false, "Unexpected occurrence of an invalid immediate storage");
+        LogThrowAssert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
+        LogThrowAssert(false, "Unexpected occurrence of an invalid immediate storage");
     }
 
 
@@ -1441,7 +1441,7 @@ namespace NativeJIT
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::AssertValidID(unsigned id) const
     {
-        Assert(id < SIZE, "Register %u is out of range.", id);
+        LogThrowAssert(id < SIZE, "Register %u is out of range.", id);
     }
 
 
@@ -1456,15 +1456,15 @@ namespace NativeJIT
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::AssertValidData(unsigned id, Data* data) const
     {
-        Assert(data != nullptr, "Unexpected null data at/intended for register %u", id);
-        Assert(data->GetStorageClass() != StorageClass::Immediate,
-               "Invalid storage class %u for data at/intended for register %u",
-               data->GetStorageClass(),
-               id);
-        Assert(data->GetRegisterId() == id,
-               "Mismatched register ID %u for data at/intended for register %u",
-               data->GetRegisterId(),
-               id);
+        LogThrowAssert(data != nullptr, "Unexpected null data at/intended for register %u", id);
+        LogThrowAssert(data->GetStorageClass() != StorageClass::Immediate,
+                       "Invalid storage class %u for data at/intended for register %u",
+                       data->GetStorageClass(),
+                       id);
+        LogThrowAssert(data->GetRegisterId() == id,
+                       "Mismatched register ID %u for data at/intended for register %u",
+                       data->GetRegisterId(),
+                       id);
     }
 
 
@@ -1490,7 +1490,7 @@ namespace NativeJIT
         unsigned id;
 
         const bool registerFound = BitOp::GetHighestBitSet(GetFreeMask(), &id);
-        Assert(registerFound, "No free registers available");
+        LogThrowAssert(registerFound, "No free registers available");
 
         Allocate(id);
 
@@ -1505,9 +1505,9 @@ namespace NativeJIT
     void ExpressionTree::FreeList<SIZE>::Allocate(unsigned id)
     {
         AssertValidID(id);
-        Assert(BitOp::TestBit(GetFreeMask(), id), "Register %u must be free", id);
-        Assert(!IsPinned(id), "Register %u must be unpined when free", id);
-        Assert(m_data[id] == nullptr, "Data for register %u must be null", id);
+        LogThrowAssert(BitOp::TestBit(GetFreeMask(), id), "Register %u must be free", id);
+        LogThrowAssert(!IsPinned(id), "Register %u must be unpined when free", id);
+        LogThrowAssert(m_data[id] == nullptr, "Data for register %u must be null", id);
 
         m_allocatedRegisters.push_back(static_cast<uint8_t>(id));
 
@@ -1520,14 +1520,14 @@ namespace NativeJIT
     void ExpressionTree::FreeList<SIZE>::Release(unsigned id)
     {
         AssertValidData(id);
-        Assert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated", id);
-        Assert(!IsPinned(id), "Register %u must be unpinned before release", id);
-        Assert(m_data[id]->GetRefCount() == 0, "Reference count for register %u must be zero", id);
+        LogThrowAssert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated", id);
+        LogThrowAssert(!IsPinned(id), "Register %u must be unpinned before release", id);
+        LogThrowAssert(m_data[id]->GetRefCount() == 0, "Reference count for register %u must be zero", id);
 
         auto it = std::find(m_allocatedRegisters.begin(),
                             m_allocatedRegisters.end(),
                             static_cast<uint8_t>(id));
-        Assert(it != m_allocatedRegisters.end(), "Couldn't find allocation record for %u", id);
+        LogThrowAssert(it != m_allocatedRegisters.end(), "Couldn't find allocation record for %u", id);
         m_allocatedRegisters.erase(it);
 
         m_data[id] = nullptr; 
@@ -1539,7 +1539,7 @@ namespace NativeJIT
     void ExpressionTree::FreeList<SIZE>::InitializeData(unsigned id, Data* data)
     {
         AssertValidID(id);
-        Assert(m_data[id] == nullptr, "Data for register %u must be clear", id);
+        LogThrowAssert(m_data[id] == nullptr, "Data for register %u must be clear", id);
         AssertValidData(id, data);
 
         m_data[id] = data;
@@ -1550,7 +1550,7 @@ namespace NativeJIT
     void ExpressionTree::FreeList<SIZE>::UpdateData(unsigned id, Data* data)
     {
         AssertValidID(id);
-        Assert(m_data[id] != nullptr, "Data for register %u must not be clear", id);
+        LogThrowAssert(m_data[id] != nullptr, "Data for register %u must not be clear", id);
         AssertValidData(id, data);
 
         m_data[id] = data;
@@ -1620,7 +1620,7 @@ namespace NativeJIT
     ExpressionTree::FreeList<SIZE>::GetPin(unsigned id)
     {
         AssertValidID(id);
-        Assert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated to be pinned", id);
+        LogThrowAssert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated to be pinned", id);
         AssertValidData(id);
 
         return ReferenceCounter(m_pinCount[id]);

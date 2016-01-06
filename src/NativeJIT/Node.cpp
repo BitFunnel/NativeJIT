@@ -31,7 +31,7 @@ namespace NativeJIT
 
     void NodeBase::IncrementParentCount()
     {
-        Assert(!HasBeenEvaluated(), "Cannot change the parent count after the node was evaluated");
+        LogThrowAssert(!HasBeenEvaluated(), "Cannot change the parent count after the node was evaluated");
 
         ++m_parentCount;
         MarkReferenced();
@@ -40,10 +40,10 @@ namespace NativeJIT
 
     void NodeBase::DecrementParentCount()
     {
-        Assert(!HasBeenEvaluated(), "Cannot change the parent count after the node was evaluated");
-        Assert(m_parentCount > 0,
-               "Cannot decrement parent count of node %u with zero parents",
-               GetId());
+        LogThrowAssert(!HasBeenEvaluated(), "Cannot change the parent count after the node was evaluated");
+        LogThrowAssert(m_parentCount > 0,
+                       "Cannot decrement parent count of node %u with zero parents",
+                       GetId());
 
         --m_parentCount;
         // Note: m_isReferenced is not affected by this, decrementing the parent
@@ -86,7 +86,7 @@ namespace NativeJIT
 
     void NodeBase::CompileAsRoot(ExpressionTree& /*tree*/)
     {
-        Assert(false, "Root of ExpressionTree must be a ReturnNode node.");
+        LogThrowAssert(false, "Root of ExpressionTree must be a ReturnNode node.");
     }
 
 
@@ -98,9 +98,9 @@ namespace NativeJIT
 
     void NodeBase::ReleaseReferencesToChildren()
     {
-        Assert(false,
-               "Don't know how to remove optimized away references for node with ID %u (orphan node?)",
-               GetId());
+        LogThrowAssert(false,
+                       "Don't know how to remove optimized away references for node with ID %u (orphan node?)",
+                       GetId());
     }
 
 

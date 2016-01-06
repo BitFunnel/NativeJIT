@@ -137,11 +137,11 @@ namespace NativeJIT
 
     void ExpressionTree::AddParameter(NodeBase& parameter, unsigned position)
     {
-        Assert(position == m_parameters.size(),
-               "Parameters must be added in order. Previously added %Iu parameters, "
-               "adding parameter with index %u",
-               m_parameters.size(),
-               position);
+        LogThrowAssert(position == m_parameters.size(),
+                       "Parameters must be added in order. Previously added %Iu parameters, "
+                       "adding parameter with index %u",
+                       m_parameters.size(),
+                       position);
         m_parameters.push_back(&parameter);
     }
 
@@ -205,13 +205,13 @@ namespace NativeJIT
         m_reservedRxxRegisterStorages.clear();
         Print();
 
-        Assert(GetRXXUsedMask() == 0,
-               "Some integer registers have not been released: 0x%x",
-               GetRXXUsedMask());
+        LogThrowAssert(GetRXXUsedMask() == 0,
+                       "Some integer registers have not been released: 0x%x",
+                       GetRXXUsedMask());
 
-        Assert(GetXMMUsedMask() == 0,
-               "Some floating point registers have not been released: 0x%x",
-               GetXMMUsedMask());
+        LogThrowAssert(GetXMMUsedMask() == 0,
+                       "Some floating point registers have not been released: 0x%x",
+                       GetXMMUsedMask());
     }
 
 
@@ -223,10 +223,10 @@ namespace NativeJIT
 
     int32_t ExpressionTree::TemporarySlotToOffset(unsigned temporarySlot)
     {
-        Assert(temporarySlot < m_temporaryCount,
-               "Invalid temporary slot %u (total slots %u)",
-               temporarySlot,
-               m_temporaryCount);
+        LogThrowAssert(temporarySlot < m_temporaryCount,
+                       "Invalid temporary slot %u (total slots %u)",
+                       temporarySlot,
+                       m_temporaryCount);
 
         // Expression tree asks for BaseRegisterType::SetRbpToOriginalRsp. That
         // means that [rbp] holds return address, [rbp + 8] home for function's
@@ -284,9 +284,9 @@ namespace NativeJIT
             if (!node->IsReferenced())
             {
                 Print();
-                Assert(node->IsReferenced(),
-                       "Node with ID %u has been created but not referenced by nodes in the tree",
-                       node->GetId());
+                LogThrowAssert(node->IsReferenced(),
+                               "Node with ID %u has been created but not referenced by nodes in the tree",
+                               node->GetId());
             }
 
             // If there's a way for node's children to be evaluated without
@@ -345,7 +345,7 @@ namespace NativeJIT
 
         NodeBase& root = *m_topologicalSort.back();
 
-        // Assert(Root node is return, "Root must be a return node.");
+        // LogThrowAssert(Root node is return, "Root must be a return node.");
 
         root.LabelSubtree(true);
         root.CompileAsRoot(*this);
@@ -434,19 +434,19 @@ namespace NativeJIT
 
     int32_t ExpressionTree::Data::GetOffset() const
     {
-        Assert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect, found %u", m_storageClass);
+        LogThrowAssert(m_storageClass == StorageClass::Indirect, "StorageClass must be Indirect, found %u", m_storageClass);
         return m_offset;
     }
 
 
     void ExpressionTree::Data::ConvertDirectToIndirect(int32_t offset)
     {
-        Assert(m_storageClass == StorageClass::Direct,
-               "StorageClass must be Direct, found %u",
-               m_storageClass);
-        Assert(!IsSharedBaseRegister(),
-               "Cannot change type of shared register %u from direct to indirect",
-               m_registerId);
+        LogThrowAssert(m_storageClass == StorageClass::Direct,
+                       "StorageClass must be Direct, found %u",
+                       m_storageClass);
+        LogThrowAssert(!IsSharedBaseRegister(),
+                       "Cannot change type of shared register %u from direct to indirect",
+                       m_registerId);
 
         m_storageClass = StorageClass::Indirect;
         m_offset = offset;
@@ -455,12 +455,12 @@ namespace NativeJIT
 
     void ExpressionTree::Data::ConvertIndirectToDirect()
     {
-        Assert(m_storageClass == StorageClass::Indirect,
-               "StorageClass must be Indirect, found %u",
-               m_storageClass);
-        Assert(!IsSharedBaseRegister(),
-               "Cannot change type of shared register %u from indirect to direct",
-               m_registerId);
+        LogThrowAssert(m_storageClass == StorageClass::Indirect,
+                       "StorageClass must be Indirect, found %u",
+                       m_storageClass);
+        LogThrowAssert(!IsSharedBaseRegister(),
+                       "Cannot change type of shared register %u from indirect to direct",
+                       m_registerId);
 
         m_storageClass = StorageClass::Direct;
         m_offset = 0;
@@ -475,7 +475,7 @@ namespace NativeJIT
 
     unsigned ExpressionTree::Data::Decrement()
     {
-         Assert(m_refCount > 0, "Attempting to decrement zero ref count.");
+         LogThrowAssert(m_refCount > 0, "Attempting to decrement zero ref count.");
         --m_refCount;
 //        std::cout << "Decrement " << this << " to " << m_refCount << std::endl;
         return m_refCount;

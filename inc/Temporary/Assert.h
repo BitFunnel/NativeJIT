@@ -9,14 +9,14 @@
 
 namespace NativeJIT
 {
-    #define Assert(condition, ...)       \
-    {                                    \
-        AssertImpl(__FILE__,             \
-                    __FUNCTION__,        \
-                    __LINE__,            \
-                    condition,           \
-                    #condition,          \
-                    __VA_ARGS__);        \
+    #define LogThrowAssert(condition, ...) \
+    {                                      \
+        AssertImpl(__FILE__,               \
+                    __FUNCTION__,          \
+                    __LINE__,              \
+                    condition,             \
+                    #condition,            \
+                    __VA_ARGS__);          \
     }
 
 

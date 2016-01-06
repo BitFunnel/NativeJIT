@@ -74,10 +74,10 @@ namespace NativeJIT
                                 UnwindCodeOp op,
                                 uint8_t info)
         {
-            Assert(currUnwindCode >= unwindCodesStart, "Unwind codes overflow");
-            Assert(codeOffset <= (std::numeric_limits<uint8_t>::max)(),
-                   "Code offset overflow: %u",
-                   codeOffset);
+            LogThrowAssert(currUnwindCode >= unwindCodesStart, "Unwind codes overflow");
+            LogThrowAssert(codeOffset <= (std::numeric_limits<uint8_t>::max)(),
+                           "Code offset overflow: %u",
+                           codeOffset);
             *currUnwindCode-- = UnwindCode(static_cast<uint8_t>(codeOffset),
                                            op,
                                            info);
@@ -95,7 +95,7 @@ namespace NativeJIT
         {
             // Since the codes are filled in reverse (epilog) order, place the
             // second operand first.
-            Assert(currUnwindCode >= unwindCodesStart, "Unwind codes overflow");
+            LogThrowAssert(currUnwindCode >= unwindCodesStart, "Unwind codes overflow");
             *currUnwindCode-- = UnwindCode(frameOffset);
 
             AddCodeAndBackDown(unwindCodesStart, currUnwindCode, codeOffset, op, info);
@@ -112,13 +112,13 @@ namespace NativeJIT
                                                          AllocatorVector<uint8_t>& unwindInfoBuffer,
                                                          int32_t& offsetToOriginalRsp)
     {
-        Assert((savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
-               "Saving/restoring of non-writable RXX registers is not allowed: 0x%Ix",
-               savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask);
+        LogThrowAssert((savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
+                       "Saving/restoring of non-writable RXX registers is not allowed: 0x%Ix",
+                       savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask);
 
-        Assert((savedXmmNonvolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask) == 0,
-               "Saving/restoring of non-writable XMM registers is not allowed: 0x%Ix",
-               savedXmmNonvolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask);
+        LogThrowAssert((savedXmmNonvolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask) == 0,
+                       "Saving/restoring of non-writable XMM registers is not allowed: 0x%Ix",
+                       savedXmmNonvolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask);
 
         // Stack pointer is always saved/restored. However, unlike for the other
         // registers, it's done by subtracting/adding a value in the prolog/epilog.
@@ -175,9 +175,9 @@ namespace NativeJIT
         const unsigned totalStackBytes = totalStackSlotCount * sizeof(void*);
         offsetToOriginalRsp = totalStackBytes;
 
-        Assert(totalStackBytes > 0 && totalStackBytes <= c_maxStackSize,
-               "Invalid request for %u stack slots",
-               totalStackSlotCount);
+        LogThrowAssert(totalStackBytes > 0 && totalStackBytes <= c_maxStackSize,
+                       "Invalid request for %u stack slots",
+                       totalStackSlotCount);
 
         // Need to use UWOP_ALLOC_SMALL for stack sizes from 8 to 128 bytes and
         // UWOP_ALLOC_LARGE otherwise. If using UWOP_ALLOC_LARGE, currently only
@@ -193,10 +193,10 @@ namespace NativeJIT
             = (rxxSavesCount + xmmSavesCount) * 2
               + (isSmallStackAlloc ? 1 : 2);
 
-        Assert(actualUnwindCodeCount > 0
-               && actualUnwindCodeCount <= c_maxUnwindCodes,
-               "Invalid number of unwind codes: %u",
-               actualUnwindCodeCount);
+        LogThrowAssert(actualUnwindCodeCount > 0
+                       && actualUnwindCodeCount <= c_maxUnwindCodes,
+                       "Invalid number of unwind codes: %u",
+                       actualUnwindCodeCount);
 
         // From MSDN UNWIND_INFO documentation for unwind codes array:
         // "For alignment purposes, this array will always have an even number
@@ -232,9 +232,9 @@ namespace NativeJIT
         // Emit the matching unwind codes.
         if (isSmallStackAlloc)
         {
-            Assert(totalStackSlotCount >= 1 && totalStackSlotCount <= 16,
-                   "Logic error, alloc small slot count %u",
-                   totalStackSlotCount);
+            LogThrowAssert(totalStackSlotCount >= 1 && totalStackSlotCount <= 16,
+                           "Logic error, alloc small slot count %u",
+                           totalStackSlotCount);
 
             // The slot count values 1-16 are encoded as 0-15, so subtract one.
             AddCodeAndBackDown(unwindCodes,
@@ -245,10 +245,10 @@ namespace NativeJIT
         }
         else
         {
-            Assert(totalStackSlotCount >= 17
-                   && totalStackSlotCount <= (std::numeric_limits<uint16_t>::max)(),
-                   "Logic error, alloc large slot count %u",
-                   totalStackSlotCount);
+            LogThrowAssert(totalStackSlotCount >= 17
+                           && totalStackSlotCount <= (std::numeric_limits<uint16_t>::max)(),
+                           "Logic error, alloc large slot count %u",
+                           totalStackSlotCount);
 
             // Value of 0 for info argument signifies two-code version of
             // UWOP_ALLOC_LARGE which is used for allocations from 136 to
@@ -323,9 +323,9 @@ namespace NativeJIT
         // comparing the last filled code with the beginning of the array. Since
         // currUnwindCode points to the place where the *next* code would have
         // been placed, currUnwindCode + 1 points to the last placed code.
-        Assert(currUnwindCode + 1 == unwindCodes,
-               "Mismatched count of unwind codes: %Id",
-               currUnwindCode + 1 - unwindCodes);
+        LogThrowAssert(currUnwindCode + 1 == unwindCodes,
+                       "Mismatched count of unwind codes: %Id",
+                       currUnwindCode + 1 - unwindCodes);
 
         // Point the RBP to the original RSP value. Note: not using UWOP_SET_FPREG
         // since 1) it's not necessary on x64 as setting the base pointer is
@@ -338,11 +338,11 @@ namespace NativeJIT
             // It's necessary to extend the last unwind code that recorded an
             // instruction offset into prolog to account for the instruction
             // to be added to set up RBP.
-            Assert(unwindCodes[0].m_operation.m_codeOffset
-                   == prologCode.CurrentPosition() - codeStartPos,
-                   "Logical error in RBP adjustment, instruction offset %u vs %u",
-                   unwindCodes[0].m_operation.m_codeOffset,
-                   prologCode.CurrentPosition() - codeStartPos);
+            LogThrowAssert(unwindCodes[0].m_operation.m_codeOffset
+                           == prologCode.CurrentPosition() - codeStartPos,
+                           "Logical error in RBP adjustment, instruction offset %u vs %u",
+                           unwindCodes[0].m_operation.m_codeOffset,
+                           prologCode.CurrentPosition() - codeStartPos);
 
             prologCode.Emit<OpCode::Lea>(rbp, rsp, offsetToOriginalRsp);
 
@@ -379,14 +379,14 @@ namespace NativeJIT
                 return 3;
 
             case UnwindCodeOp::UWOP_ALLOC_LARGE:
-                Assert(code.m_operation.m_opInfo <= 1,
-                       "Invalid OpInfo for UWOP_ALLOC_LARGE: %u",
-                       code.m_operation.m_opInfo);
+                LogThrowAssert(code.m_operation.m_opInfo <= 1,
+                               "Invalid OpInfo for UWOP_ALLOC_LARGE: %u",
+                               code.m_operation.m_opInfo);
 
                 return code.m_operation.m_opInfo == 0 ? 2 : 3;
 
             default:
-                Assert(false, "Unknown unwind operation %u", code.m_operation.m_unwindOp);
+                LogThrowAssert(false, "Unknown unwind operation %u", code.m_operation.m_unwindOp);
                 // Silence the "not all paths return a value" warning.
                 return 0;
         }
@@ -405,9 +405,9 @@ namespace NativeJIT
 
             // Check how many codes the operation needs.
             const unsigned codeCount = GetUnwindOpCodeCount(unwindCode);
-            Assert(i + codeCount <= unwindInfo.m_countOfCodes,
-                   "Not enough unwind codes for op %u",
-                   unwindCode.m_operation.m_unwindOp);
+            LogThrowAssert(i + codeCount <= unwindInfo.m_countOfCodes,
+                           "Not enough unwind codes for op %u",
+                           unwindCode.m_operation.m_unwindOp);
 
             // For 2 or more codes, read the data for the second code (always
             // the m_frameOffset union member).
@@ -418,7 +418,7 @@ namespace NativeJIT
             switch (static_cast<UnwindCodeOp>(unwindCode.m_operation.m_unwindOp))
             {
             case UnwindCodeOp::UWOP_ALLOC_LARGE:
-                Assert(codeCount == 2, "Unexpected %u-code UWOP_ALLOC_LARGE", codeCount);
+                LogThrowAssert(codeCount == 2, "Unexpected %u-code UWOP_ALLOC_LARGE", codeCount);
                 // The second code contains the offset in quadwords.
                 epilogCode.EmitImmediate<OpCode::Add>(rsp,
                                                       static_cast<int32_t>(code2Offset
@@ -450,7 +450,7 @@ namespace NativeJIT
                 break;
 
             default:
-                Assert(false, "Unsupported unwind operation %u", unwindCode.m_operation.m_unwindOp);
+                LogThrowAssert(false, "Unsupported unwind operation %u", unwindCode.m_operation.m_unwindOp);
                 break;
             }
 

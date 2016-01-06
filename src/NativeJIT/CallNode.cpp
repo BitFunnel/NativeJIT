@@ -101,7 +101,7 @@ namespace NativeJIT
         unsigned r = 0;
         while (BitOp::GetHighestBitSet(xmmVolatiles, &r))
         {
-            Assert(!m_preservationStorage.empty(), "Logic error");
+            LogThrowAssert(!m_preservationStorage.empty(), "Logic error");
             auto const & s = m_preservationStorage.back();
 
             code.Emit<OpCode::Mov>(Register<8, true>(r),
@@ -116,7 +116,7 @@ namespace NativeJIT
 
         while (BitOp::GetHighestBitSet(rxxVolatiles, &r))
         {
-            Assert(!m_preservationStorage.empty(), "Logic error");
+            LogThrowAssert(!m_preservationStorage.empty(), "Logic error");
             auto const & s = m_preservationStorage.back();
 
             code.Emit<OpCode::Mov>(Register<8, false>(r),
