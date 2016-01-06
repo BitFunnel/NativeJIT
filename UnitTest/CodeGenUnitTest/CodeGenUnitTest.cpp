@@ -1,7 +1,8 @@
 #include "stdafx.h"
 
 #include <cctype>               // isxdigit().
-#include <iostream>             // TODO: Temporary - for debugging.
+#include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "ML64Verifier.h"
@@ -15,14 +16,16 @@ namespace NativeJIT
 {
     namespace CodeGenUnitTest
     {
+        TEST_FIXTURE_START(CodeGen)
+        TEST_FIXTURE_END_TEST_CASES_BEGIN
+
         // TODO: JMP
         // TODO: JCC - all cases.
 
-        TEST_CASE(CodeGen, JCC)
+        TEST_CASE_F(CodeGen, JCC)
         {
-            ExecutionBuffer codeAllocator(200);
-            Allocator allocator(2000);
-            X64CodeGenerator buffer(codeAllocator, 200, allocator);
+            auto setup = GetSetup();
+            auto& buffer = setup->GetCode();
 
             Label l1 = buffer.AllocateLabel();
             buffer.PlaceLabel(l1);
@@ -30,16 +33,14 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE(CodeGen, OpCodes)
+        TEST_CASE_F(CodeGen, OpCodes)
         {
-            ExecutionBuffer codeAllocator(2000);
-            Allocator allocator(2000);
-            X64CodeGenerator buffer(codeAllocator, 2000, allocator);
+            auto setup = GetSetup();
+            auto& buffer = setup->GetCode();
 
             uint8_t const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
             // Another special case
-            std::cout << "Another special case." << std::endl;
             buffer.Emit<OpCode::Add>(r13, r13, 0);
             buffer.Emit<OpCode::Mov>(r13, r13, 0);
             buffer.Emit<OpCode::Mov>(rax, rbp, 0);
@@ -48,8 +49,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Mov>(rcx, rbp, 0x1234);
 
 
-            // Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8]
-            std::cout << "Mod/RM special cases for r12." << std::endl;
+            // Mod/RM special cases for RSP and R12 and [RBP] ==> [RBP + disp8].
             buffer.Emit<OpCode::Sub>(rbx, r12, 0);
             buffer.Emit<OpCode::Sub>(rdi, r12, 0x12);
             buffer.Emit<OpCode::Sub>(rbp, r12, 0x1234);
@@ -58,8 +58,7 @@ namespace NativeJIT
             // Mod/RM special cases for rsp.
             // TODO
 
-            // direct-direct
-            std::cout << "direct-direct" << std::endl;
+            // Direct-direct
             buffer.Emit<OpCode::Add>(al, cl);
             buffer.Emit<OpCode::Add>(bx, dx);
             buffer.Emit<OpCode::Add>(esi, eax);
@@ -68,8 +67,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Add>(rsp, r12);
 
 
-            // direct-indirect with zero, byte, word, and double word offsets
-            std::cout << "direct-indirect with zero, byte, word, and double word offsets" << std::endl;
+            // Direct-indirect with zero, byte, word, and double word offsets.
             buffer.Emit<OpCode::Add>(cl, rax, 0);
             buffer.Emit<OpCode::Add>(bl, rcx, 0x12);
             buffer.Emit<OpCode::Add>(r9b, rsi, 0x100);
@@ -91,8 +89,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Sub>(r10, rdi, 0x12345678);
 
 
-            // direct-immediate register 0 case
-            std::cout << "direct-immediate register 0 case" << std::endl;
+            // Direct-immediate register 0 case.
             buffer.EmitImmediate<OpCode::Or>(al, static_cast<uint8_t>(0x34));
             buffer.EmitImmediate<OpCode::Or>(ax, static_cast<uint16_t>(0x56));
             buffer.EmitImmediate<OpCode::Or>(ax, static_cast<uint16_t>(0x5678));
@@ -103,8 +100,7 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Or>(rax, 0x1234);
             buffer.EmitImmediate<OpCode::Or>(rax, 0x12345678);
 
-            // direct-immediate general purpose register case
-            std::cout << "direct-immediate general purpose register case" << std::endl;
+            // Direct-immediate general purpose register case.
             buffer.EmitImmediate<OpCode::And>(bl, static_cast<uint8_t>(0x34));
             buffer.EmitImmediate<OpCode::And>(r13b, static_cast<uint8_t>(0x34));
             buffer.EmitImmediate<OpCode::And>(cx, static_cast<uint16_t>(0x56));
@@ -141,7 +137,6 @@ namespace NativeJIT
             // call
 
             // lea
-            std::cout << "lea" << std::endl;
             buffer.Emit<OpCode::Lea>(rax, rsi, 0);
             buffer.Emit<OpCode::Lea>(rax, rsi, 0x12);
             buffer.Emit<OpCode::Lea>(rax, rsi, -0x12);
@@ -156,7 +151,6 @@ namespace NativeJIT
             buffer.Emit<OpCode::Lea>(rsp, rbp, -0x20);          // From function epilogue.
 
             // mov r, r
-            std::cout << "mov r, r" << std::endl;
             buffer.Emit<OpCode::Mov>(al, cl);
             buffer.Emit<OpCode::Mov>(bx, dx);
             buffer.Emit<OpCode::Mov>(esi, eax);
@@ -166,7 +160,6 @@ namespace NativeJIT
 
 
             // mov r, [r + offset]
-            std::cout << "mov direct-indirect with zero, byte, word, and double word offsets" << std::endl;
             buffer.Emit<OpCode::Mov>(cl, rax, 0);
             buffer.Emit<OpCode::Mov>(bl, rcx, 0x12);
             buffer.Emit<OpCode::Mov>(r9b, rsi, 0x100);
@@ -189,7 +182,6 @@ namespace NativeJIT
 
 
             // mov r, imm
-            std::cout << "mov r, imm" << std::endl;
             buffer.EmitImmediate<OpCode::Mov>(al, static_cast<uint8_t>(0));
             buffer.EmitImmediate<OpCode::Mov>(al, static_cast<uint8_t>(0x34));
             buffer.EmitImmediate<OpCode::Mov>(ax, static_cast<uint16_t>(0x56));
@@ -203,8 +195,6 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Mov>(rax, 0x80000000);
             buffer.EmitImmediate<OpCode::Mov>(rax, -1);
 
-
-            std::cout << "direct-immediate general purpose register case" << std::endl;
             buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<uint8_t>(0));
             buffer.EmitImmediate<OpCode::Mov>(bl, static_cast<uint8_t>(0x34));
             buffer.EmitImmediate<OpCode::Mov>(r13b, static_cast<uint8_t>(0x34));
@@ -222,7 +212,6 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234567812345678ull);
 
             // mov [r + offset], r with zero, byte, word, and double word offsets
-            std::cout << "mov [r + offset], r with zero, byte, word, and double word offsets" << std::endl;
             buffer.Emit<OpCode::Mov>(rax, 0, cl);
             buffer.Emit<OpCode::Mov>(rcx, 0x12, bl);
             buffer.Emit<OpCode::Mov>(rsi, 0x100, r9b);
@@ -245,7 +234,6 @@ namespace NativeJIT
 
 
             // pop/push
-            std::cout << "pop/push" << std::endl;
             buffer.Emit<OpCode::Pop>(rax);
             buffer.Emit<OpCode::Pop>(rbp);
             buffer.Emit<OpCode::Pop>(r12);
@@ -263,7 +251,6 @@ namespace NativeJIT
             // jmp
             // call
             // imul
-            std::cout << "imul" << std::endl;
             buffer.Emit<OpCode::IMul>(bx, cx);
             buffer.Emit<OpCode::IMul>(ebx, ecx);
             buffer.Emit<OpCode::IMul>(rbx, rcx);
@@ -1230,8 +1217,11 @@ namespace NativeJIT
                 " 00000695  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
                 " 00000699  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n";
 
+            std::stringstream out;
             ML64Verifier v(ml64Output, start);
         }
+
+        TEST_CASES_END
     }
 }
 

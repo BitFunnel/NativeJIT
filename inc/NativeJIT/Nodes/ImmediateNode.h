@@ -30,11 +30,11 @@ namespace NativeJIT
         //
         // Overrides of Node methods
         //
-        virtual void Print() const override
+        virtual void Print(std::ostream& out) const override
         {
-            PrintCoreProperties("ImmediateNode");
+            PrintCoreProperties(out, "ImmediateNode");
 
-            std::cout << ", value = " << m_value;
+            out << ", value = " << m_value;
         }
 
 
@@ -59,7 +59,7 @@ namespace NativeJIT
 // create circular dependency for some headers.
 // This is analog to including CastNode.h in ImmediateNode.cpp if ImmediateNode
 // was a regular class rather than a template.
-#include "CastNode.h"
+#include "NativeJIT/Nodes/CastNode.h"
 
 namespace NativeJIT
 {
@@ -97,11 +97,11 @@ namespace NativeJIT
         //
         // Overrides of Node methods
         //
-        virtual void Print() const override
+        virtual void Print(std::ostream& out) const override
         {
-            PrintCoreProperties("ImmediateNode (RIP-indirect)");
+            PrintCoreProperties(out, "ImmediateNode (RIP-indirect)");
 
-            std::cout << ", value = " << m_value;
+            out << ", value = " << m_value;
         }
 
 

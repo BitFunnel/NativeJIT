@@ -57,7 +57,7 @@ namespace NativeJIT
         // Overrides of Node methods.
         //
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
         //
         // Overrides of Node<T> methods.
@@ -89,7 +89,7 @@ namespace NativeJIT
         // Overrides of Node methods.
         //
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
 
         //
@@ -181,16 +181,16 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    void ConditionalNode<T, JCC>::Print() const
+    void ConditionalNode<T, JCC>::Print(std::ostream& out) const
     {
         const std::string name = std::string("Conditional(")
             + X64CodeGenerator::JccName(JCC)
             + ") ";
-        PrintCoreProperties(name.c_str());
+        PrintCoreProperties(out, name.c_str());
 
-        std::cout << ", condition = " << m_condition.GetId();
-        std::cout << ", trueExpression = " << m_trueExpression.GetId();
-        std::cout << ", right = " << m_falseExpression.GetId();
+        out << ", condition = " << m_condition.GetId();
+        out << ", trueExpression = " << m_trueExpression.GetId();
+        out << ", right = " << m_falseExpression.GetId();
     }
 
 
@@ -331,15 +331,15 @@ namespace NativeJIT
 
 
     template <typename T, JccType JCC>
-    void RelationalOperatorNode<T, JCC>::Print() const
+    void RelationalOperatorNode<T, JCC>::Print(std::ostream& out) const
     {
         const std::string name = std::string("RelationalOperatorNode(")
             + X64CodeGenerator::JccName(JCC)
             + ") ";
-        PrintCoreProperties(name.c_str());
+        PrintCoreProperties(out, name.c_str());
 
-        std::cout << ", left = " << m_left.GetId();
-        std::cout << ", right = " << m_right.GetId();
+        out << ", left = " << m_left.GetId();
+        out << ", right = " << m_right.GetId();
     }
 
 

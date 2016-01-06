@@ -1,8 +1,5 @@
 #include "stdafx.h"
 
-#include <iostream>             // TODO: Remove this temp debug include.
-
-#include "Assert.h"
 #include "NativeJIT/CodeGen/CallingConvention.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionSpecification.h"
@@ -10,6 +7,7 @@
 #include "NativeJIT/ExpressionTree.h"
 #include "NativeJIT/Nodes/ImmediateNode.h"
 #include "NativeJIT/Nodes/ParameterNode.h"
+#include "Temporary/Assert.h"
 
 
 namespace NativeJIT
@@ -23,6 +21,7 @@ namespace NativeJIT
         : m_allocator(allocator),
           m_stlAllocator(allocator),
           m_code(code),
+          m_diagnosticsStream(nullptr),
           // Note: there is a member initialization order dependency on
           // m_stlAllocator for multiple members below.
           m_topologicalSort(m_stlAllocator),
@@ -85,6 +84,32 @@ namespace NativeJIT
     FunctionBuffer& ExpressionTree::GetCodeGenerator() const
     {
         return m_code;
+    }
+
+
+    void ExpressionTree::EnableDiagnostics(std::ostream& out)
+    {
+        m_diagnosticsStream = &out;
+    }
+
+
+    void ExpressionTree::DisableDiagnostics()
+    {
+        m_diagnosticsStream = nullptr;
+    }
+
+
+    bool ExpressionTree::IsDiagnosticsStreamAvailable() const
+    {
+        return m_diagnosticsStream != nullptr;
+    }
+
+
+    std::ostream& ExpressionTree::GetDiagnosticsStream() const
+    {
+        LogThrowAssert(m_diagnosticsStream != nullptr, "Diagnostics are disabled");
+
+        return *m_diagnosticsStream;
     }
 
 
@@ -194,7 +219,10 @@ namespace NativeJIT
                                          m_xmmFreeList.GetLifetimeUsedMask()
                                             & CallingConvention::c_xmmNonvolatileRegistersMask
                                             & CallingConvention::c_xmmWritableRegistersMask,
-                                         FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
+                                         FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp,
+                                         m_code.IsDiagnosticsStreamAvailable()
+                                         ? &m_code.GetDiagnosticsStream()
+                                         : nullptr);
 
         m_code.PlaceLabel(m_startOfEpilogue);
         m_code.EndFunctionBodyGeneration(spec);
@@ -258,7 +286,10 @@ namespace NativeJIT
 
     void ExpressionTree::Pass0()
     {
-        std::cout << "=== Pass0 ===" << std::endl;
+        if (IsDiagnosticsStreamAvailable())
+        {
+            GetDiagnosticsStream() << "=== Pass0 ===" << std::endl;
+        }
 
         // Emit RIP-relative constants.
         for (unsigned i = 0 ; i < m_ripRelatives.size(); ++i)
@@ -304,7 +335,10 @@ namespace NativeJIT
 
     void ExpressionTree::Pass1()
     {
-        std::cout << "=== Pass1 ===" << std::endl;
+        if (IsDiagnosticsStreamAvailable())
+        {
+            GetDiagnosticsStream() << "=== Pass1 ===" << std::endl;
+        }
 
         // Reserve registers used to pass in parameters.
         for (auto param : m_parameters)
@@ -325,7 +359,10 @@ namespace NativeJIT
 
     void ExpressionTree::Pass2()
     {
-        std::cout << "=== Pass2 ===" << std::endl;
+        if (IsDiagnosticsStreamAvailable())
+        {
+            GetDiagnosticsStream() << "=== Pass2 ===" << std::endl;
+        }
 
         for (unsigned i = 0 ; i < m_topologicalSort.size(); ++i)
         {
@@ -341,7 +378,10 @@ namespace NativeJIT
 
     void ExpressionTree::Pass3()
     {
-        std::cout << "=== Pass3 ===" << std::endl;
+        if (IsDiagnosticsStreamAvailable())
+        {
+            GetDiagnosticsStream() << "=== Pass3 ===" << std::endl;
+        }
 
         NodeBase& root = *m_topologicalSort.back();
 
@@ -354,44 +394,51 @@ namespace NativeJIT
 
     void ExpressionTree::Print() const
     {
-        std::cout << "Parameters:" << std::endl;
+        if (!IsDiagnosticsStreamAvailable())
+        {
+            return;
+        }
+
+        std::ostream& out = GetDiagnosticsStream();
+
+        out << "Parameters:" << std::endl;
         for (unsigned i = 0 ; i < m_parameters.size(); ++i)
         {
-            m_parameters[i]->Print();
-            std::cout << std::endl;
+            m_parameters[i]->Print(out);
+            out << std::endl;
         }
-        std::cout << std::endl;
+        out << std::endl;
 
-        std::cout << "Topological sort:" << std::endl;
+        out << "Topological sort:" << std::endl;
         for (unsigned i = 0 ; i < m_topologicalSort.size(); ++i)
         {
-            m_topologicalSort[i]->Print();
-            std::cout << std::endl;
+            m_topologicalSort[i]->Print(out);
+            out << std::endl;
         }
-        std::cout << std::endl;
+        out << std::endl;
 
-        std::cout << "RXX Registers:" << std::endl;
+        out << "RXX Registers:" << std::endl;
         for (unsigned i = 0 ; i <= RegisterBase::c_maxIntegerRegisterID; ++i)
         {
-            std::cout << Register<8, false>(i).GetName()
+            out << Register<8, false>(i).GetName()
                       << (m_rxxFreeList.IsAvailable(i) ? " free" : " in use")
                       << std::endl;
         }
 
-        std::cout << std::endl;
+        out << std::endl;
 
-        std::cout << "XMM Registers:" << std::endl;
+        out << "XMM Registers:" << std::endl;
         for (unsigned i = 0 ; i <= RegisterBase::c_maxFloatRegisterID; ++i)
         {
-            std::cout << Register<8, true>(i).GetName()
+            out << Register<8, true>(i).GetName()
                       << (m_xmmFreeList.IsAvailable(i) ? " free" : " in use")
                       << std::endl;
         }
 
-        std::cout << "Temporaries used: " << m_temporaryCount << std::endl;
-        std::cout << "Temporaries still in use: " << m_temporaryCount - m_temporaries.size() << std::endl;
+        out << "Temporaries used: " << m_temporaryCount << std::endl;
+        out << "Temporaries still in use: " << m_temporaryCount - m_temporaries.size() << std::endl;
 
-        std::cout << std::endl;
+        out << std::endl;
     }
 
 
@@ -477,7 +524,7 @@ namespace NativeJIT
     {
          LogThrowAssert(m_refCount > 0, "Attempting to decrement zero ref count.");
         --m_refCount;
-//        std::cout << "Decrement " << this << " to " << m_refCount << std::endl;
+
         return m_refCount;
     }
 
@@ -485,7 +532,6 @@ namespace NativeJIT
     void ExpressionTree::Data::Increment()
     {
         ++m_refCount;
-//        std::cout << "Increment " << this << " to " << m_refCount << std::endl;
     }
 
 

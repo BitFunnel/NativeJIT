@@ -61,7 +61,7 @@ namespace NativeJIT
         //
         virtual ExpressionTree::Storage<R> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     protected:
         class Child : private NonCopyable
@@ -87,7 +87,7 @@ namespace NativeJIT
             virtual void Release() = 0;
 
             // Prints the contents of the child to standard output for debugging.
-            virtual void Print() = 0;
+            virtual void Print(std::ostream& out) = 0;
         };
 
 
@@ -128,7 +128,7 @@ namespace NativeJIT
             virtual void Evaluate(ExpressionTree& tree) override;
             virtual void EmitStaging(ExpressionTree& tree,
                                      SaveRestoreVolatilesHelper& volatiles) override;
-            virtual void Print() override;
+            virtual void Print(std::ostream& out) override;
 
         private:
             typename ExpressionTree::Storage<T>::DirectRegister m_destination;
@@ -160,7 +160,7 @@ namespace NativeJIT
             // Overrides of FunctionChildBase methods.
             //
             virtual void EmitCall(ExpressionTree& tree) override;
-            virtual void Print() override;
+            virtual void Print(std::ostream& out) override;
 
         private:
             typename Storage<R>::DirectRegister m_resultRegister;
@@ -410,14 +410,14 @@ namespace NativeJIT
     }
 
     template <typename R, unsigned PARAMETERCOUNT>
-    void CallNodeBase<R, PARAMETERCOUNT>::Print() const
+    void CallNodeBase<R, PARAMETERCOUNT>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("CallNode");
+        PrintCoreProperties(out, "CallNode");
 
         for (unsigned i = 0 ; i < c_childCount; ++i)
         {
-            std::cout << ", ";
-            m_children[i]->Print();
+            out << ", ";
+            m_children[i]->Print(out);
         }
     }
 
@@ -536,9 +536,9 @@ namespace NativeJIT
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename F>
-    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::Print()
+    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::Print(std::ostream& out)
     {
-        std::cout << "function(" << m_expression.GetId() << ")";
+        out << "function(" << m_expression.GetId() << ")";
     }
 
 
@@ -595,9 +595,9 @@ namespace NativeJIT
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename T>
-    void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::Print()
+    void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::Print(std::ostream& out)
     {
-        std::cout << "parameter(" << m_expression.GetId() << ")";
+        out << "parameter(" << m_expression.GetId() << ")";
     }
 
 

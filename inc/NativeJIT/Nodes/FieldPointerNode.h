@@ -17,7 +17,7 @@ namespace NativeJIT
 
         virtual ExpressionTree::Storage<FIELD*> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
         virtual void ReleaseReferencesToChildren() override;
 
@@ -129,18 +129,18 @@ namespace NativeJIT
 
 
     template <typename OBJECT, typename FIELD>
-    void FieldPointerNode<OBJECT, FIELD>::Print() const
+    void FieldPointerNode<OBJECT, FIELD>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("FieldPointerNode");
+        PrintCoreProperties(out, "FieldPointerNode");
 
-        std::cout << ", base ID = " << m_base.GetId()
+        out << ", base ID = " << m_base.GetId()
                   << ", offset = " << m_originalOffset;
 
         if (m_base.GetId() != m_collapsedBase->GetId())
         {
-            std::cout
-                  << ", collapsed base ID = " << m_collapsedBase->GetId()
-                  << ", collapsed offset = " << m_collapsedOffset;
+            out
+               << ", collapsed base ID = " << m_collapsedBase->GetId()
+               << ", collapsed offset = " << m_collapsedOffset;
         }
     }
 }

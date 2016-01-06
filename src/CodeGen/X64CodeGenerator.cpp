@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <iomanip>
 #include <iostream>
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h"
@@ -40,8 +41,7 @@ namespace NativeJIT
                                        unsigned capacity,
                                        Allocators::IAllocator& generalAllocator)
         : CodeBuffer(codeAllocator, capacity, generalAllocator),
-          // TODO: Set to nullptr by default
-          m_diagnosticsStream(&std::cout)
+          m_diagnosticsStream(nullptr)
     {
     }
 
@@ -154,9 +154,17 @@ namespace NativeJIT
     }
 
 
-    std::ostream* X64CodeGenerator::GetDiagnosticsStream() const
+    bool X64CodeGenerator::IsDiagnosticsStreamAvailable() const
     {
-        return m_diagnosticsStream;
+        return m_diagnosticsStream != nullptr;
+    }
+
+
+    std::ostream& X64CodeGenerator::GetDiagnosticsStream() const
+    {
+        LogThrowAssert(m_diagnosticsStream != nullptr, "Diagnostics are disabled");
+
+        return *m_diagnosticsStream;
     }
 
 
@@ -284,6 +292,27 @@ namespace NativeJIT
     }
 
 
+    // 
+    // IosMiniStateRestorer
+    //
+
+    IosMiniStateRestorer::IosMiniStateRestorer(std::ios& stream)
+        : m_stream(stream),
+          m_flags(stream.flags()),
+          m_width(stream.width()),
+          m_fillChar(stream.fill())
+    {
+    }
+
+
+    IosMiniStateRestorer::~IosMiniStateRestorer()
+    {
+        m_stream.flags(m_flags);
+        m_stream.width(m_width);
+        m_stream.fill(m_fillChar);
+    }
+
+
 
     //*************************************************************************
     //
@@ -293,7 +322,9 @@ namespace NativeJIT
 
     X64CodeGenerator::CodePrinter::CodePrinter(X64CodeGenerator& code)
         : m_code(code),
-          m_out(code.GetDiagnosticsStream())
+          m_out(code.IsDiagnosticsStreamAvailable()
+                ? &code.GetDiagnosticsStream()
+                : nullptr)
     {
         NoteStartPosition();
     }
@@ -329,9 +360,11 @@ namespace NativeJIT
     {
         if (m_out != nullptr)
         {
+            IosMiniStateRestorer state(*m_out);
+
             PrintBytes(m_startPosition, m_code.CurrentPosition());
 
-            *m_out << "jmp " << std::hex << function << 'h' << std::endl;
+            *m_out << "jmp " << std::uppercase << std::hex << function << 'h' << std::endl;
         }
     }
 
@@ -347,26 +380,39 @@ namespace NativeJIT
     }
 
 
+    char const * X64CodeGenerator::CodePrinter::GetPointerName(unsigned pointerSize)
+    {
+        switch (pointerSize)
+        {
+        case 1:     return "byte";
+        case 2:     return "word";
+        case 4:     return "dword";
+        case 8:     return "qword";
+        default:    return "*** UNKNOWN ***";
+        }
+    }
+
+
     const unsigned c_asmDataWidth = 36;
 
     void X64CodeGenerator::CodePrinter::PrintBytes(unsigned start, unsigned end)
     {
+        IosMiniStateRestorer state(*m_out);
+
         // TODO: Support for printing '/' after REX prefixes?
         // Alternative is unit test function can strip out white space and '/'.
         uint8_t* startPtr = m_code.BufferStart() + start;
         uint8_t* endPtr = m_code.BufferStart() + end;
 
-        *m_out << " ";
-        m_out->width(8);
         m_out->fill('0');
-        *m_out << std::uppercase << std::hex << start << "  ";
+
+        *m_out << " ";
+        *m_out << std::uppercase << std::hex << std::setw(8) << start << "  ";
 
         unsigned column = 11;
         while (startPtr < endPtr)
         {
-            m_out->width(2);
-            m_out->fill('0');
-            *m_out << std::hex << static_cast<unsigned>(*startPtr++);
+            *m_out << std::setw(2) << static_cast<unsigned>(*startPtr++);
             *m_out << " ";
             column += 3;
         }

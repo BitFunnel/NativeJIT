@@ -21,7 +21,7 @@ namespace NativeJIT
         virtual ExpressionTree::Storage<PACKED> CodeGenValue(ExpressionTree& tree) override;
 
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -182,12 +182,12 @@ namespace NativeJIT
 
 
     template <typename PACKED, bool ISMAX>
-    void PackedMinMaxNode<PACKED, ISMAX>::Print() const
+    void PackedMinMaxNode<PACKED, ISMAX>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("PackedMinMaxNode");
+        PrintCoreProperties(out, "PackedMinMaxNode");
 
-        std::cout << ", isMax = " << std::boolalpha << ISMAX
-                  << ", left = " << m_left.GetId()
-                  << ", right = " << m_right.GetId();
+        out << ", isMax = " << (ISMAX ? "true" : "false")
+            << ", left = " << m_left.GetId()
+            << ", right = " << m_right.GetId();
     }
 }

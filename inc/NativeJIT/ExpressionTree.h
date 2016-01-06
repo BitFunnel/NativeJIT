@@ -8,10 +8,10 @@
 //
 // Implementation includes
 //
-#include <iostream>             // TODO: Remove this temp debug include.
+#include <iostream>             // For debugging output.
 
-#include "CodeGenHelpers.h"
 #include "NativeJIT/BitOperations.h"
+#include "NativeJIT/CodeGenHelpers.h"
 #include "NativeJIT/TypePredicates.h"
 #include "Temporary/AllocatorOperations.h"
 #include "Temporary/Assert.h"
@@ -769,7 +769,6 @@ namespace NativeJIT
                 {
                     if (m_data->GetStorageClass() == StorageClass::Direct)
                     {
-                        std::cout << "Release Direct Register " << DirectRegister(m_data->GetRegisterId()).GetName() << std::endl;
                         m_data->GetTree().ReleaseRegister(DirectRegister(m_data->GetRegisterId()));
                     }
                     else if (m_data->GetStorageClass() == StorageClass::Indirect)
@@ -778,32 +777,31 @@ namespace NativeJIT
 
                         if (base.IsRIP())
                         {
-                            std::cout << "Don't release RIP-relative constant at " << m_data->GetOffset() << std::endl;
+                            // No need to release RIP-relative constant.
                         }
                         else if (m_data->GetTree().IsBasePointer(base))
                         {
-                            std::cout << "Release temporary " << m_data->GetOffset() << std::endl;
                             m_data->GetTree().ReleaseIfTemporary(m_data->GetOffset());
                         }
                         else if (base.IsStackPointer())
                         {
-                            // Note: this branch should be after the IsBasePointer()
+                            // Nothing to release in this case.
+                            // Note: this branch must be after the IsBasePointer()
                             // branch to also cover the cases when stack pointer
                             // is chosen to be the base pointer. For such cases,
                             // it's important that temporaries (which are based
                             // off base pointer) are released and the IsBasePointer()
                             // branch handles that.
-                            std::cout << "Don't release stack-relative indirect at "
-                                      << m_data->GetOffset() << std::endl;
                         }
                         else
                         {
-                            std::cout << "Release Base Register " << base.GetName() << std::endl;
+                            // Release the base register.
                             m_data->GetTree().ReleaseRegister(base);
                         }
                     }
 
-                    // TODO: Release m_data if not using arena allocator.
+                    // Note: m_data intentionally not released as it's meant to
+                    // be allocated and in-place constructed using arena allocator.
                 }
             }
 
@@ -838,7 +836,10 @@ namespace NativeJIT
             break;
 
         case StorageClass::Indirect:
-            out << "indirect [" << GetBaseRegister().GetName() << std::hex;
+        {
+            IosMiniStateRestorer state(out);
+
+            out << "indirect [" << GetBaseRegister().GetName() << std::uppercase << std::hex;
 
             if (GetOffset() < 0)
             {
@@ -848,8 +849,10 @@ namespace NativeJIT
             {
                 out << " + " << GetOffset() << "h";
             }
-            out << "]" << std::dec;
+            out << "]";
+
             break;
+        }
 
         default:
             out << "[unknown storage type]";
@@ -861,7 +864,8 @@ namespace NativeJIT
     template <typename T>
     void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, ValidImmediateStorage) const
     {
-        out << "immediate value " << std::hex << GetImmediate() << "h" << std::dec;
+        // Unary + would force char ([u]int8_t) to be printed as integer.
+        out << "immediate value " << +GetImmediate() << "h";
     }
 
 

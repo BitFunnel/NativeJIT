@@ -16,7 +16,7 @@ namespace NativeJIT
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -90,12 +90,12 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ShldNode<T>::Print() const
+    void ShldNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("Shld");
+        PrintCoreProperties(out, "Shld");
 
-        std::cout << ", shiftee = " << m_shiftee.GetId()
-                  << ", filler = " << m_filler.GetId()
-                  << ", bitCount = " << m_bitCount;
+        out << ", shiftee = " << m_shiftee.GetId()
+            << ", filler = " << m_filler.GetId()
+            << ", bitCount = " << m_bitCount;
     }
 }

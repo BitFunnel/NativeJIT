@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
-#include <iostream>             // TODO: Temporary - for debugging.
+#include <iomanip>
+#include <iostream>
 
 #include "ML64Verifier.h"
 #include "TestSetup.h"
@@ -10,13 +11,17 @@ namespace NativeJIT
 {
     // TODO: Add testLength parameter and verify that ml64Output has same length.
     // TODO: Print out helpful diagnostics on failure.
-    ML64Verifier::ML64Verifier(char const * ml64Output, uint8_t const * testOutput)
+    ML64Verifier::ML64Verifier(char const * ml64Output,
+                               uint8_t const * testOutput)
         : m_current(ml64Output),
-            m_currentLine(0),
-            m_currentLineStart(ml64Output),
-            m_bytesVerified(0),
-            m_testOutput(testOutput)
+          m_currentLine(0),
+          m_currentLineStart(ml64Output),
+          m_bytesVerified(0),
+          m_testOutput(testOutput)
     {
+        m_comparedBytes.fill('0');
+        m_comparedBytes << std::uppercase << std::hex;
+
         while (!AtEOF())
         {
             ProcessLine();
@@ -41,9 +46,7 @@ namespace NativeJIT
                     for (unsigned i = 0 ; i < size; ++i)
                     {
                         uint8_t x = static_cast<uint8_t>(value & 0xffull);
-                        std::cout.width(2);
-                        std::cout.fill('0');
-                        std::cout << std::hex << static_cast<unsigned>(x) << " ";
+                        m_comparedBytes << std::setw(2) << static_cast<unsigned>(x) << " ";
                         value = value >> 8;
 
                         if (x != m_testOutput[m_bytesVerified])
@@ -70,29 +73,34 @@ namespace NativeJIT
 
     void ML64Verifier::ReportError(unsigned expected, unsigned found)
     {
-        std::cout << std::endl;
-        std::cout << "ERROR: generated opcode does not match ml64 output." << std::endl;
-        std::cout << "Line " << m_currentLine << std::endl;
+        auto& out = std::cerr;
+        IosMiniStateRestorer state(out);
 
-        std::cout << '"';
+        out.fill('0');
+
+        out << std::uppercase << std::hex;
+
+        out << "Compared bytes:" << std::endl;
+        out << m_comparedBytes.str();
+        out << std::endl;
+        out << std::endl;
+        out << "ERROR: generated opcode does not match ml64 output." << std::endl;
+        out << "Line " << m_currentLine << std::endl;
+
+        out << '"';
         char const *line = m_currentLineStart;
         while (*line != '\0' && *line != '\n' && *line != '\r')
         {
-            std::cout << *line++;
+            out << *line++;
         }
-        std::cout << '"' << std::endl;
+        out << '"' << std::endl;
 
-        std::cout << "Expected ";
-        std::cout.width(2);
-        std::cout.fill('0');
-        std::cout << std::hex << expected;
+        out << "Expected ";
+        out << std::setw(2) << expected;
+        out << " - Found ";
+        out << std::setw(2) << found;
 
-        std::cout << " - Found ";
-        std::cout.width(2);
-        std::cout.fill('0');
-        std::cout << std::hex << found;
-
-        std::cout << std::endl;
+        out << std::endl;
     }
 
 

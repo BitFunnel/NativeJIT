@@ -16,7 +16,7 @@ namespace NativeJIT
         virtual ExpressionTree::Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -77,14 +77,14 @@ namespace NativeJIT
 
 
     template <OpCode OP, typename L, typename R>
-    void BinaryNode<OP, L, R>::Print() const
+    void BinaryNode<OP, L, R>::Print(std::ostream& out) const
     {
         const std::string name = std::string("Operation (")
             + X64CodeGenerator::OpCodeName(OP)
             + ") ";
-        PrintCoreProperties(name.c_str());
+        PrintCoreProperties(out, name.c_str());
 
-        std::cout << ", left = " << m_left.GetId();
-        std::cout << ", right = " << m_right.GetId();
+        out << ", left = " << m_left.GetId();
+        out << ", right = " << m_right.GetId();
     }
 }

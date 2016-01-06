@@ -2,7 +2,7 @@
 
 #include <array>                // For arrays in FreeList.
 #include <cstdint>
-#include <iosfwd>               // TODO: Remove this temp debug include.
+#include <iosfwd>               // For debugging output.
 
 #include "NativeJIT/AllocatorVector.h"                  // Embedded member.
 #include "NativeJIT/CodeGen/JumpTable.h"                // ExpressionTree embeds Label.
@@ -82,6 +82,9 @@ namespace NativeJIT
         Allocators::IAllocator& GetAllocator() const;
         FunctionBuffer& GetCodeGenerator() const;
 
+        void EnableDiagnostics(std::ostream& out);
+        void DisableDiagnostics();
+
         // In-place constructs an object using the class allocator. The object's
         // lifetime cannot be longer than that of the ExpressionTree.
         template <typename T, typename... ConstructorArgs>
@@ -152,6 +155,11 @@ namespace NativeJIT
         Label GetStartOfEpilogue() const;
 
     protected:
+        bool IsDiagnosticsStreamAvailable() const;
+
+        // Returns the diagnostic stream. Throws if it is not available.
+        std::ostream& GetDiagnosticsStream() const;
+
         // Adds a precondition for executing the expression. See the
         // m_preconditionTests variable for more information.
         void AddExecutionPreconditionTest(ExecutionPreconditionTest& test);
@@ -294,6 +302,9 @@ namespace NativeJIT
         Allocators::StlAllocator<void*> m_stlAllocator;
 
         FunctionBuffer & m_code;
+
+        // Stream used to print diagnostics or nullptr if disabled.
+        std::ostream* m_diagnosticsStream;
 
         AllocatorVector<NodeBase*> m_topologicalSort;
         AllocatorVector<NodeBase*> m_parameters;

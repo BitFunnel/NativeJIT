@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iosfwd>   // Diagnostic stream parameter.       
 
 #include "NativeJIT/AllocatorVector.h"      // Embedded member.
 
@@ -54,12 +55,16 @@ namespace NativeJIT
         // defined access to parameters and stack variables during function
         // body generation time, even if the number of required stack slots is
         // not known yet.
+        //
+        // If diagnosticStream is non-null, it will be used to print x64
+        // instructions used for prolog and epilog.
         FunctionSpecificationBase(Allocators::IAllocator& allocator,
                                   int maxFunctionCallParameters,
                                   unsigned localStackSlotCount,
                                   unsigned savedRxxNonvolatilesMask,
                                   unsigned savedXmmNonvolatilesMask,
-                                  BaseRegisterType baseRegisterType);
+                                  BaseRegisterType baseRegisterType,
+                                  std::ostream* diagnosticStream);
 
         // Returns the offset that can be added to the current RSP to get the
         // value of RSP that was effective before the prolog started executing.

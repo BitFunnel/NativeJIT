@@ -20,7 +20,7 @@ namespace NativeJIT
         // Overrides of Node methods
         //
 
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
         virtual Storage<T&> CodeGenValue(ExpressionTree& tree) override;
 
     private:
@@ -41,18 +41,18 @@ namespace NativeJIT
 
 
     template <typename T>
-    void StackVariableNode<T>::Print() const
+    void StackVariableNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("StackVariableNode");
+        PrintCoreProperties(out, "StackVariableNode");
 
         if (!m_stackStorage.IsNull())
         {
-            std::cout << ", offset " << m_stackStorage.GetOffset()
-                      << " off " << m_stackStorage.GetBaseRegister().GetName();
+            out << ", offset " << m_stackStorage.GetOffset()
+                << " off " << m_stackStorage.GetBaseRegister().GetName();
         }
         else
         {
-            std::cout << ", storage not yet assigned";
+            out << ", storage not yet assigned";
         }
     }
 

@@ -190,7 +190,7 @@ namespace NativeJIT
 
         virtual Storage<TO> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -217,7 +217,7 @@ namespace NativeJIT
 
         virtual Storage<TO> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -270,10 +270,10 @@ namespace NativeJIT
 
 
     template <typename TO, typename FROM>
-    void CastNode<TO, FROM, true>::Print() const
+    void CastNode<TO, FROM, true>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("CastNode (one-step)");
-        std::cout << ", from = " << m_from.GetId();
+        PrintCoreProperties(out, "CastNode (one-step)");
+        out << ", from = " << m_from.GetId();
     }
 
 
@@ -311,11 +311,11 @@ namespace NativeJIT
 
 
     template <typename TO, typename FROM>
-    void CastNode<TO, FROM, false>::Print() const
+    void CastNode<TO, FROM, false>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("CastNode (composite)");
+        PrintCoreProperties(out, "CastNode (composite)");
 
-        std::cout << ", conversionNode = " << m_conversionNode.GetId();
+        out << ", conversionNode = " << m_conversionNode.GetId();
     }
 
 

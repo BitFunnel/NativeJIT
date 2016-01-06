@@ -215,7 +215,7 @@ namespace NativeJIT
 
             // A function with no stack requirements, which would not even
             // need unwind information.
-            FunctionSpecification spec(setup->GetAllocator(), -1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
+            FunctionSpecification spec(setup->GetAllocator(), -1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused, GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // We impose a stricter requirement that stack must be aligned
@@ -259,7 +259,7 @@ namespace NativeJIT
             auto & code = setup->GetCode();
 
             // A function that calls functions with at most 1 argument.
-            FunctionSpecification spec(setup->GetAllocator(), 1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
+            FunctionSpecification spec(setup->GetAllocator(), 1, 0, 0, 0, FunctionSpecification::BaseRegisterType::Unused, GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // 4 slots for parameter homes, 1 slot to align stack.
@@ -300,7 +300,7 @@ namespace NativeJIT
             auto & code = setup->GetCode();
 
             // A function that allocates 17 stack slots.
-            FunctionSpecification spec(setup->GetAllocator(), -1, 17, 0, 0, FunctionSpecification::BaseRegisterType::Unused);
+            FunctionSpecification spec(setup->GetAllocator(), -1, 17, 0, 0, FunctionSpecification::BaseRegisterType::Unused, GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // 17 quadword slots exactly (already aligned).
@@ -343,7 +343,7 @@ namespace NativeJIT
             auto & code = setup->GetCode();
 
             // Max 6 arguments for a call, no explicit register saves, but RBP saved implicitly.
-            FunctionSpecification spec(setup->GetAllocator(), 6, 0, 0, 0, FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
+            FunctionSpecification spec(setup->GetAllocator(), 6, 0, 0, 0, FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp, GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // 6 slots for parameters, one for RBP, which also aligns the stack.
@@ -412,7 +412,8 @@ namespace NativeJIT
                                         2,
                                         0, // RBP implicit due to SetRbpToOriginalRsp.
                                         xmm10.GetMask() | xmm11.GetMask(),
-                                        FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp);
+                                        FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp,
+                                        GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             TestEqual(104, spec.GetOffsetToOriginalRsp());
@@ -500,7 +501,8 @@ namespace NativeJIT
                                         12, // Stack slots
                                         c_rxxWritableNonvolatilesMask,
                                         c_xmmWritableNonvolatilesMask,
-                                        FunctionSpecification::BaseRegisterType::Unused);
+                                        FunctionSpecification::BaseRegisterType::Unused,
+                                        GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             auto & code = setup->GetCode();
@@ -564,7 +566,8 @@ namespace NativeJIT
                                         12, // Allocate some slots to increase entropy.
                                         c_rxxWritableNonvolatilesMask,
                                         c_xmmWritableNonvolatilesMask,
-                                        FunctionSpecification::BaseRegisterType::Unused);
+                                        FunctionSpecification::BaseRegisterType::Unused,
+                                        GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // Erase all writable registers to show that epilog indeed restores

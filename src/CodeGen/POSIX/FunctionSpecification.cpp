@@ -31,7 +31,8 @@ namespace NativeJIT
                                                          unsigned localStackSlotCount,
                                                          unsigned savedRxxNonvolatilesMask,
                                                          unsigned savedXmmNonvolatilesMask,
-                                                         BaseRegisterType baseRegisterType)
+                                                         BaseRegisterType baseRegisterType,
+                                                         std::ostream* diagnosticsStream)
         : m_stlAllocator(allocator),
           m_unwindInfoBuffer(m_stlAllocator),
           m_prologCode(m_stlAllocator),
@@ -40,6 +41,11 @@ namespace NativeJIT
 //        // The code in this buffer will not be executed directly, so the general
 //        // allocator can be used for code buffer allocation as well.
 //        X64CodeGenerator code(allocator, c_maxPrologOrEpilogSize, allocator);
+//
+//        if (diagnosticsStream != nullptr)
+//        {
+//            code.EnableDiagnostics(*diagnosticsStream);
+//        }
 //
 //        BuildUnwindInfoAndProlog(maxFunctionCallParameters,
 //                                 localStackSlotCount,

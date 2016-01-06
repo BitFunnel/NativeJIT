@@ -25,7 +25,7 @@ namespace NativeJIT
         //
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -108,10 +108,10 @@ namespace NativeJIT
 
 
     template <typename T>
-    void ParameterNode<T>::Print() const
+    void ParameterNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("ParameterNode");
+        PrintCoreProperties(out, "ParameterNode");
 
-        std::cout << ", position = " << m_position;
+        out << ", position = " << m_position;
     }
 }

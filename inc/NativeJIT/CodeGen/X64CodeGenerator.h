@@ -93,6 +93,10 @@ namespace NativeJIT
         void EnableDiagnostics(std::ostream& out);
         void DisableDiagnostics();
 
+        // Returns the diagnostic stream. GetDiagnosticsStream() throws if it is not available.
+        bool IsDiagnosticsStreamAvailable() const;
+        std::ostream& GetDiagnosticsStream() const;
+
         // This override allows for printing of debugging information.
         virtual void PlaceLabel(Label l) override;
 
@@ -388,8 +392,6 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         void EmitModRMOffset(Register<SIZE, ISFLOAT> dest, Register<8, false> src, int32_t srcOffset);
 
-        std::ostream* GetDiagnosticsStream() const;
-
         // Helper class used to provide partial specializations by OpCode,
         // ISFLOAT and SIZE for the Emit() methods.
         template <OpCode OP>
@@ -476,11 +478,11 @@ namespace NativeJIT
             template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
             void Print(OpCode op, Register<SIZE1, ISFLOAT1> dest, Register<SIZE2, ISFLOAT2> src);
 
-            template <unsigned SIZE, bool ISFLOAT>
-            void Print(OpCode op, Register<SIZE, ISFLOAT> dest, Register<8, false> src, int32_t srcOffset);
+            template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+            void Print(OpCode op, Register<SIZE1, ISFLOAT1> dest, Register<8, false> src, int32_t srcOffset);
 
-            template <unsigned SIZE, bool ISFLOAT>
-            void Print(OpCode op, Register<8, false> dest, int32_t destOffset, Register<SIZE, ISFLOAT> src);
+            template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
+            void Print(OpCode op, Register<8, false> dest, int32_t destOffset, Register<SIZE2, ISFLOAT2> src);
 
             template <unsigned SIZE, bool ISFLOAT, typename T>
             void PrintImmediate(OpCode op, Register<SIZE, ISFLOAT> dest, T value);
@@ -493,10 +495,52 @@ namespace NativeJIT
             unsigned m_startPosition;
             std::ostream* m_out;
 
+            // Returns "byte" for 1, "word" for 2 etc.
+            static char const * GetPointerName(unsigned pointerSize);
+
+            template <typename T>
+            static void PrintImmediate(std::ostream& out, T value);
+
             void PrintBytes(unsigned startPosition, unsigned endPosition);
+
+            // A functor which implements the abs() operation for integral types.
+            template <typename T, bool ISSIGNED = std::is_signed<T>::value>
+            struct IntegralAbs
+            {
+                T operator()(T value);
+            };
+
+
+            // Specialization for non-signed types.
+            template <typename T>
+            struct IntegralAbs<T, false>
+            {
+                T operator()(T value);
+            };
         };
 
         std::ostream* m_diagnosticsStream;
+    };
+
+
+    // TODO: Move this class to a separate header once build files stabilize
+    // after the initial Mac porting efforts.
+    //
+    // Stores the current value of stream's flags, width and fill character in
+    // the constructor and restores them back in the destructor. The saving/restoring
+    // of these properties is a close subset of what std::ios::copyfmt does, but
+    // is more lightweight (no locale, invocation of callbacks etc).
+    class IosMiniStateRestorer final : private NonCopyable
+    {
+    public:
+        IosMiniStateRestorer(std::ios& stream);
+        ~IosMiniStateRestorer();
+
+    private:
+        std::ios& m_stream;
+        std::ios::fmtflags m_flags;
+        std::streamsize m_width;
+        char m_fillChar;
     };
 
 
@@ -544,26 +588,34 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE, bool ISFLOAT>
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
     void X64CodeGenerator::CodePrinter::Print(OpCode op,
-                                              Register<SIZE, ISFLOAT> dest,
+                                              Register<SIZE1, ISFLOAT1> dest,
                                               Register<8, false> src,
                                               int32_t srcOffset)
     {
         if (m_out != nullptr)
         {
+            IosMiniStateRestorer state(*m_out);
+
             PrintBytes(m_startPosition, m_code.CurrentPosition());
 
-            *m_out << OpCodeName(op) << ' ' << dest.GetName();
-            *m_out << ", [" << src.GetName();
+            *m_out << OpCodeName(op)
+                   << ' ' << dest.GetName()
+                   << ", "
+                   << GetPointerName(SIZE2)
+                   << " ptr ["
+                   << src.GetName()
+                   << std::uppercase
+                   << std::hex;
 
             if (srcOffset > 0)
             {
-                *m_out << " + " << std::hex << srcOffset << "h";
+                *m_out << " + " << srcOffset << "h";
             }
             else if (srcOffset < 0)
             {
-                *m_out << " - " << std::hex << -static_cast<int64_t>(srcOffset) << "h";
+                *m_out << " - " << -static_cast<int64_t>(srcOffset) << "h";
             }
 
             *m_out << "]"  << std::endl;
@@ -571,29 +623,73 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE, bool ISFLOAT>
+    template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
     void X64CodeGenerator::CodePrinter::Print(OpCode op,
                                               Register<8, false> dest,
                                               int32_t destOffset,
-                                              Register<SIZE, ISFLOAT> src)
+                                              Register<SIZE2, ISFLOAT2> src)
     {
         if (m_out != nullptr)
         {
+            IosMiniStateRestorer state(*m_out);
+
             PrintBytes(m_startPosition, m_code.CurrentPosition());
 
-            *m_out << OpCodeName(op) << " [" << dest.GetName();
+            *m_out << OpCodeName(op)
+                   << ' '
+                   << GetPointerName(SIZE1)
+                   << " ptr ["
+                   << dest.GetName()
+                   << std::uppercase
+                   << std::hex;
 
             if (destOffset > 0)
             {
-                *m_out << " + " << std::hex << destOffset << "h";
+                *m_out << " + " << destOffset << "h";
             }
             else if (destOffset < 0)
             {
-                *m_out << " - " << std::hex << -static_cast<int64_t>(destOffset) << "h";
+                *m_out << " - " << -static_cast<int64_t>(destOffset) << "h";
             }
 
             *m_out << "], " << src.GetName() << std::endl;
         }
+    }
+
+
+    template <typename T, bool ISSIGNED>
+    T X64CodeGenerator::CodePrinter::IntegralAbs<T, ISSIGNED>::operator()(T value)
+    {
+        return value < 0 ? -value : value;
+    }
+
+
+    // Specialization for non-signed types.
+    template <typename T>
+    T X64CodeGenerator::CodePrinter::IntegralAbs<T, false>::operator()(T value)
+    {
+        return value;
+    }
+
+
+    template <typename T>
+    void X64CodeGenerator::CodePrinter::PrintImmediate(std::ostream& out, T value)
+    {
+        static_assert(!std::is_floating_point<T>::value,
+                      "Floating point values cannot be used as immediates.");
+
+        const T nonNegativeValue = IntegralAbs<T>()(value);
+        const auto prefix = (value != nonNegativeValue) ? "-" : "";
+
+        IosMiniStateRestorer state(out);
+
+        // Unary + forces char to integer and prints it as number.
+        out
+            << std::uppercase
+            << std::hex
+            << prefix
+            << +nonNegativeValue
+            << 'h';
     }
 
 
@@ -602,22 +698,15 @@ namespace NativeJIT
                                                        Register<SIZE, ISFLOAT> dest,
                                                        T value)
     {
-        static_assert(!std::is_floating_point<T>::value,
-                      "Floating point values cannot be used as immediates.");
-
-        // Cast UInt8 to UInt64 to prevent it from being printed as char.
-        typedef typename std::conditional<std::is_same<T, uint8_t>::value,
-                                 uint64_t,
-                                 T>::type ValueType;
-
         if (m_out != nullptr)
         {
             PrintBytes(m_startPosition, m_code.CurrentPosition());
 
-            *m_out << OpCodeName(op)
-                   << ' ' << dest.GetName()
-                   << ", " << std::hex << static_cast<ValueType>(value) << 'h'
-                   << std::endl;
+            *m_out << OpCodeName(op) << ' ' << dest.GetName() << ", ";
+
+            PrintImmediate(*m_out, value);
+
+            *m_out << std::endl;
         }
     }
 
@@ -628,14 +717,6 @@ namespace NativeJIT
                                                        Register<SIZE, ISFLOAT> src,
                                                        T value)
     {
-        static_assert(!std::is_floating_point<T>::value,
-                      "Floating point values cannot be used as immediates.");
-
-        // Cast UInt8 to UInt64 to prevent it from being printed as char.
-        typedef typename std::conditional<std::is_same<T, uint8_t>::value,
-                                 uint64_t,
-                                 T>::type ValueType;
-
         if (m_out != nullptr)
         {
             PrintBytes(m_startPosition, m_code.CurrentPosition());
@@ -643,8 +724,11 @@ namespace NativeJIT
             *m_out << OpCodeName(op)
                    << ' ' << dest.GetName()
                    << ", " << src.GetName()
-                   << ", " << std::hex << static_cast<ValueType>(value) << 'h'
-                   << std::endl;
+                   << ", ";
+
+            PrintImmediate(*m_out, value);
+
+            *m_out << std::endl;
         }
     }
 
@@ -718,7 +802,7 @@ namespace NativeJIT
 
         Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest, src, srcOffset);
 
-        printer.Print(OP, dest, src, srcOffset);
+        printer.Print<SIZE, ISFLOAT, SIZE, ISFLOAT>(OP, dest, src, srcOffset);
     }
 
 
@@ -729,7 +813,7 @@ namespace NativeJIT
 
         Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, src, srcOffset);
 
-        printer.Print(OP, dest, src, srcOffset);
+        printer.Print<SIZE1, ISFLOAT1, SIZE2, ISFLOAT2>(OP, dest, src, srcOffset);
     }
 
 
@@ -740,7 +824,7 @@ namespace NativeJIT
 
         Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest, destOffset, src);
 
-        printer.Print(OP, dest, destOffset, src);
+        printer.Print<SIZE, ISFLOAT, SIZE, ISFLOAT>(OP, dest, destOffset, src);
     }
 
 
@@ -751,7 +835,7 @@ namespace NativeJIT
 
         Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, destOffset, src);
 
-        printer.Print(OP, dest, destOffset, src);
+        printer.Print<SIZE1, ISFLOAT1, SIZE2, ISFLOAT2>(OP, dest, destOffset, src);
     }
 
 

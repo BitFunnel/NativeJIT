@@ -17,7 +17,7 @@ namespace NativeJIT
         TEST_FIXTURE_START(Acceptance)
 
         public:
-            Acceptance() : TestFixture(5000, 64 * 1024)
+            Acceptance() : TestFixture(5000, 64 * 1024, TestFixture::c_defaultDiagnosticsStream)
             {
             }
 

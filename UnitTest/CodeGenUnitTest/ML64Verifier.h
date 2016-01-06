@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <sstream>
 
 
 namespace NativeJIT
 {
-    // TODO: Print out line that doesn't match.
     class ML64Verifier
     {
     public:
@@ -34,5 +34,6 @@ namespace NativeJIT
 
         unsigned m_bytesVerified;
         uint8_t const * m_testOutput;
+        std::stringstream m_comparedBytes;
     };
 }

@@ -27,13 +27,15 @@ namespace NativeJIT
                               unsigned localStackSlotCount,
                               unsigned savedRxxNonvolatilesMask,
                               unsigned savedXmmNonvolatilesMask,
-                              BaseRegisterType baseRegisterType)
+                              BaseRegisterType baseRegisterType,
+                              std::ostream* diagnosticStream)
             : FunctionSpecificationBase(allocator,
                                         maxFunctionCallParameters,
                                         localStackSlotCount,
                                         savedRxxNonvolatilesMask,
                                         savedXmmNonvolatilesMask,
-                                        baseRegisterType)
+                                        baseRegisterType,
+                                        diagnosticStream)
         {
         }
     };

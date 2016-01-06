@@ -19,7 +19,7 @@ namespace NativeJIT
 
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
         virtual unsigned LabelSubtree(bool isLeftChild) override;
-        virtual void Print() const override;
+        virtual void Print(std::ostream& out) const override;
 
         // Note: IndirectNode doesn't implement GetBaseAndOffset() method which
         // allows for base object/offset collapsing optimization because it
@@ -97,18 +97,18 @@ namespace NativeJIT
 
 
     template <typename T>
-    void IndirectNode<T>::Print() const
+    void IndirectNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties("IndirectNode");
+        PrintCoreProperties(out, "IndirectNode");
 
-        std::cout << ", base ID = " << m_base.GetId()
-                  << ", index = " << m_index;
+        out << ", base ID = " << m_base.GetId()
+            << ", index = " << m_index;
 
         if (m_base.GetId() != m_collapsedBase->GetId())
         {
-            std::cout
-                  << ", collapsed base ID = " << m_collapsedBase->GetId()
-                  << ", collapsed offset = " << m_collapsedOffset;
+            out
+                << ", collapsed base ID = " << m_collapsedBase->GetId()
+                << ", collapsed offset = " << m_collapsedOffset;
         }
     }
 }

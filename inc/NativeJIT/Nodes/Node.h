@@ -4,6 +4,7 @@
 #pragma warning(disable:4505)
 
 #include <cstdint>
+#include <iosfwd>   // Debugging output.
 
 #include "NativeJIT/ExpressionTree.h"             // ExpressionTree::Storage<T> return type.
 #include "NativeJIT/TypePredicates.h"
@@ -95,7 +96,7 @@ namespace NativeJIT
         virtual Storage<void*> CodeGenAsBase(ExpressionTree& tree) = 0;
 
         virtual unsigned LabelSubtree(bool isLeftChild) = 0;
-        virtual void Print() const = 0;
+        virtual void Print(std::ostream& out) const = 0;
         
     protected:
         // Calculates the number of registers needed by a node whose left
@@ -150,7 +151,7 @@ namespace NativeJIT
 
     protected:
         void SetRegisterCount(unsigned count);
-        void PrintCoreProperties(char const *nodeName) const;
+        void PrintCoreProperties(std::ostream& out, char const *nodeName) const;
 
     private:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -254,25 +255,25 @@ namespace NativeJIT
 
 
     template <typename T>
-    void Node<T>::PrintCoreProperties(char const* nodeName) const
+    void Node<T>::PrintCoreProperties(std::ostream& out, char const* nodeName) const
     {
-        std::cout << nodeName
-                  << " [id = " << GetId()
-                  << ", parents = " << GetParentCount()
-                  << ", register count = " << m_registerCount
-                  << ", ";
+        out << nodeName
+            << " [id = " << GetId()
+            << ", parents = " << GetParentCount()
+            << ", register count = " << m_registerCount
+            << ", ";
 
         if (IsCached())
         {
-            std::cout << "cached in ";
-            m_cache.Print(std::cout);
+            out << "cached in ";
+            m_cache.Print(out);
         }
         else
         {
-            std::cout << "not cached";
+            out << "not cached";
         }
 
-        std::cout << "]";
+        out << "]";
     }
 
 
