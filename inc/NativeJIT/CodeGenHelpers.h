@@ -49,7 +49,7 @@ namespace NativeJIT
         template <OpCode OP, typename DESTREGTYPE, typename SRC>
         void Emit(X64CodeGenerator& code, DESTREGTYPE dest, const ExpressionTree::Storage<SRC>& src)
         {
-            typedef ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
+            typedef typename ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
 
             // Pick the right flavor of the helper class specialization and call it.
             const RegTypes regTypes = std::is_same<SrcRegType, DESTREGTYPE>::value
@@ -118,7 +118,7 @@ namespace NativeJIT
             X64CodeGenerator& code, DESTREGTYPE dest,
             const ExpressionTree::Storage<SRC>& src)
         {
-            typedef ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
+            typedef typename ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
 
             switch (src.GetStorageClass())
             {
@@ -148,7 +148,7 @@ namespace NativeJIT
             X64CodeGenerator& code, DESTREGTYPE dest,
             const ExpressionTree::Storage<SRC>& src)
         {
-            typedef ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
+            typedef typename ExpressionTree::Storage<SRC>::DirectRegister SrcRegType;
 
             switch (src.GetStorageClass())
             {
@@ -177,7 +177,7 @@ namespace NativeJIT
         {
             static_assert(std::is_floating_point<T>::value, "The immediate must be a float.");
             static_assert(sizeof(T) == SIZE, "The size of the immediate must match the register size.");
-            typedef std::conditional<SIZE == 4, uint32_t, uint64_t>::type TemporaryType;
+            typedef typename std::conditional<SIZE == 4, uint32_t, uint64_t>::type TemporaryType;
 
             auto & code = tree.GetCodeGenerator();
             auto temp = tree.Direct<TemporaryType>();

@@ -6,8 +6,10 @@
 
 #include "NativeJIT/AllocatorVector.h"                  // Embedded member.
 #include "NativeJIT/BitOperations.h"
+
 #include "NativeJIT/CodeGen/FunctionSpecification.h"    // c_maxStackSize definition.
 #include "NativeJIT/CodeGen/JumpTable.h"                // ExpressionTree embeds Label.
+
 #include "NativeJIT/Register.h"
 #include "NativeJIT/TypePredicates.h"
 #include "Temporary/NonCopyable.h"
@@ -638,7 +640,7 @@ namespace NativeJIT
     ExpressionTree::Storage<T>
     ExpressionTree::Direct(typename Storage<T>::DirectRegister r)
     {
-        typedef Storage<T>::FullRegister FullRegister;
+        typedef typename Storage<T>::FullRegister FullRegister;
 
         auto & code = GetCodeGenerator();
         auto & freeList = FreeListForType<T>::Get(*this);
@@ -1005,7 +1007,7 @@ namespace NativeJIT
             // Get a pin for the base register to make sure it doesn't get spilled
             // by the target register allocation.
             ReferenceCounter basePin = indirect.GetPin();
-            target = tree.Direct<T>();
+            target = tree.template Direct<T>();
             code.Emit<OpCode::Lea>(target.GetDirectRegister(), base, offset);
         }
 
