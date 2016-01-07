@@ -22,15 +22,13 @@ set(PRIVATE_HFILES
   stdafx.h
   targetver.h
 )
+
 set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/AllocatorVector.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/BitOperations.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Register.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CallingConvention.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CodeBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/JumpTable.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ValuePredicates.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/X64CodeGenerator.h
@@ -46,9 +44,9 @@ set(WINDOWS_PRIVATE_HFILES
 )
 
 set(WINDOWS_PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/FunctionSpecification.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
 )
 
 if (WIN32)
