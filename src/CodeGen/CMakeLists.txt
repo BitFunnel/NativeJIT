@@ -9,13 +9,18 @@ set(CPPFILES
   stdafx.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
+  Windows/ExecutionBuffer.cpp
 )
 
 set(WINDOWS_CPPFILES
-  Windows/ExecutionBuffer.cpp
   Windows/FunctionBuffer.cpp
   Windows/FunctionSpecification.cpp
   Windows/UnwindCode.cpp
+)
+
+set(POSIX_CPPFILES
+  POSIX/FunctionBuffer.cpp
+  POSIX/FunctionSpecification.cpp
 )
 
 set(PRIVATE_HFILES
@@ -29,6 +34,9 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Register.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CallingConvention.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CodeBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/JumpTable.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ValuePredicates.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/X64CodeGenerator.h
@@ -44,15 +52,26 @@ set(WINDOWS_PRIVATE_HFILES
 )
 
 set(WINDOWS_PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/Windows/FunctionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/Windows/FunctionSpecification.h
+)
+
+set(POSIX_PRIVATE_HFILES
+)
+
+set(POSIX_PUBLIC_HFILES
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/POSIX/FunctionBuffer.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/POSIX/FunctionSpecification.h
 )
 
 if (WIN32)
 set(CPPFILES ${CPPFILES} ${WINDOWS_CPPFILES})
 set(PUBLIC_HFILES ${PUBLIC_HFILES} ${WINDOWS_PUBLIC_HFILES})
 set(PRIVATE_HFILES ${PRIVATE_HFILES} ${WINDOWS_PRIVATE_HFILES})
+else (WIN32)
+set(CPPFILES ${CPPFILES} ${POSIX_CPPFILES})
+set(PUBLIC_HFILES ${PUBLIC_HFILES} ${POSIX_PUBLIC_HFILES})
+set(PRIVATE_HFILES ${PRIVATE_HFILES} ${POSIX_PRIVATE_HFILES})
 endif (WIN32)
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
