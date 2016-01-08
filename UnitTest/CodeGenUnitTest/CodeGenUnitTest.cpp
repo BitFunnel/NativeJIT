@@ -217,9 +217,9 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x12345678);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x80000000);
-            buffer.EmitImmediate<OpCode::Mov>(rbx, 0x1234567812345678);
-            buffer.EmitImmediate<OpCode::Mov>(rsp, 0x1234567812345678);
-            buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234567812345678);
+            buffer.EmitImmediate<OpCode::Mov>(rbx, 0x1234567812345678ull);
+            buffer.EmitImmediate<OpCode::Mov>(rsp, 0x1234567812345678ull);
+            buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234567812345678ull);
 
             // mov [r + offset], r with zero, byte, word, and double word offsets
             std::cout << "mov [r + offset], r with zero, byte, word, and double word offsets" << std::endl;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <windows.h>                                // RUNTIME_FUNCTION embedded.
+//#include <windows.h>                                // RUNTIME_FUNCTION embedded.
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
 
@@ -56,8 +56,8 @@ namespace NativeJIT
         virtual void Reset() override;
 
     private:
-        // Structure used to register stack unwind information with Windows.
-        RUNTIME_FUNCTION m_runtimeFunction;
+//        // Structure used to register stack unwind information with Windows.
+//        RUNTIME_FUNCTION m_runtimeFunction;
 
         // Temporary values used during compilation of the function. Offsets
         // are relative to buffer start. When using BeginFunctionBodyGeneration()
@@ -71,8 +71,8 @@ namespace NativeJIT
 
         // The callback function for RtlInstallFunctionTableCallback. Context
         // is a poiner to a FunctionBuffer.
-        static RUNTIME_FUNCTION*
-        WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context);
+//        static RUNTIME_FUNCTION*
+//        WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context);
 
         // A helper method used to implement the two public flavors of the method.
         void BeginFunctionBodyGeneration(unsigned reservedUnwindInfoLength,

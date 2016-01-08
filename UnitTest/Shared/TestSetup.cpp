@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <memory>       // For std::make_unique.
+
 #include "TestSetup.h"
 
 
@@ -36,8 +38,8 @@ namespace NativeJIT
     //
 
     TestCaseSetup::TestCaseSetup(FunctionBuffer& code, Allocator& generalAllocator)
-        : m_code(code),
-          m_allocator(generalAllocator)
+        : m_allocator(generalAllocator),
+          m_code(code)
     {
     }
 

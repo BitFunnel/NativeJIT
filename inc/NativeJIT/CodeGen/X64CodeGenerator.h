@@ -683,7 +683,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest);
 
         printer.Print(OP, dest);
     }
@@ -694,7 +694,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, src);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest, src);
 
         printer.Print(OP, dest, src);
     }
@@ -705,7 +705,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, src);
+        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, src);
 
         printer.Print(OP, dest, src);
     }
@@ -716,7 +716,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, src, srcOffset);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest, src, srcOffset);
 
         printer.Print(OP, dest, src, srcOffset);
     }
@@ -727,7 +727,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, src, srcOffset);
+        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, src, srcOffset);
 
         printer.Print(OP, dest, src, srcOffset);
     }
@@ -738,7 +738,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes1<ISFLOAT>::Emit<SIZE>(*this, dest, destOffset, src);
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest, destOffset, src);
 
         printer.Print(OP, dest, destOffset, src);
     }
@@ -749,7 +749,7 @@ namespace NativeJIT
     {
         CodePrinter printer(*this);
 
-        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::Emit<SIZE1, SIZE2>(*this, dest, destOffset, src);
+        Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, destOffset, src);
 
         printer.Print(OP, dest, destOffset, src);
     }

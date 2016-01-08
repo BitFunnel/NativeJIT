@@ -23,13 +23,13 @@ namespace NativeJIT
             TestEqual(1, BitOp::GetNonZeroBitCount(0x80000000u));
             TestEqual(1, BitOp::GetNonZeroBitCountFallback(0x80000000u));
 
-            TestEqual(1, BitOp::GetNonZeroBitCount(0x8000000000000000));
+            TestEqual(1, BitOp::GetNonZeroBitCount(0x8000000000000000ll));
             TestEqual(1, BitOp::GetNonZeroBitCountFallback(0x8000000000000000));
 
             TestEqual(32, BitOp::GetNonZeroBitCount(0xFFFFFFFFu));
             TestEqual(32, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFu));
 
-            TestEqual(64, BitOp::GetNonZeroBitCount(0xFFFFFFFFFFFFFFFF));
+            TestEqual(64, BitOp::GetNonZeroBitCount(0xFFFFFFFFFFFFFFFFll));
             TestEqual(64, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFFFFFFFFF));
         }
 

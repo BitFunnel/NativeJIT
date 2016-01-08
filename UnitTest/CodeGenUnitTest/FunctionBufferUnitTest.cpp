@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#ifdef _MSC_VER
+
 #include <algorithm>
 #include <functional>
 #include <random>
@@ -616,3 +618,4 @@ namespace NativeJIT
 
 #undef TestEqualUnwindCode
 #undef ALIGNAS
+#endif
