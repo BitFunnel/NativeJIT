@@ -111,8 +111,8 @@ namespace NativeJIT
                    ? true
                    : false;
 #else
-            *lowestBitSetIndex = ffsll(value);
-            return *lowestBitSetIndex == 0;
+            *lowestBitSetIndex = ffsll(value) - 1;
+            return *lowestBitSetIndex != -1;
 #endif
         }
 
@@ -130,8 +130,8 @@ namespace NativeJIT
                    ? true
                    : false;
 #else
-            *highestBitSetIndex = flsll(value);
-            return *highestBitSetIndex == 0;
+            *highestBitSetIndex = flsll(value) - 1;
+            return *highestBitSetIndex != -1;
 #endif
         }
 
