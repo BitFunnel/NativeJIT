@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h" // Emit<OP> referenced by template definition.
-#include "NativeJIT/ExpressionTree.h"           // ExpressionTree::Storage<T> parameter.
+#include "NativeJIT/ExpressionTreeDecls.h"      // ExpressionTree::Storage<T> parameter.
 #include "Temporary/Assert.h"                   // LogThrowAssert() referenced by template definition.
 
 

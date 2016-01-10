@@ -32,6 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{
 		inc\NativeJIT\ExecutionPreconditionTest.h = inc\NativeJIT\ExecutionPreconditionTest.h
 		inc\NativeJIT\ExpressionNodeFactory.h = inc\NativeJIT\ExpressionNodeFactory.h
 		inc\NativeJIT\ExpressionTree.h = inc\NativeJIT\ExpressionTree.h
+		inc\NativeJIT\ExpressionTreeDecls.h = inc\NativeJIT\ExpressionTreeDecls.h
 		inc\NativeJIT\Function.h = inc\NativeJIT\Function.h
 		inc\NativeJIT\Model.h = inc\NativeJIT\Model.h
 		inc\NativeJIT\Packed.h = inc\NativeJIT\Packed.h

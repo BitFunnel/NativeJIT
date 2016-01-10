@@ -20,6 +20,7 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionPreconditionTest.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactory.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionTree.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionTreeDecls.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Function.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Model.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/BinaryImmediateNode.h
