@@ -100,39 +100,39 @@ namespace NativeJIT
         }
 
 
-        //TEST_CASE(BitOperations, TestAndSetBit)
-        //{
-        //    uint64_t currentValue = 0;
-        //    uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
+        TEST_CASE(BitOperations, SetBit)
+        {
+            uint64_t currentValue = 0;
+            uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
 
-        //    for (unsigned int bit = 0; bit < 64; ++bit)
-        //    {
-        //        TestEqual(false, BitOp::TestAndSetBit(&currentValue, bit));
-        //        TestEqual(true, BitOp::TestBit(currentValue, bit));
+            for (unsigned int bit = 0; bit < 64; ++bit)
+            {
+                TestEqual(false, BitOp::TestBit(currentValue, bit));
+                BitOp::SetBit(&currentValue, bit);
+                TestEqual(true, BitOp::TestBit(currentValue, bit));
 
-        //        TestEqual(true, BitOp::TestAndSetBit(&allOnes, bit));
-        //        TestEqual(true, BitOp::TestBit(allOnes, bit));
-        //    }
-        //}
-
-
-        // SetBit intentionally not tested since it's just TestAndSetBit with
-        // return value ignored.
+                TestEqual(true, BitOp::TestBit(allOnes, bit));
+                BitOp::SetBit(&allOnes, bit);
+                TestEqual(true, BitOp::TestBit(allOnes, bit));
+            }
+        }
 
 
-        //TEST_CASE(BitOperations, TestAndClearBit)
-        //{
-        //    uint64_t currentValue = 0xFFFFFFFFFFFFFFFF;
-        //    uint64_t allZeros = 0;
+        TEST_CASE(BitOperations, ClearBit)
+        {
+            uint64_t currentValue = 0xFFFFFFFFFFFFFFFF;
+            uint64_t allZeros = 0;
 
-        //    for (unsigned int bit = 0; bit < 64; ++bit)
-        //    {
-        //        TestEqual(true, BitOp::TestAndClearBit(&currentValue, bit));
-        //        TestEqual(false, BitOp::TestBit(currentValue, bit));
+            for (unsigned int bit = 0; bit < 64; ++bit)
+            {
+                TestEqual(true, BitOp::TestBit(currentValue, bit));
+                BitOp::ClearBit(&currentValue, bit);
+                TestEqual(false, BitOp::TestBit(currentValue, bit));
 
-        //        TestEqual(false, BitOp::TestAndClearBit(&allZeros, bit));
-        //        TestEqual(false, BitOp::TestBit(allZeros, bit));
-        //    }
-        //}
+                TestEqual(false, BitOp::TestBit(allZeros, bit));
+                BitOp::ClearBit(&allZeros, bit);
+                TestEqual(false, BitOp::TestBit(allZeros, bit));
+            }
+        }
     }
 }
