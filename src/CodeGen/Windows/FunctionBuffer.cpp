@@ -16,7 +16,7 @@ namespace NativeJIT
     //*************************************************************************
 
     RUNTIME_FUNCTION*
-        FunctionBufferBase::WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context)
+    FunctionBufferBase::WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context)
     {
         auto const pc = reinterpret_cast<uint8_t const *>(controlPc);
         auto const fb = reinterpret_cast<FunctionBuffer /* const */ *>(context);
@@ -101,7 +101,7 @@ namespace NativeJIT
         LogThrowAssert(m_isCodeGenerationCompleted,
                        "Cannot get unwind info offset until code generation is finalized");
 
-        return m_runtimeFunction.UnwindInfoAddress;
+        return m_runtimeFunction.UnwindData;
     }
 
 
@@ -186,7 +186,7 @@ namespace NativeJIT
         // Fill in information about the function.
         m_runtimeFunction.BeginAddress = m_prologStartOffset;
         m_runtimeFunction.EndAddress = CurrentPosition();
-        m_runtimeFunction.UnwindInfoAddress = m_unwindInfoStartOffset;
+        m_runtimeFunction.UnwindData = m_unwindInfoStartOffset;
 
         m_isCodeGenerationCompleted = true;
     }

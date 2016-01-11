@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <cstring>
+
 #include "Temporary/Allocator.h"
 #include "Temporary/Assert.h"
 

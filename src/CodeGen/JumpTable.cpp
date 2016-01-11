@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <stdexcept>
+
 #include "NativeJIT/CodeGen/JumpTable.h"
 
 

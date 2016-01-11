@@ -202,7 +202,7 @@ namespace NativeJIT
                   const ExpressionTree::Storage<DEST>& dest,
                   SRCREGTYPE src)
         {
-            typedef ExpressionTree::Storage<DEST>::DirectRegister DESTREGTYPE;
+            typedef typename ExpressionTree::Storage<DEST>::DirectRegister DESTREGTYPE;
 
             // Pick the right flavor of the helper class specialization and call it.
             const RegTypes regTypes = std::is_same<SRCREGTYPE, DESTREGTYPE>::value
@@ -243,7 +243,7 @@ namespace NativeJIT
             const ExpressionTree::Storage<DEST>& dest,
             SRCREGTYPE src)
         {
-            typedef ExpressionTree::Storage<DEST>::DirectRegister DESTREGTYPE;
+            typedef typename ExpressionTree::Storage<DEST>::DirectRegister DESTREGTYPE;
 
             switch (dest.GetStorageClass())
             {
