@@ -125,9 +125,9 @@ namespace NativeJIT
     inline void CodeBuffer::VerifyNoBufferOverflow(unsigned length)
     {
         LogThrowAssert(m_current + length - 1 < m_bufferEnd,
-                       "CodeBuffer overflow, wanted %u bytes, only %Iu out of %u bytes available",
+                       "CodeBuffer overflow, wanted %u bytes, only %u out of %u bytes available",
                        length,
-                       m_bufferEnd - m_current,
+                       static_cast<unsigned>(m_bufferEnd - m_current),
                        m_capacity);
     }
 

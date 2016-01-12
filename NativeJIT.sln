@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9BCB4D7F-294F-4C65-BF26-A492FC595B33}"
 	ProjectSection(SolutionItems) = preProject
@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{
 		inc\NativeJIT\CodeGenHelpers.h = inc\NativeJIT\CodeGenHelpers.h
 		inc\NativeJIT\ExecutionPreconditionTest.h = inc\NativeJIT\ExecutionPreconditionTest.h
 		inc\NativeJIT\ExpressionNodeFactory.h = inc\NativeJIT\ExpressionNodeFactory.h
+		inc\NativeJIT\ExpressionNodeFactoryDecls.h = inc\NativeJIT\ExpressionNodeFactoryDecls.h
 		inc\NativeJIT\ExpressionTree.h = inc\NativeJIT\ExpressionTree.h
 		inc\NativeJIT\ExpressionTreeDecls.h = inc\NativeJIT\ExpressionTreeDecls.h
 		inc\NativeJIT\Function.h = inc\NativeJIT\Function.h
@@ -75,6 +76,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nodes", "Nodes", "{80F7B398
 		inc\NativeJIT\Nodes\ConditionalNode.h = inc\NativeJIT\Nodes\ConditionalNode.h
 		inc\NativeJIT\Nodes\FieldPointerNode.h = inc\NativeJIT\Nodes\FieldPointerNode.h
 		inc\NativeJIT\Nodes\ImmediateNode.h = inc\NativeJIT\Nodes\ImmediateNode.h
+		inc\NativeJIT\Nodes\ImmediateNodeDecls.h = inc\NativeJIT\Nodes\ImmediateNodeDecls.h
 		inc\NativeJIT\Nodes\IndirectNode.h = inc\NativeJIT\Nodes\IndirectNode.h
 		inc\NativeJIT\Nodes\Node.h = inc\NativeJIT\Nodes\Node.h
 		inc\NativeJIT\Nodes\PackedMinMaxNode.h = inc\NativeJIT\Nodes\PackedMinMaxNode.h

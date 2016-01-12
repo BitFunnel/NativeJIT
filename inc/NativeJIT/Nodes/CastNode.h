@@ -107,15 +107,15 @@ namespace NativeJIT
             // conversion instruction.
             static const bool c_isOneStepIntToFloatCast
                 = c_castType == Cast::IntToFloat
-                  && (std::is_same<std::remove_cv<FROM>::type, int32_t>::value
-                      || std::is_same<std::remove_cv<FROM>::type, int64_t>::value);
+                  && (std::is_same<typename std::remove_cv<FROM>::type, int32_t>::value
+                      || std::is_same<typename std::remove_cv<FROM>::type, int64_t>::value);
 
             // Check whether a float to int cast can be done using a single x64
             // conversion instruction.
             static const bool c_isOneStepFloatToIntCast
                 = c_castType == Cast::FloatToInt
-                  && (std::is_same<std::remove_cv<TO>::type, int32_t>::value
-                      || std::is_same<std::remove_cv<TO>::type, int64_t>::value);
+                  && (std::is_same<typename std::remove_cv<TO>::type, int32_t>::value
+                      || std::is_same<typename std::remove_cv<TO>::type, int64_t>::value);
 
         public:
             static const bool c_isOneStepCast
@@ -125,28 +125,6 @@ namespace NativeJIT
                   || c_isOneStepIntToFloatCast
                   || c_isOneStepFloatToIntCast;
         };
-
-
-        // Cast using a static_cast for convertible immediates.
-        template <typename TO, typename FROM>
-        TO ForcedCast(FROM from,
-                      typename std::enable_if<std::is_convertible<FROM, TO>::value>::type* = nullptr)
-        {
-            return static_cast<TO>(from);
-        }
-
-
-        // Cast using a reinterpret_cast for non-convertible immediates of the
-        // same size.
-        template <typename TO, typename FROM>
-        TO ForcedCast(FROM from,
-                      typename std::enable_if<!std::is_convertible<FROM, TO>::value>::type* = nullptr)
-        {
-            static_assert(sizeof(FROM) == sizeof(TO),
-                          "Cannot do a forced cast between incompatible types of different sizes");
-
-            return *reinterpret_cast<TO*>(&from);
-        }
 
 
         // A class used to specialize code generation for casts that need to
@@ -240,7 +218,7 @@ namespace NativeJIT
 
     template <typename TO, typename FROM>
     CastNode<TO, FROM, true>::CastNode(ExpressionTree& tree, Node<FROM>& from)
-        : Node(tree),
+        : Node<TO>(tree),
           m_from(from)
     {
         m_from.IncrementParentCount();
@@ -248,14 +226,14 @@ namespace NativeJIT
 
 
     template <typename TO, typename FROM>
-    typename Storage<TO>
+    Storage<TO>
     CastNode<TO, FROM, true>::CodeGenValue(ExpressionTree& tree)
     {
         auto source = m_from.CodeGen(tree);
 
         return Casting
-            ::OneStepCastGenerator<Traits::c_castType>
-            ::Generate<TO, FROM>(tree, source);
+            ::template OneStepCastGenerator<Traits::c_castType>
+            ::template Generate<TO, FROM>(tree, source);
     }
 
 
@@ -263,16 +241,16 @@ namespace NativeJIT
     unsigned CastNode<TO, FROM, true>::LabelSubtree(bool /* isLeftChild */)
     {
         // Need at least one register for storing the result.
-        SetRegisterCount((std::max)(m_from.LabelSubtree(true), 1u));
+        this->SetRegisterCount((std::max)(m_from.LabelSubtree(true), 1u));
 
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
     template <typename TO, typename FROM>
     void CastNode<TO, FROM, true>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "CastNode (one-step)");
+        this->PrintCoreProperties(out, "CastNode (one-step)");
         out << ", from = " << m_from.GetId();
     }
 
@@ -285,16 +263,17 @@ namespace NativeJIT
 
     template <typename TO, typename FROM>
     CastNode<TO, FROM, false>::CastNode(ExpressionNodeFactory& tree, Node<FROM>& from)
-        : Node(tree),
-          m_conversionNode(Casting::CompositeCastNodeBuilder<Casting::Traits<TO, FROM>::c_castType>
-                            ::Build<TO, FROM>(tree, from))
+        : Node<TO>(tree),
+          m_conversionNode(Casting
+                           ::CompositeCastNodeBuilder<Casting::Traits<TO, FROM>::c_castType>
+                           ::template Build<TO, FROM>(tree, from))
     {
         m_conversionNode.IncrementParentCount();
     }
 
 
     template <typename TO, typename FROM>
-    typename Storage<TO>
+    Storage<TO>
     CastNode<TO, FROM, false>::CodeGenValue(ExpressionTree& tree)
     {
         return m_conversionNode.CodeGen(tree);
@@ -304,16 +283,16 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     unsigned CastNode<TO, FROM, false>::LabelSubtree(bool isLeftChild)
     {
-        SetRegisterCount(m_conversionNode.LabelSubtree(isLeftChild));
+        this->SetRegisterCount(m_conversionNode.LabelSubtree(isLeftChild));
 
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
     template <typename TO, typename FROM>
     void CastNode<TO, FROM, false>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "CastNode (composite)");
+        this->PrintCoreProperties(out, "CastNode (composite)");
 
         out << ", conversionNode = " << m_conversionNode.GetId();
     }
@@ -381,8 +360,8 @@ namespace NativeJIT
             case StorageClass::Immediate:
                 result = Casting
                     ::FromImmediate<ImmediateCategoryOf<FROM>::value>
-                    ::CastGenerator<Cast::IntToInt, ImmediateCategoryOf<TO>::value>
-                    ::Generate<TO, FROM>(tree, source);
+                    ::template CastGenerator<Cast::IntToInt, ImmediateCategoryOf<TO>::value>
+                    ::template Generate<TO, FROM>(tree, source);
                 break;
 
             case StorageClass::Indirect:
@@ -394,7 +373,7 @@ namespace NativeJIT
                 result = tree.Direct<TO>();
 
                 // Target the full register to prevent a partial register stall.
-                ToStorage::FullRegister targetRegister(result.GetDirectRegister());
+                typename ToStorage::FullRegister targetRegister(result.GetDirectRegister());
                 Emitter<RegTypes::Different, ImmediateType::NotAllowed>
                     ::Emit<opCode>(tree.GetCodeGenerator(),
                                    targetRegister,
@@ -410,7 +389,7 @@ namespace NativeJIT
 
                 // Always target the full register to prevent a partial register stall.
                 auto sourceRegister = source.GetDirectRegister();
-                ToStorage::FullRegister fullSourceRegister(sourceRegister);
+                typename ToStorage::FullRegister fullSourceRegister(sourceRegister);
 
                 code.Emit<opCode>(fullSourceRegister, sourceRegister);
                 break;
@@ -439,8 +418,8 @@ namespace NativeJIT
             {
                 result = Casting
                     ::FromImmediate<ImmediateCategoryOf<FROM>::value>
-                    ::CastGenerator<Cast::IntToFloat, ImmediateCategoryOf<TO>::value>
-                    ::Generate<TO, FROM>(tree, source);
+                    ::template CastGenerator<Cast::IntToFloat, ImmediateCategoryOf<TO>::value>
+                    ::template Generate<TO, FROM>(tree, source);
             }
             else
             {
@@ -521,7 +500,7 @@ namespace NativeJIT
             Storage<TO> result = tree.Direct<TO>();
 
             // After the compiler performs the cast, move the value to a direct register.
-            auto targetImmediate = Casting::ForcedCast<TO, FROM>(source.GetImmediate());
+            auto targetImmediate = ForcedCast<TO, FROM>(source.GetImmediate());
             tree.GetCodeGenerator().EmitImmediate<OpCode::Mov>(result.GetDirectRegister(),
                                                                targetImmediate);
 

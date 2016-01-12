@@ -163,9 +163,9 @@ namespace NativeJIT
     void ExpressionTree::AddParameter(NodeBase& parameter, unsigned position)
     {
         LogThrowAssert(position == m_parameters.size(),
-                       "Parameters must be added in order. Previously added %Iu parameters, "
+                       "Parameters must be added in order. Previously added %u parameters, "
                        "adding parameter with index %u",
-                       m_parameters.size(),
+                       static_cast<unsigned>(m_parameters.size()),
                        position);
         m_parameters.push_back(&parameter);
     }

@@ -44,7 +44,7 @@ namespace NativeJIT
     template <OpCode OP, typename L, typename R>
     BinaryImmediateNode<OP, L, R>::BinaryImmediateNode(
         ExpressionTree& tree, Node<L>& left, R right)
-        : Node(tree),
+        : Node<L>(tree),
           m_left(left),
           m_right(right)
     {
@@ -54,7 +54,7 @@ namespace NativeJIT
 
 
     template <OpCode OP, typename L, typename R>
-    typename Storage<L> BinaryImmediateNode<OP, L, R>::CodeGenValue(ExpressionTree& tree)
+    Storage<L> BinaryImmediateNode<OP, L, R>::CodeGenValue(ExpressionTree& tree)
     {
         auto & code = tree.GetCodeGenerator();
 
@@ -78,7 +78,7 @@ namespace NativeJIT
         const std::string name = std::string("Operation (")
             + X64CodeGenerator::OpCodeName(OP)
             + ") ";
-        PrintCoreProperties(out, name.c_str());
+        this->PrintCoreProperties(out, name.c_str());
 
         out << ", left = " << m_left.GetId()
             << ", right = " << m_right;

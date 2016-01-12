@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include <Windows.h>
 #else
 #include <sys/mman.h>
@@ -28,7 +28,7 @@ namespace NativeJIT
 
 
     // http://stackoverflow.com/questions/570257/jit-compilation-and-dep
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
     ExecutionBuffer::ExecutionBuffer(size_t bufferSize)
         : m_buffer(nullptr),
           m_bytesAllocated(0)
@@ -82,7 +82,7 @@ namespace NativeJIT
 #endif
 
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
     ExecutionBuffer::~ExecutionBuffer()
     {
         if (m_buffer != nullptr)

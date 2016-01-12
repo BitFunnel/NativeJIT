@@ -32,8 +32,8 @@ namespace NativeJIT
                 auto & test = expression.GreaterThan(expression.GetP1(), expression.GetP2());
                 auto greaterThan = expression.Compile(test);
 
-                TestEqual(false, greaterThan(3, 4));
-                TestEqual(true, greaterThan(4, 3));
+                TestAssert(!greaterThan(3, 4));
+                TestAssert(greaterThan(4, 3));
             }
         }
 

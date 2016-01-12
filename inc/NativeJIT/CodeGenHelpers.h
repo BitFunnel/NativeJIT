@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "NativeJIT/CodeGen/X64CodeGenerator.h" // Emit<OP> referenced by template definition.
+#include "NativeJIT/CodeGen/FunctionBuffer.h"   // Emit<OP> referenced by template definition.
 #include "NativeJIT/ExpressionTreeDecls.h"      // ExpressionTree::Storage<T> parameter.
 #include "Temporary/Assert.h"                   // LogThrowAssert() referenced by template definition.
 
@@ -59,7 +59,7 @@ namespace NativeJIT
                                                 ? ImmediateType::Allowed
                                                 : ImmediateType::NotAllowed;
 
-            Emitter<regTypes, immediateType>::Emit<OP>(code, dest, src);
+            Emitter<regTypes, immediateType>::template Emit<OP>(code, dest, src);
         }
 
 
@@ -209,7 +209,7 @@ namespace NativeJIT
                                       ? RegTypes::ExactlySame
                                       : RegTypes::Different;
 
-            Emitter<regTypes, ImmediateType::NotAllowed>::Emit<OP>(code, dest, src);
+            Emitter<regTypes, ImmediateType::NotAllowed>::template Emit<OP>(code, dest, src);
         }
 
 

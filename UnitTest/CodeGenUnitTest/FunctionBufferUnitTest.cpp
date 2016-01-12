@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 
 #include <algorithm>
 #include <functional>
@@ -15,7 +15,11 @@
 #include "Windows/UnwindCode.h"
 
 // TODO: Use alignas with VC14.
+#ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))
+#else
+#define ALIGNAS(x) alignas(x)
+#endif
 
 // Using a macro to keep original source line information in failure text.
 // Comparing m_frameOffset as it's a single variable which includes all of
@@ -99,16 +103,16 @@ namespace NativeJIT
             }
 
 
-            // This structure must be 128-bit aligned to be able to use its
+            // Important: ihis structure must be 128-bit aligned to be able to use its
             // m_xmm members as targets for movaps.
-            typedef ALIGNAS(16) struct
+            struct RegInfo
             {
                 // Need to save all 128 bits.
                 ALIGNAS(16) uint64_t m_xmm[2 * (RegisterBase::c_maxFloatRegisterID + 1)];
 
                 // 64 bits for RXX registers.
                 uint64_t m_rxx[RegisterBase::c_maxIntegerRegisterID + 1];
-            } RegInfo;
+            };
 
 
             // Emits the code to save all nonvolatiles into the regInfo structure
@@ -520,7 +524,7 @@ namespace NativeJIT
 
             code.EndFunctionBodyGeneration(spec);
 
-            auto func = reinterpret_cast<void (*)()>(code.GetEntryPoint());
+            auto func = reinterpret_cast<void (*)()>(const_cast<void*>(code.GetEntryPoint()));
             bool exceptionCaught = false;
 
             try
@@ -547,8 +551,8 @@ namespace NativeJIT
 
         TEST_CASE_F(FunctionBufferTest, RegisterPreservation)
         {
-            RegInfo before;
-            RegInfo after;
+            ALIGNAS(16) RegInfo before;
+            ALIGNAS(16) RegInfo after;
 
             // Make sure that the test fails if these don't get filled in.
             memset(&before, 1, sizeof(before));
@@ -576,7 +580,7 @@ namespace NativeJIT
             ASSERT_NO_FATAL_FAILURE(FillAllWritableRegistersWithGarbage(code));
             code.EndFunctionBodyGeneration(spec);
 
-            auto mainFunc = reinterpret_cast<void (*)()>(code.GetEntryPoint());
+            auto mainFunc = reinterpret_cast<void (*)()>(const_cast<void*>(code.GetEntryPoint()));
 
             // Note: there's an assumption that no nonvolatiles will be
             // modified after saveBeforeFunc() completes and before mainFunc()

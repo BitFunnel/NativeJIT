@@ -35,7 +35,7 @@ namespace NativeJIT
 
     template <typename T>
     StackVariableNode<T>::StackVariableNode(ExpressionTree& tree)
-        : Node(tree)
+        : Node<T&>(tree)
     {
     }
 
@@ -43,7 +43,7 @@ namespace NativeJIT
     template <typename T>
     void StackVariableNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "StackVariableNode");
+        this->PrintCoreProperties(out, "StackVariableNode");
 
         if (!m_stackStorage.IsNull())
         {

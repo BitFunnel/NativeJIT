@@ -8,7 +8,8 @@
 //
 // Implementation includes
 //
-#include <iostream>             // For debugging output.
+#include <algorithm>    // For std::find.
+#include <iostream>     // Debugging output.
 
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGenHelpers.h"
@@ -56,7 +57,7 @@ namespace NativeJIT
     template <typename T>
     typename Storage<T>::DirectRegister ExpressionTree::GetResultRegister()
     {
-        return Storage<T>::DirectRegister(0);
+        return typename Storage<T>::DirectRegister(0);
     }
 
 
@@ -81,7 +82,7 @@ namespace NativeJIT
         else
         {
             const unsigned id = freeList.GetAllocatedSpillable();
-            direct = Direct<T>(Storage<T>::DirectRegister(id));
+            direct = Direct<T>(typename Storage<T>::DirectRegister(id));
         }
 
         return direct;
@@ -449,7 +450,7 @@ namespace NativeJIT
             && !tree.IsAnySharedBaseRegister(base))
         {
             // Get the address and convert the storage to indirect.
-            code.Emit<OpCode::Lea>(base, base, offset);
+            code.template Emit<OpCode::Lea>(base, base, offset);
 
             indirect.m_data->ConvertIndirectToDirect();
             target.SetData(indirect.m_data);
@@ -460,7 +461,7 @@ namespace NativeJIT
             // by the target register allocation.
             ReferenceCounter basePin = indirect.GetPin();
             target = tree.template Direct<T>();
-            code.Emit<OpCode::Lea>(target.GetDirectRegister(), base, offset);
+            code.template Emit<OpCode::Lea>(target.GetDirectRegister(), base, offset);
         }
 
         // Take away ownership from the indirect storage.
@@ -1049,6 +1050,8 @@ namespace NativeJIT
     unsigned ExpressionTree::FreeList<SIZE>::GetAllocatedSpillable() const
     {
         unsigned pinnedCount = 0;
+        bool found = false;
+        unsigned foundId = 0;
 
         // Start looking from the oldest allocated register. This is expected
         // to give best results as recently allocated registers are more likely
@@ -1061,17 +1064,21 @@ namespace NativeJIT
             }
             else
             {
-                return id;
+                found = true;
+                foundId = id;
+                break;
             }
-
         }
 
-        throw std::runtime_error("Couldn't find any registers for spilling: "
-                                 + std::to_string(m_allocatedRegisters.size())
-                                 + " registers allocated, "
-                                 + std::to_string(pinnedCount)
-                                 + " of those are pinned");
+        LogThrowAssert(found,
+                       "Couldn't find any registers for spilling: %u registers "
+                       "allocated, %u of those are pinned",
+                       static_cast<unsigned>(m_allocatedRegisters.size()),
+                       pinnedCount);
+
+        return foundId;
     }
+
 
     template <unsigned SIZE>
     ReferenceCounter

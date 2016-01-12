@@ -2,138 +2,89 @@
 
 #include <type_traits>
 
-#include "NativeJIT/Nodes/Node.h"
+#include "NativeJIT/CodeGen/ValuePredicates.h"
+#include "NativeJIT/Nodes/ImmediateNodeDecls.h"
 
 
 namespace NativeJIT
 {
-    template <typename T, ImmediateCategory IMMCATEGORY = ImmediateCategoryOf<T>::value>
-    class ImmediateNode;
-
-
     //*************************************************************************
     //
     // Template specializations for ImmediateNode for InlineImmediate types.
     //
     //*************************************************************************
     template <typename T>
-    class ImmediateNode<T, ImmediateCategory::InlineImmediate> : public Node<T>
+    ImmediateNode<T, ImmediateCategory::InlineImmediate>::ImmediateNode(ExpressionTree& tree, T value)
+        : Node<T>(tree),
+          m_value(value)
     {
-    public:
-        ImmediateNode(ExpressionTree& tree, T value)
-            : Node(tree),
-              m_value(value)
-        {
-        }
+    }
 
 
-        //
-        // Overrides of Node methods
-        //
-        virtual void Print(std::ostream& out) const override
-        {
-            PrintCoreProperties(out, "ImmediateNode");
+    template <typename T>
+    void ImmediateNode<T, ImmediateCategory::InlineImmediate>::Print(std::ostream& out) const
+    {
+        this->PrintCoreProperties(out, "ImmediateNode");
 
-            out << ", value = " << m_value;
-        }
+        out << ", value = " << m_value;
+    }
 
 
-        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override
-        {
-            return tree.Immediate(m_value);
-        }
-
-    private:
-        // WARNING: This class is designed to be allocated by an arena allocator,
-        // so its destructor will never be called. Therefore, it should hold no
-        // resources other than memory from the arena allocator.
-        ~ImmediateNode();
-
-        T m_value;
-    };
-}
+    template <typename T>
+    Storage<T>
+    ImmediateNode<T, ImmediateCategory::InlineImmediate>::CodeGenValue(ExpressionTree& tree)
+    {
+        return tree.Immediate(m_value);
+    }
 
 
-// Note: including CastNode.h in the section where template declarations are
-// specified since only the implementation uses CastNode. Doing otherwise would
-// create circular dependency for some headers.
-// This is analog to including CastNode.h in ImmediateNode.cpp if ImmediateNode
-// was a regular class rather than a template.
-#include "NativeJIT/Nodes/CastNode.h"
-
-namespace NativeJIT
-{
     //*************************************************************************
     //
     // Template specializations for ImmediateNode for RIPRelativeImmediate types.
     //
     //*************************************************************************
 
-    class RIPRelativeImmediate
+    template <typename T>
+    ImmediateNode<T, ImmediateCategory::RIPRelativeImmediate>::ImmediateNode(ExpressionTree& tree, T value)
+        : Node<T>(tree),
+          m_value(value)
     {
-    public:
-        virtual void EmitStaticData(ExpressionTree& tree) = 0;
-    };
+        tree.AddRIPRelative(*this);
+
+        // m_offset will be initialized with the correct value during pass0
+        // of compilation in the call to EmitStaticData().
+        m_offset = 0;
+    }
 
 
     template <typename T>
-    class ImmediateNode<T, ImmediateCategory::RIPRelativeImmediate>
-        : public Node<T>,
-          public RIPRelativeImmediate
+    void ImmediateNode<T, ImmediateCategory::RIPRelativeImmediate>::Print(std::ostream& out) const
     {
-    public:
-        ImmediateNode(ExpressionTree& tree, T value)
-            : Node<T>(tree),
-              m_value(value)
-        {
-            tree.AddRIPRelative(*this);
+        this->PrintCoreProperties(out, "ImmediateNode (RIP-indirect)");
 
-            // m_offset will be initialized with the correct value during pass0
-            // of compilation in the call to EmitStaticData().
-            m_offset = 0;
-        }
+        out << ", value = " << m_value;
+    }
 
 
-        //
-        // Overrides of Node methods
-        //
-        virtual void Print(std::ostream& out) const override
-        {
-            PrintCoreProperties(out, "ImmediateNode (RIP-indirect)");
-
-            out << ", value = " << m_value;
-        }
+    template <typename T>
+    Storage<T>
+    ImmediateNode<T, ImmediateCategory::RIPRelativeImmediate>::CodeGenValue(ExpressionTree& tree)
+    {
+        return tree.RIPRelative<T>(m_offset);
+    }
 
 
-        virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override
-        {
-            return tree.RIPRelative<T>(m_offset);
-        }
+    template <typename T>
+    void ImmediateNode<T, ImmediateCategory::RIPRelativeImmediate>::EmitStaticData(ExpressionTree& tree)
+    {
+        auto & code = tree.GetCodeGenerator();
+        code.AdvanceToAlignment<T>();
+        m_offset = code.CurrentPosition();
 
-
-        //
-        // Overrides of RIPRelativeImmediate methods
-        //
-        virtual void EmitStaticData(ExpressionTree& tree) override
-        {
-            auto & code = tree.GetCodeGenerator();
-            code.AdvanceToAlignment<T>();
-            m_offset = code.CurrentPosition();
-
-            // Emit the value using a canonical type since the EmitValueBytes
-            // method intentionally has a limited number of input types. Basic
-            // types will be unchanged, but f. ex. function pointers will be
-            // emitted as uint64_t.
-            code.EmitBytes(Casting::ForcedCast<typename CanonicalRegisterStorageType<T>::Type>(m_value));
-        }
-
-    private:
-        // WARNING: This class is designed to be allocated by an arena allocator,
-        // so its destructor will never be called. Therefore, it should hold no
-        // resources other than memory from the arena allocator.
-        ~ImmediateNode();
-
-        T m_value;
-        int32_t m_offset;
-    };
+        // Emit the value using a canonical type since the EmitValueBytes
+        // method intentionally has a limited number of input types. Basic
+        // types will be unchanged, but f. ex. function pointers will be
+        // emitted as uint64_t.
+        code.EmitBytes(ForcedCast<typename CanonicalRegisterStorageType<T>::Type>(m_value));
+    }
 }

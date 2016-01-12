@@ -125,4 +125,17 @@ namespace NativeJIT
             typename RegisterStorage<T>::RegisterType
         >::Type Type;
     };
+
+
+    // Specifies whether a type is a valid parameter/return type for a NativeJIT function.
+    template <typename T>
+    struct IsValidParameter
+    {
+        static const bool c_value
+            = std::is_arithmetic<T>::value
+              || std::is_pointer<T>::value
+              || std::is_reference<T>::value
+              || (std::is_pod<T>::value
+                  && sizeof(T) <= RegisterBase::c_maxSize);
+    };
 }

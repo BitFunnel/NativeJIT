@@ -5,6 +5,7 @@
 #include "NativeJIT/AllocatorVector.h" // Embedded member.
 #include "NativeJIT/CodeGenHelpers.h"
 #include "NativeJIT/Nodes/Node.h"      // Base class.
+#include "NativeJIT/TypePredicates.h"
 
 // https://software.intel.com/en-us/articles/introduction-to-x64-assembly
 
@@ -29,12 +30,15 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         void RecordCallRegister(Register<SIZE, ISFLOAT> r, bool isSoleOwner);
 
-    private:
+    protected:
         // WARNING: This class is designed to be allocated by an arena allocator,
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
-        ~SaveRestoreVolatilesHelper();
+        // Would like to make this private and without method body, but it's
+        // called implicitly by child class destructors if they throw.
+        ~SaveRestoreVolatilesHelper() {}
 
+    private:
         // Returns the mask for the registers it's necessary to preserve accross
         // the function call that's being made.
         template <bool ISFLOAT>
@@ -64,6 +68,15 @@ namespace NativeJIT
         virtual void Print(std::ostream& out) const override;
 
     protected:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        // Would like to make this private and without method body, but it's
+        // called implicitly by child class destructors if they throw.
+        ~CallNodeBase() {}
+
+    protected:
+
         class Child : private NonCopyable
         {
         public:
@@ -87,7 +100,7 @@ namespace NativeJIT
             virtual void Release() = 0;
 
             // Prints the contents of the child to standard output for debugging.
-            virtual void Print(std::ostream& out) = 0;
+            virtual void Print(std::ostream& out) const = 0;
         };
 
 
@@ -128,7 +141,7 @@ namespace NativeJIT
             virtual void Evaluate(ExpressionTree& tree) override;
             virtual void EmitStaging(ExpressionTree& tree,
                                      SaveRestoreVolatilesHelper& volatiles) override;
-            virtual void Print(std::ostream& out) override;
+            virtual void Print(std::ostream& out) const override;
 
         private:
             typename ExpressionTree::Storage<T>::DirectRegister m_destination;
@@ -160,7 +173,7 @@ namespace NativeJIT
             // Overrides of FunctionChildBase methods.
             //
             virtual void EmitCall(ExpressionTree& tree) override;
-            virtual void Print(std::ostream& out) override;
+            virtual void Print(std::ostream& out) const override;
 
         private:
             typename Storage<R>::DirectRegister m_resultRegister;
@@ -173,12 +186,6 @@ namespace NativeJIT
         // Pointer to function's two base classes.
         FunctionChildBase* m_functionBase;
         Child* m_functionChild;
-
-    private:
-        // WARNING: This class is designed to be allocated by an arena allocator,
-        // so its destructor will never be called. Therefore, it should hold no
-        // resources other than memory from the arena allocator.
-        ~CallNodeBase();
     };
 
 
@@ -201,7 +208,7 @@ namespace NativeJIT
         // resources other than memory from the arena allocator.
         ~CallNode();
 
-        FunctionChild<FunctionPointer> m_f;
+        typename CallNodeBase<R, 0>::template FunctionChild<FunctionPointer> m_f;
     };
 
 
@@ -221,8 +228,8 @@ namespace NativeJIT
         // resources other than memory from the arena allocator.
         ~CallNode();
 
-        FunctionChild<FunctionPointer> m_f;
-        ParameterChild<P1> m_p1;
+        typename CallNodeBase<R, 1>::template FunctionChild<FunctionPointer> m_f;
+        typename CallNodeBase<R, 1>::template ParameterChild<P1> m_p1;
     };
 
 
@@ -243,9 +250,9 @@ namespace NativeJIT
         // resources other than memory from the arena allocator.
         ~CallNode();
 
-        FunctionChild<FunctionPointer> m_f;
-        ParameterChild<P1> m_p1;
-        ParameterChild<P2> m_p2;
+        typename CallNodeBase<R, 2>::template FunctionChild<FunctionPointer> m_f;
+        typename CallNodeBase<R, 2>::template ParameterChild<P1> m_p1;
+        typename CallNodeBase<R, 2>::template ParameterChild<P2> m_p2;
     };
 
 
@@ -267,10 +274,10 @@ namespace NativeJIT
         // resources other than memory from the arena allocator.
         ~CallNode();
 
-        FunctionChild<FunctionPointer> m_f;
-        ParameterChild<P1> m_p1;
-        ParameterChild<P2> m_p2;
-        ParameterChild<P3> m_p3;
+        typename CallNodeBase<R, 3>::template FunctionChild<FunctionPointer> m_f;
+        typename CallNodeBase<R, 3>::template ParameterChild<P1> m_p1;
+        typename CallNodeBase<R, 3>::template ParameterChild<P2> m_p2;
+        typename CallNodeBase<R, 3>::template ParameterChild<P3> m_p3;
     };
 
 
@@ -293,11 +300,11 @@ namespace NativeJIT
         // resources other than memory from the arena allocator.
         ~CallNode();
 
-        FunctionChild<FunctionPointer> m_f;
-        ParameterChild<P1> m_p1;
-        ParameterChild<P2> m_p2;
-        ParameterChild<P3> m_p3;
-        ParameterChild<P4> m_p4;
+        typename CallNodeBase<R, 4>::template FunctionChild<FunctionPointer> m_f;
+        typename CallNodeBase<R, 4>::template ParameterChild<P1> m_p1;
+        typename CallNodeBase<R, 4>::template ParameterChild<P2> m_p2;
+        typename CallNodeBase<R, 4>::template ParameterChild<P3> m_p3;
+        typename CallNodeBase<R, 4>::template ParameterChild<P4> m_p4;
     };
 
 
@@ -324,10 +331,10 @@ namespace NativeJIT
     //*************************************************************************
     template <typename R, unsigned PARAMETERCOUNT>
     CallNodeBase<R, PARAMETERCOUNT>::CallNodeBase(ExpressionTree& tree)
-        : Node(tree),
+        : Node<R>(tree),
           SaveRestoreVolatilesHelper(tree.GetAllocator())
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
         tree.ReportFunctionCallNode(PARAMETERCOUNT);
     }
 
@@ -412,7 +419,7 @@ namespace NativeJIT
     template <typename R, unsigned PARAMETERCOUNT>
     void CallNodeBase<R, PARAMETERCOUNT>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "CallNode");
+        this->PrintCoreProperties(out, "CallNode");
 
         for (unsigned i = 0 ; i < c_childCount; ++i)
         {
@@ -479,7 +486,7 @@ namespace NativeJIT
     CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::FunctionChild(
         Node<F>& expression,
         typename Storage<R>::DirectRegister resultRegister)
-        : TypedChild(expression),
+        : TypedChild<F>(expression),
           m_resultRegister(resultRegister)
     {
     }
@@ -489,7 +496,7 @@ namespace NativeJIT
     template <typename F>
     void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::Evaluate(ExpressionTree& tree)
     {
-        m_storage = m_expression.CodeGen(tree);
+        this->m_storage = this->m_expression.CodeGen(tree);
     }
 
 
@@ -498,31 +505,33 @@ namespace NativeJIT
     void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::EmitStaging(ExpressionTree& /* tree */,
                                                                         SaveRestoreVolatilesHelper& volatiles)
     {
+        auto & storage = this->m_storage;
+
         // The CALL instruction requires a direct register, ensure that's the case.
         // Convert for modification to ensure that the register doesn't need
         // to be preserved accross the call.
-        if (m_storage.GetStorageClass() != StorageClass::Direct)
+        if (storage.GetStorageClass() != StorageClass::Direct)
         {
-            m_storage.ConvertToDirect(true);
+            storage.ConvertToDirect(true);
         }
 
         // If function pointer happens to be in the result register and there
         // are other owners, they must be spilled out of the register. Otherwise,
         // the attempt to restore the contents into the result register after
         // the call would overwrite the returned result.
-        if (!m_storage.IsSoleDataOwner()
-            && m_storage.GetDirectRegister().IsSameHardwareRegister(m_resultRegister))
+        if (!storage.IsSoleDataOwner()
+            && storage.GetDirectRegister().IsSameHardwareRegister(m_resultRegister))
         {
-            m_storage.TakeSoleOwnershipOfDirect();
+            storage.TakeSoleOwnershipOfDirect();
         }
 
-        volatiles.RecordCallRegister(m_storage.GetDirectRegister(),
-                                     m_storage.IsSoleDataOwner());
+        volatiles.RecordCallRegister(storage.GetDirectRegister(),
+                                     storage.IsSoleDataOwner());
 
         // Make sure that nothing takes away this register.
         // NOTE: This depends on the fact that the function pointer is staged
         // last to ensure that a fixked parameter register is not picked.
-        PinStorageRegister();
+        this->PinStorageRegister();
     }
 
 
@@ -530,15 +539,15 @@ namespace NativeJIT
     template <typename F>
     void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::EmitCall(ExpressionTree& tree)
     {
-        tree.GetCodeGenerator().Emit<OpCode::Call>(m_storage.GetDirectRegister());
+        tree.GetCodeGenerator().Emit<OpCode::Call>(this->m_storage.GetDirectRegister());
     }
 
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename F>
-    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::Print(std::ostream& out)
+    void CallNodeBase<R, PARAMETERCOUNT>::FunctionChild<F>::Print(std::ostream& out) const
     {
-        out << "function(" << m_expression.GetId() << ")";
+        out << "function(" << this->m_expression.GetId() << ")";
     }
 
 
@@ -551,7 +560,7 @@ namespace NativeJIT
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename T>
     CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::ParameterChild(Node<T>& expression, unsigned position)
-        : TypedChild(expression)
+        : TypedChild<T>(expression)
     {
         GetParameterRegister(position, m_destination);
     }
@@ -561,7 +570,7 @@ namespace NativeJIT
     template <typename T>
     void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::Evaluate(ExpressionTree& tree)
     {
-        m_storage = m_expression.CodeGen(tree);
+        this->m_storage = this->m_expression.CodeGen(tree);
     }
 
 
@@ -570,12 +579,12 @@ namespace NativeJIT
     void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::EmitStaging(ExpressionTree& tree,
                                                                          SaveRestoreVolatilesHelper& volatiles)
     {
-        if (m_storage.GetStorageClass() != StorageClass::Direct
-            || !m_storage.GetDirectRegister().IsSameHardwareRegister(m_destination))
+        if (this->m_storage.GetStorageClass() != StorageClass::Direct
+            || !this->m_storage.GetDirectRegister().IsSameHardwareRegister(m_destination))
         {
             ExpressionTree::Storage<T> regStorage = tree.Direct<T>(m_destination);
-            CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), m_destination, m_storage);
-            m_storage = regStorage;
+            CodeGenHelpers::Emit<OpCode::Mov>(tree.GetCodeGenerator(), m_destination, this->m_storage);
+            this->m_storage = regStorage;
         }
 
         // TODO: There's room for optimization if the data was already in the
@@ -585,19 +594,19 @@ namespace NativeJIT
         // not need to push it to/pop it from the stack). Currently, in such
         // case the register will always get pushed/popped by SaveRestoreVolatilesHelper.
 
-        volatiles.RecordCallRegister(m_storage.GetDirectRegister(),
-                                     m_storage.IsSoleDataOwner());
+        volatiles.RecordCallRegister(this->m_storage.GetDirectRegister(),
+                                     this->m_storage.IsSoleDataOwner());
 
         // The parameter needs to remain in the specified register.
-        PinStorageRegister();
+        this->PinStorageRegister();
     }
 
 
     template <typename R, unsigned PARAMETERCOUNT>
     template <typename T>
-    void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::Print(std::ostream& out)
+    void CallNodeBase<R, PARAMETERCOUNT>::ParameterChild<T>::Print(std::ostream& out) const
     {
-        out << "parameter(" << m_expression.GetId() << ")";
+        out << "parameter(" << this->m_expression.GetId() << ")";
     }
 
 
@@ -609,14 +618,14 @@ namespace NativeJIT
     template <typename R>
     CallNode<R>::CallNode(ExpressionTree& tree,
                           Node<FunctionPointer>& function)
-        : CallNodeBase(tree),
+        : CallNodeBase<R, 0>(tree),
           m_f(function, tree.GetResultRegister<R>())
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
 
-        m_functionBase = &m_f;
-        m_functionChild = &m_f;
-        m_children[0] = m_functionChild;
+        this->m_functionBase = &m_f;
+        this->m_functionChild = &m_f;
+        this->m_children[0] = this->m_functionChild;
     }
 
 
@@ -624,17 +633,17 @@ namespace NativeJIT
     CallNode<R, P1>::CallNode(ExpressionTree& tree,
                                   Node<FunctionPointer>& function,
                                   Node<P1>& p1)
-        : CallNodeBase(tree),
+        : CallNodeBase<R, 1>(tree),
           m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0)
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
 
-        m_functionBase = &m_f;
-        m_functionChild = &m_f;
-        m_children[0] = m_functionChild;
-        m_children[1] = &m_p1;
+        this->m_functionBase = &m_f;
+        this->m_functionChild = &m_f;
+        this->m_children[0] = this->m_functionChild;
+        this->m_children[1] = &m_p1;
     }
 
 
@@ -643,20 +652,20 @@ namespace NativeJIT
                                   Node<FunctionPointer>& function,
                                   Node<P1>& p1,
                                   Node<P2>& p2)
-        : CallNodeBase(tree),
+        : CallNodeBase<R, 2>(tree),
           m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0),
           m_p2(p2, 1)
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
-        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
+        static_assert(IsValidParameter<P2>::c_value, "P2 is an invalid type.");
 
-        m_functionBase = &m_f;
-        m_functionChild = &m_f;
-        m_children[0] = m_functionChild;
-        m_children[1] = &m_p1;
-        m_children[2] = &m_p2;
+        this->m_functionBase = &m_f;
+        this->m_functionChild = &m_f;
+        this->m_children[0] = this->m_functionChild;
+        this->m_children[1] = &m_p1;
+        this->m_children[2] = &m_p2;
     }
 
 
@@ -666,23 +675,23 @@ namespace NativeJIT
                                       Node<P1>& p1,
                                       Node<P2>& p2,
                                       Node<P3>& p3)
-        : CallNodeBase(tree),
+        : CallNodeBase<R, 3>(tree),
           m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0),
           m_p2(p2, 1),
           m_p3(p3, 2)
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
-        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
-        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
+        static_assert(IsValidParameter<P2>::c_value, "P2 is an invalid type.");
+        static_assert(IsValidParameter<P3>::c_value, "P3 is an invalid type.");
 
-        m_functionBase = &m_f;
-        m_functionChild = &m_f;
-        m_children[0] = m_functionChild;
-        m_children[1] = &m_p1;
-        m_children[2] = &m_p2;
-        m_children[3] = &m_p3;
+        this->m_functionBase = &m_f;
+        this->m_functionChild = &m_f;
+        this->m_children[0] = this->m_functionChild;
+        this->m_children[1] = &m_p1;
+        this->m_children[2] = &m_p2;
+        this->m_children[3] = &m_p3;
     }
 
 
@@ -693,25 +702,25 @@ namespace NativeJIT
                                           Node<P2>& p2,
                                           Node<P3>& p3,
                                           Node<P4>& p4)
-        : CallNodeBase(tree),
+        : CallNodeBase<R, 4>(tree),
           m_f(function, tree.GetResultRegister<R>()),
           m_p1(p1, 0),
           m_p2(p2, 1),
           m_p3(p3, 2),
           m_p4(p4, 3)
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
-        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
-        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
-        static_assert(std::is_pod<P4>::value, "P4 must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
+        static_assert(IsValidParameter<P2>::c_value, "P2 is an invalid type.");
+        static_assert(IsValidParameter<P3>::c_value, "P3 is an invalid type.");
+        static_assert(IsValidParameter<P4>::c_value, "P4 is an invalid type.");
 
-        m_functionBase = &m_f;
-        m_functionChild = &m_f;
-        m_children[0] = m_functionChild;
-        m_children[1] = &m_p1;
-        m_children[2] = &m_p2;
-        m_children[3] = &m_p3;
-        m_children[4] = &m_p4;
+        this->m_functionBase = &m_f;
+        this->m_functionChild = &m_f;
+        this->m_children[0] = this->m_functionChild;
+        this->m_children[1] = &m_p1;
+        this->m_children[2] = &m_p2;
+        this->m_children[3] = &m_p3;
+        this->m_children[4] = &m_p4;
     }
 }

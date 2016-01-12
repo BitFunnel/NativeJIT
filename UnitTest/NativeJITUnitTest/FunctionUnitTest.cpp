@@ -9,6 +9,11 @@
 #include "TestSetup.h"
 
 
+#ifndef _MSC_VER
+#define _AddressOfReturnAddress() __builtin_frame_address(0)
+#endif
+
+
 namespace NativeJIT
 {
     namespace FunctionUnitTest
@@ -109,7 +114,7 @@ namespace NativeJIT
                                         unsigned expectedCallNumber,
                                         unsigned actualCallNumber)
             {
-                &s_methodName; // Unreferenced parameter for GTest.
+                static_cast<void>(s_methodName); // Unreferenced parameter for GTest.
 
                 TestEqual(expectedCallNumber,
                           actualCallNumber,
@@ -448,13 +453,14 @@ namespace NativeJIT
             // the previous function's stack range in the call stack.
             // The previous function is the jitted function whose stack
             // variable address we are trying to verify. The size of its
-            // stack range is roughly estimated to be 64 bytes.
+            // stack range is small (64 bytes or so), but more buffer
+            // is added to account for different compilers and settings.
             // Note: it would also be possible to define the range as the
             // value between _AddressOfReturnAddress() as returned here
             // and _AddressOfReturnAddress() as returned by the caller of the
             // jitted function (that value would be passed as an argument).
             auto const bufferStart = static_cast<uint8_t const *>(addressOfReturnAddress);
-            auto const bufferLimit = bufferStart + 96;
+            auto const bufferLimit = bufferStart + 1024;
 
             auto const intPtr = reinterpret_cast<unsigned char const *>(&intRef);
             auto const floatPtr = reinterpret_cast<unsigned char const *>(&floatRef);
@@ -798,7 +804,7 @@ namespace NativeJIT
 
             // Execute the regular expression only if argument is less than
             // 7, otherwise abort and return 0.
-            auto & argLessThan7 = e.Compare<JccType::JB>(e.GetP1(), e.Immediate(7ull));
+            auto & argLessThan7 = e.Compare<JccType::JB>(e.GetP1(), e.Immediate(static_cast<uint64_t>(7)));
             e.AddExecuteOnlyIfStatement(argLessThan7, e.Immediate(0.0f));
 
             auto function = e.Compile(regularValue);

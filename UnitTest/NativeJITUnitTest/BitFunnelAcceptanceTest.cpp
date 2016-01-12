@@ -202,13 +202,13 @@ namespace NativeJIT
 
 
             // Some test constants.
-            static const TermHash c_redHash = 0x54342434;
+            static const TermHash c_redHash;
 
-            static const TermHash c_dogHash = 0x1233333333;
-            static const TermHash c_dogsHash = 0x1255555555;
+            static const TermHash c_dogHash;
+            static const TermHash c_dogsHash;
 
-            static const TermHash c_houseHash = 0x23444444444;
-            static const TermHash c_housesHash = 0x2500000001;
+            static const TermHash c_houseHash;
+            static const TermHash c_housesHash;
 
             static const float c_anyIdf1;
             static const float c_anyIdf2;
@@ -1467,6 +1467,14 @@ namespace NativeJIT
         const Acceptance::MarketData Acceptance::c_anyOtherMarketDataWithSameLanguage = {0x01234567, 0x22222222};
         const Acceptance::MarketData Acceptance::c_anyOtherFullyDifferentMarketData = {0x89ABCDEF, 0x33334444};
         const Acceptance::MarketData Acceptance::c_clickPhraseMarketData = {0xC11CC, 0xDA7ADA7A};
+
+        const uint64_t Acceptance::c_redHash = 0x54342434;
+
+        const uint64_t Acceptance::c_dogHash = 0x1233333333;
+        const uint64_t Acceptance::c_dogsHash = 0x1255555555;
+
+        const uint64_t Acceptance::c_houseHash = 0x23444444444;
+        const uint64_t Acceptance::c_housesHash = 0x2500000001;
 
         const float Acceptance::c_anyIdf1 = 0.1f;
         const float Acceptance::c_anyIdf2 = 0.23f;

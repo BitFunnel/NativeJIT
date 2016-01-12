@@ -207,9 +207,9 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x12345678);
             buffer.EmitImmediate<OpCode::Mov>(r12, 0x80000000);
-            buffer.EmitImmediate<OpCode::Mov>(rbx, 0x1234567812345678ull);
-            buffer.EmitImmediate<OpCode::Mov>(rsp, 0x1234567812345678ull);
-            buffer.EmitImmediate<OpCode::Mov>(r12, 0x1234567812345678ull);
+            buffer.EmitImmediate<OpCode::Mov>(rbx, static_cast<uint64_t>(0x1234567812345678));
+            buffer.EmitImmediate<OpCode::Mov>(rsp, static_cast<uint64_t>(0x1234567812345678));
+            buffer.EmitImmediate<OpCode::Mov>(r12, static_cast<uint64_t>(0x1234567812345678));
 
             // mov [r + offset], r with zero, byte, word, and double word offsets
             buffer.Emit<OpCode::Mov>(rax, 0, cl);

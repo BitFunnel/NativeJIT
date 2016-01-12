@@ -2,7 +2,7 @@
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include "NativeJIT/CodeGen/Windows/FunctionBuffer.h"
 #else
 #include "NativeJIT/CodeGen/POSIX/FunctionBuffer.h"

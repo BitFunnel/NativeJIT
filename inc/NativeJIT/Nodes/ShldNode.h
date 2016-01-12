@@ -40,7 +40,7 @@ namespace NativeJIT
                           Node<T>& shiftee,
                           Node<T>& filler,
                           uint8_t bitCount)
-        : Node(tree),
+        : Node<T>(tree),
           m_shiftee(shiftee),
           m_filler(filler),
           m_bitCount(bitCount)
@@ -51,16 +51,16 @@ namespace NativeJIT
 
 
     template <typename T>
-    typename Storage<T> ShldNode<T>::CodeGenValue(ExpressionTree& tree)
+    Storage<T> ShldNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         auto & code = tree.GetCodeGenerator();
 
         Storage<T> shiftee;
         Storage<T> filler;
 
-        CodeGenInPreferredOrder(tree,
-                                m_shiftee, shiftee,
-                                m_filler, filler);
+        this->CodeGenInPreferredOrder(tree,
+                                      m_shiftee, shiftee,
+                                      m_filler, filler);
 
         // Convert both arguments to direct registers. The filler value will
         // not be touched.
@@ -82,17 +82,17 @@ namespace NativeJIT
         const unsigned left = m_shiftee.LabelSubtree(true);
         const unsigned right = m_filler.LabelSubtree(false);
 
-        SetRegisterCount(ComputeRegisterCount(left, right));
+        this->SetRegisterCount(this->ComputeRegisterCount(left, right));
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
     template <typename T>
     void ShldNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "Shld");
+        this->PrintCoreProperties(out, "Shld");
 
         out << ", shiftee = " << m_shiftee.GetId()
             << ", filler = " << m_filler.GetId()

@@ -33,12 +33,15 @@ namespace NativeJIT
         // method rather than the usual CodeGen() method.
         void IncrementFlagsParentCount();
 
-    private:
+    protected:
         // WARNING: This class is designed to be allocated by an arena allocator,
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
-        ~FlagExpressionNode();
+        // Would like to make this private and without method body, but it's
+        // called implicitly by child class destructors if they throw.
+        ~FlagExpressionNode() {}
 
+    private:
         unsigned m_flagsParentCount;
     };
 
@@ -121,7 +124,7 @@ namespace NativeJIT
     //*************************************************************************
     template <JccType JCC>
     FlagExpressionNode<JCC>::FlagExpressionNode(ExpressionTree& tree)
-        : Node(tree),
+        : Node<bool>(tree),
           m_flagsParentCount(0)
     {
     }
@@ -154,7 +157,7 @@ namespace NativeJIT
                                              FlagExpressionNode<JCC>& condition,
                                              Node<T>& trueExpression,
                                              Node<T>& falseExpression)
-        : Node(tree),
+        : Node<T>(tree),
           m_condition(condition),
           m_trueExpression(trueExpression),
           m_falseExpression(falseExpression)
@@ -174,9 +177,9 @@ namespace NativeJIT
         unsigned trueExpression = m_trueExpression.LabelSubtree(true);
         unsigned falseExpression = m_falseExpression.LabelSubtree(true);
 
-        SetRegisterCount((std::max)(condition, (std::max)(trueExpression, falseExpression)));
+        this->SetRegisterCount((std::max)(condition, (std::max)(trueExpression, falseExpression)));
 
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
@@ -186,7 +189,7 @@ namespace NativeJIT
         const std::string name = std::string("Conditional(")
             + X64CodeGenerator::JccName(JCC)
             + ") ";
-        PrintCoreProperties(out, name.c_str());
+        this->PrintCoreProperties(out, name.c_str());
 
         out << ", condition = " << m_condition.GetId();
         out << ", trueExpression = " << m_trueExpression.GetId();
@@ -225,9 +228,9 @@ namespace NativeJIT
         Storage<T> trueValue;
         Storage<T> falseValue;
 
-        CodeGenInPreferredOrder(tree,
-                                m_trueExpression, trueValue,
-                                m_falseExpression, falseValue);
+        this->CodeGenInPreferredOrder(tree,
+                                      m_trueExpression, trueValue,
+                                      m_falseExpression, falseValue);
 
         // Enum that specifies whether the result storage currently holds the
         // true value, false value or neither of them.
@@ -308,7 +311,7 @@ namespace NativeJIT
     RelationalOperatorNode<T, JCC>::RelationalOperatorNode(ExpressionTree& tree,
                                                            Node<T>& left,
                                                            Node<T>& right)
-        : FlagExpressionNode(tree),
+        : FlagExpressionNode<JCC>(tree),
           m_left(left),
           m_right(right)
     {
@@ -323,10 +326,10 @@ namespace NativeJIT
         unsigned left = m_left.LabelSubtree(true);
         unsigned right = m_right.LabelSubtree(false);
 
-        SetRegisterCount(ComputeRegisterCount(left, right));
+        this->SetRegisterCount(this->ComputeRegisterCount(left, right));
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
@@ -336,7 +339,7 @@ namespace NativeJIT
         const std::string name = std::string("RelationalOperatorNode(")
             + X64CodeGenerator::JccName(JCC)
             + ") ";
-        PrintCoreProperties(out, name.c_str());
+        this->PrintCoreProperties(out, name.c_str());
 
         out << ", left = " << m_left.GetId();
         out << ", right = " << m_right.GetId();
@@ -378,9 +381,9 @@ namespace NativeJIT
         Storage<T> sLeft;
         Storage<T> sRight;
 
-        CodeGenInPreferredOrder(tree,
-                                m_left, sLeft,
-                                m_right, sRight);
+        this->CodeGenInPreferredOrder(tree,
+                                      m_left, sLeft,
+                                      m_right, sRight);
 
         CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(false), sRight);
     }

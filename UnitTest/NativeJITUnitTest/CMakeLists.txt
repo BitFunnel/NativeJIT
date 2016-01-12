@@ -17,9 +17,11 @@ set(PRIVATE_HFILES
   targetver.h
 )
 
-if (MSVC)
-  # CastUnitTest uses a lot of templates which creates a lot of sections in debug mode which requires the /bigobj flag.
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj" )
+# CastUnitTest uses a lot of templates which creates a lot of sections in debug mode which requires the /bigobj or equivalent flag.
+if(MSVC)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wa,-mbig-obj")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT ${PROJECT_SOURCE_DIR}/UnitTest/Shared)

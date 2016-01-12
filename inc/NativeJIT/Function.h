@@ -2,6 +2,7 @@
 
 #include "NativeJIT/ExecutionPreconditionTest.h"
 #include "NativeJIT/ExpressionNodeFactory.h"
+#include "NativeJIT/TypePredicates.h"
 
 
 namespace NativeJIT
@@ -134,7 +135,7 @@ namespace NativeJIT
         : ExpressionNodeFactory(allocator, code),
           m_allocator(allocator)
     {
-        static_assert(std::is_pod<R>::value, "R must be a POD type.");
+        static_assert(IsValidParameter<R>::c_value, "R is an invalid type.");
     }
 
 
@@ -157,18 +158,18 @@ namespace NativeJIT
     template <typename R, typename P1, typename P2, typename P3, typename P4>
     Function<R, P1, P2, P3, P4>::Function(Allocators::IAllocator& allocator,
                                           FunctionBuffer& code)
-        : FunctionBase(allocator, code)
+        : FunctionBase<R>(allocator, code)
     {
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
-        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
-        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
-        static_assert(std::is_pod<P4>::value, "P4 must be a POD type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
+        static_assert(IsValidParameter<P2>::c_value, "P2 is an invalid type.");
+        static_assert(IsValidParameter<P3>::c_value, "P3 is an invalid type.");
+        static_assert(IsValidParameter<P4>::c_value, "P4 is an invalid type.");
 
         unsigned position = 0;
-        m_p1 = &Parameter<P1>(position++);
-        m_p2 = &Parameter<P2>(position++);
-        m_p3 = &Parameter<P3>(position++);
-        m_p4 = &Parameter<P4>(position++);
+        m_p1 = &this->template Parameter<P1>(position++);
+        m_p2 = &this->template Parameter<P2>(position++);
+        m_p3 = &this->template Parameter<P3>(position++);
+        m_p4 = &this->template Parameter<P4>(position++);
     }
 
 
@@ -204,9 +205,9 @@ namespace NativeJIT
     typename Function<R, P1, P2, P3, P4>::FunctionType
     Function<R, P1, P2, P3, P4>::Compile(Node<R>& value)
     {
-        Return<R>(value);
+        this->template Return<R>(value);
         ExpressionTree::Compile();
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return GetEntryPoint();
     }
 
 
@@ -214,7 +215,7 @@ namespace NativeJIT
     typename Function<R, P1, P2, P3, P4>::FunctionType
     Function<R, P1, P2, P3, P4>::GetEntryPoint() const
     {
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return reinterpret_cast<FunctionType>(const_cast<void*>(this->GetUntypedEntryPoint()));
     }
 
 
@@ -226,16 +227,16 @@ namespace NativeJIT
     template <typename R, typename P1, typename P2, typename P3>
     Function<R, P1, P2, P3>::Function(Allocators::IAllocator& allocator,
                                       FunctionBuffer& code)
-        : FunctionBase(allocator, code)
+        : FunctionBase<R>(allocator, code)
     {
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
-        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
-        static_assert(std::is_pod<P3>::value, "P3 must be a POD type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
+        static_assert(IsValidParameter<P2>::c_value, "P2 is an invalid type.");
+        static_assert(IsValidParameter<P3>::c_value, "P3 is an invalid type.");
 
         unsigned position = 0;
-        m_p1 = &Parameter<P1>(position++);
-        m_p2 = &Parameter<P2>(position++);
-        m_p3 = &Parameter<P3>(position++);
+        m_p1 = &this->template Parameter<P1>(position++);
+        m_p2 = &this->template Parameter<P2>(position++);
+        m_p3 = &this->template Parameter<P3>(position++);
     }
 
 
@@ -264,9 +265,9 @@ namespace NativeJIT
     typename Function<R, P1, P2, P3>::FunctionType
     Function<R, P1, P2, P3>::Compile(Node<R>& value)
     {
-        Return<R>(value);
+        this->template Return<R>(value);
         ExpressionTree::Compile();
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return GetEntryPoint();
     }
 
 
@@ -274,7 +275,7 @@ namespace NativeJIT
     typename Function<R, P1, P2, P3>::FunctionType
     Function<R, P1, P2, P3>::GetEntryPoint() const
     {
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return reinterpret_cast<FunctionType>(const_cast<void*>(this->GetUntypedEntryPoint()));
     }
 
 
@@ -286,14 +287,14 @@ namespace NativeJIT
     template <typename R, typename P1, typename P2>
     Function<R, P1, P2>::Function(Allocators::IAllocator& allocator,
                                   FunctionBuffer& code)
-        : FunctionBase(allocator, code)
+        : FunctionBase<R>(allocator, code)
     {
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
-        static_assert(std::is_pod<P2>::value, "P2 must be a POD type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
+        static_assert(IsValidParameter<P2>::c_value, "P2 is an invalid type.");
 
         unsigned position = 0;
-        m_p1 = &Parameter<P1>(position++);
-        m_p2 = &Parameter<P2>(position++);
+        m_p1 = &this->template Parameter<P1>(position++);
+        m_p2 = &this->template Parameter<P2>(position++);
     }
 
 
@@ -315,9 +316,9 @@ namespace NativeJIT
     typename Function<R, P1, P2>::FunctionType
     Function<R, P1, P2>::Compile(Node<R>& value)
     {
-        Return<R>(value);
+        this->template Return<R>(value);
         ExpressionTree::Compile();
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return GetEntryPoint();
     }
 
 
@@ -325,7 +326,7 @@ namespace NativeJIT
     typename Function<R, P1, P2>::FunctionType
     Function<R, P1, P2>::GetEntryPoint() const
     {
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return reinterpret_cast<FunctionType>(const_cast<void*>(this->GetUntypedEntryPoint()));
     }
 
 
@@ -337,12 +338,12 @@ namespace NativeJIT
     template <typename R, typename P1>
     Function<R, P1>::Function(Allocators::IAllocator& allocator,
                               FunctionBuffer& code)
-        : FunctionBase(allocator, code)
+        : FunctionBase<R>(allocator, code)
     {
-        static_assert(std::is_pod<P1>::value, "P1 must be a POD type.");
+        static_assert(IsValidParameter<P1>::c_value, "P1 is an invalid type.");
 
         unsigned position = 0;
-        m_p1 = &Parameter<P1>(position++);
+        m_p1 = &this->template Parameter<P1>(position++);
     }
 
 
@@ -357,9 +358,9 @@ namespace NativeJIT
     typename Function<R, P1>::FunctionType
     Function<R, P1>::Compile(Node<R>& value)
     {
-        Return<R>(value);
+        this->template Return<R>(value);
         ExpressionTree::Compile();
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return GetEntryPoint();
     }
 
 
@@ -367,7 +368,7 @@ namespace NativeJIT
     typename Function<R, P1>::FunctionType
     Function<R, P1>::GetEntryPoint() const
     {
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return reinterpret_cast<FunctionType>(const_cast<void*>(this->GetUntypedEntryPoint()));
     }
 
 
@@ -379,7 +380,7 @@ namespace NativeJIT
     template <typename R>
     Function<R>::Function(Allocators::IAllocator& allocator,
                           FunctionBuffer& code)
-        : FunctionBase(allocator, code)
+        : FunctionBase<R>(allocator, code)
     {
     }
 
@@ -387,15 +388,15 @@ namespace NativeJIT
     template <typename R>
     typename Function<R>::FunctionType  Function<R>::Compile(Node<R>& value)
     {
-        Return<R>(value);
+        this->template Return<R>(value);
         ExpressionTree::Compile();
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return GetEntryPoint();
     }
 
 
     template <typename R>
     typename Function<R>::FunctionType Function<R>::GetEntryPoint() const
     {
-        return reinterpret_cast<FunctionType>(GetUntypedEntryPoint());
+        return reinterpret_cast<FunctionType>(const_cast<void*>(this->GetUntypedEntryPoint()));
     }
 }

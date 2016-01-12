@@ -4,7 +4,7 @@
 
 #include "NativeJIT/AllocatorVector.h"      // Embedded member.
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include "NativeJIT/CodeGen/Windows/FunctionSpecification.h"
 #else
 #include "NativeJIT/CodeGen/POSIX/FunctionSpecification.h"

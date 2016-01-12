@@ -72,13 +72,13 @@ namespace NativeJIT
 
     template <typename T>
     ParameterNode<T>::ParameterNode(ExpressionTree& tree, unsigned position)
-        : Node(tree),
+        : Node<T>(tree),
           m_position(position)
     {
         // Parameter nodes are always considered to be referenced (as a part of
         // the function being compiled) even when they are not referenced
         // explicitly.
-        MarkReferenced();
+        this->MarkReferenced();
         tree.AddParameter(*this, m_position);
     }
 
@@ -100,7 +100,7 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        Storage<T>::DirectRegister reg;
+        typename Storage<T>::DirectRegister reg;
         GetParameterRegister(m_position, reg);
 
         return tree.Direct<T>(reg);
@@ -110,7 +110,7 @@ namespace NativeJIT
     template <typename T>
     void ParameterNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "ParameterNode");
+        this->PrintCoreProperties(out, "ParameterNode");
 
         out << ", position = " << m_position;
     }

@@ -64,7 +64,7 @@ namespace NativeJIT
             uint16_t m_p;
             InnerClass* m_innerPointer;
             InnerClass m_innerEmbedded;
-            long long m_q;
+            int64_t m_q;
         };
 #pragma pack(pop)
 

@@ -19,6 +19,7 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGenHelpers.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionPreconditionTest.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactory.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactoryDecls.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionTree.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionTreeDecls.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Function.h
@@ -30,6 +31,7 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ConditionalNode.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/FieldPointerNode.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ImmediateNode.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ImmediateNodeDecls.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/IndirectNode.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/Node.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/PackedMinMaxNode.h

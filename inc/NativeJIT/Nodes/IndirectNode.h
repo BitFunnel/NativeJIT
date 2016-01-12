@@ -52,7 +52,7 @@ namespace NativeJIT
     //*************************************************************************
     template <typename T>
     IndirectNode<T>::IndirectNode(ExpressionTree& tree, Node<T*>& base, int32_t index)
-        : Node(tree),
+        : Node<T>(tree),
           m_base(base),
           m_index(index),
           // Note: there is constructor order dependency for these two.
@@ -91,15 +91,15 @@ namespace NativeJIT
     unsigned IndirectNode<T>::LabelSubtree(bool /*isLeftChild*/)
     {
         // TODO: Should isLeftChild be passed down?
-        SetRegisterCount(m_collapsedBase->LabelSubtree(true));
-        return GetRegisterCount();
+        this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
+        return this->GetRegisterCount();
     }
 
 
     template <typename T>
     void IndirectNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "IndirectNode");
+        this->PrintCoreProperties(out, "IndirectNode");
 
         out << ", base ID = " << m_base.GetId()
             << ", index = " << m_index;

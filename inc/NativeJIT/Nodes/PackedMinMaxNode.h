@@ -65,7 +65,7 @@ namespace NativeJIT
     PackedMinMaxNode<PACKED, ISMAX>::PackedMinMaxNode(ExpressionTree& tree,
                                                       Node<PACKED>& left,
                                                       Node<PACKED>& right)
-        : Node(tree),
+        : Node<PACKED>(tree),
           m_left(left),
           m_right(right)
     {
@@ -84,9 +84,9 @@ namespace NativeJIT
         ExpressionTree::Storage<PACKED> sLeft;
         ExpressionTree::Storage<PACKED> sRight;
 
-        CodeGenInPreferredOrder(tree,
-                                m_left, sLeft,
-                                m_right, sRight);
+        this->CodeGenInPreferredOrder(tree,
+                                      m_left, sLeft,
+                                      m_right, sRight);
 
         // Convert the left and right parameters into direct registers making
         // sure that they don't get spilled.
@@ -122,12 +122,12 @@ namespace NativeJIT
     template <bool ISMAX, typename REGTYPE, typename PACKED>
     void PackedMinMaxHelper::MinMaxEmitter<ISMAX, REGTYPE, PACKED>::Emit(
         FunctionBuffer& code,
-        typename REGTYPE left,
-        typename REGTYPE right)
+        REGTYPE left,
+        REGTYPE right)
     {
         // The order of bits in Packed<A, Packed<B>> is actually BA, so it's
         // necessary to first process the remainder of the PACKED.
-        MinMaxEmitter<ISMAX, REGTYPE, PACKED::Rest>::Emit(code, left, right);
+        MinMaxEmitter<ISMAX, REGTYPE, typename PACKED::Rest>::Emit(code, left, right);
 
         Label keepLeftDigit = code.AllocateLabel();
         Label bottomOfLoop = code.AllocateLabel();
@@ -160,8 +160,8 @@ namespace NativeJIT
     template <bool ISMAX, typename REGTYPE>
     void PackedMinMaxHelper::MinMaxEmitter<ISMAX, REGTYPE, void>::Emit(
         FunctionBuffer& /* code */,
-        typename REGTYPE /* left */,
-        typename REGTYPE /* right */)
+        REGTYPE /* left */,
+        REGTYPE /* right */)
     {
         // End of recursion, do nothing.
     }
@@ -176,7 +176,7 @@ namespace NativeJIT
         // The standard Sethi-Ullman register calculation for left and right
         // mostly works here too, with the exception that we need at least
         // two registers since we'll modify both values that were returned.
-        return (std::max)(ComputeRegisterCount(leftCount, rightCount),
+        return (std::max)(this->ComputeRegisterCount(leftCount, rightCount),
                           2u);
     }
 
@@ -184,7 +184,7 @@ namespace NativeJIT
     template <typename PACKED, bool ISMAX>
     void PackedMinMaxNode<PACKED, ISMAX>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "PackedMinMaxNode");
+        this->PrintCoreProperties(out, "PackedMinMaxNode");
 
         out << ", isMax = " << (ISMAX ? "true" : "false")
             << ", left = " << m_left.GetId()

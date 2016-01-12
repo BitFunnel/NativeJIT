@@ -99,6 +99,16 @@ namespace NativeJIT
         virtual void Print(std::ostream& out) const = 0;
         
     protected:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        // Would like to make this private and without method body, but it's
+        // called implicitly by child class destructors if they throw.
+        // Making it non-virtual because nothing should be deleting at all,
+        // let alone through base pointer.
+        /* virtual */ ~NodeBase() {}
+
+    protected:
         // Calculates the number of registers needed by a node whose left
         // and right subtree require a certain number of registers according
         // to Sethi-Ullman algorithm.
@@ -115,11 +125,6 @@ namespace NativeJIT
                                             Node<T2>& n2, Storage<T2>& s2);
 
     private:
-        // WARNING: This class is designed to be allocated by an arena allocator,
-        // so its destructor will never be called. Therefore, it should hold no
-        // resources other than memory from the arena allocator.
-        /* virtual */ ~NodeBase();
-
         unsigned m_id;
 
         // See the comments for the related accessor methods above for more information.
@@ -150,15 +155,18 @@ namespace NativeJIT
         virtual unsigned LabelSubtree(bool isLeftChild) override;
 
     protected:
+        // WARNING: This class is designed to be allocated by an arena allocator,
+        // so its destructor will never be called. Therefore, it should hold no
+        // resources other than memory from the arena allocator.
+        // Would like to make this private and without method body, but it's
+        // called implicitly by child class destructors if they throw.
+        ~Node() {}
+
+    protected:
         void SetRegisterCount(unsigned count);
         void PrintCoreProperties(std::ostream& out, char const *nodeName) const;
 
     private:
-        // WARNING: This class is designed to be allocated by an arena allocator,
-        // so its destructor will never be called. Therefore, it should hold no
-        // resources other than memory from the arena allocator.
-        ~Node();
-
         unsigned m_cacheReferenceCount;
         ExpressionTree::Storage<T> m_cache;
 

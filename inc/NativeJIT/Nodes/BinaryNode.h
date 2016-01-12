@@ -38,7 +38,7 @@ namespace NativeJIT
     BinaryNode<OP, L, R>::BinaryNode(ExpressionTree& tree,
                                      Node<L>& left,
                                      Node<R>& right)
-        : Node(tree),
+        : Node<L>(tree),
           m_left(left),
           m_right(right)
     {
@@ -53,9 +53,9 @@ namespace NativeJIT
         Storage<L> sLeft;
         Storage<R> sRight;
 
-        CodeGenInPreferredOrder(tree,
-                                m_left, sLeft,
-                                m_right, sRight);
+        this->CodeGenInPreferredOrder(tree,
+                                      m_left, sLeft,
+                                      m_right, sRight);
 
         CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
 
@@ -69,10 +69,10 @@ namespace NativeJIT
         unsigned left = m_left.LabelSubtree(true);
         unsigned right = m_right.LabelSubtree(false);
 
-        SetRegisterCount(ComputeRegisterCount(left, right));
+        this->SetRegisterCount(this->ComputeRegisterCount(left, right));
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
@@ -82,7 +82,7 @@ namespace NativeJIT
         const std::string name = std::string("Operation (")
             + X64CodeGenerator::OpCodeName(OP)
             + ") ";
-        PrintCoreProperties(out, name.c_str());
+        this->PrintCoreProperties(out, name.c_str());
 
         out << ", left = " << m_left.GetId();
         out << ", right = " << m_right.GetId();

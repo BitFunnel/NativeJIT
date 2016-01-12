@@ -2,10 +2,12 @@
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/CodeGen/ValuePredicates.h"
 #include "NativeJIT/Function.h"
 #include "NativeJIT/Nodes/CastNode.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
+
 
 namespace NativeJIT
 {
@@ -49,10 +51,10 @@ namespace NativeJIT
                 Function<TO> expression(setup->GetAllocator(), setup->GetCode());
 
                 auto & immediate = expression.Immediate(testValue);
-                auto & cast = expression.Cast<TO>(immediate);
+                auto & cast = expression.template Cast<TO>(immediate);
                 auto function = expression.Compile(cast);
 
-                auto expected = Casting::ForcedCast<TO>(testValue);
+                auto expected = ForcedCast<TO>(testValue);
                 auto observed = function();
 
                 TestEqual(expected,
@@ -70,10 +72,10 @@ namespace NativeJIT
 
                 Function<TO, FROM> expression(setup->GetAllocator(), setup->GetCode());
 
-                auto & cast = expression.Cast<TO>(expression.GetP1());
+                auto & cast = expression.template Cast<TO>(expression.GetP1());
                 auto function = expression.Compile(cast);
 
-                auto expected = Casting::ForcedCast<TO>(testValue);
+                auto expected = ForcedCast<TO>(testValue);
                 auto observed = function(testValue);
 
                 TestEqual(expected,
@@ -101,10 +103,10 @@ namespace NativeJIT
                 auto & valueField = expression.FieldPointer(expression.GetP1(),
                                                             &TestInput::m_value);
                 auto & from = expression.Deref(valueField);
-                auto & cast = expression.Cast<TO>(from);
+                auto & cast = expression.template Cast<TO>(from);
                 auto function = expression.Compile(cast);
 
-                auto expected = Casting::ForcedCast<TO>(testValue);
+                auto expected = ForcedCast<TO>(testValue);
                 auto observed = function(&input);
 
                 TestEqual(expected,
@@ -190,7 +192,7 @@ namespace NativeJIT
         TEST_CASE_F(CastTest, FuncPointer)
         {
             auto funcPtr = &DummyFunc;
-            TestCast<decltype(funcPtr), void*>(funcPtr);
+            TestCast<decltype(funcPtr), void*>(reinterpret_cast<void*>(funcPtr));
         }
 
 

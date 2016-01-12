@@ -68,7 +68,7 @@ namespace NativeJIT
             return Packed<X, Packed>::Create(fields);
         }
 
-        typename REST Pop() const
+        REST Pop() const
         {
             return REST::Create(m_fields >> W);
         }

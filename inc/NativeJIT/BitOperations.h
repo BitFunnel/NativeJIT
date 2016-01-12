@@ -1,14 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
+
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#include <intrin.h>
+#else
 #include <nmmintrin.h>
 #include <smmintrin.h>
 #include <string.h>         // For ffsll()
-#include <type_traits>
-
-#ifdef _MSC_VER
-#include <intrin.h>
-#else
 //#include <x86intrin.h> // Intrinsic instructions.
 #endif
 
@@ -18,6 +18,24 @@
 
 namespace NativeJIT
 {
+    #ifdef NATIVEJIT_PLATFORM_WINDOWS
+      #ifndef __CYGWIN__
+        typedef long BitTestType32;
+        typedef long long BitTestType64;
+        typedef unsigned long BitScanType32;
+      #else
+        typedef int BitTestType32;
+        typedef long long BitTestType64;
+        typedef unsigned int BitScanType32;
+      #endif
+      static_assert(sizeof(BitTestType32) == 4, "Invalid BitTestType32 size");
+      static_assert(sizeof(BitTestType64) == 8, "Invalid BitTestType64 size");
+      static_assert(sizeof(BitScanType32) == 4, "Invalid BitTestType size");
+    #else
+    //#include <x86intrin.h> // Intrinsic instructions.
+    #endif
+
+
     // WARNING: the methods in this file are thin wrappers around compiler
     // intrinsic methods. As such, they are meant to have no or minimal added
     // overhead which is why only compile-time checks are done, but no runtime
@@ -98,8 +116,8 @@ namespace NativeJIT
         inline
         bool GetLowestBitSet(uint64_t value, unsigned* lowestBitSetIndex)
         {
-#ifdef _MSC_VER
-            return _BitScanForward64(SameTargetSizeCast<unsigned long>(lowestBitSetIndex),
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            return _BitScanForward64(SameTargetSizeCast<BitScanType32>(lowestBitSetIndex),
                                      value)
                    ? true
                    : false;
@@ -116,8 +134,8 @@ namespace NativeJIT
         inline
         bool GetHighestBitSet(uint64_t value, unsigned* highestBitSetIndex)
         {
-#ifdef _MSC_VER
-            return _BitScanReverse64(SameTargetSizeCast<unsigned long>(highestBitSetIndex),
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            return _BitScanReverse64(SameTargetSizeCast<BitScanType32>(highestBitSetIndex),
                                      value)
                    ? true
                    : false;
@@ -133,8 +151,8 @@ namespace NativeJIT
         inline
         bool TestBit(uint64_t value, unsigned bitIndex)
         {
-#ifdef _MSC_VER
-            return _bittest64(SameTargetSizeCast<const long long>(&value),
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            return _bittest64(SameTargetSizeCast<const BitTestType64>(&value),
                               bitIndex)
                    ? true
                    : false;
@@ -152,11 +170,11 @@ namespace NativeJIT
         {
             static_assert(std::is_integral<T>::value, "Value must be integral");
 
-#ifdef _MSC_VER
-            static_assert(sizeof(T) <= sizeof(uint32_t), "Value must not be larger than 32 bits");
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            static_assert(sizeof(T) <= sizeof(BitTestType32), "Value must not be larger than 32 bits");
             const uint32_t value32 = value;
 
-            return _bittest(SameTargetSizeCast<const long>(&value32),
+            return _bittest(SameTargetSizeCast<const BitTestType32>(&value32),
                             bitIndex)
                    ? true
                    : false;

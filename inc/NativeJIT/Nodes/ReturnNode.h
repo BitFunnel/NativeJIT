@@ -37,12 +37,12 @@ namespace NativeJIT
     //*************************************************************************
     template <typename T>
     ReturnNode<T>::ReturnNode(ExpressionTree& tree,
-                              Node& child)
-        : Node(tree),
+                              Node<T>& child)
+        : Node<T>(tree),
           m_child(child)
     {
         // There's an implicit parent to the return node: the function it's used by.
-        IncrementParentCount();
+        this->IncrementParentCount();
         child.IncrementParentCount();
     }
 
@@ -50,9 +50,9 @@ namespace NativeJIT
     template <typename T>
     typename ExpressionTree::Storage<T> ReturnNode<T>::CodeGenValue(ExpressionTree& tree)
     {
-        LogThrowAssert(GetParentCount() == 1,
+        LogThrowAssert(this->GetParentCount() == 1,
                        "Unexpected parent count for the root node: %u",
-                       GetParentCount());
+                       this->GetParentCount());
 
         return m_child.CodeGen(tree);
     }
@@ -61,7 +61,7 @@ namespace NativeJIT
     template <typename T>
     void ReturnNode<T>::CompileAsRoot(ExpressionTree& tree)
     {
-        ExpressionTree::Storage<T> s = CodeGen(tree);
+        ExpressionTree::Storage<T> s = this->CodeGen(tree);
 
         auto resultRegister = tree.GetResultRegister<T>();
 
@@ -79,16 +79,16 @@ namespace NativeJIT
     {
         unsigned child = m_child.LabelSubtree(true);
 
-        SetRegisterCount(child);
+        this->SetRegisterCount(child);
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return GetRegisterCount();
+        return this->GetRegisterCount();
     }
 
 
     template <typename T>
     void ReturnNode<T>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "ReturnNode");
+        this->PrintCoreProperties(out, "ReturnNode");
     }
 }

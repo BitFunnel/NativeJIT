@@ -32,7 +32,7 @@ namespace NativeJIT
 
         static int32_t Offset(FIELD OBJECT::*field)
         {
-            return reinterpret_cast<int32_t>(&((static_cast<OBJECT*>(nullptr))->*field));
+            return static_cast<int32_t>(reinterpret_cast<uint64_t>(&((static_cast<OBJECT*>(nullptr))->*field)));
         }
 
         NodeBase& m_base;
@@ -58,7 +58,7 @@ namespace NativeJIT
     FieldPointerNode<OBJECT, FIELD>::FieldPointerNode(ExpressionTree& tree,
                                                       Node<OBJECT*>& base,
                                                       FIELD OBJECT::*field)
-        : Node(tree),
+        : Node<FIELD*>(tree),
           m_base(base),
           m_originalOffset(Offset(field)),
           // Note: there is constructor order dependency for these two.
@@ -123,15 +123,15 @@ namespace NativeJIT
     unsigned FieldPointerNode<OBJECT, FIELD>::LabelSubtree(bool /*isLeftChild*/)
     {
         // TODO: Should isLeftChild be passed down?
-        SetRegisterCount(m_collapsedBase->LabelSubtree(true));
-        return GetRegisterCount();
+        this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
+        return this->GetRegisterCount();
     }
 
 
     template <typename OBJECT, typename FIELD>
     void FieldPointerNode<OBJECT, FIELD>::Print(std::ostream& out) const
     {
-        PrintCoreProperties(out, "FieldPointerNode");
+        this->PrintCoreProperties(out, "FieldPointerNode");
 
         out << ", base ID = " << m_base.GetId()
                   << ", offset = " << m_originalOffset;
