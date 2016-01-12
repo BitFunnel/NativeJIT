@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <cmath>        // For float std::abs(float).
 #include <memory>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
@@ -676,7 +677,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             float result = function();
 
-            TestAssert(std::fabs(12.6 - result) < 0.01,
+            TestAssert(std::abs(12.6 - result) < 0.01,
                         "Result should be around 12.6, but found %.2f",
                         result);
         }

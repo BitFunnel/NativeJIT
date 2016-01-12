@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <cmath>        // For float std::abs(float).
 #include <map>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
