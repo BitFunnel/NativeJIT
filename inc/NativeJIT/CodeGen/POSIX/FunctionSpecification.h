@@ -119,7 +119,7 @@ namespace NativeJIT
 
         // Offset to add to RSP after it's modified in prolog to get the value
         // of RSP before prolog started executing.
-//        int32_t m_offsetToOriginalRsp;
+        int32_t m_offsetToOriginalRsp;
 
         Allocators::StlAllocator<uint8_t> m_stlAllocator;
         AllocatorVector<uint8_t> m_unwindInfoBuffer;

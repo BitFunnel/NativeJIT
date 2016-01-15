@@ -4,6 +4,18 @@
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h"     // Inherits from X64CodeGenerator.
 
+typedef uint32_t DWORD;
+
+typedef struct
+{
+    DWORD BeginAddress;
+    DWORD EndAddress;
+    union {
+        DWORD UnwindInfoAddress;
+        DWORD UnwindData;
+    } DUMMYUNIONNAME;
+} RUNTIME_FUNCTION;
+
 
 namespace NativeJIT
 {
@@ -56,8 +68,8 @@ namespace NativeJIT
         virtual void Reset() override;
 
     private:
-//        // Structure used to register stack unwind information with Windows.
-//        RUNTIME_FUNCTION m_runtimeFunction;
+        // Structure used to register stack unwind information with Windows.
+        RUNTIME_FUNCTION m_runtimeFunction;
 
         // Temporary values used during compilation of the function. Offsets
         // are relative to buffer start. When using BeginFunctionBodyGeneration()

@@ -21,6 +21,7 @@ set(WINDOWS_CPPFILES
 set(POSIX_CPPFILES
   POSIX/FunctionBuffer.cpp
   POSIX/FunctionSpecification.cpp
+  POSIX/UnwindCode.cpp
 )
 
 set(PRIVATE_HFILES
@@ -49,6 +50,8 @@ set(PUBLIC_HFILES
 
 set(WINDOWS_PRIVATE_HFILES
   Windows/UnwindCode.h
+  Windows/stdafx.h
+  Windows/targetver.h
 )
 
 set(WINDOWS_PUBLIC_HFILES
@@ -57,6 +60,9 @@ set(WINDOWS_PUBLIC_HFILES
 )
 
 set(POSIX_PRIVATE_HFILES
+  POSIX/UnwindCode.h
+  POSIX/stdafx.h
+  POSIX/targetver.h
 )
 
 set(POSIX_PUBLIC_HFILES
