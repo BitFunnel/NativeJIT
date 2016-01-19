@@ -124,6 +124,54 @@ namespace NativeJIT
     };
 
 
+    // ParameterSlot allocates parameter index numbers which are used to map
+    // parameters to registers. In the Windows ABI, a parameter's index numbers
+    // is equal to its position in the parameter list, regardless of parameter
+    // type. For example, in the function,
+    //    void f(int a, float b, int c, float d)
+    // the parameter indexes would be
+    //    a:0, b:1, c:2, d:3
+    // In the System V ABI, parameters indexes are allocated from two sequences,
+    // one for integer types and one for floating point types. Given the
+    // function definition above, on System V, the parameter indexes would be
+    //    a:0, b:0, c:1, d:1
+    class ParameterSlot
+    {
+    public:
+        ParameterSlot()
+          : m_ints(0)
+#ifndef NATIVEJIT_PLATFORM_WINDOWS
+            , m_floats(0)
+#endif
+        {
+        }
+        
+        template <class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
+        unsigned Allocate()
+        {
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            return m_ints++;
+#else
+            return m_floats++;
+#endif
+        }
+        
+        
+        template <class T, typename std::enable_if<!std::is_floating_point<T>::value>::type * = nullptr>
+        unsigned Allocate()
+        {
+            return m_ints++;
+        }
+        
+        
+    private:
+        unsigned m_ints;
+#ifndef NATIVEJIT_PLATFORM_WINDOWS
+        unsigned m_floats;
+#endif
+    };
+    
+    
     //*************************************************************************
     //
     // FunctionBase<R> template definitions.
@@ -165,11 +213,11 @@ namespace NativeJIT
         static_assert(IsValidParameter<P3>::c_value, "P3 is an invalid type.");
         static_assert(IsValidParameter<P4>::c_value, "P4 is an invalid type.");
 
-        unsigned position = 0;
-        m_p1 = &this->template Parameter<P1>(position++);
-        m_p2 = &this->template Parameter<P2>(position++);
-        m_p3 = &this->template Parameter<P3>(position++);
-        m_p4 = &this->template Parameter<P4>(position++);
+        ParameterSlot slot;
+        m_p1 = &this->template Parameter<P1>(slot.Allocate<P1>());
+        m_p2 = &this->template Parameter<P2>(slot.Allocate<P2>());
+        m_p3 = &this->template Parameter<P3>(slot.Allocate<P3>());
+        m_p4 = &this->template Parameter<P4>(slot.Allocate<P4>());
     }
 
 
