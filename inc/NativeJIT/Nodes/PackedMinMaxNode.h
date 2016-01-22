@@ -107,8 +107,12 @@ namespace NativeJIT
             // and the left register will contain the final result of the operation.
 
             // Process the unused portion of the PACKED by clearing the unused bits.
-            code.EmitImmediate<OpCode::Sal>(l, static_cast<uint8_t>(64 - PACKED::c_totalBitCount));
-            code.EmitImmediate<OpCode::Sal>(r, static_cast<uint8_t>(64 - PACKED::c_totalBitCount));
+            // This is done by left-shifting towards the most significant bit.
+            const auto bitsToShiftToMSB = static_cast<uint8_t>(sizeof(PackedUnderlyingType) * 8
+                                                               - PACKED::c_totalBitCount);
+
+            code.EmitImmediate<OpCode::Sal>(l, bitsToShiftToMSB);
+            code.EmitImmediate<OpCode::Sal>(r, bitsToShiftToMSB);
 
             // Start the recursion. The helper does not use any additional registers.
             typedef decltype(l) RegisterType;

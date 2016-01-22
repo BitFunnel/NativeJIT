@@ -178,10 +178,10 @@ namespace NativeJIT
 
 
             // Creates term frequencies out of its components.
-            static TermFrequencies MakeTermFrequencies(uint64_t anchorFrequency,
-                                                       uint64_t bodyFrequency,
-                                                       uint64_t titleFrequency,
-                                                       uint64_t urlFrequency)
+            static TermFrequencies MakeTermFrequencies(PackedUnderlyingType anchorFrequency,
+                                                       PackedUnderlyingType bodyFrequency,
+                                                       PackedUnderlyingType titleFrequency,
+                                                       PackedUnderlyingType urlFrequency)
             {
                 return Packed<>()
                     .Push<c_bitsForAnchor>(anchorFrequency)
@@ -422,8 +422,8 @@ namespace NativeJIT
                 // specified function.
                 TermFrequencies Aggregate(TermFrequencies f1ABTU,
                                           TermFrequencies f2ABTU,
-                                          uint64_t (*aggFunc)(uint64_t,
-                                                                      uint64_t))
+                                          PackedUnderlyingType (*aggFunc)(PackedUnderlyingType,
+                                                                          PackedUnderlyingType))
                 {
                     auto url = aggFunc(f1ABTU.Back(), f2ABTU.Back());
                     auto f1ABT = f1ABTU.Pop();
@@ -447,7 +447,7 @@ namespace NativeJIT
                 {
                     return Aggregate(f1ABTU,
                                      f2ABTU,
-                                     [](uint64_t a, uint64_t b)
+                                     [](PackedUnderlyingType a, PackedUnderlyingType b)
                                      {
                                          return (std::min)(a, b);
                                      });
@@ -458,7 +458,7 @@ namespace NativeJIT
                 {
                     return Aggregate(f1ABTU,
                                      f2ABTU,
-                                     [](uint64_t a, uint64_t b)
+                                     [](PackedUnderlyingType a, PackedUnderlyingType b)
                                      {
                                          return (std::max)(a, b);
                                      });
@@ -479,7 +479,7 @@ namespace NativeJIT
                     }
 
 
-                    return TermFrequencies::Create(termFrequenciesRaw);
+                    return TermFrequencies::Create(static_cast<PackedUnderlyingType>(termFrequenciesRaw));
                 }
 
 
@@ -590,7 +590,7 @@ namespace NativeJIT
                     clickFeatureRaw = 0;
                 }
 
-                auto clickFeature = ClickFeature::Create(clickFeatureRaw);
+                auto clickFeature = ClickFeature::Create(static_cast<PackedUnderlyingType>(clickFeatureRaw));
 
                 return clickModel->Apply(clickFeature);
             }
@@ -697,8 +697,8 @@ namespace NativeJIT
                       m_termLookupFunc(e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_termLookupFunc))),
                       m_defaultTermFrequencies(e.Immediate(c_defaultTermFrequencies)),
                       m_termModel(termModel),
-                      m_shardShiftedToMSB(e.Sal(e.Cast<uint64_t>(shard),
-                                                static_cast<uint8_t>(64 - c_bitsForShard)))
+                      m_shardShiftedToMSB(e.Sal(e.Cast<PackedUnderlyingType>(shard),
+                                                static_cast<uint8_t>(sizeof(PackedUnderlyingType) * 8 - c_bitsForShard)))
                 {
                 }
 
@@ -762,13 +762,13 @@ namespace NativeJIT
                                                     Node<TermFrequencies>& frequencies,
                                                     uint8_t position)
                 {
-                    const uint64_t positionShiftedToMSB
-                        = static_cast<uint64_t>(position) << (64 - c_bitsForPosition);
+                    const PackedUnderlyingType positionShiftedToMSB
+                        = static_cast<PackedUnderlyingType>(position) << (sizeof(PackedUnderlyingType) * 8 - c_bitsForPosition);
 
                     // Shift the position from the MSB position into the
                     // LSB position in the target variable.
                     auto & frequenciesAndShard
-                        = e.Shld(e.Cast<uint64_t>(frequencies),
+                        = e.Shld(e.Cast<PackedUnderlyingType>(frequencies),
                                  e.Immediate(positionShiftedToMSB),
                                  c_bitsForPosition);
 
@@ -867,7 +867,7 @@ namespace NativeJIT
 
                 Node<TermModel*>& m_termModel;
 
-                Node<uint64_t>& m_shardShiftedToMSB;
+                Node<PackedUnderlyingType>& m_shardShiftedToMSB;
             };
 
 
@@ -961,7 +961,7 @@ namespace NativeJIT
                 // Evaluate the language model.
                 totalScore = &e.Add(*totalScore,
                                     e.ApplyModel(languageModel,
-                                                 e.Cast<BoolFeature>(e.Cast<uint64_t>(languageMatches))));
+                                                 e.Cast<BoolFeature>(e.Cast<PackedUnderlyingType>(languageMatches))));
 
                 // Do the same for the location.
                 auto & docLocation = e.Deref(e.FieldPointer(docMarket, &MarketData::m_locationHash));
@@ -972,7 +972,7 @@ namespace NativeJIT
 
                 totalScore = &e.Add(*totalScore,
                                     e.ApplyModel(locationModel,
-                                                 e.Cast<BoolFeature>(e.Cast<uint64_t>(locationMatches))));
+                                                 e.Cast<BoolFeature>(e.Cast<PackedUnderlyingType>(locationMatches))));
 
                 // If both language and location match, add the advanced prefer score.
                 auto & marketMatches = e.And(languageMatches, locationMatches);

@@ -6,6 +6,8 @@
 
 namespace NativeJIT
 {
+    typedef uint32_t PackedUnderlyingType;
+
     //*************************************************************************
     // DESIGN NOTE
     // 
@@ -49,9 +51,9 @@ namespace NativeJIT
         static const unsigned c_totalBitCount = c_localBitCount + REST::c_totalBitCount;
         typedef REST Rest;
 
-        static_assert(c_totalBitCount <= 64, "Too many bits in the packed.");
+        static_assert(c_totalBitCount <= sizeof(PackedUnderlyingType) * 8, "Too many bits in the packed.");
 
-        static Packed Create(uint64_t value)
+        static Packed Create(PackedUnderlyingType value)
         {
             Packed result;
             result.m_fields = value;
@@ -62,9 +64,9 @@ namespace NativeJIT
         // the existing bits are moved to the left. Thus the final order of
         // bits inside Packed<C, Packed<B, Packed<A>>> is ABC.
         template <unsigned X>
-        Packed<X, Packed> Push(uint64_t value) const
+        Packed<X, Packed> Push(PackedUnderlyingType value) const
         {
-            uint64_t fields = (m_fields << X) | value;
+            PackedUnderlyingType fields = (m_fields << X) | value;
             return Packed<X, Packed>::Create(fields);
         }
 
@@ -73,22 +75,22 @@ namespace NativeJIT
             return REST::Create(m_fields >> W);
         }
 
-        uint64_t Back() const
+        PackedUnderlyingType Back() const
         {
             return m_fields & ((1 << W) - 1);
         }
 
-        uint64_t GetBits() const
+        PackedUnderlyingType GetBits() const
         {
             return m_fields;
         }
 
-        operator uint64_t() const
+        operator PackedUnderlyingType() const
         {
             return m_fields;
         }
 
-        uint64_t m_fields;
+        PackedUnderlyingType m_fields;
     };
 
 
@@ -101,9 +103,9 @@ namespace NativeJIT
         static const unsigned c_localBitCount = W;
         typedef void Rest;
 
-        static_assert(c_totalBitCount <= 64, "Too many bits in the packed.");
+        static_assert(c_totalBitCount <= sizeof(PackedUnderlyingType) * 8, "Too many bits in the packed.");
 
-        static Packed Create(uint64_t value)
+        static Packed Create(PackedUnderlyingType value)
         {
             Packed result;
             result.m_fields = value;
@@ -111,28 +113,28 @@ namespace NativeJIT
         }
 
         template <unsigned X>
-        Packed<X, Packed> Push(uint64_t value)
+        Packed<X, Packed> Push(PackedUnderlyingType value)
         {
-            uint64_t fields = (m_fields << X) | value;
+            PackedUnderlyingType fields = (m_fields << X) | value;
             return Packed<X, Packed>::Create(fields);
         }
 
-        uint64_t Back() const
+        PackedUnderlyingType Back() const
         {
             return m_fields & ((1 << W) - 1);
         }
 
-        uint64_t GetBits() const
+        PackedUnderlyingType GetBits() const
         {
             return m_fields;
         }
 
-        operator uint64_t() const
+        operator PackedUnderlyingType() const
         {
             return m_fields;
         }
 
-        uint64_t m_fields;
+        PackedUnderlyingType m_fields;
     };
 
 
@@ -146,10 +148,9 @@ namespace NativeJIT
         typedef void Rest;
 
         template <unsigned X>
-        static Packed<X, void> Push(uint64_t value)
+        static Packed<X, void> Push(PackedUnderlyingType value)
         {
-            uint64_t fields = value;
-            return Packed<X>::Create(fields);
+            return Packed<X>::Create(value);
         }
     };
 }

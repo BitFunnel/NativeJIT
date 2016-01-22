@@ -178,8 +178,8 @@ namespace NativeJIT
         {
             auto packed = Packed<>::Push<5>(31).Push<4>(15).Push<3>(7);
 
-            TestCast<uint64_t, decltype(packed)>(packed);
-            TestCast<decltype(packed), uint64_t>(123456);
+            TestCast<PackedUnderlyingType, decltype(packed)>(packed);
+            TestCast<decltype(packed), PackedUnderlyingType>(123456);
         }
 
 
