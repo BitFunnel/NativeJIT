@@ -247,14 +247,6 @@ namespace NativeJIT
     //
     // Relational operators
     //
-    template <typename T>
-    FlagExpressionNode<JccType::JG>&
-    ExpressionNodeFactory::GreaterThan(Node<T>& left, Node<T>& right)
-    {
-        return Compare<JccType::JG>(left, right);
-    }
-
-
     template <JccType JCC, typename T>
     FlagExpressionNode<JCC>&
     ExpressionNodeFactory::Compare(Node<T>& left, Node<T>& right)

@@ -22,21 +22,6 @@ namespace NativeJIT
         // Conditionals
         //
 
-        TEST_CASE_F(Conditional, GreaterThan)
-        {
-            auto setup = GetSetup();
-
-            {
-                Function<bool, uint64_t, uint64_t> expression(setup->GetAllocator(), setup->GetCode());
-
-                auto & test = expression.GreaterThan(expression.GetP1(), expression.GetP2());
-                auto greaterThan = expression.Compile(test);
-
-                TestAssert(!greaterThan(3, 4));
-                TestAssert(greaterThan(4, 3));
-            }
-        }
-
 
         TEST_CASE_F(Conditional, Conditional)
         {
@@ -48,7 +33,7 @@ namespace NativeJIT
                 uint64_t trueValue = 5;
                 uint64_t falseValue = 6;
 
-                auto & a = expression.GreaterThan(expression.GetP1(), expression.GetP2());
+                auto & a = expression.Compare<JccType::JA>(expression.GetP1(), expression.GetP2());
                 auto & b = expression.Conditional(a, expression.Immediate(trueValue), expression.Immediate(falseValue));
                 auto function = expression.Compile(b);
 
