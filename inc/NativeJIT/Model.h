@@ -9,6 +9,8 @@ namespace NativeJIT
     class Model
     {
     public:
+        typedef typename PACKED PackedType;
+
         Model();
 
         float Apply(PACKED packed) const;
