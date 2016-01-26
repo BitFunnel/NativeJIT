@@ -14,10 +14,8 @@ namespace NativeJIT
     public:
         // Sets up a code buffer with specified capacity and registers a
         // callback to facilitate stack unwinding on exception. See the
-        // CodeBuffer constructor for more details on allocators.
-        FunctionBufferBase(Allocators::IAllocator& codeAllocator,
-                           unsigned capacity,
-                           Allocators::IAllocator& generalAllocator);
+        // CodeBuffer constructor for more details on the allocator.
+        FunctionBufferBase(Allocators::IAllocator& codeAllocator, unsigned capacity);
 
         // Deregisters the stack unwinding callback.
         ~FunctionBufferBase();

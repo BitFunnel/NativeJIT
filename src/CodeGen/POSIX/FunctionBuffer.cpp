@@ -42,9 +42,8 @@ namespace NativeJIT
 
 
     FunctionBufferBase::FunctionBufferBase(Allocators::IAllocator& codeAllocator,
-                                   unsigned capacity,
-                                   Allocators::IAllocator& generalAllocator)
-        : X64CodeGenerator(codeAllocator, capacity, generalAllocator),
+                                           unsigned capacity)
+        : X64CodeGenerator(codeAllocator, capacity),
           m_runtimeFunction(),
           m_unwindInfoStartOffset(0),
           m_unwindInfoByteLength(0),

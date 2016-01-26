@@ -22,14 +22,7 @@ namespace NativeJIT
         // the buffer is to be executed (and not just f. ex. transferred over the
         // network), the allocator must return memory that is executable (see
         // ExecutionBuffer class for an example).
-        //
-        // The general allocator is used for allocating housekeeping data such
-        // as labels, call sites etc. This allocator can be the same as the
-        // codeBufferAllocator only when it's not allocating the executable
-        // memory.
-        CodeBuffer(Allocators::IAllocator& codeAllocator,
-                   unsigned capacity,
-                   Allocators::IAllocator& generalAllocator);
+        CodeBuffer(Allocators::IAllocator& codeAllocator, unsigned capacity);
 
         // Frees the buffer.
         virtual ~CodeBuffer();

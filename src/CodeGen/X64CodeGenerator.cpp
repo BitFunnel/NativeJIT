@@ -38,9 +38,8 @@ namespace NativeJIT
     //
     //*************************************************************************
     X64CodeGenerator::X64CodeGenerator(Allocators::IAllocator& codeAllocator,
-                                       unsigned capacity,
-                                       Allocators::IAllocator& generalAllocator)
-        : CodeBuffer(codeAllocator, capacity, generalAllocator),
+                                       unsigned capacity)
+        : CodeBuffer(codeAllocator, capacity),
           m_diagnosticsStream(nullptr)
     {
     }

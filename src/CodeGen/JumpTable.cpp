@@ -7,13 +7,10 @@
 
 namespace NativeJIT
 {
-    const unsigned c_labelsReserveCount = 64;
-    const unsigned c_callSitesReserveCount = 64;
+    const unsigned c_labelsReserveCount = 512;
+    const unsigned c_callSitesReserveCount = 512;
 
-    JumpTable::JumpTable(Allocators::IAllocator& allocator)
-        : m_stlAllocator(allocator),
-          m_labels(m_stlAllocator),
-          m_callSites(m_stlAllocator)
+    JumpTable::JumpTable()
     {
         m_labels.reserve(c_labelsReserveCount);
         m_callSites.reserve(c_callSitesReserveCount);

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "NativeJIT/AllocatorVector.h" // Embedded member.
+#include <vector> // Embedded member.
 
 
 namespace NativeJIT
@@ -27,8 +27,7 @@ namespace NativeJIT
     class JumpTable
     {
     public:
-        // Allocator is used to allocate memory for labels and call sites.
-        JumpTable(Allocators::IAllocator& allocator);
+        JumpTable();
 
         void Clear();
 
@@ -49,9 +48,13 @@ namespace NativeJIT
         const uint8_t* AddressOfLabel(Label label) const;
 
     private:
-        Allocators::StlAllocator<void*> m_stlAllocator; // STL adapter for IAllocator.
-        AllocatorVector<const uint8_t*> m_labels;       // Storage for jump labels.
-        AllocatorVector<CallSite> m_callSites;          // Call sites to be patched.
+        // DESIGN NOTE: JumpTable is a part of CodeBuffer which is designed to
+        // be allocated once and reused multiple times during the program lifetime.
+        // Labels and call sites can thus use heap since the allocation (due to
+        // reserve()) will happen only at startup and perhaps very rarely be
+        // extended during the program lifetime.
+        std::vector<uint8_t const *> m_labels;      // Storage for jump labels.
+        std::vector<CallSite> m_callSites;          // Call sites to be patched.
     };
 
 

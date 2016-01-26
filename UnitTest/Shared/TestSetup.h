@@ -80,7 +80,7 @@ namespace NativeJIT
         std::ostream* GetDiagnosticsStream() const;
 
     private:
-        // Executable buffer and general allocator for the function buffer.
+        // Executable buffer and general allocator for the function.
         ExecutionBuffer m_codeAllocator;
         Allocator m_generalAllocator;
 

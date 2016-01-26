@@ -27,7 +27,7 @@ namespace NativeJIT
                              std::ostream* diagnosticsStream)
         : m_codeAllocator(codeAllocatorCapacity),
           m_generalAllocator(generalAllocatorCapacity),
-          m_code(m_codeAllocator, codeAllocatorCapacity, m_generalAllocator),
+          m_code(m_codeAllocator, codeAllocatorCapacity),
           m_testCaseAllocator(generalAllocatorCapacity),
           m_diagnosticsStream(diagnosticsStream)
     {

@@ -85,10 +85,8 @@ namespace NativeJIT
     {
     public:
         // Sets up a code buffer with specified capacity. See the CodeBuffer
-        // constructor for more details on allocators.
-        X64CodeGenerator(Allocators::IAllocator& codeAllocator,
-                         unsigned capacity,
-                         Allocators::IAllocator& generalAllocator);
+        // constructor for more details on the allocator.
+        X64CodeGenerator(Allocators::IAllocator& codeAllocator, unsigned capacity);
 
         void EnableDiagnostics(std::ostream& out);
         void DisableDiagnostics();

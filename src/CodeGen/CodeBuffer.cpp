@@ -11,13 +11,10 @@
 
 namespace NativeJIT
 {
-    CodeBuffer::CodeBuffer(Allocators::IAllocator& codeAllocator,
-                   unsigned capacity,
-                   Allocators::IAllocator& generalAllocator)
+    CodeBuffer::CodeBuffer(Allocators::IAllocator& codeAllocator, unsigned capacity)
         : m_codeAllocator(codeAllocator),
           m_capacity(capacity),
-          m_bufferStart(nullptr),
-          m_localJumpTable(generalAllocator)
+          m_bufferStart(nullptr)
     {
         m_bufferStart = static_cast<uint8_t*>(codeAllocator.Allocate(capacity));
         m_bufferEnd = m_bufferStart + capacity;

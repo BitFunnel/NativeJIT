@@ -40,8 +40,8 @@ namespace NativeJIT
           m_epilogCode(m_stlAllocator)
     {
         // The code in this buffer will not be executed directly, so the general
-        // allocator can be used for code buffer allocation as well.
-        X64CodeGenerator code(allocator, c_maxPrologOrEpilogSize, allocator);
+        // allocator can be used for code buffer allocation.
+        X64CodeGenerator code(allocator, c_maxPrologOrEpilogSize);
 
         if (diagnosticsStream != nullptr)
         {
