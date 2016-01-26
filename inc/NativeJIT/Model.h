@@ -9,7 +9,7 @@ namespace NativeJIT
     class Model
     {
     public:
-        typedef typename PACKED PackedType;
+        typedef PACKED PackedType;
 
         Model();
 
