@@ -83,7 +83,7 @@ namespace NativeJIT
                 code.Emit<OP>(dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
             }
         }
 
@@ -105,7 +105,7 @@ namespace NativeJIT
                 code.Emit<OP>(dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
             }
         }
 
@@ -135,7 +135,7 @@ namespace NativeJIT
                             dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
             }
         }
 
@@ -162,7 +162,7 @@ namespace NativeJIT
                             dest, src.GetBaseRegister(), src.GetOffset());
                 break;
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
             }
         }
 
@@ -230,7 +230,7 @@ namespace NativeJIT
                 code.Emit<OP>(dest.GetBaseRegister(), dest.GetOffset(), src);
                 break;
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
             }
         }
 
@@ -257,7 +257,7 @@ namespace NativeJIT
                             dest.GetBaseRegister(), dest.GetOffset(), src);
                 break;
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
             }
         }
     }

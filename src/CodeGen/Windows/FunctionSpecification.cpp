@@ -393,7 +393,7 @@ namespace NativeJIT
                 return code.m_operation.m_opInfo == 0 ? 2 : 3;
 
             default:
-                LogThrowAssert(false, "Unknown unwind operation %u", code.m_operation.m_unwindOp);
+                LogThrowAbort("Unknown unwind operation %u", code.m_operation.m_unwindOp);
                 // Silence the "not all paths return a value" warning.
                 return 0;
         }
@@ -457,7 +457,7 @@ namespace NativeJIT
                 break;
 
             default:
-                LogThrowAssert(false, "Unsupported unwind operation %u", unwindCode.m_operation.m_unwindOp);
+                LogThrowAbort("Unsupported unwind operation %u", unwindCode.m_operation.m_unwindOp);
                 break;
             }
 

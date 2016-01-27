@@ -1,56 +1,44 @@
 #pragma once
 
-#include <cstdarg>
-#include <cstdio>
-#include <stdexcept>
-#include <sstream>
-#include <vector>
+// MSVC has __pragma directive for use in macros since #pragma would apply to the macro itself.
+#ifdef _MSC_VER
+#define PREPROCESSOR_PRAGMA_WARNING(x) __pragma(warning(x))
+#else
+#define PREPROCESSOR_PRAGMA_WARNING(x)
+#endif
+
+
+#define LogThrowAssert(condition, ...)        \
+do                                            \
+{                                             \
+    if (!(condition))                         \
+    {                                         \
+        NativeJIT::LogThrowImpl(__FILE__,     \
+                                __FUNCTION__, \
+                                __LINE__,     \
+                                #condition,   \
+                                __VA_ARGS__); \
+    }                                         \
+PREPROCESSOR_PRAGMA_WARNING(push)             \
+PREPROCESSOR_PRAGMA_WARNING(disable:4127)     \
+} while (false)                               \
+PREPROCESSOR_PRAGMA_WARNING(pop)
+
+
+#define LogThrowAbort(...)                    \
+    NativeJIT::LogThrowImpl(__FILE__,         \
+                            __FUNCTION__,     \
+                            __LINE__,         \
+                            "Forced failure", \
+                            __VA_ARGS__)
 
 
 namespace NativeJIT
 {
-    #define LogThrowAssert(condition, ...) \
-    {                                      \
-        AssertImpl(__FILE__,               \
-                    __FUNCTION__,          \
-                    __LINE__,              \
-                    condition,             \
-                    #condition,            \
-                    __VA_ARGS__);          \
-    }
-
-
-    // Note: inlining only for convenience, there are no .cpp files for the
-    // temporary compatibility headers.
-    inline void AssertImpl(char const * filename,
-                           char const * function,
-                           unsigned lineNumber,
-                           bool condition,
-                           char const * conditionText,
-                           char const * format,
-                           ...)
-    {
-        if (!condition)
-        {
-            const unsigned messageBufferSize = 1024;
-            std::vector<char> message(messageBufferSize, '\0');
-
-            va_list arguments;
-            va_start(arguments, format);
-
-#ifdef _MSC_VER
-            vsnprintf_s(message.data(), message.size(), _TRUNCATE, format, arguments);
-#else
-            vsnprintf(message.data(), message.size(), format, arguments);
-#endif
-
-            va_end(arguments);
-
-            std::stringstream sstream;
-            sstream << "Assertion " << conditionText << " failed in " << function
-                    << " at " << filename << ":" << lineNumber << ": " << message.data();
-
-            throw std::runtime_error(sstream.str().c_str());
-        }
-    }
+    void LogThrowImpl(char const * filename,
+                      char const * function,
+                      unsigned lineNumber,
+                      char const * title,
+                      char const * format,
+                      ...);
 }

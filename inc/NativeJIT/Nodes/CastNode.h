@@ -396,7 +396,7 @@ namespace NativeJIT
             }
 
             default:
-                LogThrowAssert(false, "Invalid storage class.");
+                LogThrowAbort("Invalid storage class.");
                 break;
             }
 
@@ -549,7 +549,7 @@ namespace NativeJIT
             // reach this point. Since GetStorageClass() is a runtime method, it's
             // necessary to provide a body for the remaining cases even though
             // they should not be reachable.
-            LogThrowAssert(false, "Unexpected immediate type");
+            LogThrowAbort("Unexpected immediate type");
 
             return Storage<TO>();
         }

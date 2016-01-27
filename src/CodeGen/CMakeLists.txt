@@ -2,6 +2,7 @@
 
 set(CPPFILES
   Allocator.cpp
+  Assert.cpp
   BitOperations.cpp
   CodeBuffer.cpp
   JumpTable.cpp

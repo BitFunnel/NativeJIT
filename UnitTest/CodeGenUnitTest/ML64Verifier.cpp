@@ -255,7 +255,7 @@ namespace NativeJIT
         }
         else
         {
-            LogThrowAssert(false, "Unexpected character, code: %u", c);
+            LogThrowAbort("Unexpected character, code: %u", c);
             throw std::runtime_error("Unreachable code");
         }
     }

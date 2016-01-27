@@ -321,7 +321,7 @@ namespace NativeJIT
             break;
 
         default:
-            LogThrowAssert(false, "Unknown register change type %u", type);
+            LogThrowAbort("Unknown register change type %u", type);
             break;
         }
     }
@@ -636,7 +636,7 @@ namespace NativeJIT
             break;
 
         default:
-            LogThrowAssert(false, "ConvertToDirect: invalid storage class.");
+            LogThrowAbort("ConvertToDirect: invalid storage class.");
             break;
         }
 
@@ -669,7 +669,7 @@ namespace NativeJIT
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.
         LogThrowAssert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
-        LogThrowAssert(false, "Unexpected occurrence of an invalid immediate storage");
+        LogThrowAbort("Unexpected occurrence of an invalid immediate storage");
     }
 
 
@@ -688,7 +688,7 @@ namespace NativeJIT
             break;
 
         default:
-            LogThrowAssert(false, "Unknown swap type %u", type);
+            LogThrowAbort("Unknown swap type %u", type);
             break;
         }
     }
@@ -876,7 +876,7 @@ namespace NativeJIT
         // This should never be hit, it's impossible to compile an invalid immediate
         // with StorageClass::Immediate.
         LogThrowAssert(m_data->GetStorageClass() == StorageClass::Immediate, "Unexpected storage class");
-        LogThrowAssert(false, "Unexpected occurrence of an invalid immediate storage");
+        LogThrowAbort("Unexpected occurrence of an invalid immediate storage");
     }
 
 

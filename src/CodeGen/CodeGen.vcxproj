@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Allocator.cpp" />
+    <ClCompile Include="Assert.cpp" />
     <ClCompile Include="BitOperations.cpp" />
     <ClCompile Include="CodeBuffer.cpp" />
     <ClCompile Include="JumpTable.cpp" />

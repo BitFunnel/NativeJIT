@@ -4,7 +4,7 @@
 // http://ref.x86asm.net/coder64.html
 // http://felixcloutier.com/x86/
 
-#include <iosfwd>
+#include <ostream>                              // Debugging output.
 
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CodeBuffer.h"       // Inherits from CodeBuffer.

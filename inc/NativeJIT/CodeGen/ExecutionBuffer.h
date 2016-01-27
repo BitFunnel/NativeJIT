@@ -4,12 +4,6 @@
 #include "Temporary/IAllocator.h"
 
 
-namespace Allocators
-{
-    class IAllocator;
-}
-
-
 namespace NativeJIT
 {
     class CodeBuffer;

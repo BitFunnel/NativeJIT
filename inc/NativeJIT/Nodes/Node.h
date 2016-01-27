@@ -351,11 +351,32 @@ namespace NativeJIT
     }
 
 
+    // Calls LogThrowAbort() if a constant condition is false.
+    template <bool CONDITION>
+    void AssertAtRuntime(char const * message);
+
+
+    template <>
+    inline void AssertAtRuntime<false>(char const * message)
+    {
+        LogThrowAbort(message);
+    }
+
+
+    template <>
+    inline void AssertAtRuntime<true>(char const * /* message */)
+    {
+    }
+
+
     template <typename T>
     ExpressionTree::Storage<void*> Node<T>::CodeGenAsBase(ExpressionTree& tree)
     {
-        LogThrowAssert(!RegisterStorage<T>::c_isFloat && RegisterStorage<T>::c_size == sizeof(void*),
-                       "Invalid call to CodeGenAsBase");
+        // Use this rather than tag dispatch since CodeGenAsBase is a virtual method
+        // so the method signature at base class would have to be changed as well.
+        AssertAtRuntime<!RegisterStorage<T>::c_isFloat
+                        && RegisterStorage<T>::c_size == sizeof(void*)>(
+            "Invalid call to CodeGenAsBase");
 
         return ExpressionTree::Storage<void*>(CodeGen(tree));
     }

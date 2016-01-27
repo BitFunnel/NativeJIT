@@ -86,7 +86,7 @@ namespace NativeJIT
 
     void NodeBase::CompileAsRoot(ExpressionTree& /*tree*/)
     {
-        LogThrowAssert(false, "Root of ExpressionTree must be a ReturnNode node.");
+        LogThrowAbort("Root of ExpressionTree must be a ReturnNode node.");
     }
 
 
@@ -98,9 +98,8 @@ namespace NativeJIT
 
     void NodeBase::ReleaseReferencesToChildren()
     {
-        LogThrowAssert(false,
-                       "Don't know how to remove optimized away references for node with ID %u (orphan node?)",
-                       GetId());
+        LogThrowAbort("Don't know how to remove optimized away references for node with ID %u (orphan node?)",
+                      GetId());
     }
 
 
