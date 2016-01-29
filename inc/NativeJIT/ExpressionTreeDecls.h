@@ -6,7 +6,7 @@
 
 #include "NativeJIT/AllocatorVector.h"                  // Embedded member.
 #include "NativeJIT/CodeGen/JumpTable.h"                // ExpressionTree embeds Label.
-#include "NativeJIT/Register.h"
+#include "NativeJIT/CodeGen/Register.h"
 #include "NativeJIT/TypePredicates.h"                   // RegisterStorage used in typedef.
 #include "Temporary/NonCopyable.h"
 

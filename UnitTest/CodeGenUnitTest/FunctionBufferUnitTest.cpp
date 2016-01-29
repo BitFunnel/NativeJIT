@@ -147,7 +147,7 @@ namespace NativeJIT
                 {
                     // Load the target address into RAX and store the data.
                     code.EmitImmediate<OpCode::Mov>(rax, &regInfo.m_xmm[2 * regId]);
-                    code.Emit<OpCode::MovAligned128>(rax, 0, Register<4, true>(regId));
+                    code.Emit<OpCode::MovAP>(rax, 0, Register<4, true>(regId));
                     BitOp::ClearBit(&regMask, regId);
                 }
 
@@ -436,13 +436,13 @@ namespace NativeJIT
                                 offsets);
             EmitAndRecordOffset(code,
                                 // Skip offset 40 as it's not 16-byte aligned.
-                                [](FunctionBuffer& f) { f.Emit<OpCode::MovAligned128>(rsp, 48, xmm10s); },
+                                [](FunctionBuffer& f) { f.Emit<OpCode::MovAP>(rsp, 48, xmm10s); },
                                 offsets);
             EmitAndRecordOffset(code,
                                 // 16 bytes needed for xmm10, advance to offset 64 for xmm11.
                                 [](FunctionBuffer& f)
                                 {
-                                    f.Emit<OpCode::MovAligned128>(rsp, 64, xmm11s);
+                                    f.Emit<OpCode::MovAP>(rsp, 64, xmm11s);
                                     // Note: offsets [80, 96) are used for the
                                     // 2 variable slots, [96, 104) to align
                                     // the beginning of the stack.
@@ -479,8 +479,8 @@ namespace NativeJIT
             // Verify epilog.
             code.Reset();
 
-            code.Emit<OpCode::MovAligned128>(xmm11s, rsp, 64);
-            code.Emit<OpCode::MovAligned128>(xmm10s, rsp, 48);
+            code.Emit<OpCode::MovAP>(xmm11s, rsp, 64);
+            code.Emit<OpCode::MovAP>(xmm10s, rsp, 48);
             code.Emit<OpCode::Mov>(rbp, rsp, 32);
             code.EmitImmediate<OpCode::Add>(rsp, 104);
             code.Emit<OpCode::Ret>();

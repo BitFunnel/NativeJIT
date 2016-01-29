@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "NativeJIT/Register.h"
+#include "NativeJIT/CodeGen/Register.h"
 
 namespace NativeJIT
 {

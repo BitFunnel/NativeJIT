@@ -33,13 +33,13 @@ set(PRIVATE_HFILES
 set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/AllocatorVector.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/BitOperations.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Register.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CallingConvention.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CodeBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/JumpTable.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/Register.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ValuePredicates.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/X64CodeGenerator.h
   ${CMAKE_SOURCE_DIR}/inc/Temporary/Allocator.h

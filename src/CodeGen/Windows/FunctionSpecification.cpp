@@ -307,7 +307,9 @@ namespace NativeJIT
 
             while (BitOp::GetLowestBitSet(registersMask, &regId))
             {
-                prologCode.Emit<OpCode::MovAligned128>(
+                // Both movaps and movapd can be used here, but according to
+                // external tests, movaps is more performant.
+                prologCode.Emit<OpCode::MovAP>(
                     rsp,
                     currStackSlotOffset * sizeof(void*),
                     Register<4, true>(regId));
@@ -450,7 +452,7 @@ namespace NativeJIT
 
             case UnwindCodeOp::UWOP_SAVE_XMM128:
                 // The second code contains the halved offset in quadwords.
-                epilogCode.Emit<OpCode::MovAligned128>(
+                epilogCode.Emit<OpCode::MovAP>(
                     Register<4, true>(unwindCode.m_operation.m_opInfo),
                     rsp,
                     code2Offset * 2 * sizeof(void*));

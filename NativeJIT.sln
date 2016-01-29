@@ -37,7 +37,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NativeJIT", "NativeJIT", "{
 		inc\NativeJIT\Function.h = inc\NativeJIT\Function.h
 		inc\NativeJIT\Model.h = inc\NativeJIT\Model.h
 		inc\NativeJIT\Packed.h = inc\NativeJIT\Packed.h
-		inc\NativeJIT\Register.h = inc\NativeJIT\Register.h
 		inc\NativeJIT\TypePredicates.h = inc\NativeJIT\TypePredicates.h
 	EndProjectSection
 EndProject
@@ -63,6 +62,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeGen", "CodeGen", "{1B35
 		inc\NativeJIT\CodeGen\FunctionBuffer.h = inc\NativeJIT\CodeGen\FunctionBuffer.h
 		inc\NativeJIT\CodeGen\FunctionSpecification.h = inc\NativeJIT\CodeGen\FunctionSpecification.h
 		inc\NativeJIT\CodeGen\JumpTable.h = inc\NativeJIT\CodeGen\JumpTable.h
+		inc\NativeJIT\CodeGen\Register.h = inc\NativeJIT\CodeGen\Register.h
 		inc\NativeJIT\CodeGen\ValuePredicates.h = inc\NativeJIT\CodeGen\ValuePredicates.h
 		inc\NativeJIT\CodeGen\X64CodeGenerator.h = inc\NativeJIT\CodeGen\X64CodeGenerator.h
 	EndProjectSection

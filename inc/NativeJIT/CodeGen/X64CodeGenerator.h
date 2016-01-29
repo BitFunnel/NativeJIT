@@ -9,7 +9,7 @@
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CodeBuffer.h"       // Inherits from CodeBuffer.
 #include "NativeJIT/CodeGen/ValuePredicates.h"  // Called by template code.
-#include "NativeJIT/Register.h"                 // Register parameter.
+#include "NativeJIT/CodeGen/Register.h"         // Register parameter.
 #include "Temporary/NonCopyable.h"              // Inherits from NonCopyable.
 
 
@@ -65,7 +65,7 @@ namespace NativeJIT
         Mov,
         MovSX,
         MovZX,
-        MovAligned128, // Aligned 128-bit FPU move.
+        MovAP,      // Aligned 128-bit FPU move.
         Nop,
         Or,
         Pop,
@@ -502,6 +502,8 @@ namespace NativeJIT
             void PrintBytes(unsigned startPosition, unsigned endPosition);
 
             // A functor which implements the abs() operation for integral types.
+            // CodePrinter prints immediates in hex so the negative values need
+            // to have the sign printed explicitly in front of the absolute value.
             template <typename T, bool ISSIGNED = std::is_signed<T>::value>
             struct IntegralAbs
             {
@@ -681,7 +683,8 @@ namespace NativeJIT
 
         IosMiniStateRestorer state(out);
 
-        // Unary + forces char to integer and prints it as number.
+        // Unary + causes integral promotion so char would be printed as integer,
+        // as expected.
         out
             << std::uppercase
             << std::hex
@@ -2059,7 +2062,7 @@ namespace NativeJIT
     DEFINE_SSE_ARGS1(Cmp,            SSEx66,    0x2f);  // ComISS/ComISD.
     DEFINE_SSE_ARGS1(IMul,           ScalarSSE, 0x59);  // MulSS/MulSD.
     DEFINE_SSE_ARGS1(Mov,            ScalarSSE, 0x10);  // MovSS/MovSD.
-    DEFINE_SSE_ARGS1(MovAligned128,  SSEx66,    0x28);  // MovAPS/MovAPD.
+    DEFINE_SSE_ARGS1(MovAP,          SSEx66,    0x28);  // MovAPS/MovAPD.
     DEFINE_SSE_ARGS1(Sub,            ScalarSSE, 0x5c);  // SubSS/SubSD.
 
 #undef DEFINE_SSE_ARGS1
@@ -2069,7 +2072,7 @@ namespace NativeJIT
     template <>
     template <>
     template <unsigned SIZE>
-    void X64CodeGenerator::Helper<OpCode::MovAligned128>::ArgTypes1<true>::Emit(
+    void X64CodeGenerator::Helper<OpCode::MovAP>::ArgTypes1<true>::Emit(
         X64CodeGenerator& code,
         Register<8, false> dest,
         int32_t destOffset,

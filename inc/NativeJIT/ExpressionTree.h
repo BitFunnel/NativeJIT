@@ -865,7 +865,8 @@ namespace NativeJIT
     template <typename T>
     void ExpressionTree::Storage<T>::PrintImmediate(std::ostream& out, ValidImmediateStorage) const
     {
-        // Unary + would force char ([u]int8_t) to be printed as integer.
+        // Unary + causes integral promotion and char ([u]int8_t) would be
+        // printed as integer, as expected.
         out << "immediate value " << +GetImmediate() << "h";
     }
 

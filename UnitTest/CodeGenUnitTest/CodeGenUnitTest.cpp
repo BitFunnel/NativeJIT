@@ -450,21 +450,21 @@ namespace NativeJIT
             buffer.Emit<OpCode::MovSX, 8, false, 4, false>(rbx, r9, 0x34);
 
             // Aligned 128-bit floating point move: movaps and movapd.
-            buffer.Emit<OpCode::MovAligned128>(xmm1s, xmm1s);
-            buffer.Emit<OpCode::MovAligned128>(xmm2s, xmm9s);
-            buffer.Emit<OpCode::MovAligned128>(xmm2s, rcx, 0x20);
-            buffer.Emit<OpCode::MovAligned128>(xmm2s, r9, 0x200);
-            buffer.Emit<OpCode::MovAligned128>(rcx, 0x20, xmm2s);
-            buffer.Emit<OpCode::MovAligned128>(r9, 0x20, xmm2s);
-            buffer.Emit<OpCode::MovAligned128>(r9, 0x200, xmm11s);
+            buffer.Emit<OpCode::MovAP>(xmm1s, xmm1s);
+            buffer.Emit<OpCode::MovAP>(xmm2s, xmm9s);
+            buffer.Emit<OpCode::MovAP>(xmm2s, rcx, 0x20);
+            buffer.Emit<OpCode::MovAP>(xmm2s, r9, 0x200);
+            buffer.Emit<OpCode::MovAP>(rcx, 0x20, xmm2s);
+            buffer.Emit<OpCode::MovAP>(r9, 0x20, xmm2s);
+            buffer.Emit<OpCode::MovAP>(r9, 0x200, xmm11s);
 
-            buffer.Emit<OpCode::MovAligned128>(xmm1, xmm1);
-            buffer.Emit<OpCode::MovAligned128>(xmm2, xmm9);
-            buffer.Emit<OpCode::MovAligned128>(xmm2, rcx, 0x20);
-            buffer.Emit<OpCode::MovAligned128>(xmm2, r9, 0x200);
-            buffer.Emit<OpCode::MovAligned128>(rcx, 0x20, xmm2);
-            buffer.Emit<OpCode::MovAligned128>(r9, 0x20, xmm2);
-            buffer.Emit<OpCode::MovAligned128>(r9, 0x200, xmm11);
+            buffer.Emit<OpCode::MovAP>(xmm1, xmm1);
+            buffer.Emit<OpCode::MovAP>(xmm2, xmm9);
+            buffer.Emit<OpCode::MovAP>(xmm2, rcx, 0x20);
+            buffer.Emit<OpCode::MovAP>(xmm2, r9, 0x200);
+            buffer.Emit<OpCode::MovAP>(rcx, 0x20, xmm2);
+            buffer.Emit<OpCode::MovAP>(r9, 0x20, xmm2);
+            buffer.Emit<OpCode::MovAP>(r9, 0x200, xmm11);
 
             // Conversion, signed integer to floating point cvtsi2ss/cvtsi2sd.
             buffer.Emit<OpCode::CvtSI2FP>(xmm1s, eax);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "NativeJIT/Register.h"
+#include "NativeJIT/CodeGen/Register.h"
 #include "UnwindCode.h"
 
 
