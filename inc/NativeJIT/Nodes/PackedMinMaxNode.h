@@ -129,10 +129,6 @@ namespace NativeJIT
         REGTYPE left,
         REGTYPE right)
     {
-        // The order of bits in Packed<A, Packed<B>> is actually BA, so it's
-        // necessary to first process the remainder of the PACKED.
-        MinMaxEmitter<ISMAX, REGTYPE, typename PACKED::Rest>::Emit(code, left, right);
-
         Label keepLeftDigit = code.AllocateLabel();
         Label bottomOfLoop = code.AllocateLabel();
 
@@ -147,17 +143,20 @@ namespace NativeJIT
         // Case: Want the keep the digit from the right parameter.
         //       Shift the high order bits from the right parameter into the low
         //       order bits of the left parameter.
-        code.EmitImmediate<OpCode::Shld>(left, right, static_cast<uint8_t>(PACKED::c_localBitCount));
+        code.EmitImmediate<OpCode::Shld>(left, right, static_cast<uint8_t>(PACKED::c_leftmostBitCount));
         code.Jmp(bottomOfLoop);
 
         // Case: Want to keep the digit from left parameter.
         //       Just rotate it around to the low order bits.
         code.PlaceLabel(keepLeftDigit);
-        code.EmitImmediate<OpCode::Rol>(left, static_cast<uint8_t>(PACKED::c_localBitCount));
+        code.EmitImmediate<OpCode::Rol>(left, static_cast<uint8_t>(PACKED::c_leftmostBitCount));
 
         // In either case, shift off the high order bits or the right parameter.
         code.PlaceLabel(bottomOfLoop);
-        code.EmitImmediate<OpCode::Sal>(right, static_cast<uint8_t>(PACKED::c_localBitCount));
+        code.EmitImmediate<OpCode::Sal>(right, static_cast<uint8_t>(PACKED::c_leftmostBitCount));
+
+        // Process the remainder of the PACKED.
+        MinMaxEmitter<ISMAX, REGTYPE, typename PACKED::Right>::Emit(code, left, right);
     }
 
 

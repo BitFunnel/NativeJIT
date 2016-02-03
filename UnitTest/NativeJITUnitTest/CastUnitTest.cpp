@@ -176,7 +176,7 @@ namespace NativeJIT
 
         TEST_CASE_F(CastTest, Packed)
         {
-            auto packed = Packed<>::Push<5>(31).Push<4>(15).Push<3>(7);
+            auto packed = Packed<3, 4, 5>::FromComponents(7, 15, 31);
 
             TestCast<PackedUnderlyingType, decltype(packed)>(packed);
             TestCast<decltype(packed), PackedUnderlyingType>(123456);

@@ -49,7 +49,7 @@ namespace NativeJIT
     template <typename PACKED>
     float Model<PACKED>::Apply(PACKED packed) const
     {
-        return m_data[packed.m_fields];
+        return m_data[packed.m_bits];
     }
 
 
@@ -70,13 +70,13 @@ namespace NativeJIT
     template <typename PACKED>
     float& Model<PACKED>::operator[](PACKED packed)
     {
-        return m_data[packed.m_fields];
+        return m_data[packed.m_bits];
     }
 
 
     template <typename PACKED>
     float const & Model<PACKED>::operator[](PACKED packed) const
     {
-        return m_data[packed.m_fields];
+        return m_data[packed.m_bits];
     }
 }

@@ -30,8 +30,8 @@ namespace NativeJIT
             static const unsigned c_bitsForPosition = 4;
             static const unsigned c_bitsForShard = 4;
 
-            typedef Packed<c_bitsForUrl, Packed<c_bitsForTitle, Packed<c_bitsForBody, Packed<c_bitsForAnchor>>>> TermFrequencies;
-            typedef Packed<c_bitsForShard, Packed <c_bitsForPosition, TermFrequencies>> TermFeatures;
+            typedef Packed<c_bitsForAnchor, c_bitsForBody, c_bitsForTitle, c_bitsForUrl> TermFrequencies;
+            typedef Packed<c_bitsForAnchor, c_bitsForBody, c_bitsForTitle, c_bitsForUrl, c_bitsForPosition,  c_bitsForShard> TermFeatures;
             typedef Model<TermFeatures> TermModel;
 
             typedef Packed<2> ClickFeature;
@@ -177,28 +177,14 @@ namespace NativeJIT
             static const TermFrequencies c_defaultTermFrequencies;
 
 
-            // Creates term frequencies out of its components.
-            static TermFrequencies MakeTermFrequencies(PackedUnderlyingType anchorFrequency,
-                                                       PackedUnderlyingType bodyFrequency,
-                                                       PackedUnderlyingType titleFrequency,
-                                                       PackedUnderlyingType urlFrequency)
-            {
-                return Packed<>()
-                    .Push<c_bitsForAnchor>(anchorFrequency)
-                    .Push<c_bitsForBody>(bodyFrequency)
-                    .Push<c_bitsForTitle>(titleFrequency)
-                    .Push<c_bitsForUrl>(urlFrequency);
-            }
-
-
             // Creates term features out of frequencies and position and shard.
             static TermFeatures MakeTermFeatures(TermFrequencies const & frequencies,
                                                  uint8_t position,
                                                  Shard shard)
             {
                 return frequencies
-                    .Push<c_bitsForPosition>(position)
-                    .Push<c_bitsForShard>(shard);
+                    .InsertRightmost<c_bitsForPosition>(position)
+                    .InsertRightmost<c_bitsForShard>(shard);
             }
 
 
@@ -425,21 +411,21 @@ namespace NativeJIT
                                           PackedUnderlyingType (*aggFunc)(PackedUnderlyingType,
                                                                           PackedUnderlyingType))
                 {
-                    auto url = aggFunc(f1ABTU.Back(), f2ABTU.Back());
-                    auto f1ABT = f1ABTU.Pop();
-                    auto f2ABT = f2ABTU.Pop();
+                    auto anchor = aggFunc(f1ABTU.Leftmost(), f2ABTU.Leftmost());
+                    auto f1BTU = f1ABTU.WithoutLeftmost();
+                    auto f2BTU = f2ABTU.WithoutLeftmost();
 
-                    auto title = aggFunc(f1ABT.Back(), f2ABT.Back());
-                    auto f1AB = f1ABT.Pop();
-                    auto f2AB = f2ABT.Pop();
+                    auto body = aggFunc(f1BTU.Leftmost(), f2BTU.Leftmost());
+                    auto f1TU = f1BTU.WithoutLeftmost();
+                    auto f2TU = f2BTU.WithoutLeftmost();
 
-                    auto body = aggFunc(f1AB.Back(), f2AB.Back());
-                    auto f1A = f1AB.Pop();
-                    auto f2A = f2AB.Pop();
+                    auto title = aggFunc(f1TU.Leftmost(), f2TU.Leftmost());
+                    auto f1U = f1TU.WithoutLeftmost();
+                    auto f2U = f2TU.WithoutLeftmost();
 
-                    auto anchor = aggFunc(f1A.m_fields, f2A.m_fields);
+                    auto url = aggFunc(f1U.Leftmost(), f2U.Leftmost());
 
-                    return MakeTermFrequencies(anchor, body, title, url);
+                    return TermFrequencies::FromComponents(anchor, body, title, url);
                 }
 
 
@@ -479,7 +465,7 @@ namespace NativeJIT
                     }
 
 
-                    return TermFrequencies::Create(static_cast<PackedUnderlyingType>(termFrequenciesRaw));
+                    return TermFrequencies::FromBits(static_cast<PackedUnderlyingType>(termFrequenciesRaw));
                 }
 
 
@@ -590,7 +576,7 @@ namespace NativeJIT
                     clickFeatureRaw = 0;
                 }
 
-                auto clickFeature = ClickFeature::Create(static_cast<PackedUnderlyingType>(clickFeatureRaw));
+                auto clickFeature = ClickFeature::FromBits(static_cast<PackedUnderlyingType>(clickFeatureRaw));
 
                 return clickModel->Apply(clickFeature);
             }
@@ -629,14 +615,14 @@ namespace NativeJIT
                 auto queryLanguage = queryContext->m_queryMarket.m_languageHash;
 
                 const unsigned languageMatches = docLanguage == queryLanguage ? 1 : 0;
-                totalScore += modelSet->m_languageModel->Apply(BoolFeature::Create(languageMatches));
+                totalScore += modelSet->m_languageModel->Apply(BoolFeature::FromBits(languageMatches));
 
                 // Do the same for the location.
                 auto docLocation = docData->m_documentMarket.m_locationHash;
                 auto queryLocation = queryContext->m_queryMarket.m_locationHash;
 
                 const unsigned locationMatches = docLocation == queryLocation ? 1: 0;
-                totalScore += modelSet->m_locationModel->Apply(BoolFeature::Create(locationMatches));
+                totalScore += modelSet->m_locationModel->Apply(BoolFeature::FromBits(locationMatches));
 
                 // If both language and location match, use the advanced prefer score.
                 if (languageMatches && locationMatches)
@@ -913,7 +899,7 @@ namespace NativeJIT
 
                 auto & clickFeature = e.If(clickLookupSuccessful,
                                            e.Cast<ClickFeature>(e.Deref(clickFeatureRaw)),
-                                           e.Immediate(ClickFeature::Create(0)));
+                                           e.Immediate(ClickFeature::FromBits(0)));
 
                 return e.ApplyModel(clickModel, clickFeature);
             }
@@ -1070,17 +1056,17 @@ namespace NativeJIT
                     : m_shard(3),
                       m_docHandle(m_fixedSizeBlobs, m_variableSizeBlobs)
                 {
-                    m_termFreqMap[c_redHash] = MakeTermFrequencies(4, 3, 1, 1);
+                    m_termFreqMap[c_redHash] = TermFrequencies::FromComponents(4, 3, 1, 1);
                     // c_dogHash not placed into the map to signify a trivial term.
-                    m_termFreqMap[c_dogsHash] = MakeTermFrequencies(2, 3, 0, 1);
-                    m_termFreqMap[c_houseHash] = MakeTermFrequencies(0, 2, 0, 0);
-                    m_termFreqMap[c_housesHash] = MakeTermFrequencies(1, 2, 1, 0);
+                    m_termFreqMap[c_dogsHash] = TermFrequencies::FromComponents(2, 3, 0, 1);
+                    m_termFreqMap[c_houseHash] = TermFrequencies::FromComponents(0, 2, 0, 0);
+                    m_termFreqMap[c_housesHash] = TermFrequencies::FromComponents(1, 2, 1, 0);
 
                     auto const clickHash
                         = ComputeClickHash(c_clickPhraseMarketData.m_languageHash,
                                            c_clickPhraseMarketData.m_locationHash,
                                            c_dogHouseHash);
-                    m_clickFreqMap[clickHash] = ClickFeature::Create(2);
+                    m_clickFreqMap[clickHash] = ClickFeature::FromBits(2);
 
                     m_docData.m_staticScore = 5.7f;
                     m_docData.m_advancedPreferScore = 1.3f;
@@ -1460,7 +1446,7 @@ namespace NativeJIT
 
         TEST_CASES_END
 
-        const Acceptance::TermFrequencies Acceptance::c_defaultTermFrequencies = Acceptance::MakeTermFrequencies(0, 1, 0, 0);
+        const Acceptance::TermFrequencies Acceptance::c_defaultTermFrequencies = Acceptance::TermFrequencies::FromComponents(0, 1, 0, 0);
 
         const float Acceptance::c_discardedDocumentScore = std::numeric_limits<float>::lowest();
 
