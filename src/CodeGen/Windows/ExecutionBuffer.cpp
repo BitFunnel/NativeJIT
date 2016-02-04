@@ -1,12 +1,12 @@
 #include "stdafx.h"
 
 #include <stdexcept>
-#include <unistd.h>
 
 #ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include <Windows.h>
 #else
 #include <sys/mman.h>
+#include <unistd.h>
 #endif
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"

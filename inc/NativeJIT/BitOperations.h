@@ -140,7 +140,7 @@ namespace NativeJIT
                                      value)
                    ? true
                    : false;
-#elseif (APPLE)
+#elif (APPLE)
 	    // OS X provides flsll().
 	    *highestBitSetIndex = flsll(value) - 1;
             return *highestBitSetIndex != -1;
