@@ -1,4 +1,14 @@
+# Emacs
 *~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Other
 .DS_Store
 build/
 build-*/

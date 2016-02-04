@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include <stdexcept>
+#include <unistd.h>
 
 #ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include <Windows.h>

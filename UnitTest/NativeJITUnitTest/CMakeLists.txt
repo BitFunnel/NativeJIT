@@ -1,6 +1,6 @@
 # NativeJIT/UnitTest/NativeJITUnitTest
 
-set(CPPFILES
+set(CPPFILES_EXCLUDED_FROM_GCC
   BitFunnelAcceptanceTest.cpp
   CastUnitTest.cpp
   ConditionalUnitTest.cpp
@@ -8,9 +8,16 @@ set(CPPFILES
   FloatingPointUnitTest.cpp
   FunctionUnitTest.cpp
   PackedUnitTest.cpp
-  stdafx.cpp
   UnsignedUnitTest.cpp
 )
+
+set(CPPFILES
+  stdafx.cpp
+)
+
+if(MINGW OR NOT CMAKE_COMPILER_IS_GNUCXX)
+  set (CPPFILES "${CPPFILES} ${CPPFILES_EXCLUDED_FROM_GCC}")
+endif()
 
 set(PRIVATE_HFILES
   stdafx.h
@@ -20,7 +27,9 @@ set(PRIVATE_HFILES
 # CastUnitTest uses a lot of templates which creates a lot of sections in debug mode which requires the /bigobj or equivalent flag.
 if(MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
-elseif(CMAKE_COMPILER_IS_GNUCXX)
+elseif(CMAKE_COMPILER_IS_GNUCXX AND MINGW)
+  # NOTE: the "-Wa, -mbig-obj" flags are supported by mingw
+  # but not gcc in Linux.
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wa,-mbig-obj")
 endif()
 
