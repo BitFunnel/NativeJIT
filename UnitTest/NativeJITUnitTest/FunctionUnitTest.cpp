@@ -687,15 +687,23 @@ namespace NativeJIT
         // ECX/XMM1s when they are called. It is important that they
         // are not inlined to achieve this.
 
+#ifdef _MSC_VER
         __declspec(noinline)
         static void TakeZeroIntArg(int arg)
+#else
+        static void __attribute__ ((noinline)) TakeZeroIntArg(int arg)	
+#endif
         {
             TestEqual(0, arg);
         }
 
 
+#ifdef _MSC_VER
         __declspec(noinline)
         static void TakeZeroFloatArg(float /* arg1 */, float arg2)
+#else
+        static void __attribute__ ((noinline)) TakeZeroFloatArg(float /* arg1 */, float arg2)
+#endif
         {
             TestEqual(0.0f, arg2);
         }

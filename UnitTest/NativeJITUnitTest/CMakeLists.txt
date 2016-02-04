@@ -1,6 +1,6 @@
 # NativeJIT/UnitTest/NativeJITUnitTest
 
-set(CPPFILES_EXCLUDED_FROM_GCC
+set(CPPFILES
   BitFunnelAcceptanceTest.cpp
   CastUnitTest.cpp
   ConditionalUnitTest.cpp
@@ -8,16 +8,9 @@ set(CPPFILES_EXCLUDED_FROM_GCC
   FloatingPointUnitTest.cpp
   FunctionUnitTest.cpp
   PackedUnitTest.cpp
+  stdafx.cpp
   UnsignedUnitTest.cpp
 )
-
-set(CPPFILES
-  stdafx.cpp
-)
-
-if(MINGW OR NOT CMAKE_COMPILER_IS_GNUCXX)
-  set (CPPFILES "${CPPFILES} ${CPPFILES_EXCLUDED_FROM_GCC}")
-endif()
 
 set(PRIVATE_HFILES
   stdafx.h

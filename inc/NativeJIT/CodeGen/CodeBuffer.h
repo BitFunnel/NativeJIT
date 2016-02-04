@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <stddef.h>                         // For ::size_t
 
 #include "NativeJIT/CodeGen/JumpTable.h"    // Label parameter and return value.
 #include "Temporary/Assert.h"
