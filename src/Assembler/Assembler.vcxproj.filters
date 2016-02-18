@@ -18,5 +18,8 @@
     <MASM Include="TestAsm.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="InstructionEncoding.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

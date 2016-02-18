@@ -4,6 +4,7 @@ set(CPPFILES
   BitOperationsUnitTest.cpp
   CodeGenUnitTest.cpp
   FunctionBufferUnitTest.cpp
+  InstructionEncodingUnitTest.cpp
   ML64Verifier.cpp
   stdafx.cpp
   )

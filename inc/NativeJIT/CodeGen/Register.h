@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 
 #include "Temporary/Assert.h"
 
@@ -106,13 +107,23 @@ namespace NativeJIT
 
 
         // Returns whether the registers are exactly the same (size, type and ID).
-        // This will return false for comparison between f. ex. rax and eax.
-        template <unsigned SIZE2, bool ISFLOAT2>
+        // Thus, this will return false for comparison between f. ex. rax and eax.
+
+        template <unsigned SIZE2,
+                  bool ISFLOAT2,
+                  typename std::enable_if<SIZE != SIZE2 || ISFLOAT != ISFLOAT2>::type * = nullptr>
+        bool operator==(Register<SIZE2, ISFLOAT2> /* other */) const
+        {
+            return false;
+        }
+
+
+        template <unsigned SIZE2,
+                  bool ISFLOAT2,
+                  typename std::enable_if<SIZE == SIZE2 && ISFLOAT == ISFLOAT2>::type * = nullptr>
         bool operator==(Register<SIZE2, ISFLOAT2> other) const
         {
-            return SIZE2 == SIZE
-                   && ISFLOAT2 == ISFLOAT
-                   && other.GetId() == GetId();
+            return GetId() == other.GetId();
         }
 
 
@@ -137,6 +148,7 @@ namespace NativeJIT
 
 
     typedef Register<sizeof(void*), false> PointerRegister;
+
 
     // TODO: Need to avoid "static initialization order fiasco" for register definitions.
     // See http://www.parashift.com/c++-faq/static-init-order.html.

@@ -1105,7 +1105,7 @@ namespace NativeJIT
                 "           20                                                                                      \n"
                 " 00000684  66| 45/ 0F 29 99     movapd qword ptr [r9 + 200h], xmm11                                \n"
                 "           00000200                                                                                \n"
-                "                                                                                                   \n"                "                                ;                                                                  \n"
+                "                                                                                                   \n"
                 "                                ; CvtSI2SD/CvtSI2SS                                                \n"
                 "                                ;                                                                  \n"
                 "                                                                                                   \n"
@@ -1217,7 +1217,6 @@ namespace NativeJIT
                 " 00000695  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
                 " 00000699  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n";
 
-            std::stringstream out;
             ML64Verifier v(ml64Output, start);
         }
 

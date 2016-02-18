@@ -238,7 +238,14 @@ namespace NativeJIT
 
     unsigned ML64Verifier::ReadHexDigit()
     {
-        LogThrowAssert(isxdigit(PeekChar()) != 0, "Non-hex character");
+        if (isxdigit(PeekChar()) == 0)
+        {
+            char const * start = m_currentLineStart;
+            AdvanceToNextLine();
+
+            std::string line(start, m_currentLineStart);
+            LogThrowAbort("Non-hex character in line: %s", line.c_str());
+        }
 
         char c = GetChar();
         if (c >= '0' && c <= '9')

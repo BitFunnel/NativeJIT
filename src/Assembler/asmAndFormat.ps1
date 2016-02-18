@@ -36,9 +36,54 @@ function Expand-Tabs
 & cmd /c "$MlPath" /nologo /c /Sn /Fl"$OutputFile" "$InputFile" | Out-Null
 
 # Expand tabs and format as [indent]"line   \n".
-Get-Content "$OutputFile" `
+#
+# Note: Masm has what seems to be a bug where it sometimes concatenates the cvtsi2ss
+# instruction with its byte code, which confuses ML64Verifier. The replace mitigates that.
+$lines = Get-Content "$OutputFile" `
     | Expand-Tabs -TabSize 8 `
-    | %{ "{0,-$IndentLength}`"{1,-$QuotedLineLength}\n`"" -f " ", $_ }
+    | %{ "{0,-$IndentLength}`"{1,-$QuotedLineLength}\n`"" -f " ", $_ } `
+    | %{ $_ -creplace "([^ ])cvtsi2ss", '$1     cvtsi2ss' }
 
 # Add [indent]""; to end the string.
-"{0,-$IndentLength}`"`";" -f " "
+$lines += "{0,-$IndentLength}`"`";" -f " "
+
+# Print the header.
+@"
+            std::string ml64Output;
+
+            ml64Output +=
+"@
+
+$currentLength = 0
+
+foreach ($line in $lines)
+{
+    $currentLength += $line.Length
+
+    # If next line is likely to overflow, split into a new string. MSVC can't handle strings larger than 64 kB.
+    # This is overestimating the length of the line as it also includes the spaces before/after the string.
+    if ($currentLength + $line.Length -ge 65535)
+    {
+@"
+$line;
+
+            ml64Output +=
+"@
+
+        $currentLength = 0
+    }
+    else
+    {
+        $line
+    }
+}
+
+if ($currentLength -eq 0)
+{
+    '            "";'
+}
+
+@"
+
+            ML64Verifier v(ml64Output.c_str(), start);
+"@

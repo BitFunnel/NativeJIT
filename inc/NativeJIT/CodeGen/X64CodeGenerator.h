@@ -1574,7 +1574,13 @@ namespace NativeJIT
         // in our case always 8).
         const bool w = (REGSIZE == 8 && !REGISFLOAT) || (RMSIZE == 8 && !RMISFLOAT);
 
-        if (w || reg.IsExtended() || rm.IsExtended())
+        // When spl, bpl, sil or dil are used, at least an empty REX byte must
+        // be emitted. Otherwise, these registers would be treated as ah, ch, dh
+        // and bh respectively.
+        const bool forceRex = (reg == spl || reg == bpl || reg == sil || reg == dil)
+                              || (rm == spl || rm == bpl || rm == sil || rm == dil);
+
+        if (forceRex || w || reg.IsExtended() || rm.IsExtended())
         {
             // WRXB
             Emit8(0x40
