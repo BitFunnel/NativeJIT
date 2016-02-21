@@ -629,7 +629,8 @@ namespace NativeJIT
             auto & call10 = e.Call(return10);
 
             auto & return1Point3 = e.Immediate(Return1Point3<2>);
-            auto & call1Point3 = e.Call(return1Point3);
+            auto & call1Point3 = e.Dependent(e.Call(return1Point3),
+                                             call10);
 
             // Convert 1.3 to 1. This is to ensure that the call is referenced
             // and the value is then used since it's convenient.
@@ -664,7 +665,8 @@ namespace NativeJIT
             auto & call1Point3 = e.Call(return1Point3);
 
             auto & return10 = e.Immediate(Return10<2>);
-            auto & call10 = e.Call(return10);
+            auto & call10 = e.Dependent(e.Call(return10),
+                                        call1Point3);
 
             // Convert 10 to 10.0. This is to ensure that the call is referenced
             // and the value is then used since it's convenient.

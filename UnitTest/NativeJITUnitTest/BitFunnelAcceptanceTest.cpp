@@ -736,8 +736,12 @@ namespace NativeJIT
                                                          termHash,
                                                          termFrequenciesRaw);
 
+                    auto & dereferencedRawFrequencies
+                        = e.Dependent(e.Deref(termFrequenciesRaw),
+                                      termLookupSuccessful);
+
                     auto & termFrequencies = e.If(termLookupSuccessful,
-                                                  e.Cast<TermFrequencies>(e.Deref(termFrequenciesRaw)),
+                                                  e.Cast<TermFrequencies>(dereferencedRawFrequencies),
                                                   m_defaultTermFrequencies);
 
                     return termFrequencies;
@@ -897,8 +901,12 @@ namespace NativeJIT
                                                       e.Cast<uint64_t>(clickHash),
                                                       clickFeatureRaw);
 
+                auto & dereferencedRawFeature
+                    = e.Dependent(e.Deref(clickFeatureRaw),
+                                  clickLookupSuccessful);
+
                 auto & clickFeature = e.If(clickLookupSuccessful,
-                                           e.Cast<ClickFeature>(e.Deref(clickFeatureRaw)),
+                                           e.Cast<ClickFeature>(dereferencedRawFeature),
                                            e.Immediate(ClickFeature::FromBits(0)));
 
                 return e.ApplyModel(clickModel, clickFeature);

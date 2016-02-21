@@ -74,6 +74,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nodes", "Nodes", "{80F7B398
 		inc\NativeJIT\Nodes\CallNode.h = inc\NativeJIT\Nodes\CallNode.h
 		inc\NativeJIT\Nodes\CastNode.h = inc\NativeJIT\Nodes\CastNode.h
 		inc\NativeJIT\Nodes\ConditionalNode.h = inc\NativeJIT\Nodes\ConditionalNode.h
+		inc\NativeJIT\Nodes\DependentNode.h = inc\NativeJIT\Nodes\DependentNode.h
 		inc\NativeJIT\Nodes\FieldPointerNode.h = inc\NativeJIT\Nodes\FieldPointerNode.h
 		inc\NativeJIT\Nodes\ImmediateNode.h = inc\NativeJIT\Nodes\ImmediateNode.h
 		inc\NativeJIT\Nodes\ImmediateNodeDecls.h = inc\NativeJIT\Nodes\ImmediateNodeDecls.h

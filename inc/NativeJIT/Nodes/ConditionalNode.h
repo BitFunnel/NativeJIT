@@ -193,7 +193,7 @@ namespace NativeJIT
 
         out << ", condition = " << m_condition.GetId();
         out << ", trueExpression = " << m_trueExpression.GetId();
-        out << ", right = " << m_falseExpression.GetId();
+        out << ", falseExpression = " << m_falseExpression.GetId();
     }
 
 

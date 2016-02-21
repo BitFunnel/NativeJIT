@@ -72,6 +72,11 @@ namespace NativeJIT
         template <typename OBJECT, typename FIELD, typename OBJECT1 = OBJECT>
         Node<FIELD*>& FieldPointer(Node<OBJECT*>& object, FIELD OBJECT1::*field);
 
+        // Note: even though it has two arguments, Dependent node is conceptually
+        // unary.
+        template <typename T> Node<T>& Dependent(Node<T>& dependentNode,
+                                                 NodeBase& prerequisiteNode);
+
         template <typename T> NodeBase& Return(Node<T>& value);
 
 

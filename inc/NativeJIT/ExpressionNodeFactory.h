@@ -16,6 +16,7 @@
 #include "NativeJIT/Nodes/CallNode.h"
 #include "NativeJIT/Nodes/CastNode.h"
 #include "NativeJIT/Nodes/ConditionalNode.h"
+#include "NativeJIT/Nodes/DependentNode.h"
 #include "NativeJIT/Nodes/FieldPointerNode.h"
 #include "NativeJIT/Nodes/ImmediateNode.h"
 #include "NativeJIT/Nodes/IndirectNode.h"
@@ -156,6 +157,14 @@ namespace NativeJIT
                       "Mismatch between the provided object type and field's parent object type");
 
         return PlacementConstruct<FieldPointerNode<OBJECT, FIELD>>(*this, object, field);
+    }
+
+
+    template <typename T>
+    Node<T>& ExpressionNodeFactory::Dependent(Node<T>& dependentNode,
+                                              NodeBase& prerequisiteNode)
+    {
+        return PlacementConstruct<DependentNode<T>>(*this, dependentNode, prerequisiteNode);
     }
 
 
