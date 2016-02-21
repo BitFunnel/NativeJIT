@@ -111,8 +111,8 @@ namespace NativeJIT
             const auto bitsToShiftToMSB = static_cast<uint8_t>(sizeof(PackedUnderlyingType) * 8
                                                                - PACKED::c_totalBitCount);
 
-            code.EmitImmediate<OpCode::Sal>(l, bitsToShiftToMSB);
-            code.EmitImmediate<OpCode::Sal>(r, bitsToShiftToMSB);
+            code.EmitImmediate<OpCode::Shl>(l, bitsToShiftToMSB);
+            code.EmitImmediate<OpCode::Shl>(r, bitsToShiftToMSB);
 
             // Start the recursion. The helper does not use any additional registers.
             typedef decltype(l) RegisterType;
@@ -153,7 +153,7 @@ namespace NativeJIT
 
         // In either case, shift off the high order bits or the right parameter.
         code.PlaceLabel(bottomOfLoop);
-        code.EmitImmediate<OpCode::Sal>(right, static_cast<uint8_t>(PACKED::c_leftmostBitCount));
+        code.EmitImmediate<OpCode::Shl>(right, static_cast<uint8_t>(PACKED::c_leftmostBitCount));
 
         // Process the remainder of the PACKED.
         MinMaxEmitter<ISMAX, REGTYPE, typename PACKED::Right>::Emit(code, left, right);

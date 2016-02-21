@@ -85,6 +85,47 @@ namespace NativeJIT
     }
 
 
+    template <typename FROM>
+    Node<FROM const>&
+    ExpressionNodeFactory::AddConstCast(Node<FROM>& value)
+    {
+        return Cast<FROM const>(value);
+    }
+
+
+    template <typename FROM>
+    Node<FROM>&
+    ExpressionNodeFactory::RemoveConstCast(Node<FROM const>& value,
+                                           typename std::enable_if<!std::is_const<FROM>::value>::type*)
+    {
+        return Cast<FROM>(value);
+    }
+
+
+    template <typename FROM>
+    Node<FROM&>&
+    ExpressionNodeFactory::RemoveConstCast(Node<FROM const &>& value,
+                                           typename std::enable_if<std::is_const<FROM>::value>::type*)
+    {
+        return Cast<FROM&>(value);
+    }
+
+
+    template <typename FROM>
+    Node<FROM const *>&
+    ExpressionNodeFactory::AddTargetConstCast(Node<FROM*>& value)
+    {
+        return Cast<FROM const *>(value);
+    }
+
+
+    template <typename FROM>
+    Node<FROM*>& ExpressionNodeFactory::RemoveTargetConstCast(Node<FROM const *>& value)
+    {
+        return Cast<FROM*>(value);
+    }
+
+
     template <typename T>
     Node<T>& ExpressionNodeFactory::Deref(Node<T*>& pointer)
     {
@@ -176,11 +217,11 @@ namespace NativeJIT
             unsigned bitIndex;
             BitOp::GetLowestBitSet(right, &bitIndex);
 
-            result = &Sal(left, static_cast<uint8_t>(bitIndex));
+            result = &Shl(left, static_cast<uint8_t>(bitIndex));
         }
         else
         {
-            result = &Binary<OpCode::IMul>(left, right);
+            result = &BinaryImmediate<OpCode::IMul>(left, right);
         }
 
         return *result;
@@ -195,9 +236,16 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
-    Node<L>& ExpressionNodeFactory::Sal(Node<L>& left, R right)
+    Node<L>& ExpressionNodeFactory::Shl(Node<L>& left, R right)
     {
-        return Binary<OpCode::Sal>(left, right);
+        return BinaryImmediate<OpCode::Shl>(left, right);
+    }
+
+
+    template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Shr(Node<L>& left, R right)
+    {
+        return BinaryImmediate<OpCode::Shr>(left, right);
     }
 
 
@@ -362,7 +410,7 @@ namespace NativeJIT
 
 
     template <OpCode OP, typename L, typename R>
-    Node<L>& ExpressionNodeFactory::Binary(Node<L>& left, R right)
+    Node<L>& ExpressionNodeFactory::BinaryImmediate(Node<L>& left, R right)
     {
         return PlacementConstruct<BinaryImmediateNode<OP, L, R>>(*this, left, right);
     }

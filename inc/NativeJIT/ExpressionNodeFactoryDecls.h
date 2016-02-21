@@ -42,7 +42,22 @@ namespace NativeJIT
         //
         template <typename T> Node<T*>& AsPointer(Node<T&>& reference);
         template <typename T> Node<T&>& AsReference(Node<T*>& pointer);
+
         template <typename TO, typename FROM> Node<TO>& Cast(Node<FROM>& value);
+
+        // Casts that add or remove const from the node type.
+        // Note: enable_if is a workaround for the MSVC bug (falsely reported
+        // ambiguity between the two templates).
+        template <typename FROM> Node<FROM const>& AddConstCast(Node<FROM>& value);
+        template <typename FROM> Node<FROM>& RemoveConstCast(Node<FROM const>& value,
+                                                             typename std::enable_if<!std::is_const<FROM>::value>::type* = nullptr);
+        template <typename FROM> Node<FROM&>& RemoveConstCast(Node<FROM const &>& value,
+                                                              typename std::enable_if<std::is_const<FROM>::value>::type* = nullptr);
+
+        // Casts that add or remove const from the pointed-to target type.
+        template <typename FROM> Node<FROM const *>& AddTargetConstCast(Node<FROM*>& value);
+        template <typename FROM> Node<FROM*>& RemoveTargetConstCast(Node<FROM const *>& value);
+
         template <typename T> Node<T>& Deref(Node<T*>& pointer);
         template <typename T> Node<T>& Deref(Node<T*>& pointer, int32_t index);
         template <typename T> Node<T>& Deref(Node<T&>& reference);
@@ -68,7 +83,8 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& MulImmediate(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Or(Node<L>& left, Node<R>& right);
-        template <typename L, typename R> Node<L>& Sal(Node<L>& left, R right);
+        template <typename L, typename R> Node<L>& Shl(Node<L>& left, R right);
+        template <typename L, typename R> Node<L>& Shr(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
 
         template <typename T, size_t SIZE, typename INDEX>
@@ -154,6 +170,6 @@ namespace NativeJIT
 
     private:
         template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, Node<R>& right);
-        template <OpCode OP, typename L, typename R> Node<L>& Binary(Node<L>& left, R right);
+        template <OpCode OP, typename L, typename R> Node<L>& BinaryImmediate(Node<L>& left, R right);
     };
 }

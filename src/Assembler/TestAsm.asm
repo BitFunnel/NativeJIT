@@ -598,11 +598,11 @@ comisd xmm2, qword ptr [r9 + 200h]
 ;
 
 rol al, cl
-sal ebx, cl
+shl ebx, cl
 shr r12, cl
 
 rol rax, 3
-sal bl, 4
+shl bl, 4
 shr r12d, 5
 
 shld ax, bx, 11

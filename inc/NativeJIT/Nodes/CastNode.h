@@ -56,6 +56,9 @@ namespace NativeJIT
             // other one must be a pointer.
             static_assert((!std::is_reference<FROM>::value
                            && !std::is_reference<TO>::value)
+                          // Const cast is also acceptable.
+                          || (std::is_same<typename std::remove_const<FROM>::type,
+                                           typename std::remove_const<TO>::type>::value)
                           || (std::is_pointer<FROM>::value
                               || std::is_pointer<TO>::value),
                           "If one side is a reference, the other one must be a pointer");

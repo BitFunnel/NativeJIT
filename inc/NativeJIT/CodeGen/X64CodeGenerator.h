@@ -72,7 +72,7 @@ namespace NativeJIT
         Push,
         Ret,
         Rol,
-        Sal,
+        Shl,        // Note: Shl and Sal are aliases, unlike Shr and Sar.
         Shld,
         Shr,
         Sub,
@@ -2032,7 +2032,7 @@ namespace NativeJIT
     }                                                                                    
 
     DEFINE_GROUP2(Rol, 0);
-    DEFINE_GROUP2(Sal, 4);
+    DEFINE_GROUP2(Shl, 4);
     DEFINE_GROUP2(Shr, 5);
 
 #undef DEFINE_GROUP2

@@ -110,7 +110,7 @@ namespace NativeJIT
             "push",
             "ret",
             "rol",
-            "sal",
+            "shl",
             "shld",
             "shr",
             "sub",

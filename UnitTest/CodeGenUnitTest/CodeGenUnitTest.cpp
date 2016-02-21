@@ -524,11 +524,11 @@ namespace NativeJIT
 
             // Shift
             buffer.Emit<OpCode::Rol>(al);
-            buffer.Emit<OpCode::Sal>(ebx);
+            buffer.Emit<OpCode::Shl>(ebx);
             buffer.Emit<OpCode::Shr>(r12);
 
             buffer.EmitImmediate<OpCode::Rol>(rax, static_cast<uint8_t>(3));
-            buffer.EmitImmediate<OpCode::Sal>(bl, static_cast<uint8_t>(4));
+            buffer.EmitImmediate<OpCode::Shl>(bl, static_cast<uint8_t>(4));
             buffer.EmitImmediate<OpCode::Shr>(r12d, static_cast<uint8_t>(5));
 
             buffer.EmitImmediate<OpCode::Shld>(ax, bx, static_cast<uint8_t>(11));
@@ -1197,11 +1197,11 @@ namespace NativeJIT
                 "                                ;                                                                  \n"
                 "                                                                                                   \n"
                 " 0000047F  D2 C0                rol al, cl                                                         \n"
-                " 00000481  D3 E3                sal ebx, cl                                                        \n"
+                " 00000481  D3 E3                shl ebx, cl                                                        \n"
                 " 00000483  49/ D3 EC            shr r12, cl                                                        \n"
                 "                                                                                                   \n"
                 " 00000486  48/ C1 C0 03         rol rax, 3                                                         \n"
-                " 0000048A  C0 E3 04             sal bl, 4                                                          \n"
+                " 0000048A  C0 E3 04             shl bl, 4                                                          \n"
                 " 0000048D  41/ C1 EC 05         shr r12d, 5                                                        \n"
                 "                                                                                                   \n"
                 " 0000067B  66| 0F A4 D8         shld ax, bx, 11                                                    \n"

@@ -683,7 +683,7 @@ namespace NativeJIT
                       m_termLookupFunc(e.Deref(e.FieldPointer(rankerContext, &WebRankerContext::m_termLookupFunc))),
                       m_defaultTermFrequencies(e.Immediate(c_defaultTermFrequencies)),
                       m_termModel(termModel),
-                      m_shardShiftedToMSB(e.Sal(e.Cast<PackedUnderlyingType>(shard),
+                      m_shardShiftedToMSB(e.Shl(e.Cast<PackedUnderlyingType>(shard),
                                                 static_cast<uint8_t>(sizeof(PackedUnderlyingType) * 8 - c_bitsForShard)))
                 {
                 }
@@ -868,7 +868,7 @@ namespace NativeJIT
 
                 // (language64 | (location64 << 32)) + clickPhrase)
                 auto & clickHash64 = e.Add(e.Or(lang64,
-                                                e.Sal(loc64, static_cast<uint8_t>(32))),
+                                                e.Shl(loc64, static_cast<uint8_t>(32))),
                                            e.Immediate(clickPhrase));
 
                 // Keep only the lowest 16 bits.
@@ -986,7 +986,7 @@ namespace NativeJIT
                                                                    rankerContext,
                                                                    termModel,
                                                                    docData,
-                                                                   e.Cast<void const *>(termHashTable),
+                                                                   e.AddTargetConstCast(termHashTable),
                                                                    shard);
 
                         totalScore = &termContext.AddQueryWordsScore(e,
@@ -1006,7 +1006,7 @@ namespace NativeJIT
                                                                 rankerContext,
                                                                 clickModel,
                                                                 docData,
-                                                                e.Cast<void const *>(clickHashTable),
+                                                                e.AddTargetConstCast(clickHashTable),
                                                                 queryLanguage,
                                                                 queryLocation,
                                                                 parsedQuery.m_clickPhrase.Get()));

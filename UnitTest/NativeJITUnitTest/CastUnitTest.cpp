@@ -125,6 +125,43 @@ namespace NativeJIT
 
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
+        // A no-op test which ensures that the type returned by
+        // Add/RemoveTargetConstCast is correct by getting compiled.
+        TEST_CASE_F(CastTest, TargetCast)
+        {
+            auto setup = GetSetup();
+
+            Function<void const *, void*> add(setup->GetAllocator(), setup->GetCode());
+            add.Return(add.AddTargetConstCast(add.GetP1()));
+
+            Function<void*, void const *> rem(setup->GetAllocator(), setup->GetCode());
+            rem.Return(rem.RemoveTargetConstCast(rem.GetP1()));
+        }
+
+
+        TEST_CASE_F(CastTest, ConstCastNonReference)
+        {
+            auto setup = GetSetup();
+
+            Function<int const, int> add(setup->GetAllocator(), setup->GetCode());
+            add.Return(add.AddConstCast(add.GetP1()));
+
+            Function<int, int const> rem(setup->GetAllocator(), setup->GetCode());
+            rem.Return(rem.RemoveConstCast(rem.GetP1()));
+        }
+
+
+        TEST_CASE_F(CastTest, ConstCastReference)
+        {
+            auto setup = GetSetup();
+
+            Function<int const &, int &> add(setup->GetAllocator(), setup->GetCode());
+            add.Return(add.AddConstCast(add.GetP1()));
+
+            Function<int &, int const &> rem(setup->GetAllocator(), setup->GetCode());
+            rem.Return(rem.RemoveConstCast<int const &>(rem.GetP1()));
+        }
+
 
         TEST_CASE_F(CastTest, FromInt8)
         {
