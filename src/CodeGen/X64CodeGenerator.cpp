@@ -114,6 +114,7 @@ namespace NativeJIT
             "shld",
             "shr",
             "sub",
+            "xor",
         };
 
         static_assert(static_cast<unsigned>(OpCode::OpCodeCount) == std::extent<decltype(names)>::value,

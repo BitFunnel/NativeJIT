@@ -55,9 +55,6 @@ namespace NativeJIT
             buffer.Emit<OpCode::Sub>(rbp, r12, 0x1234);
             buffer.Emit<OpCode::Sub>(r10, r12, 0x12345678);
 
-            // Mod/RM special cases for rsp.
-            // TODO
-
             // Direct-direct
             buffer.Emit<OpCode::Add>(al, cl);
             buffer.Emit<OpCode::Add>(bx, dx);
@@ -73,44 +70,65 @@ namespace NativeJIT
             buffer.Emit<OpCode::Add>(r9b, rsi, 0x100);
             buffer.Emit<OpCode::Add>(r15b, rdi, 0x12345678);
 
-            buffer.Emit<OpCode::Cmp>(dl, rdx, 0);
-            buffer.Emit<OpCode::Cmp>(cx, rcx, 0x12);
-            buffer.Emit<OpCode::Cmp>(r9w, rsi, 0x1234);
-            buffer.Emit<OpCode::Cmp>(r11w, rdi, 0x12345678);
+            buffer.Emit<OpCode::Add>(dx, rdx, 0);
+            buffer.Emit<OpCode::Add>(cx, rcx, 0x12);
+            buffer.Emit<OpCode::Add>(r9w, rsi, 0x1234);
+            buffer.Emit<OpCode::Add>(r11w, rdi, 0x12345678);
 
-            buffer.Emit<OpCode::Or>(esp, r9, 0);
-            buffer.Emit<OpCode::Or>(edx, rcx, 0x12);
-            buffer.Emit<OpCode::Or>(esi, rsi, 0x1234);
-            buffer.Emit<OpCode::Or>(r11d, rdi, 0x12345678);
+            buffer.Emit<OpCode::Add>(edx, rdx, 0);
+            buffer.Emit<OpCode::Add>(ecx, rcx, 0x12);
+            buffer.Emit<OpCode::Add>(r9d, rsi, 0x1234);
+            buffer.Emit<OpCode::Add>(r11d, rdi, 0x12345678);
 
-            buffer.Emit<OpCode::Sub>(rbx, r12, 0);
-            buffer.Emit<OpCode::Sub>(rdi, rcx, 0x12);
-            buffer.Emit<OpCode::Sub>(rbp, rsi, 0x1234);
-            buffer.Emit<OpCode::Sub>(r10, rdi, 0x12345678);
+            buffer.Emit<OpCode::Add>(rdx, rdx, 0);
+            buffer.Emit<OpCode::Add>(rcx, rcx, 0x12);
+            buffer.Emit<OpCode::Add>(r9, rsi, 0x1234);
+            buffer.Emit<OpCode::Add>(r11, rdi, 0x12345678);
 
+
+            // Indirect-direct with zero, byte, word, and double word offsets.
+            buffer.Emit<OpCode::Add>(rax, 0, cl);
+            buffer.Emit<OpCode::Add>(rcx, 0x12, bl);
+            buffer.Emit<OpCode::Add>(rsi, 0x100, r9b);
+            buffer.Emit<OpCode::Add>(rdi, 0x12345678, r15b);
+
+            buffer.Emit<OpCode::Add>(rdx, 0, dx);
+            buffer.Emit<OpCode::Add>(rcx, 0x12, cx);
+            buffer.Emit<OpCode::Add>(rsi, 0x1234, r9w);
+            buffer.Emit<OpCode::Add>(rdi, 0x12345678, r11w);
+
+            buffer.Emit<OpCode::Add>(rdx, 0, edx);
+            buffer.Emit<OpCode::Add>(rcx, 0x12, ecx);
+            buffer.Emit<OpCode::Add>(rsi, 0x1234, r9d);
+            buffer.Emit<OpCode::Add>(rdi, 0x12345678, r11d);
+
+            buffer.Emit<OpCode::Add>(rdx, 0, rdx);
+            buffer.Emit<OpCode::Add>(rcx, 0x12, rcx);
+            buffer.Emit<OpCode::Add>(rsi, 0x1234, r9);
+            buffer.Emit<OpCode::Add>(rdi, 0x12345678, r11);
 
             // Direct-immediate register 0 case.
-            buffer.EmitImmediate<OpCode::Or>(al, static_cast<uint8_t>(0x34));
-            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<uint16_t>(0x56));
-            buffer.EmitImmediate<OpCode::Or>(ax, static_cast<uint16_t>(0x5678));
-            buffer.EmitImmediate<OpCode::Or>(eax, 0x12);
-            buffer.EmitImmediate<OpCode::Or>(eax, 0x1234);
-            buffer.EmitImmediate<OpCode::Or>(eax, 0x12345678);
-            buffer.EmitImmediate<OpCode::Or>(rax, 0x12);
-            buffer.EmitImmediate<OpCode::Or>(rax, 0x1234);
-            buffer.EmitImmediate<OpCode::Or>(rax, 0x12345678);
+            buffer.EmitImmediate<OpCode::Add>(al, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Add>(ax, static_cast<uint16_t>(0x56));
+            buffer.EmitImmediate<OpCode::Add>(ax, static_cast<uint16_t>(0x5678));
+            buffer.EmitImmediate<OpCode::Add>(eax, 0x12);
+            buffer.EmitImmediate<OpCode::Add>(eax, 0x1234);
+            buffer.EmitImmediate<OpCode::Add>(eax, 0x12345678);
+            buffer.EmitImmediate<OpCode::Add>(rax, 0x12);
+            buffer.EmitImmediate<OpCode::Add>(rax, 0x1234);
+            buffer.EmitImmediate<OpCode::Add>(rax, 0x12345678);
 
             // Direct-immediate general purpose register case.
-            buffer.EmitImmediate<OpCode::And>(bl, static_cast<uint8_t>(0x34));
-            buffer.EmitImmediate<OpCode::And>(r13b, static_cast<uint8_t>(0x34));
-            buffer.EmitImmediate<OpCode::And>(cx, static_cast<uint16_t>(0x56));
-            buffer.EmitImmediate<OpCode::And>(dx, static_cast<uint16_t>(0x5678));
-            buffer.EmitImmediate<OpCode::And>(ebp, 0x12);
-            buffer.EmitImmediate<OpCode::And>(ebp, 0x1234);
-            buffer.EmitImmediate<OpCode::And>(ebp, 0x12345678);
-            buffer.EmitImmediate<OpCode::And>(r12, 0x12);
-            buffer.EmitImmediate<OpCode::And>(r12, 0x1234);
-            buffer.EmitImmediate<OpCode::And>(r12, 0x12345678);
+            buffer.EmitImmediate<OpCode::Add>(bl, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Add>(r13b, static_cast<uint8_t>(0x34));
+            buffer.EmitImmediate<OpCode::Add>(cx, static_cast<uint16_t>(0x56));
+            buffer.EmitImmediate<OpCode::Add>(dx, static_cast<uint16_t>(0x5678));
+            buffer.EmitImmediate<OpCode::Add>(ebp, 0x12);
+            buffer.EmitImmediate<OpCode::Add>(ebp, 0x1234);
+            buffer.EmitImmediate<OpCode::Add>(ebp, 0x12345678);
+            buffer.EmitImmediate<OpCode::Add>(r12, 0x12);
+            buffer.EmitImmediate<OpCode::Add>(r12, 0x1234);
+            buffer.EmitImmediate<OpCode::Add>(r12, 0x12345678);
 
             // Direct-immediate, different opcodes depending on whether sign
             // extension is acceptable.
@@ -119,20 +137,75 @@ namespace NativeJIT
             // correctly fail to compile in NativeJIT. They would produce the value
             // of FFFFFFFF80000000h unexpectedly since sign extension is
             // unconditionally used for 32-bit immediates targeting 64-bit registers.
-            // buffer.EmitImmediate<OpCode::Or>(rax, 0x80000000);
-            // buffer.EmitImmediate<OpCode::Or>(rcx, 0x80000000);
-            buffer.EmitImmediate<OpCode::Or>(rax, -0x7fffffff);
-            buffer.EmitImmediate<OpCode::Or>(rcx, -0x7fffffff);
-            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<int8_t>(-0x7f));
-            buffer.EmitImmediate<OpCode::Or>(cl, static_cast<uint8_t>(0x80));
-            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<int8_t>(-0x7f));
-            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<int8_t>(-0x7f));
-            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<int8_t>(-0x7f));
+            // buffer.EmitImmediate<OpCode::Add>(rax, 0x80000000);
+            // buffer.EmitImmediate<OpCode::Add>(rcx, 0x80000000);
+            buffer.EmitImmediate<OpCode::Add>(rax, -0x7fffffff);
+            buffer.EmitImmediate<OpCode::Add>(rcx, -0x7fffffff);
+            buffer.EmitImmediate<OpCode::Add>(cl, static_cast<int8_t>(-0x7f));
+            buffer.EmitImmediate<OpCode::Add>(cl, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Add>(cx, static_cast<int8_t>(-0x7f));
+            buffer.EmitImmediate<OpCode::Add>(ecx, static_cast<int8_t>(-0x7f));
+            buffer.EmitImmediate<OpCode::Add>(rcx, static_cast<int8_t>(-0x7f));
 
             // The immediates that will not be sign extended.
-            buffer.EmitImmediate<OpCode::Or>(cx, static_cast<uint8_t>(0x80));
-            buffer.EmitImmediate<OpCode::Or>(ecx, static_cast<uint8_t>(0x80));
-            buffer.EmitImmediate<OpCode::Or>(rcx, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Add>(cx, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Add>(ecx, static_cast<uint8_t>(0x80));
+            buffer.EmitImmediate<OpCode::Add>(rcx, static_cast<uint8_t>(0x80));
+
+            // and
+            buffer.EmitImmediate<OpCode::And>(al, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::And>(eax, 0x11223344);
+            buffer.EmitImmediate<OpCode::And>(dl, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::And>(edx, 0x11223344);
+            buffer.EmitImmediate<OpCode::And>(edx, static_cast<uint8_t>(0x11));
+            buffer.Emit<OpCode::And>(rbx, 1, dl);
+            buffer.Emit<OpCode::And>(rcx, 4, edx);
+            buffer.Emit<OpCode::And>(dl, rbx, 1);
+            buffer.Emit<OpCode::And>(edx, rcx, 4);
+
+            // cmp
+            buffer.EmitImmediate<OpCode::Cmp>(al, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Cmp>(eax, 0x11223344);
+            buffer.EmitImmediate<OpCode::Cmp>(dl, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Cmp>(edx, 0x11223344);
+            buffer.EmitImmediate<OpCode::Cmp>(edx, static_cast<uint8_t>(0x11));
+            buffer.Emit<OpCode::Cmp>(rbx, 1, dl);
+            buffer.Emit<OpCode::Cmp>(rcx, 4, edx);
+            buffer.Emit<OpCode::Cmp>(dl, rbx, 1);
+            buffer.Emit<OpCode::Cmp>(edx, rcx, 4);
+
+            // or
+            buffer.EmitImmediate<OpCode::Or>(al, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Or>(eax, 0x11223344);
+            buffer.EmitImmediate<OpCode::Or>(dl, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Or>(edx, 0x11223344);
+            buffer.EmitImmediate<OpCode::Or>(edx, static_cast<uint8_t>(0x11));
+            buffer.Emit<OpCode::Or>(rbx, 1, dl);
+            buffer.Emit<OpCode::Or>(rcx, 4, edx);
+            buffer.Emit<OpCode::Or>(dl, rbx, 1);
+            buffer.Emit<OpCode::Or>(edx, rcx, 4);
+
+            // sub
+            buffer.EmitImmediate<OpCode::Sub>(al, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Sub>(eax, 0x11223344);
+            buffer.EmitImmediate<OpCode::Sub>(dl, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Sub>(edx, 0x11223344);
+            buffer.EmitImmediate<OpCode::Sub>(edx, static_cast<uint8_t>(0x11));
+            buffer.Emit<OpCode::Sub>(rbx, 1, dl);
+            buffer.Emit<OpCode::Sub>(rcx, 4, edx);
+            buffer.Emit<OpCode::Sub>(dl, rbx, 1);
+            buffer.Emit<OpCode::Sub>(edx, rcx, 4);
+
+            // xor
+            buffer.EmitImmediate<OpCode::Xor>(al, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Xor>(eax, 0x11223344);
+            buffer.EmitImmediate<OpCode::Xor>(dl, static_cast<uint8_t>(0x11));
+            buffer.EmitImmediate<OpCode::Xor>(edx, 0x11223344);
+            buffer.EmitImmediate<OpCode::Xor>(edx, static_cast<uint8_t>(0x11));
+            buffer.Emit<OpCode::Xor>(rbx, 1, dl);
+            buffer.Emit<OpCode::Xor>(rcx, 4, edx);
+            buffer.Emit<OpCode::Xor>(dl, rbx, 1);
+            buffer.Emit<OpCode::Xor>(edx, rcx, 4);
 
             // call
 
@@ -210,6 +283,7 @@ namespace NativeJIT
             buffer.EmitImmediate<OpCode::Mov>(rbx, static_cast<uint64_t>(0x1234567812345678));
             buffer.EmitImmediate<OpCode::Mov>(rsp, static_cast<uint64_t>(0x1234567812345678));
             buffer.EmitImmediate<OpCode::Mov>(r12, static_cast<uint64_t>(0x1234567812345678));
+            buffer.EmitImmediate<OpCode::Mov>(rax, reinterpret_cast<void*>(0x2234567812345678));
 
             // mov [r + offset], r with zero, byte, word, and double word offsets
             buffer.Emit<OpCode::Mov>(rax, 0, cl);
@@ -565,7 +639,10 @@ namespace NativeJIT
             // TODO: Have a build step use the script to automatically produce
             // a .cpp file containing the ml64Output variable as a dependency
             // on TestAsm.asm.
-            char const * ml64Output = 
+            // The full string is longer than 64 kB and needs to be split in smaller pieces at least for MSVC.
+            std::string ml64Output;
+
+            ml64Output +=
                 "                                ; Another special case                                             \n"
                 " 00000000  4D/ 03 6D 00         add r13, [r13]                                                     \n"
                 " 00000000  4D/ 8B 6D 00         mov r13, [r13]                                                     \n"
@@ -583,94 +660,191 @@ namespace NativeJIT
                 "           00001234                                                                                \n"
                 " 00000011  4D/ 2B 94 24         sub r10, [r12 + 12345678h]                                         \n"
                 "           12345678                                                                                \n"
-                " 00000019  02 C1                add al, cl                                                         \n"
-                " 0000001B  66| 03 DA            add bx, dx                                                         \n"
-                " 0000001E  03 F0                add esi, eax                                                       \n"
-                " 00000020  48/ 03 C3            add rax, rbx                                                       \n"
-                " 00000023  4D/ 03 C1            add r8, r9                                                         \n"
-                " 00000026  49/ 03 E4            add rsp, r12                                                       \n"
+
+                "                                ;                                                                  \n"
+                "                                ; Group1 addressing mode permutations for a single opcode.         \n"
+                "                                ;                                                                  \n"
+                "                                                                                                   \n"
+                "                                ; direct-direct                                                    \n"
+                " 00000080  02 C1                add al, cl                                                         \n"
+                " 00000082  66| 03 DA            add bx, dx                                                         \n"
+                " 00000085  03 F0                add esi, eax                                                       \n"
+                " 00000087  48/ 03 C3            add rax, rbx                                                       \n"
+                " 0000008A  4D/ 03 C1            add r8, r9                                                         \n"
+                " 0000008D  49/ 03 E4            add rsp, r12                                                       \n"
                 "                                                                                                   \n"
                 "                                ; direct-indirect with zero, byte, word, and double word offsets   \n"
-                " 00000029  02 08                add cl, [rax]                                                      \n"
-                " 0000002B  02 59 12             add bl, [rcx + 12h]                                                \n"
-                " 0000002E  44/ 02 8E            add r9b, [rsi + 100h]                                              \n"
+                " 00000090  02 08                add cl, byte ptr [rax]                                             \n"
+                " 00000092  02 59 12             add bl, byte ptr [rcx + 12h]                                       \n"
+                " 00000095  44/ 02 8E            add r9b, byte ptr [rsi + 100h]                                     \n"
                 "           00000100                                                                                \n"
-                " 00000035  44/ 02 BF            add r15b, [rdi + 12345678h]                                        \n"
+                " 0000009C  44/ 02 BF            add r15b, byte ptr [rdi + 12345678h]                               \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
-                " 0000003C  3A 12                cmp dl, [rdx]                                                      \n"
-                " 0000003E  66| 3B 49 12         cmp cx, [rcx + 12h]                                                \n"
-                " 00000042  66| 44/ 3B 8E        cmp r9w, [rsi + 1234h]                                             \n"
+                " 000000A3  66| 03 12            add dx, word ptr [rdx]                                             \n"
+                " 000000A6  66| 03 49 12         add cx, word ptr [rcx + 12h]                                       \n"
+                " 000000AA  66| 44/ 03 8E        add r9w, word ptr [rsi + 1234h]                                    \n"
                 "           00001234                                                                                \n"
-                " 0000004A  66| 44/ 3B 9F        cmp r11w, [rdi + 12345678h]                                        \n"
+                " 000000B2  66| 44/ 03 9F        add r11w, word ptr [rdi + 12345678h]                               \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
-                " 00000052  41/ 0B 21            or esp, [r9]                                                       \n"
-                " 00000055  0B 51 12             or edx, [rcx + 12h]                                                \n"
-                " 00000058  0B B6 00001234       or esi, [rsi + 1234h]                                              \n"
-                " 0000005E  44/ 0B 9F            or r11d, [rdi + 12345678h]                                         \n"
-                "           12345678                                                                                \n"
-                "                                                                                                   \n"
-                " 00000065  49/ 2B 1C 24         sub rbx, [r12]                                                     \n"
-                " 00000069  48/ 2B 79 12         sub rdi, [rcx + 12h]                                               \n"
-                " 0000006D  48/ 2B AE            sub rbp, [rsi + 1234h]                                             \n"
+                " 000000BA  03 12                add edx, dword ptr [rdx]                                           \n"
+                " 000000BC  03 49 12             add ecx, dword ptr [rcx + 12h]                                     \n"
+                " 000000BF  44/ 03 8E            add r9d, dword ptr [rsi + 1234h]                                   \n"
                 "           00001234                                                                                \n"
-                " 00000074  4C/ 2B 97            sub r10, [rdi + 12345678h]                                         \n"
+                " 000000C6  44/ 03 9F            add r11d, dword ptr [rdi + 12345678h]                              \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 000000CD  48/ 03 12            add rdx, qword ptr [rdx]                                           \n"
+                " 000000D0  48/ 03 49 12         add rcx, qword ptr [rcx + 12h]                                     \n"
+                " 000000D4  4C/ 03 8E            add r9, qword ptr [rsi + 1234h]                                    \n"
+                "           00001234                                                                                \n"
+                " 000000DB  4C/ 03 9F            add r11, qword ptr [rdi + 12345678h]                               \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                "                                                                                                   \n"
+                "                                ; indirect-direct with zero, byte, word, and double word offsets   \n"
+                " 000000E2  00 08                add byte ptr [rax], cl                                             \n"
+                " 000000E4  00 59 12             add byte ptr [rcx + 12h], bl                                       \n"
+                " 000000E7  44/ 00 8E            add byte ptr [rsi + 100h], r9b                                     \n"
+                "           00000100                                                                                \n"
+                " 000000EE  44/ 00 BF            add byte ptr [rdi + 12345678h], r15b                               \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 000000F5  66| 01 12            add word ptr [rdx], dx                                             \n"
+                " 000000F8  66| 01 49 12         add word ptr [rcx + 12h], cx                                       \n"
+                " 000000FC  66| 44/ 01 8E        add word ptr [rsi + 1234h], r9w                                    \n"
+                "           00001234                                                                                \n"
+                " 00000104  66| 44/ 01 9F        add word ptr [rdi + 12345678h], r11w                               \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 0000010C  01 12                add dword ptr [rdx], edx                                           \n"
+                " 0000010E  01 49 12             add dword ptr [rcx + 12h], ecx                                     \n"
+                " 00000111  44/ 01 8E            add dword ptr [rsi + 1234h], r9d                                   \n"
+                "           00001234                                                                                \n"
+                " 00000118  44/ 01 9F            add dword ptr [rdi + 12345678h], r11d                              \n"
+                "           12345678                                                                                \n"
+                "                                                                                                   \n"
+                " 0000011F  48/ 01 12            add qword ptr [rdx], rdx                                           \n"
+                " 00000122  48/ 01 49 12         add qword ptr [rcx + 12h], rcx                                     \n"
+                " 00000126  4C/ 01 8E            add qword ptr [rsi + 1234h], r9                                    \n"
+                "           00001234                                                                                \n"
+                " 0000012D  4C/ 01 9F            add qword ptr [rdi + 12345678h], r11                               \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
                 "                                ; direct-immediate register 0 case                                 \n"
-                " 0000007B  0C 34                or al, 34h                                                         \n"
-                " 0000007D  66| 83 C8 56         or ax, 56h                                                         \n"
-                " 00000081  66| 0D 5678          or ax, 5678h                                                       \n"
-                " 00000085  83 C8 12             or eax, 12h                                                        \n"
-                " 00000088  0D 00001234          or eax, 1234h                                                      \n"
-                " 0000008D  0D 12345678          or eax, 12345678h                                                  \n"
-                " 00000092  48/ 83 C8 12         or rax, 12h                                                        \n"
-                " 00000096  48/ 0D               or rax, 1234h                                                      \n"
+                " 00000134  04 34                add al, 34h                                                        \n"
+                " 00000136  66| 83 C0 56         add ax, 56h                                                        \n"
+                " 0000013A  66| 05 5678          add ax, 5678h                                                      \n"
+                " 0000013E  83 C0 12             add eax, 12h                                                       \n"
+                " 00000141  05 00001234          add eax, 1234h                                                     \n"
+                " 00000146  05 12345678          add eax, 12345678h                                                 \n"
+                " 0000014B  48/ 83 C0 12         add rax, 12h                                                       \n"
+                " 0000014F  48/ 05               add rax, 1234h                                                     \n"
                 "           00001234                                                                                \n"
-                " 0000009C  48/ 0D               or rax, 12345678h                                                  \n"
+                " 00000155  48/ 05               add rax, 12345678h                                                 \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
                 "                                ; direct-immediate general purpose register case                   \n"
-                " 000000A2  80 E3 34             and bl, 34h                                                        \n"
-                " 0000010C  41/ 80 E5 34         and r13b, 34h                                                      \n"
-                " 000000A5  66| 83 E1 56         and cx, 56h                                                        \n"
-                " 000000A9  66| 81 E2 5678       and dx, 5678h                                                      \n"
-                " 000000AE  83 E5 12             and ebp, 12h                                                       \n"
-                " 000000B1  81 E5 00001234       and ebp, 1234h                                                     \n"
-                " 000000B7  81 E5 12345678       and ebp, 12345678h                                                 \n"
-                " 000000BD  49/ 83 E4 12         and r12, 12h                                                       \n"
-                " 000000C1  49/ 81 E4            and r12, 1234h                                                     \n"
+                " 0000015B  80 C3 34             add bl, 34h                                                        \n"
+                " 0000015E  41/ 80 C5 34         add r13b, 34h                                                      \n"
+                " 00000162  66| 83 C1 56         add cx, 56h                                                        \n"
+                " 00000166  66| 81 C2 5678       add dx, 5678h                                                      \n"
+                " 0000016B  83 C5 12             add ebp, 12h                                                       \n"
+                " 0000016E  81 C5 00001234       add ebp, 1234h                                                     \n"
+                " 00000174  81 C5 12345678       add ebp, 12345678h                                                 \n"
+                " 0000017A  49/ 83 C4 12         add r12, 12h                                                       \n"
+                " 0000017E  49/ 81 C4            add r12, 1234h                                                     \n"
                 "           00001234                                                                                \n"
-                " 000000C8  49/ 81 E4            and r12, 12345678h                                                 \n"
+                " 00000185  49/ 81 C4            add r12, 12345678h                                                 \n"
                 "           12345678                                                                                \n"
                 "                                                                                                   \n"
                 "                                ; Direct-immediate, different opcodes depending on                 \n"
                 "                                ; whether sign extension is acceptable.                            \n"
                 "                                ;                                                                  \n"
-                "                                ; The immediates that will be sign extended.                       \n"
-                "                                ; The first two lines would correctly fail to compile              \n"
-                "                                ; in NativeJIT. They would produce the value of                    \n"
-                "                                ; FFFFFFFF80000000h unexpectedly since sign extension              \n"
-                "                                ; is unconditionally used for 32-bit immediates targeting          \n"
-                "                                ; 64-bit registers.                                                \n"
-                "                                ; or rax, 80000000h                                                \n"
-                "                                ; or rcx, 80000000h                                                \n"
-                " 0000013A  48/ 0D               or rax, -7fffffffh                                                 \n"
+                "                                ; The immediates that will be sign extended or will use the        \n"
+                "                                ; sign-extend opcode in cases when it makes no difference          \n"
+                "                                ; (when both source and target are 1-byte).                        \n"
+                "                                ;                                                                  \n"
+                "                                ; The first two lines would correctly fail to compile in NativeJIT \n"
+                "                                ; and are thus commented out. They would produce the value of      \n"
+                "                                ; FFFFFFFF80000000h unexpectedly since sign extension is unconditionally\n"
+                "                                ; used for 32-bit immediates targeting 64-bit registers.           \n"
+                "                                ;                                                                  \n"
+                "                                ; add rax, 80000000h                                               \n"
+                "                                ; add rcx, 80000000h                                               \n"
+                " 0000018C  48/ 05               add rax, -7fffffffh                                                \n"
                 "           80000001                                                                                \n"
-                " 00000140  48/ 81 C9            or rcx, -7fffffffh                                                 \n"
+                " 00000192  48/ 81 C1            add rcx, -7fffffffh                                                \n"
                 "           80000001                                                                                \n"
-                " 00000147  80 C9 81             or cl, -7fh                                                        \n"
-                " 0000014A  80 C9 80             or cl, 80h                                                         \n"
-                " 0000014D  66| 83 C9 81         or cx, -7fh                                                        \n"
-                " 00000151  83 C9 81             or ecx, -7fh                                                       \n"
-                " 00000154  48/ 83 C9 81         or rcx, -7fh                                                       \n"
+                " 00000199  80 C1 81             add cl, -7fh                                                       \n"
+                " 0000019C  80 C1 80             add cl, 80h                                                        \n"
+                " 0000019F  66| 83 C1 81         add cx, -7fh                                                       \n"
+                " 000001A3  83 C1 81             add ecx, -7fh                                                      \n"
+                " 000001A6  48/ 83 C1 81         add rcx, -7fh                                                      \n"
                 "                                                                                                   \n"
                 "                                ; The immediates that will not be sign extended.                   \n"
-                " 00000158  66| 81 C9 0080       or cx, 80h                                                         \n"
-                " 0000015D  81 C9 00000080       or ecx, 80h                                                        \n"
-                " 00000163  48/ 81 C9            or rcx, 80h                                                        \n"
+                " 000001AA  66| 81 C1 0080       add cx, 80h                                                        \n"
+                " 000001AF  81 C1 00000080       add ecx, 80h                                                       \n"
+                " 000001B5  48/ 81 C1            add rcx, 80h                                                       \n"
                 "           00000080                                                                                \n"
+                "                                                                                                   \n"
+                "                                ;                                                                  \n"
+                "                                ; Verify various flavors of each Group1 opcode.                    \n"
+                "                                ; These instructions excercise all different flavors               \n"
+                "                                ; which use different base opcode and extension. The               \n"
+                "                                ; generic Group1 encoding was already verified with                \n"
+                "                                ; the add instruction above.                                       \n"
+                "                                ;                                                                  \n"
+                " 000001BC  24 11                and al, 11h                                                        \n"
+                " 000001BE  25 11223344          and eax, 11223344h                                                 \n"
+                " 000001C3  80 E2 11             and dl, 11h                                                        \n"
+                " 000001C6  81 E2 11223344       and edx, 11223344h                                                 \n"
+                " 000001CC  83 E2 11             and edx, 11h                                                       \n"
+                " 000001CF  20 53 01             and byte ptr [rbx + 1], dl                                         \n"
+                " 000001D2  21 51 04             and dword ptr [rcx + 4], edx                                       \n"
+                " 000001D5  22 53 01             and dl, byte ptr [rbx + 1]                                         \n"
+                " 000001D8  23 51 04             and edx, dword ptr [rcx + 4]                                       \n"
+                "                                                                                                   \n"
+                " 000001DB  3C 11                cmp al, 11h                                                        \n"
+                " 000001DD  3D 11223344          cmp eax, 11223344h                                                 \n"
+                " 000001E2  80 FA 11             cmp dl, 11h                                                        \n"
+                " 000001E5  81 FA 11223344       cmp edx, 11223344h                                                 \n"
+                " 000001EB  83 FA 11             cmp edx, 11h                                                       \n"
+                " 000001EE  38 53 01             cmp byte ptr [rbx + 1], dl                                         \n"
+                " 000001F1  39 51 04             cmp dword ptr [rcx + 4], edx                                       \n"
+                " 000001F4  3A 53 01             cmp dl, byte ptr [rbx + 1]                                         \n"
+                " 000001F7  3B 51 04             cmp edx, dword ptr [rcx + 4]                                       \n"
+                "                                                                                                   \n"
+                " 000001FA  0C 11                or al, 11h                                                         \n"
+                " 000001FC  0D 11223344          or eax, 11223344h                                                  \n"
+                " 00000201  80 CA 11             or dl, 11h                                                         \n"
+                " 00000204  81 CA 11223344       or edx, 11223344h                                                  \n"
+                " 0000020A  83 CA 11             or edx, 11h                                                        \n"
+                " 0000020D  08 53 01             or byte ptr [rbx + 1], dl                                          \n"
+                " 00000210  09 51 04             or dword ptr [rcx + 4], edx                                        \n"
+                " 00000213  0A 53 01             or dl, byte ptr [rbx + 1]                                          \n"
+                " 00000216  0B 51 04             or edx, dword ptr [rcx + 4]                                        \n"
+                "                                                                                                   \n"
+                " 00000219  2C 11                sub al, 11h                                                        \n"
+                " 0000021B  2D 11223344          sub eax, 11223344h                                                 \n"
+                " 00000220  80 EA 11             sub dl, 11h                                                        \n"
+                " 00000223  81 EA 11223344       sub edx, 11223344h                                                 \n"
+                " 00000229  83 EA 11             sub edx, 11h                                                       \n"
+                " 0000022C  28 53 01             sub byte ptr [rbx + 1], dl                                         \n"
+                " 0000022F  29 51 04             sub dword ptr [rcx + 4], edx                                       \n"
+                " 00000232  2A 53 01             sub dl, byte ptr [rbx + 1]                                         \n"
+                " 00000235  2B 51 04             sub edx, dword ptr [rcx + 4]                                       \n"
+                "                                                                                                   \n"
+                " 00000238  34 11                xor al, 11h                                                        \n"
+                " 0000023A  35 11223344          xor eax, 11223344h                                                 \n"
+                " 0000023F  80 F2 11             xor dl, 11h                                                        \n"
+                " 00000242  81 F2 11223344       xor edx, 11223344h                                                 \n"
+                " 00000248  83 F2 11             xor edx, 11h                                                       \n"
+                " 0000024B  30 53 01             xor byte ptr [rbx + 1], dl                                         \n"
+                " 0000024E  31 51 04             xor dword ptr [rcx + 4], edx                                       \n"
+                " 00000251  32 53 01             xor dl, byte ptr [rbx + 1]                                         \n"
+                " 00000254  33 51 04             xor edx, dword ptr [rcx + 4]                                       \n"
                 "                                                                                                   \n"
                 "                                ;                                                                  \n"
                 "                                ; Lea                                                              \n"
@@ -773,6 +947,9 @@ namespace NativeJIT
                 "           1234567812345678                                                                        \n"
                 " 000001CF  49/ BC               mov r12, 1234567812345678h                                         \n"
                 "           1234567812345678                                                                        \n"
+                "                                ; Test for immediate T*                                            \n"
+                " 0000030E  48/ B8               mov rax, 2234567812345678h                                         \n"
+                "           2234567812345678                                                                        \n"
                 "                                                                                                   \n"
                 "                                                                                                   \n"
                 "                                ; mov [r + offset], r with zero, byte, word, and dword offsets     \n"
@@ -865,7 +1042,9 @@ namespace NativeJIT
                 " 000002ED  FF D5                call rbp                                                           \n"
                 " 000002EF  41/ FF D4            call r12                                                           \n"
                 " 000002F2  41/ FF D5            call r13                                                           \n"
-                "                                                                                                   \n"
+                "                                                                                                   \n";
+
+            ml64Output +=
                 "                                ; MovD                                                             \n"
                 " 0000030D  66| 48/ 0F 6E C8     movd xmm1, rax                                                     \n"
                 " 00000312  66| 48/ 0F 6E C9     movd xmm1, rcx                                                     \n"
@@ -1217,7 +1396,7 @@ namespace NativeJIT
                 " 00000695  49/ 0F A5 EC         shld r12, rbp, cl                                                  \n"
                 " 00000699  4C/ 0F A5 E5         shld rbp, r12, cl                                                  \n";
 
-            ML64Verifier v(ml64Output, start);
+            ML64Verifier v(ml64Output.c_str(), start);
         }
 
         TEST_CASES_END

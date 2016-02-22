@@ -76,6 +76,7 @@ namespace NativeJIT
         Shld,
         Shr,
         Sub,
+        Xor,
         // The following value must be the last one.
         OpCodeCount
     };
@@ -997,7 +998,6 @@ namespace NativeJIT
     }
 
 
-    // TODO: Need a unit test for this case.
     template <typename T>
     void X64CodeGenerator::MovImmediate(Register<8, false> dest,
                                         T* value)
@@ -1350,16 +1350,25 @@ namespace NativeJIT
     }
 
 
-    // TODO: It appears that this cases is not directly tested for Group1 opcodes.
-    // It might be tested for mov.
-    // TODO: This doesn't seem correct for Add, etc. since the base opcode doesn't change.
     template <unsigned SIZE>
     void X64CodeGenerator::Group1(uint8_t baseOpCode,
                                   Register<8, false> dest,
                                   int32_t destOffset,
                                   Register<SIZE, false> src)
     {
-        Group1(baseOpCode, src, dest, destOffset);
+        // Note: operand encoding is MR, so the order of arguments for the
+        // Emit*() methods is reversed.
+        EmitOpSizeOverrideIndirect<SIZE, false>(src, dest);
+        EmitRexIndirect<SIZE, false>(src, dest);
+        if (SIZE == 1)
+        {
+            Emit8(baseOpCode);
+        }
+        else
+        {
+            Emit8(baseOpCode + 0x1);
+        }
+        EmitModRMOffset(src, dest, destOffset);
     }
 
 
@@ -1771,7 +1780,7 @@ namespace NativeJIT
         int32_t destOffset,
         Register<SIZE, false> src)
     {
-        code.Group1(0x86, dest, destOffset, src);
+        code.Group1(0x88, dest, destOffset, src);
     }
 
 
@@ -1990,6 +1999,19 @@ namespace NativeJIT
                                                                                                 \
     template <>                                                                                 \
     template <>                                                                                 \
+    template <unsigned SIZE>                                                                    \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::Emit(                        \
+        X64CodeGenerator& code,                                                                 \
+        Register<8, false> dest,                                                                \
+        int32_t destOffset,                                                                     \
+        Register<SIZE, false> src)                                                              \
+    {                                                                                           \
+        code.Group1(baseOpCode, dest, destOffset, src);                                         \
+    }                                                                                           \
+                                                                                                \
+                                                                                                \
+    template <>                                                                                 \
+    template <>                                                                                 \
     template <unsigned SIZE, typename T>                                                        \
     void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::EmitImmediate(               \
         X64CodeGenerator& code,                                                                 \
@@ -2001,9 +2023,10 @@ namespace NativeJIT
 
     DEFINE_GROUP1(Add, 0, 0);
     DEFINE_GROUP1(And, 0x20, 4);
+    DEFINE_GROUP1(Cmp, 0x38, 7);
     DEFINE_GROUP1(Or, 8, 1);
     DEFINE_GROUP1(Sub, 0x28, 5);
-    DEFINE_GROUP1(Cmp, 0x38, 7);
+    DEFINE_GROUP1(Xor, 0x30, 6);
 
 #undef DEFINE_GROUP1
 

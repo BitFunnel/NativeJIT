@@ -84,59 +84,71 @@ add r8, r9
 add rsp, r12
 
 ; direct-indirect with zero, byte, word, and double word offsets
-add cl, [rax]
-add bl, [rcx + 12h]
-add r9b, [rsi + 100h]
-add r15b, [rdi + 12345678h]
+add cl, byte ptr [rax]
+add bl, byte ptr [rcx + 12h]
+add r9b, byte ptr [rsi + 100h]
+add r15b, byte ptr [rdi + 12345678h]
 
-cmp dl, [rdx]
-cmp cx, [rcx + 12h]
-cmp r9w, [rsi + 1234h]
-cmp r11w, [rdi + 12345678h]
+add dx, word ptr [rdx]
+add cx, word ptr [rcx + 12h]
+add r9w, word ptr [rsi + 1234h]
+add r11w, word ptr [rdi + 12345678h]
 
-or esp, [r9]
-or edx, [rcx + 12h]
-or esi, [rsi + 1234h]
-or r11d, [rdi + 12345678h]
+add edx, dword ptr [rdx]
+add ecx, dword ptr [rcx + 12h]
+add r9d, dword ptr [rsi + 1234h]
+add r11d, dword ptr [rdi + 12345678h]
 
-sub rbx, [r12]
-sub rdi, [rcx + 12h]
-sub rbp, [rsi + 1234h]
-sub r10, [rdi + 12345678h]
+add rdx, qword ptr [rdx]
+add rcx, qword ptr [rcx + 12h]
+add r9, qword ptr [rsi + 1234h]
+add r11, qword ptr [rdi + 12345678h]
+
+
+; indirect-direct with zero, byte, word, and double word offsets
+add byte ptr [rax], cl
+add byte ptr [rcx + 12h], bl
+add byte ptr [rsi + 100h], r9b
+add byte ptr [rdi + 12345678h], r15b
+
+add word ptr [rdx], dx
+add word ptr [rcx + 12h], cx
+add word ptr [rsi + 1234h], r9w
+add word ptr [rdi + 12345678h], r11w
+
+add dword ptr [rdx], edx
+add dword ptr [rcx + 12h], ecx
+add dword ptr [rsi + 1234h], r9d
+add dword ptr [rdi + 12345678h], r11d
+
+add qword ptr [rdx], rdx
+add qword ptr [rcx + 12h], rcx
+add qword ptr [rsi + 1234h], r9
+add qword ptr [rdi + 12345678h], r11
 
 ; direct-immediate register 0 case
-or al, 34h
-or ax, 56h
-or ax, 5678h
-or eax, 12h
-or eax, 1234h
-or eax, 12345678h
-or rax, 12h
-or rax, 1234h
-or rax, 12345678h
+add al, 34h
+add ax, 56h
+add ax, 5678h
+add eax, 12h
+add eax, 1234h
+add eax, 12345678h
+add rax, 12h
+add rax, 1234h
+add rax, 12345678h
 
 ; direct-immediate general purpose register case
-and bl, 34h
-and r13b, 34h
-and cx, 56h
-and dx, 5678h
-and ebp, 12h
-and ebp, 1234h
-and ebp, 12345678h
-and r12, 12h
-and r12, 1234h
-and r12, 12345678h
+add bl, 34h
+add r13b, 34h
+add cx, 56h
+add dx, 5678h
+add ebp, 12h
+add ebp, 1234h
+add ebp, 12345678h
+add r12, 12h
+add r12, 1234h
+add r12, 12345678h
 
-
-;
-; One example of each Group1 opcode.
-;
-add rdx, [rsi + 56h]
-cmp rdx, [rsi + 56h]
-or rdx, [rsi + 56h]
-cmp rdx, [rsi + 56h]
-
-; adc, sbb, and, xor not supported.
 ; Direct-immediate, different opcodes depending on
 ; whether sign extension is acceptable.
 ;
@@ -149,23 +161,77 @@ cmp rdx, [rsi + 56h]
 ; FFFFFFFF80000000h unexpectedly since sign extension is unconditionally
 ; used for 32-bit immediates targeting 64-bit registers.
 ;
-; or rax, 80000000h
-; or rcx, 80000000h
-or rax, -7fffffffh
-or rcx, -7fffffffh
-or cl, -7fh
-or cl, 80h
-or cx, -7fh
-or ecx, -7fh
-or rcx, -7fh
+; add rax, 80000000h
+; add rcx, 80000000h
+add rax, -7fffffffh
+add rcx, -7fffffffh
+add cl, -7fh
+add cl, 80h
+add cx, -7fh
+add ecx, -7fh
+add rcx, -7fh
 
 ; The immediates that will not be sign extended.
-or cx, 80h
-or ecx, 80h
-or rcx, 80h
+add cx, 80h
+add ecx, 80h
+add rcx, 80h
 
-; TODO: test one group1 instruction with all the different branches that
-; produce different opcode/extension opcode.
+;
+; Verify various flavors of each Group1 opcode.
+; These instructions excercise all different flavors
+; which use different base opcode and extension. The
+; generic Group1 encoding was already verified with
+; the add instruction above.
+;
+and al, 11h
+and eax, 11223344h
+and dl, 11h
+and edx, 11223344h
+and edx, 11h
+and byte ptr [rbx + 1], dl
+and dword ptr [rcx + 4], edx
+and dl, byte ptr [rbx + 1]
+and edx, dword ptr [rcx + 4]
+
+cmp al, 11h
+cmp eax, 11223344h
+cmp dl, 11h
+cmp edx, 11223344h
+cmp edx, 11h
+cmp byte ptr [rbx + 1], dl
+cmp dword ptr [rcx + 4], edx
+cmp dl, byte ptr [rbx + 1]
+cmp edx, dword ptr [rcx + 4]
+
+or al, 11h
+or eax, 11223344h
+or dl, 11h
+or edx, 11223344h
+or edx, 11h
+or byte ptr [rbx + 1], dl
+or dword ptr [rcx + 4], edx
+or dl, byte ptr [rbx + 1]
+or edx, dword ptr [rcx + 4]
+
+sub al, 11h
+sub eax, 11223344h
+sub dl, 11h
+sub edx, 11223344h
+sub edx, 11h
+sub byte ptr [rbx + 1], dl
+sub dword ptr [rcx + 4], edx
+sub dl, byte ptr [rbx + 1]
+sub edx, dword ptr [rcx + 4]
+
+xor al, 11h
+xor eax, 11223344h
+xor dl, 11h
+xor edx, 11223344h
+xor edx, 11h
+xor byte ptr [rbx + 1], dl
+xor dword ptr [rcx + 4], edx
+xor dl, byte ptr [rbx + 1]
+xor edx, dword ptr [rcx + 4]
 
 ;
 ; Lea
@@ -243,6 +309,8 @@ mov r12, 80000000h
 mov rbx, 1234567812345678h
 mov rsp, 1234567812345678h
 mov r12, 1234567812345678h
+; Test for immediate T*
+mov rax, 2234567812345678h
 
 
 ; mov [r + offset], r with zero, byte, word, and dword offsets
