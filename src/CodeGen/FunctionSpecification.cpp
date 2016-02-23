@@ -1,8 +1,10 @@
-//#include "stdafx.h"
+#include "stdafx.h"
 
 #include <algorithm>    // For std::min.
 #include <stdexcept>
-//#include <Windows.h>
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#include <Windows.h>
+#endif
 
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CallingConvention.h"
@@ -20,19 +22,20 @@ namespace NativeJIT
 
     // Note: defining in .cpp file to avoid the need to include UnwindCode.h
     // in FunctionSpecification.h.
-    const unsigned FunctionSpecificationBase::c_maxUnwindInfoBufferSize
+    const unsigned FunctionSpecification::c_maxUnwindInfoBufferSize
         = sizeof(UnwindInfo)
           - sizeof(UnwindCode) // Included in UnwindInfo.
           + c_maxUnwindCodes * sizeof(UnwindCode);
 
 
-    FunctionSpecificationBase::FunctionSpecificationBase(Allocators::IAllocator& allocator,
-                                                         int maxFunctionCallParameters,
-                                                         unsigned localStackSlotCount,
-                                                         unsigned savedRxxNonvolatilesMask,
-                                                         unsigned savedXmmNonvolatilesMask,
-                                                         BaseRegisterType baseRegisterType,
-                                                         std::ostream* diagnosticsStream)
+
+    FunctionSpecification::FunctionSpecification(Allocators::IAllocator& allocator,
+                                                 int maxFunctionCallParameters,
+                                                 unsigned localStackSlotCount,
+                                                 unsigned savedRxxNonvolatilesMask,
+                                                 unsigned savedXmmNonvolatilesMask,
+                                                 BaseRegisterType baseRegisterType,
+                                                 std::ostream* diagnosticsStream)
         : m_stlAllocator(allocator),
           m_unwindInfoBuffer(m_stlAllocator),
           m_prologCode(m_stlAllocator),
@@ -109,14 +112,14 @@ namespace NativeJIT
     }
 
 
-    void FunctionSpecificationBase::BuildUnwindInfoAndProlog(int maxFunctionCallParameters,
-                                                             unsigned localStackSlotCount,
-                                                             unsigned savedRxxNonvolatilesMask,
-                                                             unsigned savedXmmNonvolatilesMask,
-                                                             BaseRegisterType baseRegisterType,
-                                                             X64CodeGenerator& prologCode,
-                                                             AllocatorVector<uint8_t>& unwindInfoBuffer,
-                                                             int32_t& offsetToOriginalRsp)
+    void FunctionSpecification::BuildUnwindInfoAndProlog(int maxFunctionCallParameters,
+                                                         unsigned localStackSlotCount,
+                                                         unsigned savedRxxNonvolatilesMask,
+                                                         unsigned savedXmmNonvolatilesMask,
+                                                         BaseRegisterType baseRegisterType,
+                                                         X64CodeGenerator& prologCode,
+                                                         AllocatorVector<uint8_t>& unwindInfoBuffer,
+                                                         int32_t& offsetToOriginalRsp)
     {
         LogThrowAssert((savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
                        "Saving/restoring of non-writable RXX registers is not allowed: 0x%Ix",
@@ -306,6 +309,8 @@ namespace NativeJIT
 
             while (BitOp::GetLowestBitSet(registersMask, &regId))
             {
+                // Both movaps and movapd can be used here, but according to
+                // external tests, movaps is more performant.
                 prologCode.Emit<OpCode::MovAP>(
                     rsp,
                     currStackSlotOffset * sizeof(void*),
@@ -392,15 +397,15 @@ namespace NativeJIT
                 return code.m_operation.m_opInfo == 0 ? 2 : 3;
 
             default:
-                LogThrowAssert(false, "Unknown unwind operation %u", code.m_operation.m_unwindOp);
+                LogThrowAbort("Unknown unwind operation %u", code.m_operation.m_unwindOp);
                 // Silence the "not all paths return a value" warning.
                 return 0;
         }
     }
 
 
-    void FunctionSpecificationBase::BuildEpilog(UnwindInfo const & unwindInfo,
-                                                X64CodeGenerator& epilogCode)
+    void FunctionSpecification::BuildEpilog(UnwindInfo const & unwindInfo,
+                                            X64CodeGenerator& epilogCode)
     {
         UnwindCode const * codes = &unwindInfo.m_firstUnwindCode;
         unsigned i = 0;
@@ -456,7 +461,7 @@ namespace NativeJIT
                 break;
 
             default:
-                LogThrowAssert(false, "Unsupported unwind operation %u", unwindCode.m_operation.m_unwindOp);
+                LogThrowAbort("Unsupported unwind operation %u", unwindCode.m_operation.m_unwindOp);
                 break;
             }
 
@@ -468,43 +473,43 @@ namespace NativeJIT
     }
 
 
-    int32_t FunctionSpecificationBase::GetOffsetToOriginalRsp() const
+    int32_t FunctionSpecification::GetOffsetToOriginalRsp() const
     {
         return m_offsetToOriginalRsp;
     }
 
 
-    uint8_t const * FunctionSpecificationBase::GetUnwindInfoBuffer() const
+    uint8_t const * FunctionSpecification::GetUnwindInfoBuffer() const
     {
         return m_unwindInfoBuffer.data();
     }
 
 
-    unsigned FunctionSpecificationBase::GetUnwindInfoByteLength() const
+    unsigned FunctionSpecification::GetUnwindInfoByteLength() const
     {
         return static_cast<unsigned>(m_unwindInfoBuffer.size());
     }
 
 
-    uint8_t const * FunctionSpecificationBase::GetProlog() const
+    uint8_t const * FunctionSpecification::GetProlog() const
     {
         return m_prologCode.data();
     }
 
 
-    unsigned FunctionSpecificationBase::GetPrologLength() const
+    unsigned FunctionSpecification::GetPrologLength() const
     {
         return static_cast<unsigned>(m_prologCode.size());
     }
 
     
-    uint8_t const * FunctionSpecificationBase::GetEpilog() const
+    uint8_t const * FunctionSpecification::GetEpilog() const
     {
         return m_epilogCode.data();
     }
     
     
-    unsigned FunctionSpecificationBase::GetEpilogLength() const
+    unsigned FunctionSpecification::GetEpilogLength() const
     {
         return static_cast<unsigned>(m_epilogCode.size());
     }

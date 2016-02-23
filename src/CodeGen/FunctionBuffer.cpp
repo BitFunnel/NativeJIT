@@ -1,10 +1,23 @@
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include "stdafx.h"
+#endif
 
 #include <stdexcept>
 
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionSpecification.h"
 #include "UnwindCode.h"
+
+
+// linux x64 stack unwinding
+// http://blog.reverberate.org/2013/05/deep-wizardry-stack-unwinding.html
+// http://www.hexblog.com/wp-content/uploads/2012/06/Recon-2012-Skochinsky-Compiler-Internals.pdf
+// https://llvm.org/bugs/show_bug.cgi?id=24233
+// https://bugzilla.mozilla.org/show_bug.cgi?id=844196
+// https://sourceware.org/gdb/current/onlinedocs/gdb/JIT-Interface.html#JIT-Interface
+
+// linux x64 ABI
+// http://x86-64.org/documentation/abi.pdf
 
 
 namespace NativeJIT
@@ -15,8 +28,9 @@ namespace NativeJIT
     //
     //*************************************************************************
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
     RUNTIME_FUNCTION*
-    FunctionBufferBase::WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context)
+    FunctionBuffer::WindowsGetRuntimeFunctionCallback(DWORD64 controlPc, void* context)
     {
         auto const pc = reinterpret_cast<uint8_t const *>(controlPc);
         auto const fb = reinterpret_cast<FunctionBuffer /* const */ *>(context);
@@ -28,10 +42,11 @@ namespace NativeJIT
                 ? runtime
                 : nullptr;
     }
+#endif
 
 
-    FunctionBufferBase::FunctionBufferBase(Allocators::IAllocator& codeAllocator,
-                                           unsigned capacity)
+    FunctionBuffer::FunctionBuffer(Allocators::IAllocator& codeAllocator,
+                                   unsigned capacity)
         : X64CodeGenerator(codeAllocator, capacity),
           m_runtimeFunction(),
           m_unwindInfoStartOffset(0),
@@ -42,6 +57,8 @@ namespace NativeJIT
     {
         LogThrowAssert(reinterpret_cast<size_t>(&m_runtimeFunction) % sizeof(DWORD) == 0,
                        "RUNTIME_FUNCTION must be DWORD aligned");
+
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 
         // Register a callback to return the RUNTIME_FUNCTION when Windows
         // asks for it during exception handling.
@@ -54,11 +71,13 @@ namespace NativeJIT
         {
             throw std::runtime_error("Couldn't install function table callback");
         }
+#endif
     }
 
 
-    FunctionBufferBase::~FunctionBufferBase()
+    FunctionBuffer::~FunctionBuffer()
     {
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
         // From MSDN about the argument to RtlDeleteFunctionTable: "A pointer to
         // ... or an identifier previously passed to RtlInstallFunctionTableCallback."
         // TODO: return code not checked as there's nothing else to do on error but
@@ -66,10 +85,11 @@ namespace NativeJIT
         auto entry = reinterpret_cast<RUNTIME_FUNCTION*>(
             UnwindUtils::MakeFunctionTableIdentifier(this));
         RtlDeleteFunctionTable(entry);
+#endif
     }
 
 
-    void const * FunctionBufferBase::GetEntryPoint() const
+    void const * FunctionBuffer::GetEntryPoint() const
     {
         LogThrowAssert(m_isCodeGenerationCompleted,
                        "Cannot get entry point until code generation is finalized");
@@ -77,7 +97,7 @@ namespace NativeJIT
         return BufferStart() + m_runtimeFunction.BeginAddress;
     }
 
-    unsigned FunctionBufferBase::GetFunctionCodeStartOffset() const
+    unsigned FunctionBuffer::GetFunctionCodeStartOffset() const
     {
         LogThrowAssert(m_isCodeGenerationCompleted,
                        "Cannot get start offset until code generation is finalized");
@@ -86,7 +106,7 @@ namespace NativeJIT
     }
 
 
-    unsigned FunctionBufferBase::GetFunctionCodeEndOffset() const
+    unsigned FunctionBuffer::GetFunctionCodeEndOffset() const
     {
         LogThrowAssert(m_isCodeGenerationCompleted,
                        "Cannot get end offset until code generation is finalized");
@@ -95,23 +115,27 @@ namespace NativeJIT
     }
 
 
-    unsigned FunctionBufferBase::GetUnwindInfoStartOffset() const
+    unsigned FunctionBuffer::GetUnwindInfoStartOffset() const
     {
         LogThrowAssert(m_isCodeGenerationCompleted,
                        "Cannot get unwind info offset until code generation is finalized");
 
-        return m_runtimeFunction.UnwindData;
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+        return m_runtimeFunction.UnwindInfoAddress;
+#else
+        return m_runtimeFunction.DUMMYUNIONNAME.UnwindInfoAddress;
+#endif
     }
 
 
-    void FunctionBufferBase::BeginFunctionBodyGeneration(FunctionSpecification const & spec)
+    void FunctionBuffer::BeginFunctionBodyGeneration(FunctionSpecification const & spec)
     {
         BeginFunctionBodyGeneration(spec.GetUnwindInfoByteLength(),
                                     spec.GetPrologLength());
     }
 
 
-    void FunctionBufferBase::BeginFunctionBodyGeneration()
+    void FunctionBuffer::BeginFunctionBodyGeneration()
     {
         // Function specification is unknown at this point. Reserve enough
         // space for unwind info and prolog to be filled in after it's known.
@@ -120,7 +144,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::BeginFunctionBodyGeneration(unsigned reservedUnwindInfoLength,
+    void FunctionBuffer::BeginFunctionBodyGeneration(unsigned reservedUnwindInfoLength,
                                                      unsigned reservedPrologLength)
     {
         LogThrowAssert(!m_isCodeGenerationCompleted, "Code generation has already been completed");
@@ -141,7 +165,7 @@ namespace NativeJIT
     }
 
 
-    void FunctionBufferBase::EndFunctionBodyGeneration(FunctionSpecification const & spec)
+    void FunctionBuffer::EndFunctionBodyGeneration(FunctionSpecification const & spec)
     {
         LogThrowAssert(spec.GetUnwindInfoByteLength() <= m_unwindInfoByteLength,
                        "Unwind info length of %u bytes is larger than the reserved %u bytes",
@@ -185,13 +209,17 @@ namespace NativeJIT
         // Fill in information about the function.
         m_runtimeFunction.BeginAddress = m_prologStartOffset;
         m_runtimeFunction.EndAddress = CurrentPosition();
-        m_runtimeFunction.UnwindData = m_unwindInfoStartOffset;
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+        m_runtimeFunction.UnwindInfoAddress = m_unwindInfoStartOffset;
+#else
+        m_runtimeFunction.DUMMYUNIONNAME.UnwindInfoAddress = m_unwindInfoStartOffset;
+#endif
 
         m_isCodeGenerationCompleted = true;
     }
 
 
-    void FunctionBufferBase::Reset()
+    void FunctionBuffer::Reset()
     {
         X64CodeGenerator::Reset();
 

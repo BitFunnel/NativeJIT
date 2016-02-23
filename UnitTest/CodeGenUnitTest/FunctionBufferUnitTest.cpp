@@ -12,10 +12,10 @@
 #include "NativeJIT/CodeGen/FunctionSpecification.h"
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
-#include "Windows/UnwindCode.h"
+#include "UnwindCode.h"
 
 // TODO: Use alignas with VC14.
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #define ALIGNAS(x) __declspec(align(x))
 #else
 #define ALIGNAS(x) alignas(x)

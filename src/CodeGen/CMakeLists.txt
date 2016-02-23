@@ -5,29 +5,27 @@ set(CPPFILES
   Assert.cpp
   BitOperations.cpp
   CodeBuffer.cpp
+  FunctionBuffer.cpp
+  FunctionSpecification.cpp
   JumpTable.cpp
   Register.cpp
   stdafx.cpp
+  UnwindCode.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
   Windows/ExecutionBuffer.cpp
 )
 
 set(WINDOWS_CPPFILES
-  Windows/FunctionBuffer.cpp
-  Windows/FunctionSpecification.cpp
-  Windows/UnwindCode.cpp
 )
 
 set(POSIX_CPPFILES
-  POSIX/FunctionBuffer.cpp
-  POSIX/FunctionSpecification.cpp
-  POSIX/UnwindCode.cpp
 )
 
 set(PRIVATE_HFILES
   stdafx.h
   targetver.h
+  UnwindCode.h
 )
 
 set(PUBLIC_HFILES
@@ -50,25 +48,15 @@ set(PUBLIC_HFILES
 )
 
 set(WINDOWS_PRIVATE_HFILES
-  Windows/UnwindCode.h
-  Windows/stdafx.h
-  Windows/targetver.h
 )
 
 set(WINDOWS_PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/Windows/FunctionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/Windows/FunctionSpecification.h
 )
 
 set(POSIX_PRIVATE_HFILES
-  POSIX/UnwindCode.h
-  POSIX/stdafx.h
-  POSIX/targetver.h
 )
 
 set(POSIX_PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/POSIX/FunctionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/POSIX/FunctionSpecification.h
 )
 
 if (NATIVEJIT_PLATFORM_WINDOWS)

@@ -3,14 +3,17 @@
 #include <cstdint>
 #include <ostream>
 #include <type_traits>
-//#include <windows.h>
 
 // TODO: What's the underlying reason for this requirement in this file?
 #if !defined(_M_X64) && !defined(__amd64__)
 #error This code must be compiled for _AMD64_
 #endif
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#include <windows.h>
+#else
 typedef uint64_t DWORD64;
+#endif
 
 namespace NativeJIT
 {
