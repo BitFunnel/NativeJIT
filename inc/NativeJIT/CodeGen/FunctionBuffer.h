@@ -3,6 +3,7 @@
 #ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include <windows.h>                                // RUNTIME_FUNCTION embedded.
 #else
+#include <cstdint>
 typedef uint32_t DWORD;
 
 typedef struct

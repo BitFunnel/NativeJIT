@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
-
 #include <algorithm>
 #include <functional>
 #include <random>
@@ -489,6 +487,11 @@ namespace NativeJIT
         }
 
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+        // NativeJIT only implements stack unwinding on Windows.
+        // Therefore, the exception propagation unit test must be
+        // disabled for other operating systems.
+        
         static void ThrowTestException()
         {
             throw std::runtime_error("Test");
@@ -547,7 +550,8 @@ namespace NativeJIT
 
             TestAssert(exceptionCaught);
         }
-
+#endif
+        
 
         TEST_CASE_F(FunctionBufferTest, RegisterPreservation)
         {
@@ -625,4 +629,3 @@ namespace NativeJIT
 
 #undef TestEqualUnwindCode
 #undef ALIGNAS
-#endif
