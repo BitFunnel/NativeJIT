@@ -5,7 +5,7 @@
 
 #pragma once
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include "targetver.h"
 
 // Windows Header Files:

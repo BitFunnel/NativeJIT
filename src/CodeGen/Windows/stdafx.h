@@ -5,7 +5,7 @@
 
 #pragma once
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 
 // http://stackoverflow.com/questions/1191248/handling-stdafx-h-in-cross-platform-code
 

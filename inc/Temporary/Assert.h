@@ -1,7 +1,7 @@
 #pragma once
 
 // MSVC has __pragma directive for use in macros since #pragma would apply to the macro itself.
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #define PREPROCESSOR_PRAGMA_WARNING(x) __pragma(warning(x))
 #else
 #define PREPROCESSOR_PRAGMA_WARNING(x)

@@ -6,7 +6,7 @@ namespace NativeJIT
 {
     namespace
     {
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
         // Uses CPUID instruction to check whether POPCNT instruction is supported.
         bool IsPopCntSupported()
         {

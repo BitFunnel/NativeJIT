@@ -10,7 +10,7 @@
 #include "TestSetup.h"
 
 
-#ifndef _MSC_VER
+#ifndef NATIVEJIT_PLATFORM_WINDOWS
 #define _AddressOfReturnAddress() __builtin_frame_address(0)
 #endif
 
@@ -786,7 +786,7 @@ namespace NativeJIT
         // ECX/XMM1s when they are called. It is important that they
         // are not inlined to achieve this.
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
         __declspec(noinline)
         static void TakeZeroIntArg(int arg)
 #else
@@ -797,7 +797,7 @@ namespace NativeJIT
         }
 
 
-#ifdef _MSC_VER
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
         __declspec(noinline)
         static void TakeZeroFloatArg(float /* arg1 */, float arg2)
 #else
