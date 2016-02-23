@@ -48,9 +48,9 @@ namespace NativeJIT
 
 
     template <typename T>
-    ParameterNode<T>& ExpressionNodeFactory::Parameter(unsigned position)
+    ParameterNode<T>& ExpressionNodeFactory::Parameter(ParameterSlotAllocator& slotAllocator)
     {
-        return PlacementConstruct<ParameterNode<T>>(*this, position);
+        return PlacementConstruct<ParameterNode<T>>(*this, slotAllocator);
     }
 
 

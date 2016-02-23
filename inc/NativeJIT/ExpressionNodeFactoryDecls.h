@@ -18,6 +18,8 @@ namespace NativeJIT
 
     class NodeBase;
 
+    class ParameterSlotAllocator;
+
     template <typename T>
     class ParameterNode;
 
@@ -30,7 +32,7 @@ namespace NativeJIT
         // Leaf nodes
         //
         template <typename T> ImmediateNode<T>& Immediate(T value);
-        template <typename T> ParameterNode<T>& Parameter(unsigned position);
+        template <typename T> ParameterNode<T>& Parameter(ParameterSlotAllocator& slotAllocator);
 
         // See StackVariableNode for important information about stack variable
         // lifetime.

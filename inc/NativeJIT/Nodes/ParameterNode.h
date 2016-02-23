@@ -7,11 +7,13 @@
 
 namespace NativeJIT
 {
+    class ParameterSlotAllocator;
+
     template <typename T>
     class ParameterNode : public Node<T>
     {
     public:
-        ParameterNode(ExpressionTree& tree, unsigned position);
+        ParameterNode(ExpressionTree& tree, ParameterSlotAllocator& slotAllocator);
 
         unsigned GetPosition() const;
 
@@ -34,6 +36,75 @@ namespace NativeJIT
         ~ParameterNode();
 
         unsigned m_position;
+        unsigned m_logicalRegister;
+    };
+
+
+    // ParameterSlotAllocator allocates parameter index numbers which are used to
+    // map parameters to registers. In the Windows ABI, a parameter's index
+    // numbers is equal to its position in the parameter list, regardless of
+    // parameter type. For example, in the function,
+    //    void f(int a, float b, int c, float d)
+    // the parameter indexes would be
+    //    a:0, b:1, c:2, d:3
+    // In the System V ABI, parameters indexes are allocated from two sequences,
+    // one for integer types and one for floating point types. Given the
+    // function definition above, on System V, the parameter indexes would be
+    //    a:0, b:0, c:1, d:1
+    class ParameterSlotAllocator
+    {
+    public:
+        ParameterSlotAllocator()
+            : m_ints(0),
+              m_floats(0),
+              m_position(0),
+              m_register(0)
+        {
+        }
+
+
+        unsigned GetPosition() const
+        {
+            return m_position;
+        }
+
+
+        unsigned GetLogicalRegister() const
+        {
+            return m_register;
+        }
+
+
+        template <class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
+        void Allocate()
+        {
+            m_position = m_ints + m_floats;
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            m_register = m_position;
+#else
+            m_register = m_floats;
+#endif
+            m_floats++;
+        }
+
+
+        template <class T, typename std::enable_if<!std::is_floating_point<T>::value>::type * = nullptr>
+        void Allocate()
+        {
+            m_position = m_ints + m_floats;
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
+            m_register = m_position;
+#else
+            m_register = m_ints;
+#endif
+            m_ints++;
+        }
+
+    private:
+        unsigned m_ints;
+        unsigned m_floats;
+        unsigned m_position;
+        unsigned m_register;
     };
 
 
@@ -75,10 +146,13 @@ namespace NativeJIT
 
 
     template <typename T>
-    ParameterNode<T>::ParameterNode(ExpressionTree& tree, unsigned position)
-        : Node<T>(tree),
-          m_position(position)
+    ParameterNode<T>::ParameterNode(ExpressionTree& tree, ParameterSlotAllocator& slotAllocator)
+        : Node<T>(tree)
     {
+        slotAllocator.Allocate<T>();
+        m_position = slotAllocator.GetPosition();
+        m_logicalRegister = slotAllocator.GetLogicalRegister();
+
         // Parameter nodes are always considered to be referenced (as a part of
         // the function being compiled) even when they are not referenced
         // explicitly.
@@ -105,7 +179,7 @@ namespace NativeJIT
     typename ExpressionTree::Storage<T> ParameterNode<T>::CodeGenValue(ExpressionTree& tree)
     {
         typename Storage<T>::DirectRegister reg;
-        GetParameterRegister(m_position, reg);
+        GetParameterRegister(m_logicalRegister, reg);
 
         return tree.Direct<T>(reg);
     }
