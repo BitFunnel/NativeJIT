@@ -5,6 +5,7 @@ set(CPPFILES
   Assert.cpp
   BitOperations.cpp
   CodeBuffer.cpp
+  ExecutionBuffer.cpp
   FunctionBuffer.cpp
   FunctionSpecification.cpp
   JumpTable.cpp
@@ -13,7 +14,6 @@ set(CPPFILES
   UnwindCode.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
-  Windows/ExecutionBuffer.cpp
 )
 
 set(WINDOWS_CPPFILES
