@@ -277,6 +277,103 @@ namespace NativeJIT
         }
 
 
+        // The Windows x64 ABI and the System V ABI handle parameter passing
+        // differently. This test case verifies that a function with int and
+        // float parameters works correctly.
+        TEST_CASE_F(FunctionTest, FunctionTwoMixedParameters)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<float, int, float> expression(setup->GetAllocator(), setup->GetCode());
+
+                float c10 = 10.0f;
+
+                auto & a = expression.Mul(expression.GetP2(), expression.Immediate<float>(c10));
+                auto & b = expression.Add(expression.Cast<float>(expression.GetP1()), a);
+
+                auto function = expression.Compile(b);
+
+                int p1 = 1;
+                float p2 = 2.0;
+
+                auto expected = (float)p1 + (p2 * 10.0f);
+                auto observed = function(p1, p2);
+
+                TestEqual(expected, observed);
+            }
+        }
+
+
+        // The Windows x64 ABI and the System V ABI handle parameter passing
+        // differently. This test case verifies that a function with int and
+        // float parameters works correctly.
+        TEST_CASE_F(FunctionTest, FunctionThreeMixedParameters)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<float, int, float, int> expression(setup->GetAllocator(), setup->GetCode());
+
+                float c10 = 10.0f;
+                float c100 = 100.0f;
+
+                auto & a = expression.Mul(expression.GetP2(), expression.Immediate<float>(c10));
+                auto & b = expression.Mul(expression.Cast<float>(expression.GetP3()), expression.Immediate<float>(c100));
+                auto & c = expression.Add(expression.Cast<float>(expression.GetP1()), a);
+                auto & d = expression.Add(c, b);
+
+                auto function = expression.Compile(d);
+
+                int p1 = 1;
+                float p2 = 2.0;
+                int p3 = 3;
+
+                auto expected = (float)p1 + (p2 * 10.0f) + (p3 * 100);
+                auto observed = function(p1, p2, p3);
+
+                TestEqual(expected, observed);
+            }
+        }
+
+
+        // The Windows x64 ABI and the System V ABI handle parameter passing
+        // differently. This test case verifies that a function with int and
+        // float parameters works correctly.
+        TEST_CASE_F(FunctionTest, FunctionFourMixedParameters)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<float, int, float, int, float> expression(setup->GetAllocator(), setup->GetCode());
+
+                float c10 = 10.0f;
+                float c100 = 100.0f;
+                float c1000 = 1000.0f;
+
+                auto & a = expression.Mul(expression.GetP2(), expression.Immediate<float>(c10));
+                auto & b = expression.Mul(expression.Cast<float>(expression.GetP3()), expression.Immediate<float>(c100));
+                auto & c = expression.Mul(expression.GetP4(), expression.Immediate<float>(c1000));
+
+                auto & d = expression.Add(expression.Cast<float>(expression.GetP1()), a);
+                auto & e = expression.Add(d, b);
+                auto & f = expression.Add(e, c);
+
+                auto function = expression.Compile(f);
+
+                int p1 = 1;
+                float p2 = 2.0;
+                int p3 = 3;
+                float p4 = 4.0;
+
+                auto expected = (float)p1 + (p2 * 10.0f) + (p3 * 100) + (p4 * 1000.0f);
+                auto observed = function(p1, p2, p3, p4);
+
+                TestEqual(expected, observed);
+            }
+        }
+
+
         //
         // Calling C functions with 0, 1, 2, 3, and 4 parameters.
         //
