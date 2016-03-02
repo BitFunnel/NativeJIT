@@ -79,10 +79,13 @@ namespace NativeJIT
     template <typename T>
     unsigned ShldNode<T>::LabelSubtree(bool /* isLeftChild */)
     {
-        const unsigned left = m_shiftee.LabelSubtree(true);
-        const unsigned right = m_filler.LabelSubtree(false);
+        if (this->GetRegisterCount() < 0)
+        {
+            const unsigned left = m_shiftee.LabelSubtree(true);
+            const unsigned right = m_filler.LabelSubtree(false);
 
-        this->SetRegisterCount(this->ComputeRegisterCount(left, right));
+            this->SetRegisterCount(this->ComputeRegisterCount(left, right));
+        }
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
         return this->GetRegisterCount();

@@ -35,7 +35,7 @@ namespace NativeJIT
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
         // Would like to make this private and without method body, but it's
-        // called implicitly by child class destructors if they throw.
+        // called implicitly by child class constructors if they throw.
         ~SaveRestoreVolatilesHelper() {}
 
     private:
@@ -72,7 +72,7 @@ namespace NativeJIT
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
         // Would like to make this private and without method body, but it's
-        // called implicitly by child class destructors if they throw.
+        // called implicitly by child class constructors if they throw.
         ~CallNodeBase() {}
 
     protected:
@@ -395,26 +395,32 @@ namespace NativeJIT
     template <typename R, unsigned PARAMETERCOUNT>
     unsigned CallNodeBase<R, PARAMETERCOUNT>::LabelSubtree(bool /* isLeftChild */)
     {
-        static unsigned counts[c_childCount];
-
-        for (unsigned i = 0 ; i < c_childCount; ++i)
+        if (this->GetRegisterCount() < 0)
         {
-            // TODO: Need to account for the fact the extra registers may be used
-            // when the specific parameter home is different than the one returned
-            // duing code generation.
-            counts[i] = m_children[i]->LabelSubtree(true);
+            static unsigned counts[c_childCount];
+
+            for (unsigned i = 0 ; i < c_childCount; ++i)
+            {
+                // TODO: Need to account for the fact the extra registers may be used
+                // when the specific parameter home is different than the one returned
+                // duing code generation.
+                counts[i] = m_children[i]->LabelSubtree(true);
+            }
+
+            // TODO: sort m_children by decreasing register count.
+
+            unsigned count = 0;
+            for (unsigned i = 0 ; i < c_childCount; ++i)
+            {
+                count = (std::max)(count, 1 + counts[i]);
+            }
+
+            this->SetRegisterCount(count);
         }
 
-        // TODO: sort m_children by decreasing register count.
-
-        unsigned count = 0;
-        for (unsigned i = 0 ; i < c_childCount; ++i)
-        {
-            count = (std::max)(count, 1 + counts[i]);
-        }
-
-        return count;
+        return this->GetRegisterCount();
     }
+
 
     template <typename R, unsigned PARAMETERCOUNT>
     void CallNodeBase<R, PARAMETERCOUNT>::Print(std::ostream& out) const
@@ -448,6 +454,11 @@ namespace NativeJIT
     template <typename T>
     unsigned CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::LabelSubtree(bool isLeftChild)
     {
+        // Note: TypedChild is not a Node, it doesn't have Get/SetRegisterCount()
+        // methods. Thus the check if GetRegisterCount() is smaller than zero
+        // to see whether to evaluate child's LabelSubtree() method cannot be
+        // used. Even so, this method will only be called once since CallNodeBase's
+        // LabelSubtree() will only be called once.
         return m_expression.LabelSubtree(isLeftChild);
     }
 

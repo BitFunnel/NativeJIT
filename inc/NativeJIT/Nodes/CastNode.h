@@ -243,8 +243,11 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     unsigned CastNode<TO, FROM, true>::LabelSubtree(bool /* isLeftChild */)
     {
-        // Need at least one register for storing the result.
-        this->SetRegisterCount((std::max)(m_from.LabelSubtree(true), 1u));
+        if (this->GetRegisterCount() < 0)
+        {
+            // Need at least one register for storing the result.
+            this->SetRegisterCount((std::max)(m_from.LabelSubtree(true), 1u));
+        }
 
         return this->GetRegisterCount();
     }
@@ -286,7 +289,10 @@ namespace NativeJIT
     template <typename TO, typename FROM>
     unsigned CastNode<TO, FROM, false>::LabelSubtree(bool isLeftChild)
     {
-        this->SetRegisterCount(m_conversionNode.LabelSubtree(isLeftChild));
+        if (this->GetRegisterCount() < 0)
+        {
+            this->SetRegisterCount(m_conversionNode.LabelSubtree(isLeftChild));
+        }
 
         return this->GetRegisterCount();
     }

@@ -122,8 +122,12 @@ namespace NativeJIT
     template <typename OBJECT, typename FIELD>
     unsigned FieldPointerNode<OBJECT, FIELD>::LabelSubtree(bool /*isLeftChild*/)
     {
-        // TODO: Should isLeftChild be passed down?
-        this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
+        if (this->GetRegisterCount() < 0)
+        {
+            // TODO: Should isLeftChild be passed down?
+            this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
+        }
+
         return this->GetRegisterCount();
     }
 

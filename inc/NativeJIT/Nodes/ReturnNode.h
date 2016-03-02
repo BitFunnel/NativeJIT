@@ -77,9 +77,12 @@ namespace NativeJIT
     template <typename T>
     unsigned ReturnNode<T>::LabelSubtree(bool /*isLeftChild*/)
     {
-        unsigned child = m_child.LabelSubtree(true);
+        if (this->GetRegisterCount() < 0)
+        {
+            unsigned child = m_child.LabelSubtree(true);
 
-        this->SetRegisterCount(child);
+            this->SetRegisterCount(child);
+        }
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
         return this->GetRegisterCount();

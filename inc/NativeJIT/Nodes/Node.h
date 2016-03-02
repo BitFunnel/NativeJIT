@@ -103,7 +103,7 @@ namespace NativeJIT
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
         // Would like to make this private and without method body, but it's
-        // called implicitly by child class destructors if they throw.
+        // called implicitly by child class constructors if they throw.
         // Making it non-virtual because nothing should be deleting at all,
         // let alone through base pointer.
         /* virtual */ ~NodeBase() {}
@@ -142,7 +142,14 @@ namespace NativeJIT
 
         Node(ExpressionTree& tree);
 
-        unsigned GetRegisterCount() const;
+        // Returns the estimated number of registers needed to evaluate this
+        // node. Used to determine preferrable order of node evaluation according
+        // to the Sethi-Ullman algorithm.
+        //
+        // A negative value specifies that the number has not been calculated
+        // yet. The LabelSubtree() method calculates the number of registers and
+        // saves it using the SetRegisterCount() call.
+        int GetRegisterCount() const;
 
         ExpressionTree::Storage<T> CodeGen(ExpressionTree& tree);
 
@@ -159,7 +166,7 @@ namespace NativeJIT
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
         // Would like to make this private and without method body, but it's
-        // called implicitly by child class destructors if they throw.
+        // called implicitly by child class constructors if they throw.
         ~Node() {}
 
     protected:
@@ -170,7 +177,8 @@ namespace NativeJIT
         unsigned m_cacheReferenceCount;
         ExpressionTree::Storage<T> m_cache;
 
-        unsigned m_registerCount;
+        // See GetRegisterCount() method.
+        int m_registerCount;
 
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
         virtual Storage<void*> CodeGenAsBase(ExpressionTree& tree) override;
@@ -214,7 +222,7 @@ namespace NativeJIT
     Node<T>::Node(ExpressionTree& tree)
         : NodeBase(tree),
           m_cacheReferenceCount(0),
-          m_registerCount(0)
+          m_registerCount(-1)
     {
     }
 
@@ -304,13 +312,16 @@ namespace NativeJIT
     template <typename T>
     unsigned Node<T>::LabelSubtree(bool isLeftChild)
     {
-        if (isLeftChild)
+        if (GetRegisterCount() < 0)
         {
-            SetRegisterCount(1);
-        }
-        else
-        {
-            SetRegisterCount(0);
+            if (isLeftChild)
+            {
+                SetRegisterCount(1);
+            }
+            else
+            {
+                SetRegisterCount(0);
+            }
         }
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
@@ -319,7 +330,7 @@ namespace NativeJIT
 
 
     template <typename T>
-    unsigned Node<T>::GetRegisterCount() const
+    int Node<T>::GetRegisterCount() const
     {
         return m_registerCount;
     }

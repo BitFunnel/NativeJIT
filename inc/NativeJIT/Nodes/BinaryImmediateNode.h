@@ -68,7 +68,12 @@ namespace NativeJIT
     template <OpCode OP, typename L, typename R>
     unsigned BinaryImmediateNode<OP, L, R>::LabelSubtree(bool /* isLeftChild */)
     {
-        return m_left.LabelSubtree(true);
+        if (this->GetRegisterCount() < 0)
+        {
+            this->SetRegisterCount(m_left.LabelSubtree(true));
+        }
+
+        return this->GetRegisterCount();
     }
 
 

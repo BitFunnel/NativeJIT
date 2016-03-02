@@ -73,11 +73,14 @@ namespace NativeJIT
     template <typename T>
     unsigned DependentNode<T>::LabelSubtree(bool /* isLeftChild */)
     {
-        const unsigned registerCount
-            = (std::max)(m_dependentNode.LabelSubtree(true),
-                         m_prerequisiteNode.LabelSubtree(true));
+        if (this->GetRegisterCount() < 0)
+        {
+            const unsigned registerCount
+                = (std::max)(m_dependentNode.LabelSubtree(true),
+                             m_prerequisiteNode.LabelSubtree(true));
 
-        this->SetRegisterCount(registerCount);
+            this->SetRegisterCount(registerCount);
+        }
 
         return this->GetRegisterCount();
     }

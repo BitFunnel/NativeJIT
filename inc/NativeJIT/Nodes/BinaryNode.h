@@ -66,10 +66,13 @@ namespace NativeJIT
     template <OpCode OP, typename L, typename R>
     unsigned BinaryNode<OP, L, R>::LabelSubtree(bool /*isLeftChild*/)
     {
-        unsigned left = m_left.LabelSubtree(true);
-        unsigned right = m_right.LabelSubtree(false);
+        if (this->GetRegisterCount() < 0)
+        {
+            unsigned left = m_left.LabelSubtree(true);
+            unsigned right = m_right.LabelSubtree(false);
 
-        this->SetRegisterCount(this->ComputeRegisterCount(left, right));
+            this->SetRegisterCount(this->ComputeRegisterCount(left, right));
+        }
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
         return this->GetRegisterCount();

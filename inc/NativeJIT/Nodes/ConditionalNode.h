@@ -38,7 +38,7 @@ namespace NativeJIT
         // so its destructor will never be called. Therefore, it should hold no
         // resources other than memory from the arena allocator.
         // Would like to make this private and without method body, but it's
-        // called implicitly by child class destructors if they throw.
+        // called implicitly by child class constructors if they throw.
         ~FlagExpressionNode() {}
 
     private:
@@ -173,11 +173,14 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     unsigned ConditionalNode<T, JCC>::LabelSubtree(bool /*isLeftChild*/)
     {
-        unsigned condition = m_condition.LabelSubtree(true);
-        unsigned trueExpression = m_trueExpression.LabelSubtree(true);
-        unsigned falseExpression = m_falseExpression.LabelSubtree(true);
+        if (this->GetRegisterCount() < 0)
+        {
+            unsigned condition = m_condition.LabelSubtree(true);
+            unsigned trueExpression = m_trueExpression.LabelSubtree(true);
+            unsigned falseExpression = m_falseExpression.LabelSubtree(true);
 
-        this->SetRegisterCount((std::max)(condition, (std::max)(trueExpression, falseExpression)));
+            this->SetRegisterCount((std::max)(condition, (std::max)(trueExpression, falseExpression)));
+        }
 
         return this->GetRegisterCount();
     }
@@ -323,10 +326,13 @@ namespace NativeJIT
     template <typename T, JccType JCC>
     unsigned RelationalOperatorNode<T, JCC>::LabelSubtree(bool /*isLeftChild*/)
     {
-        unsigned left = m_left.LabelSubtree(true);
-        unsigned right = m_right.LabelSubtree(false);
+        if (this->GetRegisterCount() < 0)
+        {
+            unsigned left = m_left.LabelSubtree(true);
+            unsigned right = m_right.LabelSubtree(false);
 
-        this->SetRegisterCount(this->ComputeRegisterCount(left, right));
+            this->SetRegisterCount(this->ComputeRegisterCount(left, right));
+        }
 
         // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
         return this->GetRegisterCount();

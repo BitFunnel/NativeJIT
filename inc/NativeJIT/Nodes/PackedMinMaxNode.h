@@ -173,14 +173,19 @@ namespace NativeJIT
     template <typename PACKED, bool ISMAX>
     unsigned PackedMinMaxNode<PACKED, ISMAX>::LabelSubtree(bool /* isLeftChild */)
     {
-        const unsigned leftCount = m_left.LabelSubtree(true);
-        const unsigned rightCount = m_right.LabelSubtree(false);
+        if (this->GetRegisterCount() < 0)
+        {
+            const unsigned leftCount = m_left.LabelSubtree(true);
+            const unsigned rightCount = m_right.LabelSubtree(false);
 
-        // The standard Sethi-Ullman register calculation for left and right
-        // mostly works here too, with the exception that we need at least
-        // two registers since we'll modify both values that were returned.
-        return (std::max)(this->ComputeRegisterCount(leftCount, rightCount),
-                          2u);
+            // The standard Sethi-Ullman register calculation for left and right
+            // mostly works here too, with the exception that we need at least
+            // two registers since we'll modify both values that were returned.
+            this->SetRegisterCount((std::max)(this->ComputeRegisterCount(leftCount, rightCount),
+                                              2u));
+        }
+
+        return this->GetRegisterCount();
     }
 
 
