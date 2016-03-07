@@ -1,6 +1,4 @@
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include "stdafx.h"
-#endif
 
 #include <stdexcept>
 
@@ -120,11 +118,7 @@ namespace NativeJIT
         LogThrowAssert(m_isCodeGenerationCompleted,
                        "Cannot get unwind info offset until code generation is finalized");
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
-        return m_runtimeFunction.UnwindInfoAddress;
-#else
-        return m_runtimeFunction.DUMMYUNIONNAME.UnwindInfoAddress;
-#endif
+        return m_runtimeFunction.UnwindData;
     }
 
 
@@ -209,11 +203,7 @@ namespace NativeJIT
         // Fill in information about the function.
         m_runtimeFunction.BeginAddress = m_prologStartOffset;
         m_runtimeFunction.EndAddress = CurrentPosition();
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
-        m_runtimeFunction.UnwindInfoAddress = m_unwindInfoStartOffset;
-#else
-        m_runtimeFunction.DUMMYUNIONNAME.UnwindInfoAddress = m_unwindInfoStartOffset;
-#endif
+        m_runtimeFunction.UnwindData = m_unwindInfoStartOffset;
 
         m_isCodeGenerationCompleted = true;
     }

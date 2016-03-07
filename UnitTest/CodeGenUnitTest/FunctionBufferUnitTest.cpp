@@ -13,7 +13,7 @@
 #include "UnwindCode.h"
 
 // TODO: Use alignas with VC14.
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))
 #else
 #define ALIGNAS(x) alignas(x)

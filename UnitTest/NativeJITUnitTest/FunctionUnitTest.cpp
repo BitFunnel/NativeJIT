@@ -10,7 +10,7 @@
 #include "TestSetup.h"
 
 
-#ifndef NATIVEJIT_PLATFORM_WINDOWS
+#ifndef _MSC_VER
 #define _AddressOfReturnAddress() __builtin_frame_address(0)
 #endif
 

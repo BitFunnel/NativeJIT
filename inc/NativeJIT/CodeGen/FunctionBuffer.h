@@ -10,10 +10,7 @@ typedef struct
 {
     DWORD BeginAddress;
     DWORD EndAddress;
-    union {
-        DWORD UnwindInfoAddress;
-        DWORD UnwindData;
-    } DUMMYUNIONNAME;
+    DWORD UnwindData;
 } RUNTIME_FUNCTION;
 #endif
 
