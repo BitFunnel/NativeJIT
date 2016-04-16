@@ -23,7 +23,7 @@
 #!/bin/sh
 
 echo "Configuring CMake for XCode."
-mkdir build
-cd build
+mkdir build-osx-xcode
+cd build-osx-xcode
 cmake -G Xcode ..
 
