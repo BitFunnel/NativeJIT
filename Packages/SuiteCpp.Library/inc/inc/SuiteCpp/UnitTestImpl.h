@@ -96,12 +96,12 @@ namespace SuiteCpp
     {
         if (!condition)
         {
-            std::stringstream condition;
-            condition << "!(" << expression << ")";
+            std::stringstream ss_condition;
+            ss_condition << "!(" << expression << ")";
             std::stringstream message;
             va_list args;
             va_start(args, format);
-            GetMessage(message, condition.str().c_str(), format, args);
+            GetMessage(message, ss_condition.str().c_str(), format, args);
             va_end(args);
             ThrowAssertFailure(file, line, "TestAssert", message.str().c_str());
         }
