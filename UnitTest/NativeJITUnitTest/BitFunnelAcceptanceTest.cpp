@@ -171,7 +171,7 @@ namespace NativeJIT
 
                 void* m_modelSet;
 
-                /* const */ char m_fixedSizePadding[64 - 3 * sizeof(void*)];
+                char m_fixedSizePadding[64 - 3 * sizeof(void*)];
             };
 
             static_assert(std::is_pod<CommonRankerContext>::value,
@@ -1219,7 +1219,7 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    TestEqual(0, offsetof(WebRankerContext, m_commonContext),
+                    TestEqual(0u, offsetof(WebRankerContext, m_commonContext),
                              "Invalid WebRankerContext structure layout");
 
                     // TestData is large, allocate from heap to avoid stack overflow.

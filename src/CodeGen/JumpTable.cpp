@@ -94,7 +94,7 @@ namespace NativeJIT
     // WARNING: Non portable. Assumes that fixup value is labelAddress - siteAddress - size.Size().
     void JumpTable::PatchCallSites()
     {
-        for (int i=0; i < m_callSites.size(); ++i)
+        for (size_t i=0; i < m_callSites.size(); ++i)
         {
             const CallSite& site = m_callSites[i];
             const uint8_t* labelAddress = AddressOfLabel(site.GetLabel());

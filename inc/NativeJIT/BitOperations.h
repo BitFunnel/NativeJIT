@@ -29,6 +29,7 @@
 #ifdef NATIVEJIT_PLATFORM_WINDOWS
 #include <intrin.h>
 #else
+#include <limits>
 #include <nmmintrin.h>
 #include <smmintrin.h>
 #include <string.h>         // For ffsll()
@@ -146,7 +147,7 @@ namespace NativeJIT
                    : false;
 #else
             *lowestBitSetIndex = ffsll(value) - 1;
-            return *lowestBitSetIndex != -1;
+            return *lowestBitSetIndex != std::numeric_limits<unsigned int>::max();
 #endif
         }
 
@@ -166,7 +167,7 @@ namespace NativeJIT
 #elif (APPLE)
 	    // OS X provides flsll().
 	    *highestBitSetIndex = flsll(value) - 1;
-            return *highestBitSetIndex != -1;
+            return *highestBitSetIndex != std::numeric_limits<unsigned int>::max();
 #else
 	    // Linux + gcc provide __builtin_clzl().
 	    if (value == 0)
@@ -175,7 +176,7 @@ namespace NativeJIT
               return false;
 	    }
             *highestBitSetIndex = 63 - __builtin_clzl(value);
-            return *highestBitSetIndex != -1;
+            return *highestBitSetIndex != std::numeric_limits<unsigned int>::max();
 #endif
         }
 

@@ -23,8 +23,10 @@
 
 #pragma once
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 // Disable warning: 'function' : unreferenced local function has been removed
 #pragma warning(disable:4505)
+#endif
 
 #include <cstdint>
 #include <iosfwd>   // Debugging output.

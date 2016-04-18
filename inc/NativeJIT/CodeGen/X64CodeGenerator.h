@@ -36,9 +36,11 @@
 #include "Temporary/NonCopyable.h"              // Inherits from NonCopyable.
 
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 // Supress warning about constant expression involving template parameters.
 #pragma warning(push)
 #pragma warning(disable:4127)
+#endif
 
 
 namespace Allocators
@@ -2171,4 +2173,6 @@ namespace NativeJIT
 #undef DEFINE_SCALAR_SSE2
 }
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #pragma warning(pop)
+#endif

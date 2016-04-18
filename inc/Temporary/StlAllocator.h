@@ -155,8 +155,10 @@ namespace Allocators
     }
 
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #pragma warning(push)
 #pragma warning(disable:4100)
+#endif
     // Warning C4100 says that 'ptr' is unreferenced as a formal parameter.
     // This happens when T is a simple type like int. In this case it seems that
     // the compiler optimizes away the call to ptr->~T(), causing the ptr to
@@ -166,7 +168,9 @@ namespace Allocators
     {
         ptr->~T();
     }
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #pragma warning(pop)
+#endif
 
 
     template <typename T>

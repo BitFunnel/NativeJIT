@@ -59,14 +59,18 @@ namespace NativeJIT
     // Template definitions for Model<PACKED>
     //
     //*************************************************************************
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #pragma warning(push)
 #pragma warning(disable:4351)
+#endif
     template <typename PACKED>
     Model<PACKED>::Model()
         : m_data()
     {
     }
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #pragma warning(pop)
+#endif
 
 
     template <typename PACKED>

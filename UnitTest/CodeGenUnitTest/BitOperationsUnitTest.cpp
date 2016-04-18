@@ -55,10 +55,9 @@ namespace NativeJIT
             TestEqual(64, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFFFFFFFFF));
         }
 
-
         void VerifyLowestBitSet(uint64_t testValue, unsigned expected)
         {
-            TestNotEqual(0, testValue);
+            TestNotEqual(0u, testValue);
 
             unsigned actual;
             const bool foundBit = BitOp::GetLowestBitSet(testValue, &actual);
@@ -66,7 +65,6 @@ namespace NativeJIT
             TestAssert(foundBit, "Expected to find a bit in %I64u", testValue);
             TestEqual(expected, actual, "Mismatched expected and actual bit for %I64u", testValue);
         }
-
 
         TEST_CASE(BitOperations, LowestBitSet)
         {
@@ -81,7 +79,7 @@ namespace NativeJIT
 
         void VerifyHighestBitSet(uint64_t testValue, unsigned expected)
         {
-            TestNotEqual(0, testValue);
+            TestNotEqual(0u, testValue);
 
             unsigned actual;
             const bool foundBit = BitOp::GetHighestBitSet(testValue, &actual);

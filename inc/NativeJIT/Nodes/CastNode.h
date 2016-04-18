@@ -591,9 +591,11 @@ namespace NativeJIT
         // Template definitions for CompositeCastNodeBuilder.
         //
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 // Supress warning about constant expression involving template parameters.
 #pragma warning(push)
 #pragma warning(disable:4127)
+#endif
 
         // Composite node for casting from integer to float.
         template <>
@@ -699,6 +701,8 @@ namespace NativeJIT
             return *result;
         }
 
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
 #pragma warning(pop)
+#endif
     }
 }
