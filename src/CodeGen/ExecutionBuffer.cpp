@@ -112,7 +112,8 @@ namespace NativeJIT
         {
             if (VirtualFree(m_buffer, 0, MEM_RELEASE) == 0)
             {
-                throw std::runtime_error("CodeBuffer: VirtualFree failed.");
+                // TODO: Fix this See bug#13
+                // throw std::runtime_error("CodeBuffer: VirtualFree failed.");
             }
         }
     }
@@ -123,7 +124,8 @@ namespace NativeJIT
         {
             if (munmap(m_buffer, m_bufferSize) != 0)
             {
-                throw std::runtime_error("CodeBuffer: munmap failed.");
+                // TODO: Fix this. See bug#13
+                // throw std::runtime_error("CodeBuffer: munmap failed.");
             }
         }
     }
