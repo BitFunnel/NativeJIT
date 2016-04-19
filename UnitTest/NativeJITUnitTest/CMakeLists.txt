@@ -4,6 +4,7 @@ set(CPPFILES
   BitFunnelAcceptanceTest.cpp
   CastUnitTest.cpp
   ConditionalUnitTest.cpp
+  ConditionalAutoGenUnitTest.cpp
   ExpressionTreeUnitTest.cpp
   FloatingPointUnitTest.cpp
   FunctionUnitTest.cpp
