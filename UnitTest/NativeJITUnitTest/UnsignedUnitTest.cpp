@@ -39,7 +39,6 @@ namespace NativeJIT
 
         //
         // TODO:
-        //   Other boolean operators: shift, sub, mul, etc.
         //   Signed vs unsigned
         //
 
@@ -201,6 +200,137 @@ namespace NativeJIT
 
                 auto expected = p1 + p2;
                 auto observed = function(p1, p2);
+
+                TestAssert(observed == expected);
+            }
+        }
+
+        TEST_CASE_F(Unsigned, MulUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+                auto & a = expression.Mul(expression.GetP2(), expression.GetP1());
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 12340000ul;
+                uint32_t p2 = 5678ul;
+
+                auto expected = p1 * p2;
+                auto observed = function(p1, p2);
+
+                TestAssert(observed == expected);
+            }
+        }
+
+        TEST_CASE_F(Unsigned, SubUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+                auto & a = expression.Sub(expression.GetP2(), expression.GetP1());
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 12340000ul;
+                uint32_t p2 = 5678ul;
+
+                auto expected = p2 - p1;
+                auto observed = function(p1, p2);
+
+                TestAssert(observed == expected);
+            }
+        }
+
+        TEST_CASE_F(Unsigned, ShlUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+                uint32_t p2 = 3ul;
+
+                auto & a = expression.Shl(expression.GetP1(), p2);
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 1ul;
+
+                auto expected = p1 << p2;
+                auto observed = function(p1, p2);
+
+                TestAssert(observed == expected);
+            }
+        }
+
+        TEST_CASE_F(Unsigned, ShrUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+                uint32_t p2 = 3ul;
+
+                auto & a = expression.Shr(expression.GetP1(), p2);
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 0xffffffff;
+
+                auto expected = p1 >> p2;
+                auto observed = function(p1, p2);
+
+                TestAssert(observed == expected);
+            }
+        }
+
+
+        //
+        // Ternary operations
+        //
+
+        TEST_CASE_F(Unsigned, ShldUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+		uint32_t p3 = 4ul;
+
+                auto & a = expression.Shld(expression.GetP2(), expression.GetP1(), p3);
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 1ul;
+                uint32_t p2 = 3ul;
+
+                auto expected = p2 << p3;
+                auto observed = function(p1, p2, p3);
+
+                TestAssert(observed == expected);
+            }
+        }
+
+        TEST_CASE_F(Unsigned, ShldPairUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+                uint32_t p3 = 4ul;
+
+                auto & a = expression.Shld(expression.GetP2(), expression.GetP1(), p3);
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 0xaaaaaaaa;
+                uint32_t p2 = 3ul;
+
+                auto expected = p2 << p3 | (p1 & 0xf);
+                auto observed = function(p1, p2, p3);
 
                 TestAssert(observed == expected);
             }
