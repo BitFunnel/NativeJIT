@@ -113,6 +113,7 @@ namespace NativeJIT
         template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
         template <typename L, typename R> Node<L>& MulImmediate(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Or(Node<L>& left, Node<R>& right);
+        template <typename L, typename R> Node<L>& Rol(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Shl(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Shr(Node<L>& left, R right);
         template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);

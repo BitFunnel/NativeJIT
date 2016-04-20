@@ -268,6 +268,13 @@ namespace NativeJIT
 
 
     template <typename L, typename R>
+    Node<L>& ExpressionNodeFactory::Rol(Node<L>& left, R right)
+    {
+        return BinaryImmediate<OpCode::Rol>(left, right);
+    }
+
+
+    template <typename L, typename R>
     Node<L>& ExpressionNodeFactory::Shl(Node<L>& left, R right)
     {
         return BinaryImmediate<OpCode::Shl>(left, right);

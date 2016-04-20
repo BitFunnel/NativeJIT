@@ -225,6 +225,27 @@ namespace NativeJIT
             }
         }
 
+        TEST_CASE_F(Unsigned, RolUnsignedInt32)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
+
+                uint32_t p2 = 1ul;
+
+                auto & a = expression.Rol(expression.GetP1(), p2);
+                auto function = expression.Compile(a);
+
+                uint32_t p1 = 0x80000001;
+
+                uint32_t expected = 0x00000003;
+                uint32_t observed = function(p1, p2);
+
+                TestEqual(observed, expected);
+            }
+        }
+
         TEST_CASE_F(Unsigned, SubUnsignedInt32)
         {
             auto setup = GetSetup();
