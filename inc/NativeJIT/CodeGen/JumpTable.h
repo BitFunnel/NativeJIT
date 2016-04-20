@@ -37,12 +37,12 @@ namespace NativeJIT
     {
     public:
         Label();
-        explicit Label(unsigned id);
+        explicit Label(size_t id);
 
-        unsigned GetId() const;
+        size_t GetId() const;
 
     private:
-        unsigned m_id;
+        size_t m_id;
     };
 
 
@@ -91,12 +91,12 @@ namespace NativeJIT
 
         Label GetLabel() const;
 
-        unsigned Size() const;
+        size_t Size() const;
         uint8_t* Site() const;
 
     private:
         Label m_label;              // The jump label used to find the jump target address for this site.
-        unsigned m_size;            // The number of bytes to be patched at this site.
+        size_t m_size;            // The number of bytes to be patched at this site.
         uint8_t* m_site;    // The address to be patched.
     };
 }

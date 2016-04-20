@@ -42,13 +42,13 @@ namespace NativeJIT
     }
 
 
-    Label::Label(unsigned id)
+    Label::Label(size_t id)
         : m_id(id)
     {
     }
 
 
-    unsigned Label::GetId() const
+    size_t Label::GetId() const
     {
         return m_id;
     }

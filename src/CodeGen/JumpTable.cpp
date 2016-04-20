@@ -48,8 +48,7 @@ namespace NativeJIT
 
     Label JumpTable::AllocateLabel()
     {
-        // TODO: Code to ensure that this cast is always safe.
-        Label label = Label(static_cast<unsigned>(m_labels.size()));
+        Label label = Label(m_labels.size());
         m_labels.push_back(NULL);
 
         return label;
@@ -102,7 +101,7 @@ namespace NativeJIT
             size_t delta = labelAddress - siteAddress - site.Size();
 
             // TODO: Evaluate whether special cases for size == 2 and size == 4 actually improve performance.
-            int size = site.Size();
+            size_t size = site.Size();
             if (size == 2)
             {
                 *((int16_t*)siteAddress) = (int16_t)delta;
@@ -148,7 +147,7 @@ namespace NativeJIT
         return m_label;
     }
 
-    unsigned CallSite::Size() const
+    size_t CallSite::Size() const
     {
         return m_size;
     }
