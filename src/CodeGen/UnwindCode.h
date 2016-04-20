@@ -27,8 +27,10 @@
 #include <ostream>
 #include <type_traits>
 
-// TODO: What's the underlying reason for this requirement in this file?
-#if !defined(_M_X64) && !defined(__amd64__)
+// _M_X64 is used by VC, as well as icc on Windows.
+// __amd64__ is used by gcc/clang.
+// __x86_64__ is used by icc.
+#if !defined(_M_X64) && !defined(__amd64__) && !defined(__x86_64__)
 #error This code must be compiled for _AMD64_
 #endif
 
