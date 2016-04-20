@@ -8,118 +8,99 @@ NativeJIT is an open source, cross-platform library for high performance
 just-in-time compilation of C++ expressions into X64 machine code.
 NativeJIT was developed by the [Bing](http://www.bing.com) team at Microsoft and currently runs in production in the Bing search engine.
 
-NativeJIT is published on GitHub at [TBD](about:blank)
+NativeJIT is published on [GitHub](https://github.com/bitfunnel/nativejit)
 
 Coming soon: online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
 
 Dependencies
 ------------
 
-The NativeJIT repository uses Git submodules and should be cloned with the 
-`--recursive` flag:
-
-    git clone --recursive https://bitfunnel.visualstudio.com/DefaultCollection/_git/NativeJIT.Library
-
-In order to build NativeJIT you will need CMake (3.3.2+), Pandoc (1.15.2+) and a C++11 compiler.
+In order to build NativeJIT you will need CMake (3.3.2+), and a modern C++
+compiler (gcc 5+, clang 3.4+, or VC 2012+).
 
 Following are specific instructions for building on various platforms.
 
-### Linux (WORK IN PROGRESS - NOT TESTED)
+### Linux
 
-NativeJIT can be built with Clang (3.4+) or GNU C++ (4.7+). We recommend the latest
-version of Clang as it's much faster with template-heavy code like NativeJIT.
+NativeJIT can be built with Clang (3.4+) or GNU C++ (5.0+). We recommend the
+latest version of Clang as it's much faster with template-heavy code like
+NativeJIT.
 
 Run the following commands to install the minimal set of packages needed to 
-build the core NativeJIT library on Ubuntu 14.04:
+build the core NativeJIT library on Ubuntu 15:
 
-    sudo apt-get install \
-        clang \
-        cmake \
-        pandoc 
+~~~
+sudo apt-get install clang cmake
+~~~
+
+The current Ubuntu LTS version (14) points to an older version of cmake. To
+install a new-enough CMake, see [this link](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04).
+If you're using gcc, you'll also need to make sure you have gcc-5 (`sudo apt-get install g++-5`).
 
 In the root `NativeJIT` directory run:
 
-    mkdir build
-    cd build
-    cmake ..
-    make
-
-The `build` directory is just an example. Any directory can be used for build 
-destination.
-
-Running the following command in the build directory will build and execute all 
-the tests and examples:
-
-    TODO
+~~~
+./Configure_Linux_Make_clang.sh
+cd build-linux-clang
+make
+~~~
 
 ### OSX (WORK IN PROGRESS - NOT TESTED)
 
 Install XCode and then run the following command to install required packages 
 using Homebrew ([http://brew.sh/](http://brew.sh/)):
 
-    brew install \
-        cmake \
-        pandoc
+~~~
+brew install cmake
+~~~
 
 NativeJIT can be built on OS X using either standard \*nix makefiles or XCode.
 In order to generate and build makefiles, in the root `NativeJIT` directory run:
 
-    ./Configure_OSX_Make.sh
+~~~
+./Configure_OSX_Make.sh
+~~~
     
-or run the following commands.
-
-    mkdir build
-    cd build
-    cmake ..
-    make
-
 Alternatively you can generate XCode project by running
 
-    ./Configure_OSX_XCode.sh
+~~~
+./Configure_OSX_XCode.sh
+~~~
 
-or by passing `-G Xcode` option to cmake:
-
-    mkdir build
-    cd build
-    cmake -G Xcode ..
-
-You can build and run unit tests by building the `check` target in XCode or by 
+You can build and run unit tests by building the `test` target in XCode or by
 running make in the build directory:
 
-    make --jobs 8 check
+~~~
+make test
+~~~
 
 ### Windows
 
 Install the following tools:
 
-- Visual Studio 2015
+- Visual Studio 2015 with C++ compiler
 - CMake ([http://www.cmake.org/download/](http://www.cmake.org/download/))
-- Pandoc ([http://pandoc.org/installing.html)](http://pandoc.org/installing.html))
+
+You can get [the free version of Visual Studio here](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx).
+Note that if you're installing Visual Studio for the first time and select the
+default install options, you won't get a C++ compiler. To force the install of
+the C++ compiler, you need to either create a new C++ project or open an
+existing C++ project.
 
 In order to configure solution for Visual Studio 2015 run the following 
 commands from the root `NativeJIT` directory:
 
-    .\Configure_Windows.bat
-
-This batch file does the following:
-
-    mkdir build
-    cd build
-    cmake -G "Visual Studio 14 2015 Win64" ..
+~~~
+.\Configure_Windows_MSVC.bat
+~~~
 
 Instead of `cmake` you can also use `cmake-gui` and specify configuration 
 settings in the UI. This configuration step has to be performed only once. From 
-now on you can use the generated solution `build\BitFunnel.sln` from Visual Studio 
+now on you can use the generated solution `build-win-msvc\BitFunnel.sln` from Visual Studio
 or build from command line using `cmake`:
-
-    set PreferredToolArchitecture=x64
-    cmake --build . --target
-    cmake --build . --target INSTALL
 
 In order to build and execute the unit tests and examples run:
 
-    cmake --build . --target check -- /maxcpucount:8
-
-Setting `PreferredToolArchitecture=x64` selects the 64-bit toolchain which 
-dramatically improves build speed (Bond unit tests are too big to build with 
-32-bit tools).
+~~~
+cmake --build . --target test
+~~~
