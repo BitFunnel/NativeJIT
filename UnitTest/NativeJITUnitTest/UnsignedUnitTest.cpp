@@ -299,7 +299,7 @@ namespace NativeJIT
             {
                 Function<uint32_t, uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
 
-		uint32_t p3 = 4ul;
+		uint8_t p3 = 4ul;
 
                 auto & a = expression.Shld(expression.GetP2(), expression.GetP1(), p3);
                 auto function = expression.Compile(a);
@@ -321,7 +321,7 @@ namespace NativeJIT
             {
                 Function<uint32_t, uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                uint32_t p3 = 4ul;
+                uint8_t p3 = 4ul;
 
                 auto & a = expression.Shld(expression.GetP2(), expression.GetP1(), p3);
                 auto function = expression.Compile(a);
