@@ -61,7 +61,7 @@ namespace NativeJIT
                 auto expected = value;
                 auto observed = function();
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -108,7 +108,7 @@ namespace NativeJIT
                 auto expected = p1->m_b;
                 auto observed = function(p1);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -140,7 +140,7 @@ namespace NativeJIT
                 auto expected = p1[pointersIndex]->m_innerEmbedded.m_b;
                 auto observed = function(p1);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -201,7 +201,7 @@ namespace NativeJIT
                 auto expected = p1 + p2;
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -221,7 +221,7 @@ namespace NativeJIT
                 auto expected = p1 * p2;
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -262,7 +262,7 @@ namespace NativeJIT
                 auto expected = p2 - p1;
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -283,7 +283,7 @@ namespace NativeJIT
                 auto expected = p1 << p2;
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -304,7 +304,7 @@ namespace NativeJIT
                 auto expected = p1 >> p2;
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -331,7 +331,7 @@ namespace NativeJIT
                 auto expected = p2 << p3;
                 auto observed = function(p1, p2, p3);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -353,7 +353,7 @@ namespace NativeJIT
                 auto expected = p2 << p3 | (p1 & 0xf);
                 auto observed = function(p1, p2, p3);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -383,7 +383,7 @@ namespace NativeJIT
                 auto expected = array[1] + array[2];
                 auto observed = function(p1);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -439,7 +439,7 @@ namespace NativeJIT
                 auto expected = p1[p2].m_q;
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
@@ -496,7 +496,7 @@ namespace NativeJIT
 
                 auto observed = function(p1, p2);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 

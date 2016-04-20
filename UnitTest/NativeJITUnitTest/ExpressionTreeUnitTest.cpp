@@ -220,8 +220,8 @@ namespace NativeJIT
             auto temp1 = e.Temporary<int>();
             auto temp2 = e.Temporary<int>();
 
-            TestAssert(temp1.GetBaseRegister() == temp2.GetBaseRegister());
-            TestAssert(temp1.GetOffset() != temp2.GetOffset());
+            TestEqual(temp1.GetBaseRegister(), temp2.GetBaseRegister());
+            TestNotEqual(temp1.GetOffset(), temp2.GetOffset());
         }
 
 
@@ -234,7 +234,7 @@ namespace NativeJIT
             auto temp2 = e.RIPRelative<int>(16);
 
             TestAssert(temp1.GetBaseRegister().IsRIP());
-            TestAssert(temp1.GetBaseRegister() == temp2.GetBaseRegister());
+            TestEqual(temp1.GetBaseRegister(), temp2.GetBaseRegister());
         }
 
 
@@ -276,7 +276,7 @@ namespace NativeJIT
             for (unsigned i = 0; i < totalRegisterCount; ++i)
             {
                 storages.push_back(e.Direct<int>());
-                TestAssert(storages.back().GetStorageClass() == StorageClass::Direct);
+                TestEqual(storages.back().GetStorageClass(), StorageClass::Direct);
             }
 
             // There won't be enough registers for all storages to stay
@@ -317,11 +317,11 @@ namespace NativeJIT
 
             // A new direct storage should cause the oldest reserved register
             // to be spilled (note: this assumes current allocation strategy).
-            TestAssert(storages[indexOfFirstDirect].GetStorageClass() == StorageClass::Direct);
+            TestEqual(storages[indexOfFirstDirect].GetStorageClass(), StorageClass::Direct);
             Storage<int> spillTrigger = e.Direct<int>();
 
-            TestAssert(spillTrigger.GetStorageClass() == StorageClass::Direct);
-            TestAssert(storages[indexOfFirstDirect].GetStorageClass() == StorageClass::Indirect);
+            TestEqual(spillTrigger.GetStorageClass(),  StorageClass::Direct);
+            TestEqual(storages[indexOfFirstDirect].GetStorageClass(), StorageClass::Indirect);
         }
 
 
@@ -336,35 +336,35 @@ namespace NativeJIT
             for (unsigned i = 0; i < totalRegisterCount; ++i)
             {
                 storages.push_back(e.Direct<float>());
-                TestAssert(storages.back().GetStorageClass() == StorageClass::Direct);
+                TestEqual(storages.back().GetStorageClass(),  StorageClass::Direct);
             }
 
             // There are no reserved registers for floats, so no register
             // should have been bumped.
             for (auto const & s : storages)
             {
-                TestAssert(s.GetStorageClass() == StorageClass::Direct);
+                TestEqual(s.GetStorageClass(), StorageClass::Direct);
             }
 
             // A new direct storage should cause the oldest reserved register
             // to be spilled (note: this assumes current allocation strategy).
             Storage<float> spillTrigger = e.Direct<float>();
 
-            TestAssert(spillTrigger.GetStorageClass() == StorageClass::Direct);
-            TestAssert(storages[0].GetStorageClass() == StorageClass::Indirect);
+            TestEqual(spillTrigger.GetStorageClass(), StorageClass::Direct);
+            TestEqual(storages[0].GetStorageClass(), StorageClass::Indirect);
 
             Storage<float> spillTrigger2 = e.Direct<float>();
 
-            TestAssert(spillTrigger2.GetStorageClass() == StorageClass::Direct);
-            TestAssert(storages[1].GetStorageClass() == StorageClass::Indirect);
+            TestEqual(spillTrigger2.GetStorageClass(), StorageClass::Direct);
+            TestEqual(storages[1].GetStorageClass(), StorageClass::Indirect);
 
             // Make sure that a released register will be used for a new
             // direct rather than spilling storages[2] for it.
-            TestAssert(storages[2].GetStorageClass() == StorageClass::Direct);
+            TestEqual(storages[2].GetStorageClass(), StorageClass::Direct);
             spillTrigger2.Reset();
 
             spillTrigger2 = e.Direct<float>();
-            TestAssert(storages[2].GetStorageClass() == StorageClass::Direct);
+            TestEqual(storages[2].GetStorageClass(), StorageClass::Direct);
         }
 
 
@@ -402,8 +402,8 @@ namespace NativeJIT
             Storage<T> storage2 = e.Direct<T>(reg);
 
             // The new storage should own the register, the old not should not.
-            TestAssert(storage2.GetStorageClass() == StorageClass::Direct
-                        && storage2.GetDirectRegister() == reg);
+            TestEqual(storage2.GetStorageClass(), StorageClass::Direct);
+            TestEqual(storage2.GetDirectRegister(), reg);
             TestAssert(!(storage.GetStorageClass() == StorageClass::Direct
                          && storage.GetDirectRegister() == reg));
         }
@@ -453,23 +453,24 @@ namespace NativeJIT
 
             auto s = e.Direct<int>(eax);
             TestAssert(s.IsSoleDataOwner());
-            TestAssert(s.GetStorageClass() == StorageClass::Direct);
-            TestAssert(s.GetDirectRegister() == eax);
+            TestEqual(s.GetStorageClass(), StorageClass::Direct);
+            TestEqual(s.GetDirectRegister(), eax);
 
             auto s2 = s;
             TestAssert(!s.IsSoleDataOwner());
             TestAssert(!s2.IsSoleDataOwner());
-            TestAssert(s2.GetStorageClass() == StorageClass::Direct);
-            TestAssert(s2.GetDirectRegister() == eax);
+            TestEqual(s2.GetStorageClass(), StorageClass::Direct);
+            TestEqual(s2.GetDirectRegister(), eax);
 
             s.TakeSoleOwnershipOfDirect();
 
             TestAssert(s.IsSoleDataOwner());
-            TestAssert(s.GetStorageClass() == StorageClass::Direct);
-            TestAssert(s.GetDirectRegister() == eax);
+            TestEqual(s.GetStorageClass(), StorageClass::Direct);
+            TestEqual(s.GetDirectRegister(), eax);
 
             TestAssert(s2.IsSoleDataOwner());
-            TestAssert(s2.GetStorageClass() == StorageClass::Direct);
+            TestEqual(s2.GetStorageClass(), StorageClass::Direct);
+            // TestNotEqual(s2.GetDirectRegister(), eax); Doesn't compile!
             TestAssert(!(s2.GetDirectRegister() == eax));
         }
 

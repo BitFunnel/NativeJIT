@@ -116,7 +116,7 @@ namespace NativeJIT
                 auto expected = model.Apply(packed);
                 auto observed = function(&model, packed);
 
-                TestAssert(observed == expected);
+                TestEqual(observed, expected);
             }
         }
 
