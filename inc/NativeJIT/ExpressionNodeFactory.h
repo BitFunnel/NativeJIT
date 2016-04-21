@@ -357,8 +357,6 @@ namespace NativeJIT
     template <typename CONDT, typename T>
     Node<T>& ExpressionNodeFactory::IfNotZero(Node<CONDT>& conditionValue, Node<T>& trueValue, Node<T>& falseValue)
     {
-        // TODO: This can be achieved with a FlagExpressionNode implementation in
-        // terms of the x64 test instruction, once the instruction is available.
         auto & conditionNode = Compare<JccType::JNE>(conditionValue, Immediate<CONDT>(0));
 
         return Conditional(conditionNode, trueValue, falseValue);
