@@ -160,24 +160,24 @@ namespace NativeJIT
         bool GetHighestBitSet(uint64_t value, unsigned* highestBitSetIndex)
         {
 #ifdef NATIVEJIT_PLATFORM_WINDOWS
-	    // Windows provides _BitScanReverse64()
+        // Windows provides _BitScanReverse64()
             return _BitScanReverse64(SameTargetSizeCast<BitScanType32>(highestBitSetIndex),
                                      value)
                    ? true
                    : false;
 #elif (APPLE)
-	    // OS X provides flsll().
+        // OS X provides flsll().
             *highestBitSetIndex = ffsll(value);
             bool retval = *highestBitSetIndex != 0;
             --*highestBitSetIndex;
             return retval;
 #else
-	    // Linux + gcc provide __builtin_clzl().
-	    if (value == 0)
-	    {
-	      // Special case for value == 0 since __builtin_clzl(0) is undefined.
+        // Linux + gcc provide __builtin_clzl().
+        if (value == 0)
+        {
+          // Special case for value == 0 since __builtin_clzl(0) is undefined.
               return false;
-	    }
+        }
             *highestBitSetIndex = __builtin_clzl(value);
             bool retval = *highestBitSetIndex != 64;
             *highestBitSetIndex = 63 - *highestBitSetIndex;
