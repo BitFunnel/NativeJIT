@@ -164,7 +164,7 @@ namespace NativeJIT
 
         bool IsRIP() const;
         bool IsStackPointer() const;
-        
+
     protected:
         unsigned m_id;
     };
@@ -279,19 +279,19 @@ namespace NativeJIT
     extern Register<8, true> xmm13;
     extern Register<8, true> xmm14;
     extern Register<8, true> xmm15;
-    
-    
+
+
     // TODO: REVIEW: MAC: IsRIP() and IsStackPointer() must be moved after definitions of rip and rsp in CLang.
     template <unsigned SIZE, bool ISFLOAT>
     bool Register<SIZE, ISFLOAT>::IsRIP() const
     {
         return IsSameHardwareRegister(rip);
     }
-    
-    
+
+
     template <unsigned SIZE, bool ISFLOAT>
     bool Register<SIZE, ISFLOAT>::IsStackPointer() const
     {
         return IsSameHardwareRegister(rsp);
-    }    
+    }
 }

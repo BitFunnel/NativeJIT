@@ -67,7 +67,7 @@ namespace NativeJIT
 
 
     // MSDN struct UNWIND_CODE: https://msdn.microsoft.com/en-us/library/ck9asaa9.aspx
-    struct UnwindCode 
+    struct UnwindCode
     {
         UnwindCode();
         UnwindCode(uint8_t codeOffset, UnwindCodeOp op, uint8_t info);

@@ -1013,7 +1013,7 @@ namespace NativeJIT
                 " 0000010E  41/ 54               push r12                                                           \n"
                 "                                                                                                   \n"
                 "                                ; ret                                                              \n"
-              
+
                 " 00000110  C3                   ret                                                                \n"
                 "                                                                                                   \n"
                 "                                ; IMul                                                             \n"

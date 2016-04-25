@@ -46,7 +46,7 @@ namespace NativeJIT
             const int popcntFunctionId = 1;
             const int popcntSubfunctionId = 0;
             const int popcntEcxBit = 23;
- 
+
             // First, check what information CPUID instruction is able to return.
             __cpuid(cpuInfo, generalInfoFunctionId);
 
@@ -77,8 +77,8 @@ namespace NativeJIT
         }
 #endif
     }
-    
-    
+
+
 
     namespace BitOp
     {

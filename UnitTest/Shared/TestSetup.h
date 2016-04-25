@@ -71,7 +71,7 @@
     #define TEST_CASE_F(className, name) TEST_F(className, name)
 
     #define TEST_CASES_END
-    
+
     #define TestAssert(condition, ...) ASSERT_TRUE(condition)
     #define TestEqual(expected, actual, ...) ASSERT_EQ(expected, actual)
     #define TestEqualCharPtrs(expected, actual, ...) ASSERT_EQ(std::string(expected), std::string(actual))

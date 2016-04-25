@@ -156,7 +156,7 @@ namespace NativeJIT
         // A class used to specialize code generation for casts that need to
         // convert between two immediate storages. The class is needed instead
         // of a simple if/else branch because e.g. if TO type belongs to a
-        // RIPRelativeImmediate category, the if/else branch that contained 
+        // RIPRelativeImmediate category, the if/else branch that contained
         // a tree.Immediate() call would fail to compile.
         // Two levels of structs are used to allow different template specializations.
         template <ImmediateCategory FROMCATEGORY>

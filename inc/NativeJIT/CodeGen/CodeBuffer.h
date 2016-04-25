@@ -54,8 +54,8 @@ namespace NativeJIT
         // Allocating and resolving jump labels.
         //   Use AllocateLabel() at any time to allocated a label representing a jump target.
         //   Use PlaceLabel() to associate the current buffer position with a label.
-        //   Once all code generation is done, invoke Finalize() to patch all of the call 
-        //   sites with jump targets. Note that all allocated labels must be placed before 
+        //   Once all code generation is done, invoke Finalize() to patch all of the call
+        //   sites with jump targets. Note that all allocated labels must be placed before
         //   calling Finalize().
         Label AllocateLabel();
         virtual void PlaceLabel(Label label);
@@ -84,7 +84,7 @@ namespace NativeJIT
         // length bytes long with specified data. The portion of the buffer that
         // will be changed with this call must already have been filled in
         // (i.e. CurrentPosition() <= startPosition + length). Besides the buffer
-        // contents, no other CodeBuffer properties get modified. 
+        // contents, no other CodeBuffer properties get modified.
         void ReplaceBytes(unsigned startPosition, uint8_t const *data, unsigned length);
 
         // Return the size of the buffer, in bytes.

@@ -61,7 +61,7 @@ namespace NativeJIT
 
         m_bufferSize = RoundUp(bufferSize, systemInfo.dwPageSize);
 
-        // Allocate m_bufferSize bytes plus one extra page that will act as 
+        // Allocate m_bufferSize bytes plus one extra page that will act as
         // a write-guard to detect buffer overruns.
         m_buffer = (unsigned char*)VirtualAlloc(NULL, m_bufferSize + systemInfo.dwPageSize,
                                                 MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -73,7 +73,7 @@ namespace NativeJIT
 
         // Set protection on the guard page.
         DWORD oldProtection;
-        if (!VirtualProtect(m_buffer + m_bufferSize, systemInfo.dwPageSize, 
+        if (!VirtualProtect(m_buffer + m_bufferSize, systemInfo.dwPageSize,
                             PAGE_NOACCESS, &oldProtection))
         {
             // TODO: Fix memory leaks by f. ex. using unique_ptr with custom deleter
@@ -100,7 +100,7 @@ namespace NativeJIT
             // for m_buffer.
             throw std::runtime_error("CodeBuffer: failed to set protection on guard page.");
         }
-      
+
     }
 #endif
 
@@ -129,7 +129,7 @@ namespace NativeJIT
             }
         }
     }
-    
+
 #endif
 
 

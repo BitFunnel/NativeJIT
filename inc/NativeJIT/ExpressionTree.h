@@ -854,7 +854,7 @@ namespace NativeJIT
         case StorageClass::Direct:
             out << "register " << GetDirectRegister().GetName();
             break;
-    
+
         case StorageClass::Immediate:
             PrintImmediate(out, ImmediateFlavor());
             break;
@@ -1013,7 +1013,7 @@ namespace NativeJIT
         LogThrowAssert(it != m_allocatedRegisters.end(), "Couldn't find allocation record for %u", id);
         m_allocatedRegisters.erase(it);
 
-        m_data[id] = nullptr; 
+        m_data[id] = nullptr;
         BitOp::ClearBit(&m_usedMask, id);
     }
 

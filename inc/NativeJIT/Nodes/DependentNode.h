@@ -76,7 +76,7 @@ namespace NativeJIT
     {
         m_dependentNode.IncrementParentCount();
         // Note: not increasing parent count on prerequisite node as DependentNode
-        // is not using its value but only ensuring that it has been evaluated. 
+        // is not using its value but only ensuring that it has been evaluated.
     }
 
 

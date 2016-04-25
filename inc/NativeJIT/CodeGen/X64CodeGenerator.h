@@ -472,7 +472,7 @@ namespace NativeJIT
         // The client is expected to 1. call NoteStartPosition() before emitting
         // the instructions into the X64CodeGenerator and 2. call the relevant
         // Print() method after emitting them.
-        // 
+        //
         class CodePrinter : public NonCopyable
         {
         public:
@@ -1052,7 +1052,7 @@ namespace NativeJIT
 
         // Size override is not necessary for 16-bit source since an opcode that
         // defaults to 16 bits is used in that scenario.
-        // 
+        //
         if (!twoByteSource)
         {
             EmitOpSizeOverrideDirect(dest, src);
@@ -1664,7 +1664,7 @@ namespace NativeJIT
     {
         Emit8(0xc0 | (dest.GetId8() << 3) | src.GetId8());
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
-        // this function is only used for Register-Register encoding. Problem will 
+        // this function is only used for Register-Register encoding. Problem will
         // crop up if caller passes the base register from an X64Indirect.
     }
 
@@ -1674,7 +1674,7 @@ namespace NativeJIT
     {
         Emit8(0xc0 | (extensionOpCode << 3) | dest.GetId8());
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
-        // this function is only used for Register-Register encoding. Problem will 
+        // this function is only used for Register-Register encoding. Problem will
         // crop up if caller passes the base register from an X64Indirect.
     }
 
@@ -2077,7 +2077,7 @@ namespace NativeJIT
         T value)                                                                                \
     {                                                                                           \
         code.Group2(extensionOpCode, value, dest);                                              \
-    }                                                                                    
+    }
 
     DEFINE_GROUP2(Rol, 0);
     DEFINE_GROUP2(Shl, 4);

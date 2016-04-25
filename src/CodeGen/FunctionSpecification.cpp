@@ -524,13 +524,13 @@ namespace NativeJIT
         return static_cast<unsigned>(m_prologCode.size());
     }
 
-    
+
     uint8_t const * FunctionSpecification::GetEpilog() const
     {
         return m_epilogCode.data();
     }
-    
-    
+
+
     unsigned FunctionSpecification::GetEpilogLength() const
     {
         return static_cast<unsigned>(m_epilogCode.size());

@@ -24,7 +24,7 @@
 #pragma once
 
 #include <cstdint>
-#include <iosfwd>   // Diagnostic stream parameter.       
+#include <iosfwd>   // Diagnostic stream parameter.
 
 #include "NativeJIT/AllocatorVector.h"      // Embedded member.
 
@@ -111,7 +111,7 @@ namespace NativeJIT
     private:
         // Builds unwind info and prolog code from the information about
         // function's behavior. The prolog code and unwind info are built into
-        // the two provided buffers. 
+        // the two provided buffers.
         // DESIGN NOTE: Conceptually, it makes most sense to first build UnwindInfo
         // and then build prolog from it. However, unwind info and prolog code
         // are tightly coupled since offsets to prolog instructions need to be

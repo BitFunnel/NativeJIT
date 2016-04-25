@@ -151,7 +151,7 @@ namespace NativeJIT
     {
         static char const * names[] = {
             "jo",
-            "jno", 
+            "jno",
             "jb",
             "jae",
             "je",
@@ -314,7 +314,7 @@ namespace NativeJIT
     }
 
 
-    // 
+    //
     // IosMiniStateRestorer
     //
 

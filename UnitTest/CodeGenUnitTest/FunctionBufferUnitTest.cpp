@@ -266,7 +266,7 @@ namespace NativeJIT
             TestEqual(1, unwindInfo.m_countOfCodes);
             TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 1 - 1),
                                 unwindCodes[0]);
-                
+
             // Verify epilog.
             code.Reset();
 
@@ -307,7 +307,7 @@ namespace NativeJIT
             TestEqual(1, unwindInfo.m_countOfCodes);
             TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 5 - 1),
                                 unwindCodes[0]);
-                
+
             // Verify epilog.
             code.Reset();
 
@@ -350,7 +350,7 @@ namespace NativeJIT
                                  UnwindCode(17),
                                  unwindCodes[0],
                                  unwindCodes[1]);
-                
+
             // Verify epilog.
             code.Reset();
 
@@ -409,7 +409,7 @@ namespace NativeJIT
                                  UnwindCode(6), // Quardword offset off rsp.
                                  unwindCodes[0],
                                  unwindCodes[1]);
-                
+
             // Verify epilog.
             code.Reset();
 
@@ -495,7 +495,7 @@ namespace NativeJIT
                                  UnwindCode(4), // 16-byte offset off rsp.
                                  unwindCodes[0],
                                  unwindCodes[1]);
-                
+
             // Verify epilog.
             code.Reset();
 
@@ -513,7 +513,7 @@ namespace NativeJIT
         // NativeJIT only implements stack unwinding on Windows.
         // Therefore, the exception propagation unit test must be
         // disabled for other operating systems.
-        
+
         static void ThrowTestException()
         {
             throw std::runtime_error("Test");
@@ -573,7 +573,7 @@ namespace NativeJIT
             TestAssert(exceptionCaught);
         }
 #endif
-        
+
 
         TEST_CASE_F(FunctionBufferTest, RegisterPreservation)
         {

@@ -812,7 +812,7 @@ namespace NativeJIT
         __declspec(noinline)
         static void TakeZeroIntArg(int arg)
 #else
-        static void __attribute__ ((noinline)) TakeZeroIntArg(int arg)  
+        static void __attribute__ ((noinline)) TakeZeroIntArg(int arg)
 #endif
         {
             TestEqual(0, arg);

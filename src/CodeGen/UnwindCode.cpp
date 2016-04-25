@@ -33,12 +33,12 @@ namespace NativeJIT
     // UnwindCode
     //
     //*************************************************************************
-    UnwindCode::UnwindCode() 
+    UnwindCode::UnwindCode()
     {
     }
 
 
-    UnwindCode::UnwindCode(uint16_t frameOffset) 
+    UnwindCode::UnwindCode(uint16_t frameOffset)
         : m_frameOffset(frameOffset)
     {
     }
@@ -46,7 +46,7 @@ namespace NativeJIT
 
     UnwindCode::UnwindCode(uint8_t codeOffset,
                            UnwindCodeOp op,
-                           uint8_t info) 
+                           uint8_t info)
     {
         // Note: cannot use initializer list as VC++ doesn't support it (error
         // C2797 "List initialization inside member initializer list or
