@@ -27,9 +27,9 @@
 #include <ostream>
 #include <type_traits>
 
-// _M_X64 is used by VC, as well as icc on Windows.
-// __amd64__ is used by gcc/clang.
-// __x86_64__ is used by icc.
+// _M_X64 is defined by VC, as well as icc on Windows.
+// __amd64__ is defined by gcc/clang.
+// __x86_64__ is defined by icc.
 #if !defined(_M_X64) && !defined(__amd64__) && !defined(__x86_64__)
 #error This code must be compiled for _AMD64_
 #endif
