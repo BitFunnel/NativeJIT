@@ -232,7 +232,7 @@ namespace NativeJIT
             {
                 Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                uint32_t p2 = 1ul;
+                uint8_t p2 = 1ul;
 
                 auto & a = expression.Rol(expression.GetP1(), p2);
                 auto function = expression.Compile(a);
@@ -273,7 +273,7 @@ namespace NativeJIT
             {
                 Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                uint32_t p2 = 3ul;
+                uint8_t p2 = 3ul;
 
                 auto & a = expression.Shl(expression.GetP1(), p2);
                 auto function = expression.Compile(a);
@@ -294,7 +294,7 @@ namespace NativeJIT
             {
                 Function<uint32_t, uint32_t, uint32_t> expression(setup->GetAllocator(), setup->GetCode());
 
-                uint32_t p2 = 3ul;
+                uint8_t p2 = 3ul;
 
                 auto & a = expression.Shr(expression.GetP1(), p2);
                 auto function = expression.Compile(a);
