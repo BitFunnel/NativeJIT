@@ -47,7 +47,6 @@ typedef ::testing::Test TestFixtureBase;
 
 #define TEST_CASES_END
 
-#define TestEqualCharPtrs(expected, actual, ...) ASSERT_EQ(std::string(expected), std::string(actual))
 #define TestNotEqual(expected, actual, ...) ASSERT_NE(expected, actual)
 #define TestFail(x) FAIL() << x
 
