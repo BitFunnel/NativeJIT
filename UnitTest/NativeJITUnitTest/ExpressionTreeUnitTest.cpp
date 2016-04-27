@@ -385,7 +385,7 @@ namespace NativeJIT
             try
             {
                 e.Direct<T>(reg);
-                TestFail("It should not have been possible to obtain a pinned register");
+                FAIL() << "It should not have been possible to obtain a pinned register";
             }
             catch (std::exception const & e)
             {
@@ -397,7 +397,7 @@ namespace NativeJIT
             }
             catch (...)
             {
-                TestFail("Unexpected exception type");
+                FAIL() << "Unexpected exception type";
             }
 
             // Unpin the register and try obtaining it again (should succceed now).

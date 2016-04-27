@@ -47,8 +47,6 @@ typedef ::testing::Test TestFixtureBase;
 
 #define TEST_CASES_END
 
-#define TestFail(x) FAIL() << x
-
 // To be called only from TEST or TEST_F methods.
 #define ASSERT_NO_FATAL_FAILURES() ASSERT_TRUE(!HasFatalFailure())
 
