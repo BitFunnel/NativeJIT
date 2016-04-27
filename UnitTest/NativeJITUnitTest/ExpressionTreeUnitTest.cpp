@@ -223,7 +223,7 @@ namespace NativeJIT
             auto temp2 = e.Temporary<int>();
 
             ASSERT_EQ(temp1.GetBaseRegister(), temp2.GetBaseRegister());
-            TestNotEqual(temp1.GetOffset(), temp2.GetOffset());
+            ASSERT_NE(temp1.GetOffset(), temp2.GetOffset());
         }
 
 
@@ -473,7 +473,7 @@ namespace NativeJIT
 
             ASSERT_TRUE(s2.IsSoleDataOwner());
             ASSERT_EQ(s2.GetStorageClass(), StorageClass::Direct);
-            // TestNotEqual(s2.GetDirectRegister(), eax); Doesn't compile!
+            // ASSERT_NE(s2.GetDirectRegister(), eax); Doesn't compile!
             ASSERT_TRUE(!(s2.GetDirectRegister() == eax));
         }
 

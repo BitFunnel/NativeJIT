@@ -47,7 +47,6 @@ typedef ::testing::Test TestFixtureBase;
 
 #define TEST_CASES_END
 
-#define TestNotEqual(expected, actual, ...) ASSERT_NE(expected, actual)
 #define TestFail(x) FAIL() << x
 
 // To be called only from TEST or TEST_F methods.

@@ -59,7 +59,7 @@ namespace NativeJIT
 
         void VerifyLowestBitSet(uint64_t testValue, unsigned expected)
         {
-            TestNotEqual(0u, testValue);
+            ASSERT_NE(0u, testValue);
 
             unsigned actual;
             const bool foundBit = BitOp::GetLowestBitSet(testValue, &actual);
@@ -82,7 +82,7 @@ namespace NativeJIT
 
         void VerifyHighestBitSet(uint64_t testValue, unsigned expected)
         {
-            TestNotEqual(0u, testValue);
+            ASSERT_NE(0u, testValue);
 
             unsigned actual;
             const bool foundBit = BitOp::GetHighestBitSet(testValue, &actual);
