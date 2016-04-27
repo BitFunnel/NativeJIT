@@ -22,6 +22,8 @@
 
 #include "stdafx.h"
 
+#include <iostream>
+
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/CodeGen/ValuePredicates.h"
@@ -79,11 +81,11 @@ namespace NativeJIT
                 auto expected = ForcedCast<TO>(testValue);
                 auto observed = function();
 
-                TestEqual(expected,
-                          observed,
-                          "Incorrect cast from %s to %s (immediate)",
-                          typeid(FROM).name(),
-                          typeid(TO).name());
+                ASSERT_EQ(expected, observed) 
+                    << "Incorrect cast from "
+                    << typeid(FROM).name()
+                    << " to "
+                    << typeid(TO).name();
             }
 
 
@@ -100,11 +102,11 @@ namespace NativeJIT
                 auto expected = ForcedCast<TO>(testValue);
                 auto observed = function(testValue);
 
-                TestEqual(expected,
-                          observed,
-                          "Incorrect cast from %s to %s (direct)",
-                          typeid(FROM).name(),
-                          typeid(TO).name());
+                ASSERT_EQ(expected, observed)
+                    << "Incorrect cast from "
+                    << typeid(FROM).name()
+                    << " to "
+                    << typeid(TO).name();
             }
 
 
@@ -131,11 +133,11 @@ namespace NativeJIT
                 auto expected = ForcedCast<TO>(testValue);
                 auto observed = function(&input);
 
-                TestEqual(expected,
-                          observed,
-                          "Incorrect cast from %s to %s (indirect)",
-                          typeid(FROM).name(),
-                          typeid(TO).name());
+                ASSERT_EQ(expected, observed)
+                    << "Incorrect cast from "
+                    << typeid(FROM).name()
+                    << " to "
+                    << typeid(TO).name();
             }
 
 

@@ -52,7 +52,7 @@ namespace NativeJIT
                 auto expected = value;
                 auto observed = function();
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 
@@ -72,7 +72,7 @@ namespace NativeJIT
                 auto expected = value;
                 auto observed = function();
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 
@@ -97,7 +97,7 @@ namespace NativeJIT
                 auto expected = p1 + p2;
                 auto observed = function(p1, p2);
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 
@@ -119,7 +119,7 @@ namespace NativeJIT
                 auto expected = p1 + immediate;
                 auto observed = function(p1);
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 
@@ -142,7 +142,7 @@ namespace NativeJIT
                 auto expected = immediate1 + immediate2;
                 auto observed = function();
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 
@@ -165,7 +165,7 @@ namespace NativeJIT
                 auto expected = immediate1 + immediate2;
                 auto observed = function();
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 

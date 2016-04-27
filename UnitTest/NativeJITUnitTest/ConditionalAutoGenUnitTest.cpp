@@ -58,7 +58,7 @@ namespace NativeJIT
                     auto expected = (p1 > p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -83,7 +83,7 @@ namespace NativeJIT
                     auto expected = (p1 == p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -108,7 +108,7 @@ namespace NativeJIT
                     auto expected = (p1 == p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -133,7 +133,7 @@ namespace NativeJIT
                     auto expected = (p1 < p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -158,7 +158,7 @@ namespace NativeJIT
                     auto expected = (p1 > p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -183,7 +183,7 @@ namespace NativeJIT
                     auto expected = (p1 >= p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -208,7 +208,7 @@ namespace NativeJIT
                     auto expected = (p1 <= p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -233,7 +233,7 @@ namespace NativeJIT
                     auto expected = (p1 <= p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -258,7 +258,7 @@ namespace NativeJIT
                     auto expected = (p1 > p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -283,7 +283,7 @@ namespace NativeJIT
                     auto expected = (p1 != p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -308,7 +308,7 @@ namespace NativeJIT
                     auto expected = (p1 != p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -333,7 +333,7 @@ namespace NativeJIT
                     auto expected = (p1 <= p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -358,7 +358,7 @@ namespace NativeJIT
                     auto expected = (p1 < p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -383,7 +383,7 @@ namespace NativeJIT
                     auto expected = (p1 <= p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -408,7 +408,7 @@ namespace NativeJIT
                     auto expected = (p1 > p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -433,7 +433,7 @@ namespace NativeJIT
                     auto expected = (p1 < p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -458,7 +458,7 @@ namespace NativeJIT
                     auto expected = (p1 >= p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -483,7 +483,7 @@ namespace NativeJIT
                     auto expected = (p1 != p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -508,7 +508,7 @@ namespace NativeJIT
                     auto expected = (p1 != p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -533,7 +533,7 @@ namespace NativeJIT
                     auto expected = (p1 == p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }
@@ -558,7 +558,7 @@ namespace NativeJIT
                     auto expected = (p1 == p2) ? trueValue : falseValue;
                     auto observed = function(p1, p2);
 
-                    TestEqual(expected, observed);
+                    ASSERT_EQ(expected, observed);
                   }
                 }
             }

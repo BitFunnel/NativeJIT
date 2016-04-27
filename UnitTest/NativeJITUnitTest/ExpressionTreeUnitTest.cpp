@@ -222,7 +222,7 @@ namespace NativeJIT
             auto temp1 = e.Temporary<int>();
             auto temp2 = e.Temporary<int>();
 
-            TestEqual(temp1.GetBaseRegister(), temp2.GetBaseRegister());
+            ASSERT_EQ(temp1.GetBaseRegister(), temp2.GetBaseRegister());
             TestNotEqual(temp1.GetOffset(), temp2.GetOffset());
         }
 
@@ -236,7 +236,7 @@ namespace NativeJIT
             auto temp2 = e.RIPRelative<int>(16);
 
             ASSERT_TRUE(temp1.GetBaseRegister().IsRIP());
-            TestEqual(temp1.GetBaseRegister(), temp2.GetBaseRegister());
+            ASSERT_EQ(temp1.GetBaseRegister(), temp2.GetBaseRegister());
         }
 
 
@@ -245,25 +245,25 @@ namespace NativeJIT
             unsigned count = 0;
 
             ReferenceCounter ref1(count);
-            TestEqual(1u, count);
+            ASSERT_EQ(1u, count);
 
             ReferenceCounter ref2(count);
-            TestEqual(2u, count);
+            ASSERT_EQ(2u, count);
 
             ReferenceCounter ref3;
-            TestEqual(2u, count);
+            ASSERT_EQ(2u, count);
 
             ref3 = ref2;
-            TestEqual(3u, count);
+            ASSERT_EQ(3u, count);
 
             ref3.Reset();
-            TestEqual(2u, count);
+            ASSERT_EQ(2u, count);
 
             ref2 = ReferenceCounter();
-            TestEqual(1u, count);
+            ASSERT_EQ(1u, count);
 
             ref1.Reset();
-            TestEqual(0u, count);
+            ASSERT_EQ(0u, count);
         }
 
 
@@ -278,7 +278,7 @@ namespace NativeJIT
             for (unsigned i = 0; i < totalRegisterCount; ++i)
             {
                 storages.push_back(e.Direct<int>());
-                TestEqual(storages.back().GetStorageClass(), StorageClass::Direct);
+                ASSERT_EQ(storages.back().GetStorageClass(), StorageClass::Direct);
             }
 
             // There won't be enough registers for all storages to stay
@@ -314,16 +314,16 @@ namespace NativeJIT
 
             // Most storages should be direct, some corresponding to the
             // reserved registers should not.
-            TestEqual(totalRegisterCount - reservedRegisterCount, directCount);
-            TestEqual(reservedRegisterCount, indirectCount);
+            ASSERT_EQ(totalRegisterCount - reservedRegisterCount, directCount);
+            ASSERT_EQ(reservedRegisterCount, indirectCount);
 
             // A new direct storage should cause the oldest reserved register
             // to be spilled (note: this assumes current allocation strategy).
-            TestEqual(storages[indexOfFirstDirect].GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(storages[indexOfFirstDirect].GetStorageClass(), StorageClass::Direct);
             Storage<int> spillTrigger = e.Direct<int>();
 
-            TestEqual(spillTrigger.GetStorageClass(),  StorageClass::Direct);
-            TestEqual(storages[indexOfFirstDirect].GetStorageClass(), StorageClass::Indirect);
+            ASSERT_EQ(spillTrigger.GetStorageClass(),  StorageClass::Direct);
+            ASSERT_EQ(storages[indexOfFirstDirect].GetStorageClass(), StorageClass::Indirect);
         }
 
 
@@ -338,35 +338,35 @@ namespace NativeJIT
             for (unsigned i = 0; i < totalRegisterCount; ++i)
             {
                 storages.push_back(e.Direct<float>());
-                TestEqual(storages.back().GetStorageClass(),  StorageClass::Direct);
+                ASSERT_EQ(storages.back().GetStorageClass(),  StorageClass::Direct);
             }
 
             // There are no reserved registers for floats, so no register
             // should have been bumped.
             for (auto const & s : storages)
             {
-                TestEqual(s.GetStorageClass(), StorageClass::Direct);
+                ASSERT_EQ(s.GetStorageClass(), StorageClass::Direct);
             }
 
             // A new direct storage should cause the oldest reserved register
             // to be spilled (note: this assumes current allocation strategy).
             Storage<float> spillTrigger = e.Direct<float>();
 
-            TestEqual(spillTrigger.GetStorageClass(), StorageClass::Direct);
-            TestEqual(storages[0].GetStorageClass(), StorageClass::Indirect);
+            ASSERT_EQ(spillTrigger.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(storages[0].GetStorageClass(), StorageClass::Indirect);
 
             Storage<float> spillTrigger2 = e.Direct<float>();
 
-            TestEqual(spillTrigger2.GetStorageClass(), StorageClass::Direct);
-            TestEqual(storages[1].GetStorageClass(), StorageClass::Indirect);
+            ASSERT_EQ(spillTrigger2.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(storages[1].GetStorageClass(), StorageClass::Indirect);
 
             // Make sure that a released register will be used for a new
             // direct rather than spilling storages[2] for it.
-            TestEqual(storages[2].GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(storages[2].GetStorageClass(), StorageClass::Direct);
             spillTrigger2.Reset();
 
             spillTrigger2 = e.Direct<float>();
-            TestEqual(storages[2].GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(storages[2].GetStorageClass(), StorageClass::Direct);
         }
 
 
@@ -405,8 +405,8 @@ namespace NativeJIT
             Storage<T> storage2 = e.Direct<T>(reg);
 
             // The new storage should own the register, the old not should not.
-            TestEqual(storage2.GetStorageClass(), StorageClass::Direct);
-            TestEqual(storage2.GetDirectRegister(), reg);
+            ASSERT_EQ(storage2.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(storage2.GetDirectRegister(), reg);
             ASSERT_TRUE(!(storage.GetStorageClass() == StorageClass::Direct
                          && storage.GetDirectRegister() == reg));
         }
@@ -456,23 +456,23 @@ namespace NativeJIT
 
             auto s = e.Direct<int>(eax);
             ASSERT_TRUE(s.IsSoleDataOwner());
-            TestEqual(s.GetStorageClass(), StorageClass::Direct);
-            TestEqual(s.GetDirectRegister(), eax);
+            ASSERT_EQ(s.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(s.GetDirectRegister(), eax);
 
             auto s2 = s;
             ASSERT_TRUE(!s.IsSoleDataOwner());
             ASSERT_TRUE(!s2.IsSoleDataOwner());
-            TestEqual(s2.GetStorageClass(), StorageClass::Direct);
-            TestEqual(s2.GetDirectRegister(), eax);
+            ASSERT_EQ(s2.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(s2.GetDirectRegister(), eax);
 
             s.TakeSoleOwnershipOfDirect();
 
             ASSERT_TRUE(s.IsSoleDataOwner());
-            TestEqual(s.GetStorageClass(), StorageClass::Direct);
-            TestEqual(s.GetDirectRegister(), eax);
+            ASSERT_EQ(s.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(s.GetDirectRegister(), eax);
 
             ASSERT_TRUE(s2.IsSoleDataOwner());
-            TestEqual(s2.GetStorageClass(), StorageClass::Direct);
+            ASSERT_EQ(s2.GetStorageClass(), StorageClass::Direct);
             // TestNotEqual(s2.GetDirectRegister(), eax); Doesn't compile!
             ASSERT_TRUE(!(s2.GetDirectRegister() == eax));
         }

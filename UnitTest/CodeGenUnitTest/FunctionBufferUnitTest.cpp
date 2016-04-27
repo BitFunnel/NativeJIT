@@ -45,15 +45,25 @@
 // Using a macro to keep original source line information in failure text.
 // Comparing m_frameOffset as it's a single variable which includes all of
 // UnwindCode's bits.
-#define TestEqualUnwindCode(expected, actual) \
-    TestEqual(expected.m_frameOffset, \
-              actual.m_frameOffset, \
-              "UnwindCode difference: (%u, %u, %u) vs (%u, %u, %u)", \
-              expected.m_operation.m_codeOffset, expected.m_operation.m_unwindOp, expected.m_operation.m_opInfo, \
-              actual.m_operation.m_codeOffset, actual.m_operation.m_unwindOp, actual.m_operation.m_opInfo)
+#define ASSERT_EQ_UNWIND_CODE(expected, actual) \
+    ASSERT_EQ(expected.m_frameOffset, \
+              actual.m_frameOffset) \
+    << "UnwindCode difference: (" \
+    << expected.m_operation.m_codeOffset \
+    << ", " \
+    << expected.m_operation.m_unwindOp \
+    << ", " \
+    << expected.m_operation.m_opInfo \
+    << ") vs (" \
+    << actual.m_operation.m_codeOffset \
+    << ", " \
+    << actual.m_operation.m_unwindOp \
+    << ", " \
+    << actual.m_operation.m_opInfo \
+    << ")";
 
 // The two-code version.
-#define TestEqualUnwindCode2(expected1, expected2, actual1, actual2) \
+#define ASSERT_EQ_UNWIND_CODE2(expected1, expected2, actual1, actual2) \
     ASSERT_TRUE(expected1.m_frameOffset == actual1.m_frameOffset \
                 && expected2.m_frameOffset == actual2.m_frameOffset) \
     << "UnwindCode difference: (" \
@@ -64,7 +74,7 @@
     << expected1.m_operation.m_opInfo \
     << ", " \
     << expected2.m_frameOffset \
-    << " vs " \
+    << ") vs (" \
     << actual1.m_operation.m_codeOffset \
     << ", " \
     << actual1.m_operation.m_unwindOp \
@@ -89,10 +99,10 @@ namespace NativeJIT
 
                 ASSERT_TRUE(unwindByteLen >= sizeof(UnwindInfo)) << "Invalid UnwindInfo length " << unwindByteLen;
 
-                TestEqual(1, unwindInfo.m_version);
-                TestEqual(0, unwindInfo.m_flags);
-                TestEqual(0, unwindInfo.m_frameRegister);
-                TestEqual(0, unwindInfo.m_frameOffset);
+                ASSERT_EQ(1, unwindInfo.m_version);
+                ASSERT_EQ(0, unwindInfo.m_flags);
+                ASSERT_EQ(0, unwindInfo.m_frameRegister);
+                ASSERT_EQ(0, unwindInfo.m_frameOffset);
 
                 // Verify consistency of unwind codes count. One UnwindCode is
                 // already included inside UnwindInfo structure.
@@ -115,7 +125,8 @@ namespace NativeJIT
                 unsigned regId;
 
                 // Using RAX explicitly in a few places below.
-                ASSERT_TRUE((regMask & rax.GetMask()) != 0) << "This test assumes RAX is writable";
+                ASSERT_TRUE((regMask & rax.GetMask()) != 0)
+                    << "This test assumes RAX is writable";
 
                 while (BitOp::GetLowestBitSet(regMask, &regId))
                 {
@@ -213,8 +224,8 @@ namespace NativeJIT
             void VerifyProlog(FunctionSpecification const & spec,
                               FunctionBuffer const & expectedProlog)
             {
-                TestEqual(expectedProlog.CurrentPosition(), spec.GetPrologLength());
-                TestEqual(0,
+                ASSERT_EQ(expectedProlog.CurrentPosition(), spec.GetPrologLength());
+                ASSERT_EQ(0,
                           memcmp(expectedProlog.BufferStart(),
                                  spec.GetProlog(),
                                  spec.GetPrologLength()));
@@ -225,8 +236,8 @@ namespace NativeJIT
             void VerifyEpilog(FunctionSpecification const & spec,
                               FunctionBuffer const & expectedEpilog)
             {
-                TestEqual(expectedEpilog.CurrentPosition(), spec.GetEpilogLength());
-                TestEqual(0,
+                ASSERT_EQ(expectedEpilog.CurrentPosition(), spec.GetEpilogLength());
+                ASSERT_EQ(0,
                           memcmp(expectedEpilog.BufferStart(),
                                  spec.GetEpilog(),
                                  spec.GetEpilogLength()));
@@ -261,7 +272,7 @@ namespace NativeJIT
             // for all functions, so there's at least one code to perform
             // the alignment even if the function makes no calls or uses
             // no stack. So, 1 quadword slot allocated for the alignment:
-            TestEqual(8, spec.GetOffsetToOriginalRsp());
+            ASSERT_EQ(8, spec.GetOffsetToOriginalRsp());
 
             // Verify prolog.
             std::vector<uint8_t> offsets;
@@ -278,8 +289,8 @@ namespace NativeJIT
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
             auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
-            TestEqual(1, unwindInfo.m_countOfCodes);
-            TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 1 - 1),
+            ASSERT_EQ(1, unwindInfo.m_countOfCodes);
+            ASSERT_EQ_UNWIND_CODE(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 1 - 1),
                                 unwindCodes[0]);
 
             // Verify epilog.
@@ -302,7 +313,7 @@ namespace NativeJIT
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // 4 slots for parameter homes, 1 slot to align stack.
-            TestEqual(40, spec.GetOffsetToOriginalRsp());
+            ASSERT_EQ(40, spec.GetOffsetToOriginalRsp());
 
             // Verify prolog.
             std::vector<uint8_t> offsets;
@@ -319,8 +330,8 @@ namespace NativeJIT
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
             auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
-            TestEqual(1, unwindInfo.m_countOfCodes);
-            TestEqualUnwindCode(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 5 - 1),
+            ASSERT_EQ(1, unwindInfo.m_countOfCodes);
+            ASSERT_EQ_UNWIND_CODE(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_SMALL, 5 - 1),
                                 unwindCodes[0]);
 
             // Verify epilog.
@@ -343,7 +354,7 @@ namespace NativeJIT
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // 17 quadword slots exactly (already aligned).
-            TestEqual(136, spec.GetOffsetToOriginalRsp());
+            ASSERT_EQ(136, spec.GetOffsetToOriginalRsp());
 
             // Verify prolog.
             std::vector<uint8_t> offsets;
@@ -360,8 +371,8 @@ namespace NativeJIT
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
             auto unwindCodes = &unwindInfo.m_firstUnwindCode;
 
-            TestEqual(2, unwindInfo.m_countOfCodes);
-            TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_LARGE, 0),
+            ASSERT_EQ(2, unwindInfo.m_countOfCodes);
+            ASSERT_EQ_UNWIND_CODE2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_ALLOC_LARGE, 0),
                                  UnwindCode(17),
                                  unwindCodes[0],
                                  unwindCodes[1]);
@@ -386,7 +397,7 @@ namespace NativeJIT
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
             // 6 slots for parameters, one for RBP, which also aligns the stack.
-            TestEqual(56, spec.GetOffsetToOriginalRsp());
+            ASSERT_EQ(56, spec.GetOffsetToOriginalRsp());
 
             // Verify prolog.
             std::vector<uint8_t> offsets;
@@ -417,10 +428,10 @@ namespace NativeJIT
             // Reverse the offsets to match the epilog order.
             std::reverse(offsets.begin(), offsets.end());
 
-            TestEqual(3, unwindInfo.m_countOfCodes);
-            TestEqualUnwindCode(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_ALLOC_SMALL, 7 - 1),
+            ASSERT_EQ(3, unwindInfo.m_countOfCodes);
+            ASSERT_EQ_UNWIND_CODE(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_ALLOC_SMALL, 7 - 1),
                                 unwindCodes[2]);
-            TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
+            ASSERT_EQ_UNWIND_CODE2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
                                  UnwindCode(6), // Quardword offset off rsp.
                                  unwindCodes[0],
                                  unwindCodes[1]);
@@ -455,7 +466,7 @@ namespace NativeJIT
                                         GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
-            TestEqual(104, spec.GetOffsetToOriginalRsp());
+            ASSERT_EQ(104, spec.GetOffsetToOriginalRsp());
 
             // Verify prolog.
             std::vector<uint8_t> offsets;
@@ -495,18 +506,18 @@ namespace NativeJIT
             // Reverse the offsets to match the epilog order.
             std::reverse(offsets.begin(), offsets.end());
 
-            TestEqual(7, unwindInfo.m_countOfCodes);
-            TestEqualUnwindCode(UnwindCode(offsets.at(3), UnwindCodeOp::UWOP_ALLOC_SMALL, 13 - 1),
+            ASSERT_EQ(7, unwindInfo.m_countOfCodes);
+            ASSERT_EQ_UNWIND_CODE(UnwindCode(offsets.at(3), UnwindCodeOp::UWOP_ALLOC_SMALL, 13 - 1),
                                 unwindCodes[6]);
-            TestEqualUnwindCode2(UnwindCode(offsets.at(2), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
+            ASSERT_EQ_UNWIND_CODE2(UnwindCode(offsets.at(2), UnwindCodeOp::UWOP_SAVE_NONVOL, static_cast<uint8_t>(rbp.GetId())),
                                  UnwindCode(4), // Quadword offset off rsp.
                                  unwindCodes[4],
                                  unwindCodes[5]);
-            TestEqualUnwindCode2(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm10.GetId())),
+            ASSERT_EQ_UNWIND_CODE2(UnwindCode(offsets.at(1), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm10.GetId())),
                                  UnwindCode(3), // 16-byte offset off rsp.
                                  unwindCodes[2],
                                  unwindCodes[3]);
-            TestEqualUnwindCode2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm11.GetId())),
+            ASSERT_EQ_UNWIND_CODE2(UnwindCode(offsets.at(0), UnwindCodeOp::UWOP_SAVE_XMM128, static_cast<uint8_t>(xmm11.GetId())),
                                  UnwindCode(4), // 16-byte offset off rsp.
                                  unwindCodes[0],
                                  unwindCodes[1]);
@@ -576,7 +587,7 @@ namespace NativeJIT
             catch (std::exception const &e)
             {
                 ASSERT_TRUE(!exceptionCaught);
-                TestEqualCharPtrs("Test", e.what());
+                ASSERT_EQCharPtrs("Test", e.what());
 
                 exceptionCaught = true;
             }
@@ -637,10 +648,9 @@ namespace NativeJIT
 
             while (BitOp::GetLowestBitSet(regMask, &regId))
             {
-                TestEqual(before.m_rxx[regId],
-                            after.m_rxx[regId],
-                            "Mismatch for register %s",
-                            Register<8, false>(regId).GetName());
+                ASSERT_EQ(before.m_rxx[regId], after.m_rxx[regId])
+                    << "Mismatch for register "
+                    << Register<8, false>(regId).GetName();
                 BitOp::ClearBit(&regMask, regId);
             }
 
@@ -648,15 +658,14 @@ namespace NativeJIT
 
             while (BitOp::GetLowestBitSet(regMask, &regId))
             {
-                TestEqual(before.m_xmm[2 * regId],
-                          after.m_xmm[2 * regId],
-                          "Mismatch for register %s",
-                          Register<8, true>(regId).GetName());
-                TestEqual(before.m_xmm[2 * regId] + 1,
-                          after.m_xmm[2 * regId] + 1,
-                          "Mismatch for register %s",
-                          Register<8, true>(regId).GetName());
-                BitOp::ClearBit(&regMask, regId);
+              ASSERT_EQ(before.m_xmm[2 * regId], after.m_xmm[2 * regId])
+                  << "Mismatch for register "
+                  << Register<8, true>(regId).GetName();
+              ASSERT_EQ(before.m_xmm[2 * regId] + 1,
+                        after.m_xmm[2 * regId] + 1)
+                  << "Mismatch for register "
+                  << Register<8, true>(regId).GetName();
+              BitOp::ClearBit(&regMask, regId);
             }
         }
 
@@ -664,5 +673,6 @@ namespace NativeJIT
     }
 }
 
-#undef TestEqualUnwindCode
+#undef ASSERT_EQ_UNWIND_CODE
+#undef ASSERT_EQ_UNWIND_CODE2
 #undef ALIGNAS

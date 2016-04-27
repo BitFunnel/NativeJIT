@@ -1220,8 +1220,8 @@ namespace NativeJIT
                 auto setup = GetSetup();
 
                 {
-                    TestEqual(0u, offsetof(WebRankerContext, m_commonContext),
-                             "Invalid WebRankerContext structure layout");
+                    ASSERT_EQ(0u, offsetof(WebRankerContext, m_commonContext))
+                        <<  "Invalid WebRankerContext structure layout";
 
                     // TestData is large, allocate from heap to avoid stack overflow.
                     auto testData = std::make_unique<TestData>(docDescriptor, parsedQuery);

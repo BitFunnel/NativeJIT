@@ -35,26 +35,26 @@ namespace NativeJIT
     {
         TEST_CASE(BitOperations, NonZeroBitCount)
         {
-            TestEqual(0, BitOp::GetNonZeroBitCount(0u));
-            TestEqual(0, BitOp::GetNonZeroBitCountFallback(0u));
+            ASSERT_EQ(0, BitOp::GetNonZeroBitCount(0u));
+            ASSERT_EQ(0, BitOp::GetNonZeroBitCountFallback(0u));
 
-            TestEqual(0, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0)));
-            TestEqual(0, BitOp::GetNonZeroBitCountFallback(static_cast<uint64_t>(0)));
+            ASSERT_EQ(0, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0)));
+            ASSERT_EQ(0, BitOp::GetNonZeroBitCountFallback(static_cast<uint64_t>(0)));
 
-            TestEqual(1, BitOp::GetNonZeroBitCount(1u));
-            TestEqual(1, BitOp::GetNonZeroBitCountFallback(1u));
+            ASSERT_EQ(1, BitOp::GetNonZeroBitCount(1u));
+            ASSERT_EQ(1, BitOp::GetNonZeroBitCountFallback(1u));
 
-            TestEqual(1, BitOp::GetNonZeroBitCount(0x80000000u));
-            TestEqual(1, BitOp::GetNonZeroBitCountFallback(0x80000000u));
+            ASSERT_EQ(1, BitOp::GetNonZeroBitCount(0x80000000u));
+            ASSERT_EQ(1, BitOp::GetNonZeroBitCountFallback(0x80000000u));
 
-            TestEqual(1, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0x8000000000000000)));
-            TestEqual(1, BitOp::GetNonZeroBitCountFallback(0x8000000000000000));
+            ASSERT_EQ(1, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0x8000000000000000)));
+            ASSERT_EQ(1, BitOp::GetNonZeroBitCountFallback(0x8000000000000000));
 
-            TestEqual(32, BitOp::GetNonZeroBitCount(0xFFFFFFFFu));
-            TestEqual(32, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFu));
+            ASSERT_EQ(32, BitOp::GetNonZeroBitCount(0xFFFFFFFFu));
+            ASSERT_EQ(32, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFu));
 
-            TestEqual(64, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0xFFFFFFFFFFFFFFFF)));
-            TestEqual(64, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFFFFFFFFF));
+            ASSERT_EQ(64, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0xFFFFFFFFFFFFFFFF)));
+            ASSERT_EQ(64, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFFFFFFFFF));
         }
 
         void VerifyLowestBitSet(uint64_t testValue, unsigned expected)
@@ -65,7 +65,8 @@ namespace NativeJIT
             const bool foundBit = BitOp::GetLowestBitSet(testValue, &actual);
 
             ASSERT_TRUE(foundBit) << "Expected to find a bit in " << testValue;
-            TestEqual(expected, actual, "Mismatched expected and actual bit for %I64u", testValue);
+            ASSERT_EQ(expected, actual) <<
+                "Mismatched expected and actual bit for " << testValue;
         }
 
         TEST_CASE(BitOperations, LowestBitSet)
@@ -87,7 +88,8 @@ namespace NativeJIT
             const bool foundBit = BitOp::GetHighestBitSet(testValue, &actual);
 
             ASSERT_TRUE(foundBit) << "Expected to find a bit in " << testValue;
-            TestEqual(expected, actual, "Mismatched expected and actual bit for %I64u", testValue);
+            ASSERT_EQ(expected, actual) <<
+                "Mismatched expected and actual bit for " << testValue;
         }
 
 

@@ -23,6 +23,7 @@
 #include "stdafx.h"
 
 #include <cmath>        // For float std::abs(float).
+#include <iostream>
 #include <memory>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
@@ -139,10 +140,9 @@ namespace NativeJIT
             {
                 static_cast<void>(s_methodName); // Unreferenced parameter for GTest.
 
-                TestEqual(expectedCallNumber,
-                          actualCallNumber,
-                          "%s must be call #%u",
-                          s_methodName);
+                ASSERT_EQ(expectedCallNumber, actualCallNumber)
+                    << "unexpected call order "
+                    << s_methodName;
             }
 
 
@@ -205,7 +205,7 @@ namespace NativeJIT
 
                 auto observed = function();
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -225,7 +225,7 @@ namespace NativeJIT
                 auto expected = p1;
                 auto observed = function(p1);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -246,7 +246,7 @@ namespace NativeJIT
                 auto expected = p1 + p2;
                 auto observed = function(p1, p2);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -269,7 +269,7 @@ namespace NativeJIT
                 auto expected = p2 - p1 + p3;
                 auto observed = function(p1, p2, p3);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -294,7 +294,7 @@ namespace NativeJIT
                 auto expected = (p1 - p2) - (p3 - p4);
                 auto observed = function(p1, p2, p3, p4);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -322,7 +322,7 @@ namespace NativeJIT
                 auto expected = (float)p1 + (p2 * 10.0f);
                 auto observed = function(p1, p2);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -354,7 +354,7 @@ namespace NativeJIT
                 auto expected = (float)p1 + (p2 * 10.0f) + (p3 * 100);
                 auto observed = function(p1, p2, p3);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -391,7 +391,7 @@ namespace NativeJIT
                 auto expected = (float)p1 + (p2 * 10.0f) + (p3 * 100) + (p4 * 1000.0f);
                 auto observed = function(p1, p2, p3, p4);
 
-                TestEqual(expected, observed);
+                ASSERT_EQ(expected, observed);
             }
         }
 
@@ -417,8 +417,8 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function();
 
-                TestEqual(expected, observed);
-                TestEqual(1, s_sampleFunctionCalls);
+                ASSERT_EQ(expected, observed);
+                ASSERT_EQ(1, s_sampleFunctionCalls);
             }
         }
 
@@ -443,9 +443,9 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p1);
 
-                TestEqual(expected, observed);
-                TestEqual(1, s_sampleFunctionCalls);
-                TestEqual(s_charParameter1, p1);
+                ASSERT_EQ(expected, observed);
+                ASSERT_EQ(1, s_sampleFunctionCalls);
+                ASSERT_EQ(s_charParameter1, p1);
             }
         }
 
@@ -473,10 +473,10 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p2, p1);
 
-                TestEqual(expected, observed);
-                TestEqual(1, s_sampleFunctionCalls);
-                TestEqual(s_intParameter1, p1);
-                TestEqual(s_intParameter2, p2);
+                ASSERT_EQ(expected, observed);
+                ASSERT_EQ(1, s_sampleFunctionCalls);
+                ASSERT_EQ(s_intParameter1, p1);
+                ASSERT_EQ(s_intParameter2, p2);
             }
         }
 
@@ -509,11 +509,11 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p3, p2, p1);
 
-                TestEqual(expected, observed);
-                TestEqual(1, s_sampleFunctionCalls);
-                TestEqual(s_charParameter1, p1);
-                TestEqual(s_intParameter2, p2);
-                TestEqual(s_int64Parameter3, p3);
+                ASSERT_EQ(expected, observed);
+                ASSERT_EQ(1, s_sampleFunctionCalls);
+                ASSERT_EQ(s_charParameter1, p1);
+                ASSERT_EQ(s_intParameter2, p2);
+                ASSERT_EQ(s_int64Parameter3, p3);
             }
         }
 
@@ -549,12 +549,12 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p4, p3, p2, p1);
 
-                TestEqual(expected, observed);
-                TestEqual(1, s_sampleFunctionCalls);
-                TestEqual(s_charParameter1, p1);
-                TestEqual(s_intParameter2, p2);
-                TestEqual(s_int64Parameter3, p3);
-                TestEqual(s_boolParameter4, p4);
+                ASSERT_EQ(expected, observed);
+                ASSERT_EQ(1, s_sampleFunctionCalls);
+                ASSERT_EQ(s_charParameter1, p1);
+                ASSERT_EQ(s_intParameter2, p2);
+                ASSERT_EQ(s_int64Parameter3, p3);
+                ASSERT_EQ(s_boolParameter4, p4);
             }
         }
 
@@ -636,8 +636,9 @@ namespace NativeJIT
                                                      uint32_t& intRef,
                                                      unsigned int expectedValue)
         {
-            TestEqual(intPtr, &intRef, "Pointer and reference should have referred to the same address");
-            TestEqual(expectedValue, intRef, "Unexpected target value");
+            ASSERT_EQ(intPtr, &intRef) <<
+                "Pointer and reference should have referred to the same address";
+            ASSERT_EQ(expectedValue, intRef) << "Unexpected target value";
         }
 
         static int VerifyPointerVsReference(uint32_t* intPtr,
@@ -691,7 +692,7 @@ namespace NativeJIT
 
             int& result = function();
 
-            TestEqual(10, result);
+            ASSERT_EQ(10, result);
         }
 
 
@@ -712,7 +713,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             int result = function();
 
-            TestEqual(7 + 8, result);
+            ASSERT_EQ(7 + 8, result);
         }
 
 
@@ -730,7 +731,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             float result = function();
 
-            TestEqual(7.7 + 3.3, result);
+            ASSERT_EQ(7.7 + 3.3, result);
         }
 
 
@@ -766,7 +767,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             int result = function();
 
-            TestEqual(21, result);
+            ASSERT_EQ(21, result);
         }
 
 
@@ -803,8 +804,8 @@ namespace NativeJIT
             float result = function();
 
             ASSERT_TRUE(std::abs(12.6 - result) < 0.01) << 
-              "Result should be around 12.6, but found " <<
-              result;
+                "Result should be around 12.6, but found " <<
+                result;
         }
 
 
@@ -819,7 +820,7 @@ namespace NativeJIT
         static void __attribute__ ((noinline)) TakeZeroIntArg(int arg)
 #endif
         {
-            TestEqual(0, arg);
+            ASSERT_EQ(0, arg);
         }
 
 
@@ -830,7 +831,7 @@ namespace NativeJIT
         static void __attribute__ ((noinline)) TakeZeroFloatArg(float /* arg1 */, float arg2)
 #endif
         {
-            TestEqual(0.0f, arg2);
+            ASSERT_EQ(0.0f, arg2);
         }
 
 
@@ -879,7 +880,7 @@ namespace NativeJIT
 
             // The first 7 comes from the return value from the call and the
             // other 7 comes from the preserved value of ECX.
-            TestEqual(7 + 7, result);
+            ASSERT_EQ(7 + 7, result);
         }
 
 
@@ -904,7 +905,7 @@ namespace NativeJIT
 
             // The 2.5 value comes from the return value from the call and
             // 7.5 comes from the preserved value of XMM1s.
-            TestEqual(2.5f + 7.5f, result);
+            ASSERT_EQ(2.5f + 7.5f, result);
         }
 
 
@@ -922,7 +923,7 @@ namespace NativeJIT
 
             auto observed = function(p1Unused, p2);
 
-            TestEqual(p2, observed);
+            ASSERT_EQ(p2, observed);
         }
 
 
@@ -945,12 +946,12 @@ namespace NativeJIT
 
             // Argument is less than 7, the regular value should be returned.
             auto observed = function(5);
-            TestEqual(5.0f + 2.5f, observed);
+            ASSERT_EQ(5.0f + 2.5f, observed);
 
             // Argument is not less than 7, 0 should be returned.
             observed = function(10);
 
-            TestEqual(0.0f, observed);
+            ASSERT_EQ(0.0f, observed);
         }
 
         TEST_CASES_END

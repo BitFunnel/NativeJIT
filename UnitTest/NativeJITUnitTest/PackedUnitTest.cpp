@@ -59,8 +59,8 @@ namespace NativeJIT
                 const auto packed1FromBits = Packed<8>::FromBits(0xE0);
                 const auto packed2FromBits = Packed<4, 8>::FromBits(0x2E0);
 
-                TestEqual(0xE0u, packed1FromBits.m_bits);
-                TestEqual(0x2E0u, packed2FromBits.m_bits);
+                ASSERT_EQ(0xE0u, packed1FromBits.m_bits);
+                ASSERT_EQ(0x2E0u, packed2FromBits.m_bits);
 
                 // Operations on a single-component packed.
                 const auto packed1 = Packed<8>::FromComponents(0xE0);
@@ -70,13 +70,13 @@ namespace NativeJIT
                 static_assert(8 == packed1.c_leftmostBitCount, "Invalid leftmost bit count");
                 static_assert(8 == packed1.c_rightmostBitCount, "Invalid rightmost bit count");
 
-                TestEqual(0xE0u, packed1.m_bits);
-                TestEqual(0xE0u, packed1.Leftmost());
-                TestEqual(0xE0u, packed1.Rightmost());
+                ASSERT_EQ(0xE0u, packed1.m_bits);
+                ASSERT_EQ(0xE0u, packed1.Leftmost());
+                ASSERT_EQ(0xE0u, packed1.Rightmost());
 
                 // No WithoutLeftmost() operation available.
-                TestEqual(0x1E0u, packed1.InsertLeftmost<4>(0x1).m_bits);
-                TestEqual(0xE03u, packed1.InsertRightmost<4>(0x3).m_bits);
+                ASSERT_EQ(0x1E0u, packed1.InsertLeftmost<4>(0x1).m_bits);
+                ASSERT_EQ(0xE03u, packed1.InsertRightmost<4>(0x3).m_bits);
 
                 // Operations on two-component packed.
                 const auto packed2 = Packed<4, 8>::FromComponents(0x2, 0xE0);
@@ -86,13 +86,13 @@ namespace NativeJIT
                 static_assert(4 == packed2.c_leftmostBitCount, "Invalid leftmost bit count");
                 static_assert(8 == packed2.c_rightmostBitCount, "Invalid rightmost bit count");
 
-                TestEqual(0x2E0u, packed2.m_bits);
-                TestEqual(0x2u, packed2.Leftmost());
-                TestEqual(0xE0u, packed2.Rightmost());
+                ASSERT_EQ(0x2E0u, packed2.m_bits);
+                ASSERT_EQ(0x2u, packed2.Leftmost());
+                ASSERT_EQ(0xE0u, packed2.Rightmost());
 
-                TestEqual(0xE0u, packed2.WithoutLeftmost());
-                TestEqual(0x12E0u, packed2.InsertLeftmost<4>(0x1).m_bits);
-                TestEqual(0x2E01u, packed2.InsertRightmost<4>(0x1).m_bits);
+                ASSERT_EQ(0xE0u, packed2.WithoutLeftmost());
+                ASSERT_EQ(0x12E0u, packed2.InsertLeftmost<4>(0x1).m_bits);
+                ASSERT_EQ(0x2E01u, packed2.InsertRightmost<4>(0x1).m_bits);
             }
         }
 
@@ -116,7 +116,7 @@ namespace NativeJIT
                 auto expected = model.Apply(packed);
                 auto observed = function(&model, packed);
 
-                TestEqual(observed, expected);
+                ASSERT_EQ(observed, expected);
             }
         }
 
@@ -136,7 +136,7 @@ namespace NativeJIT
 
             auto observed = function(packed1, packed2);
 
-            TestEqual(expected.m_bits, observed.m_bits);
+            ASSERT_EQ(expected.m_bits, observed.m_bits);
         }
 
 
@@ -155,7 +155,7 @@ namespace NativeJIT
 
             auto observed = function(packed1, packed2);
 
-            TestEqual(expected.m_bits, observed.m_bits);
+            ASSERT_EQ(expected.m_bits, observed.m_bits);
         }
 
         TEST_CASES_END
