@@ -588,7 +588,7 @@ namespace NativeJIT
             catch (std::exception const &e)
             {
                 ASSERT_TRUE(!exceptionCaught);
-                ASSERT_EQCharPtrs("Test", e.what());
+                ASSERT_EQ_CHAR_PTRS("Test", e.what());
 
                 exceptionCaught = true;
             }
