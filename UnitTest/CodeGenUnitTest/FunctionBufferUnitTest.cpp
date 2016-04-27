@@ -583,7 +583,6 @@ namespace NativeJIT
                 ASSERT_TRUE(!exceptionCaught);
                 func();
                 FAIL() << "Should not have reached here";
-                sdfljdslkfjlds
             }
             catch (std::exception const &e)
             {
