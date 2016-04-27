@@ -31,56 +31,29 @@
 #include "Temporary/Allocator.h"
 #include "Temporary/NonCopyable.h"
 
-#ifdef USE_SUITECPP_TESTS
-    #include "SuiteCpp/UnitTest.h"
+#include "gtest/gtest.h"
 
-    typedef NativeJIT::NonCopyable TestFixtureBase;
+typedef ::testing::Test TestFixtureBase;
 
-    #define TEST_FIXTURE_START(x) \
-        class x : public SuiteCpp::TestClassFactory<x>, private TestFixture \
-        { \
-        private:
+#define TEST_FIXTURE_START(x)        \
+  class x : public TestFixture       \
+  {                                  \
+  private:
 
-    #define TEST_FIXTURE_END_TEST_CASES_BEGIN public:
+#define TEST_FIXTURE_END_TEST_CASES_BEGIN };
 
-    #define TEST_CASE(className, name) TestCase(name)
-    #define TEST_CASE_F(className, name) TestCase(name)
+#define TEST_CASE(className, name) TEST(className, name)
+#define TEST_CASE_F(className, name) TEST_F(className, name)
 
-    #define TEST_CASES_END };
+#define TEST_CASES_END
 
-    #define TestEqualCharPtrs TestEqual
+#define TestEqual(expected, actual, ...) ASSERT_EQ(expected, actual)
+#define TestEqualCharPtrs(expected, actual, ...) ASSERT_EQ(std::string(expected), std::string(actual))
+#define TestNotEqual(expected, actual, ...) ASSERT_NE(expected, actual)
+#define TestFail(x) FAIL() << x
 
-    // TestAssert calls etc. inside sub-routines in SuiteCPP will fail immediately,
-    // no need to explicitly verify.
-    #define ASSERT_NO_FATAL_FAILURE(x) x
-    #define ASSERT_NO_FATAL_FAILURES()
-
-#else
-    #include "gtest/gtest.h"
-
-    typedef ::testing::Test TestFixtureBase;
-
-    #define TEST_FIXTURE_START(x) \
-        class x : public TestFixture \
-        { \
-        private:
-
-    #define TEST_FIXTURE_END_TEST_CASES_BEGIN };
-
-    #define TEST_CASE(className, name) TEST(className, name)
-    #define TEST_CASE_F(className, name) TEST_F(className, name)
-
-    #define TEST_CASES_END
-
-    #define TestAssert(condition, ...) ASSERT_TRUE(condition)
-    #define TestEqual(expected, actual, ...) ASSERT_EQ(expected, actual)
-    #define TestEqualCharPtrs(expected, actual, ...) ASSERT_EQ(std::string(expected), std::string(actual))
-    #define TestNotEqual(expected, actual, ...) ASSERT_NE(expected, actual)
-    #define TestFail(x) FAIL() << x
-
-    // To be called only from TEST or TEST_F methods.
-    #define ASSERT_NO_FATAL_FAILURES() ASSERT_TRUE(!HasFatalFailure())
-#endif
+// To be called only from TEST or TEST_F methods.
+#define ASSERT_NO_FATAL_FAILURES() ASSERT_TRUE(!HasFatalFailure())
 
 namespace NativeJIT
 {

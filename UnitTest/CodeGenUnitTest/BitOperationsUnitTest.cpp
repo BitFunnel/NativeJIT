@@ -26,6 +26,8 @@
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 
+#include <iostream>
+
 
 namespace NativeJIT
 {
@@ -62,14 +64,14 @@ namespace NativeJIT
             unsigned actual;
             const bool foundBit = BitOp::GetLowestBitSet(testValue, &actual);
 
-            TestAssert(foundBit, "Expected to find a bit in %I64u", testValue);
+            ASSERT_TRUE(foundBit) << "Expected to find a bit in " << testValue;
             TestEqual(expected, actual, "Mismatched expected and actual bit for %I64u", testValue);
         }
 
         TEST_CASE(BitOperations, LowestBitSet)
         {
             unsigned unused;
-            TestAssert(!BitOp::GetLowestBitSet(0, &unused));
+            ASSERT_TRUE(!BitOp::GetLowestBitSet(0, &unused));
 
             VerifyLowestBitSet(1, 0);
             VerifyLowestBitSet(0xFFFFFFFFFFFFFFFF, 0);
@@ -84,7 +86,7 @@ namespace NativeJIT
             unsigned actual;
             const bool foundBit = BitOp::GetHighestBitSet(testValue, &actual);
 
-            TestAssert(foundBit, "Expected to find a bit in %I64u", testValue);
+            ASSERT_TRUE(foundBit) << "Expected to find a bit in " << testValue;
             TestEqual(expected, actual, "Mismatched expected and actual bit for %I64u", testValue);
         }
 
@@ -92,7 +94,7 @@ namespace NativeJIT
         TEST_CASE(BitOperations, HighestBitSet)
         {
             unsigned unused;
-            TestAssert(!BitOp::GetHighestBitSet(0, &unused));
+            ASSERT_TRUE(!BitOp::GetHighestBitSet(0, &unused));
 
             VerifyHighestBitSet(1, 0);
             VerifyHighestBitSet(0x8000000000000000, 63);
@@ -104,18 +106,18 @@ namespace NativeJIT
         {
             const uint64_t bits62and63 = 0xC000000000000000;
 
-            TestAssert(!BitOp::TestBit(bits62and63, 0));
-            TestAssert(!BitOp::TestBit(bits62and63, 1));
-            TestAssert(BitOp::TestBit(bits62and63, 62));
-            TestAssert(BitOp::TestBit(bits62and63, 63));
+            ASSERT_TRUE(!BitOp::TestBit(bits62and63, 0));
+            ASSERT_TRUE(!BitOp::TestBit(bits62and63, 1));
+            ASSERT_TRUE(BitOp::TestBit(bits62and63, 62));
+            ASSERT_TRUE(BitOp::TestBit(bits62and63, 63));
 
             const uint64_t allZeros = 0;
             const uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
-                TestAssert(!BitOp::TestBit(allZeros, bit));
-                TestAssert(BitOp::TestBit(allOnes, bit));
+                ASSERT_TRUE(!BitOp::TestBit(allZeros, bit));
+                ASSERT_TRUE(BitOp::TestBit(allOnes, bit));
             }
         }
 
@@ -127,13 +129,13 @@ namespace NativeJIT
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
-                TestAssert(!BitOp::TestBit(currentValue, bit));
+                ASSERT_TRUE(!BitOp::TestBit(currentValue, bit));
                 BitOp::SetBit(&currentValue, bit);
-                TestAssert(BitOp::TestBit(currentValue, bit));
+                ASSERT_TRUE(BitOp::TestBit(currentValue, bit));
 
-                TestAssert(BitOp::TestBit(allOnes, bit));
+                ASSERT_TRUE(BitOp::TestBit(allOnes, bit));
                 BitOp::SetBit(&allOnes, bit);
-                TestAssert(BitOp::TestBit(allOnes, bit));
+                ASSERT_TRUE(BitOp::TestBit(allOnes, bit));
             }
         }
 
@@ -145,13 +147,13 @@ namespace NativeJIT
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
-                TestAssert(BitOp::TestBit(currentValue, bit));
+                ASSERT_TRUE(BitOp::TestBit(currentValue, bit));
                 BitOp::ClearBit(&currentValue, bit);
-                TestAssert(!BitOp::TestBit(currentValue, bit));
+                ASSERT_TRUE(!BitOp::TestBit(currentValue, bit));
 
-                TestAssert(!BitOp::TestBit(allZeros, bit));
+                ASSERT_TRUE(!BitOp::TestBit(allZeros, bit));
                 BitOp::ClearBit(&allZeros, bit);
-                TestAssert(!BitOp::TestBit(allZeros, bit));
+                ASSERT_TRUE(!BitOp::TestBit(allZeros, bit));
             }
         }
     }

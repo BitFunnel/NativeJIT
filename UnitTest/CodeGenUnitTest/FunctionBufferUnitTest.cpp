@@ -23,6 +23,7 @@
 #include "stdafx.h"
 
 #include <algorithm>
+#include <iostream>
 #include <functional>
 #include <random>
 
@@ -53,11 +54,25 @@
 
 // The two-code version.
 #define TestEqualUnwindCode2(expected1, expected2, actual1, actual2) \
-    TestAssert(expected1.m_frameOffset == actual1.m_frameOffset \
-               && expected2.m_frameOffset == actual2.m_frameOffset, \
-               "UnwindCode difference: (%u, %u, %u; %u) vs (%u, %u, %u; %u)", \
-               expected1.m_operation.m_codeOffset, expected1.m_operation.m_unwindOp, expected1.m_operation.m_opInfo, expected2.m_frameOffset, \
-               actual1.m_operation.m_codeOffset, actual1.m_operation.m_unwindOp, actual1.m_operation.m_opInfo, actual2.m_frameOffset)
+    ASSERT_TRUE(expected1.m_frameOffset == actual1.m_frameOffset \
+                && expected2.m_frameOffset == actual2.m_frameOffset) \
+    << "UnwindCode difference: (" \
+    << expected1.m_operation.m_codeOffset \
+    << ", " \
+    << expected1.m_operation.m_unwindOp \
+    << ", " \
+    << expected1.m_operation.m_opInfo \
+    << ", " \
+    << expected2.m_frameOffset \
+    << " vs " \
+    << actual1.m_operation.m_codeOffset \
+    << ", " \
+    << actual1.m_operation.m_unwindOp \
+    << ", " \
+    << actual1.m_operation.m_opInfo \
+    << ", " \
+    << actual2.m_frameOffset \
+    << ")";
 
 
 namespace NativeJIT
@@ -72,7 +87,7 @@ namespace NativeJIT
                 auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
                 const unsigned unwindByteLen = spec.GetUnwindInfoByteLength();
 
-                TestAssert(unwindByteLen >= sizeof(UnwindInfo), "Invalid UnwindInfo length %u", unwindByteLen);
+                ASSERT_TRUE(unwindByteLen >= sizeof(UnwindInfo)) << "Invalid UnwindInfo length " << unwindByteLen;
 
                 TestEqual(1, unwindInfo.m_version);
                 TestEqual(0, unwindInfo.m_flags);
@@ -87,7 +102,7 @@ namespace NativeJIT
 
                 // Compare the expected and actual size of unwind data, accounting
                 // for potential additional UnwindCode for alignment.
-                TestAssert(occupiedUnwindInfoBytes == unwindByteLen
+                ASSERT_TRUE(occupiedUnwindInfoBytes == unwindByteLen
                            || occupiedUnwindInfoBytes + sizeof(UnwindCode) == unwindByteLen);
             }
 
@@ -100,7 +115,7 @@ namespace NativeJIT
                 unsigned regId;
 
                 // Using RAX explicitly in a few places below.
-                TestAssert((regMask & rax.GetMask()) != 0, "This test assumes RAX is writable");
+                ASSERT_TRUE((regMask & rax.GetMask()) != 0) << "This test assumes RAX is writable";
 
                 while (BitOp::GetLowestBitSet(regMask, &regId))
                 {
@@ -186,7 +201,7 @@ namespace NativeJIT
                 emitter(code);
 
                 const unsigned offset = code.CurrentPosition();
-                TestAssert(offset < (std::numeric_limits<uint8_t>::max)());
+                ASSERT_TRUE(offset < (std::numeric_limits<uint8_t>::max)());
 
                 offsets.push_back(static_cast<uint8_t>(offset));
             }
@@ -554,13 +569,13 @@ namespace NativeJIT
 
             try
             {
-                TestAssert(!exceptionCaught);
+                ASSERT_TRUE(!exceptionCaught);
                 func();
                 TestFail("Should not have reached here");
             }
             catch (std::exception const &e)
             {
-                TestAssert(!exceptionCaught);
+                ASSERT_TRUE(!exceptionCaught);
                 TestEqualCharPtrs("Test", e.what());
 
                 exceptionCaught = true;
@@ -570,7 +585,7 @@ namespace NativeJIT
                 TestFail("Unexpected exception caught");
             }
 
-            TestAssert(exceptionCaught);
+            ASSERT_TRUE(exceptionCaught);
         }
 #endif
 

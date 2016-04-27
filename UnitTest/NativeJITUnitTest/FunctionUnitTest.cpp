@@ -585,16 +585,20 @@ namespace NativeJIT
             auto const intPtr = reinterpret_cast<unsigned char const *>(&intRef);
             auto const floatPtr = reinterpret_cast<unsigned char const *>(&floatRef);
 
-            TestAssert(intPtr >= bufferStart && intPtr < bufferLimit,
-                       "Expected range: [%I64x, %I64x), found: %I64x",
-                       bufferStart,
-                       bufferLimit,
-                       intPtr);
-            TestAssert(floatPtr >= bufferStart && floatPtr < bufferLimit,
-                       "Expected range: [%I64x, %I64x), found: %I64x",
-                       bufferStart,
-                       bufferLimit,
-                       floatPtr);
+            ASSERT_TRUE(intPtr >= bufferStart && intPtr < bufferLimit) <<
+              "Expected range: [" <<
+              bufferStart <<
+              "," <<
+              bufferLimit <<
+              ") found:" <<
+              intPtr;
+            ASSERT_TRUE(floatPtr >= bufferStart && floatPtr < bufferLimit) <<
+              "Expected range: [" <<
+              bufferStart <<
+              "," <<
+              bufferLimit <<
+              ") found:" <<
+              floatPtr;
         }
 
 
@@ -798,9 +802,9 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             float result = function();
 
-            TestAssert(std::abs(12.6 - result) < 0.01,
-                        "Result should be around 12.6, but found %.2f",
-                        result);
+            ASSERT_TRUE(std::abs(12.6 - result) < 0.01) << 
+              "Result should be around 12.6, but found " <<
+              result;
         }
 
 

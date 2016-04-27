@@ -22,6 +22,8 @@
 
 #include "stdafx.h"
 
+#include <iostream>
+
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/Function.h"
@@ -154,7 +156,7 @@ namespace NativeJIT
             auto storage = indirectNode.CodeGen(e);
             auto baseRegister = storage.GetBaseRegister();
 
-            TestAssert(storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
+            ASSERT_TRUE(storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
         }
 
 
@@ -168,9 +170,9 @@ namespace NativeJIT
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
             auto storage = e.RIPRelative<int>(16);
-            TestAssert(storage.GetBaseRegister().IsRIP());
+            ASSERT_TRUE(storage.GetBaseRegister().IsRIP());
 
-            TestAssert(!storage.ConvertToDirect(false).IsRIP());
+            ASSERT_TRUE(!storage.ConvertToDirect(false).IsRIP());
         }
 
 
@@ -182,7 +184,7 @@ namespace NativeJIT
             auto storage = e.Temporary<int>();
             auto baseRegister = storage.GetBaseRegister();
 
-            TestAssert(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
+            ASSERT_TRUE(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
         }
 
 
@@ -205,7 +207,7 @@ namespace NativeJIT
             auto storage = indirectNode.CodeGen(e);
             auto baseRegister = storage.GetBaseRegister();
 
-            TestAssert(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
+            ASSERT_TRUE(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
         }
 
 
@@ -233,7 +235,7 @@ namespace NativeJIT
             auto temp1 = e.RIPRelative<int>(0);
             auto temp2 = e.RIPRelative<int>(16);
 
-            TestAssert(temp1.GetBaseRegister().IsRIP());
+            ASSERT_TRUE(temp1.GetBaseRegister().IsRIP());
             TestEqual(temp1.GetBaseRegister(), temp2.GetBaseRegister());
         }
 
@@ -389,8 +391,9 @@ namespace NativeJIT
             {
                 std::string msg = e.what();
 
-                TestAssert(msg.find("Attempted to obtain the pinned register") != std::string::npos,
-                            "Unexpected exception received");
+                ASSERT_TRUE(msg.find("Attempted to obtain the pinned register") !=
+                            std::string::npos) <<
+                  "Unexpected exception received";
             }
             catch (...)
             {
@@ -404,7 +407,7 @@ namespace NativeJIT
             // The new storage should own the register, the old not should not.
             TestEqual(storage2.GetStorageClass(), StorageClass::Direct);
             TestEqual(storage2.GetDirectRegister(), reg);
-            TestAssert(!(storage.GetStorageClass() == StorageClass::Direct
+            ASSERT_TRUE(!(storage.GetStorageClass() == StorageClass::Direct
                          && storage.GetDirectRegister() == reg));
         }
 
@@ -424,25 +427,25 @@ namespace NativeJIT
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
             Storage<int> empty;
-            TestAssert(empty.IsSoleDataOwner());
+            ASSERT_TRUE(empty.IsSoleDataOwner());
 
             auto s = e.Direct<int>();
-            TestAssert(s.IsSoleDataOwner());
+            ASSERT_TRUE(s.IsSoleDataOwner());
 
             auto s2 = s;
-            TestAssert(!s.IsSoleDataOwner());
-            TestAssert(!s2.IsSoleDataOwner());
+            ASSERT_TRUE(!s.IsSoleDataOwner());
+            ASSERT_TRUE(!s2.IsSoleDataOwner());
 
             s2.Reset();
-            TestAssert(s.IsSoleDataOwner());
-            TestAssert(s2.IsSoleDataOwner());
+            ASSERT_TRUE(s.IsSoleDataOwner());
+            ASSERT_TRUE(s2.IsSoleDataOwner());
 
             // Different indirects that refer to stack are sole owners of their storage.
             auto stack1 = e.Temporary<int>();
-            TestAssert(stack1.IsSoleDataOwner());
+            ASSERT_TRUE(stack1.IsSoleDataOwner());
 
             auto stack2 = e.Temporary<int>();
-            TestAssert(stack2.IsSoleDataOwner());
+            ASSERT_TRUE(stack2.IsSoleDataOwner());
         }
 
 
@@ -452,26 +455,26 @@ namespace NativeJIT
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
 
             auto s = e.Direct<int>(eax);
-            TestAssert(s.IsSoleDataOwner());
+            ASSERT_TRUE(s.IsSoleDataOwner());
             TestEqual(s.GetStorageClass(), StorageClass::Direct);
             TestEqual(s.GetDirectRegister(), eax);
 
             auto s2 = s;
-            TestAssert(!s.IsSoleDataOwner());
-            TestAssert(!s2.IsSoleDataOwner());
+            ASSERT_TRUE(!s.IsSoleDataOwner());
+            ASSERT_TRUE(!s2.IsSoleDataOwner());
             TestEqual(s2.GetStorageClass(), StorageClass::Direct);
             TestEqual(s2.GetDirectRegister(), eax);
 
             s.TakeSoleOwnershipOfDirect();
 
-            TestAssert(s.IsSoleDataOwner());
+            ASSERT_TRUE(s.IsSoleDataOwner());
             TestEqual(s.GetStorageClass(), StorageClass::Direct);
             TestEqual(s.GetDirectRegister(), eax);
 
-            TestAssert(s2.IsSoleDataOwner());
+            ASSERT_TRUE(s2.IsSoleDataOwner());
             TestEqual(s2.GetStorageClass(), StorageClass::Direct);
             // TestNotEqual(s2.GetDirectRegister(), eax); Doesn't compile!
-            TestAssert(!(s2.GetDirectRegister() == eax));
+            ASSERT_TRUE(!(s2.GetDirectRegister() == eax));
         }
 
 

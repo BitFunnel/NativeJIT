@@ -23,6 +23,7 @@
 #include "stdafx.h"
 
 #include <cmath>        // For float std::abs(float).
+#include <iostream>
 #include <map>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
@@ -1236,10 +1237,8 @@ namespace NativeJIT
                                            &testData->m_rankerContext.m_commonContext,
                                            &testData->m_queryContext);
 
-                    TestAssert(std::abs(actual - expected) < 0.0001,
-                               "Expected score: %.6f, actual score: %.6f",
-                               expected,
-                               actual);
+                    ASSERT_TRUE(std::abs(actual - expected) < 0.0001) <<
+                      "Expected score: " << expected << " Actual score: " << actual;
                 }
             }
 
