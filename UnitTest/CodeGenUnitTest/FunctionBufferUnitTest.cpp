@@ -582,7 +582,8 @@ namespace NativeJIT
             {
                 ASSERT_TRUE(!exceptionCaught);
                 func();
-                FAIL("Should not have reached here");
+                FAIL() << "Should not have reached here";
+                sdfljdslkfjlds
             }
             catch (std::exception const &e)
             {
@@ -593,7 +594,7 @@ namespace NativeJIT
             }
             catch (...)
             {
-                FAIL("Unexpected exception caught");
+                FAIL() << "Unexpected exception caught";
             }
 
             ASSERT_TRUE(exceptionCaught);
