@@ -20,5 +20,5 @@ ipch
 *.sdf
 *.suo
 *.user
-
+*.db
 
