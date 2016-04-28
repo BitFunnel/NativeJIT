@@ -169,9 +169,6 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         bool IsPinned(Register<SIZE, ISFLOAT> reg);
 
-        //
-        //
-        //
         unsigned GetRXXUsedMask() const;
         unsigned GetXMMUsedMask() const;
 
