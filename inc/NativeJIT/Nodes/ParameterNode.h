@@ -145,7 +145,7 @@ namespace NativeJIT
         LogThrowAssert(id < 4, "Exceeded maximum number of register parameters.");
 
         // Integer parameters are passed in RCX, RDX, R8, and R9.
-        // TODO: Use constants to encode registers.
+        // Use constants to encode registers. See #31.
 #ifdef NATIVEJIT_PLATFORM_WINDOWS
         const uint8_t idMap[] = {1, 2, 8, 9};
 #else

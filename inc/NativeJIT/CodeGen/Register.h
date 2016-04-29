@@ -170,9 +170,10 @@ namespace NativeJIT
     typedef Register<sizeof(void*), false> PointerRegister;
 
 
-    // TODO: Need to avoid "static initialization order fiasco" for register definitions.
+    // Need to avoid "static initialization order fiasco" for register definitions.
     // See http://www.parashift.com/c++-faq/static-init-order.html.
     // Plan is to use constexpr when VS2013 becomes available to Bing build.
+    // See bug#24.
 
     extern Register<1, false> al;
     extern Register<1, false> cl;

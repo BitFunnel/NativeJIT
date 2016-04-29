@@ -119,7 +119,7 @@ namespace NativeJIT
         //
         unsigned AddNode(NodeBase& node);
 
-        // TODO: This should take ParameterNode<T> (and get position from it)
+        // DESIGN NOTE: This might be better if ParameterNode<T> (and get position from it)
         // to ensure that other nodes can't be passed to AddParameter. To make
         // that possible, a circular include dependency between ExpressionTree.h
         // and Node.h (through ParameterNode.h) needs to be broken. Then forward
@@ -361,7 +361,7 @@ namespace NativeJIT
         template <unsigned SIZE, bool ISFLOAT>
         Data(ExpressionTree& tree, Register<SIZE, ISFLOAT> r);
 
-        // TODO: Review. Indirect data must know the size of the memory it
+        // DESIGN NOTE: It would be better if indrect memory knew the size of the memory it
         // points to, otherwise access violation can happen if larger, non-owned
         // memory area is dereferenced.
         // Also applies to ConvertDirectToIndirect and Storage::Direct(Register).

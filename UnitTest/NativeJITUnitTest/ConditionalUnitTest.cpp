@@ -38,7 +38,7 @@ namespace NativeJIT
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
 
-        // TODO: Test all comparision operators.
+        // Test all comparision operators. See bug#32.
 
         //
         // Conditionals

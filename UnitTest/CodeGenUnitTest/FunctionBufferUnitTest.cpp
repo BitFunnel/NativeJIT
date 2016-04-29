@@ -600,6 +600,9 @@ namespace NativeJIT
 #endif
 
 
+        // This tests that, FunctionSpecification correctly drives non-volatile
+        // save and restore. This does not test that the register allocator
+        // correctly indicates which volatiles were clobbered.
         TEST_CASE_F(FunctionBufferTest, RegisterPreservation)
         {
             ALIGNAS(16) RegInfo before;
@@ -625,7 +628,7 @@ namespace NativeJIT
                                         GetDiagnosticsStream());
             ASSERT_NO_FATAL_FAILURE(ValidateUnwindInfo(spec));
 
-            // Erase all writable registers to show that epilog indeed restores
+            // Erase all writable registers to show that epilogue indeed restores
             // nonvolatiles.
             code.BeginFunctionBodyGeneration(spec);
             ASSERT_NO_FATAL_FAILURE(FillAllWritableRegistersWithGarbage(code));

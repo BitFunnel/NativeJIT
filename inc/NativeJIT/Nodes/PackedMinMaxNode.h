@@ -31,8 +31,6 @@
 
 namespace NativeJIT
 {
-    // TODO: This class and Packed should probably move from NativeJIT to BitFunnel.Library.
-
     template <typename PACKED, bool ISMAX>
     class PackedMinMaxNode : public Node<PACKED>
     {

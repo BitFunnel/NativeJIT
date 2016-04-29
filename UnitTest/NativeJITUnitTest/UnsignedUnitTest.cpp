@@ -38,15 +38,9 @@ namespace NativeJIT
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
         //
-        // TODO:
-        //   Signed vs unsigned
-        //
-
-        //
         // Immediate values
         //
 
-        // TODO: cases for (signed, unsigned) x (1, 2, 4, 8), float
         TEST_CASE_F(Unsigned, ImmediateU64)
         {
             auto setup = GetSetup();

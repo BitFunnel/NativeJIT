@@ -46,8 +46,6 @@ namespace NativeJIT
 
         // m_data must be public or friend of NativeJIT::ExpressionNodeFactory.
         // Otherwise the JIT compiler cannot access m_data.
-        // TODO: Policy decision. Do we require members be public or do we
-        // use the friend keyword?.
 
         static const unsigned c_size = 1 << PACKED::c_totalBitCount;
         float m_data[c_size];

@@ -62,7 +62,8 @@ namespace NativeJIT
     //
     //*************************************************************************
 
-    // TODO: This class and PackedMinMaxNode should probably move from NativeJIT to BitFunnel.Library.
+    // This class and PackedMinMaxNode should probably move from NativeJIT to BitFunnel.Library.
+    // See bug#30.
 
 
     // Retrieves the number of bits in the rightmost (last) component of the

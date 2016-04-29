@@ -58,8 +58,8 @@ namespace NativeJIT
         // matching number of references. The cache will be released once all
         // parents evaluate the node.
         // IMPORTANT: Currently, there's an assumption that if a node is created,
-        // it must be placed inside the tree. TODO: Remove this assumption and
-        // allow for optimizing away unused nodes.
+        // it must be placed inside the tree. Remove this assumption and
+        // allow for optimizing away unused nodes. See bug#29.
         void IncrementParentCount();
 
         // Decrements the number of node's parents as set through

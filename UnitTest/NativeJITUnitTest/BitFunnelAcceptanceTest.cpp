@@ -70,9 +70,6 @@ namespace NativeJIT
 
             typedef uint32_t DocIndex;
 
-            // TODO: Add a warning to all structures used for the ComputeScore
-            // call that they must be backwards and forwards compatible since
-            // they are accessed both from MLA and OS.
             struct MarketData
             {
                 uint32_t m_languageHash;
@@ -748,9 +745,6 @@ namespace NativeJIT
                 Node<TermFrequencies>& LookupTermFrequencies(ExpressionNodeFactory& e,
                                                              TermHash term)
                 {
-                    // TODO: For a query with a lot of words, this can allocate
-                    // a lot of stack given the current behavior of StackVariable
-                    // (see the TODO comment in StackVariable::CodeGenValue()).
                     auto & termFrequenciesRaw = e.StackVariable<uint64_t>();
                     auto & termHash = e.Immediate(term);
                     auto & termLookupSuccessful = e.Call(m_termLookupFunc,

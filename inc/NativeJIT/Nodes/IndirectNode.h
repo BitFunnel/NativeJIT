@@ -115,7 +115,6 @@ namespace NativeJIT
     {
         if (this->GetRegisterCount() < 0)
         {
-            // TODO: Should isLeftChild be passed down?
             this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
         }
 

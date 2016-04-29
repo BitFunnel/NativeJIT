@@ -86,7 +86,7 @@ namespace NativeJIT
         // Allocate temporary storage and store it as a class variable to keep
         // it alive. Make a copy which we can give up ownership on.
         //
-        // TODO: The storage returned by CodeGenValue() is a pointer to the
+        // DESIGN NOTE: The storage returned by CodeGenValue() is a pointer to the
         // stack space allocated by m_stackStorage. Thus, m_stackStorage has to
         // be kept alive for the address to remain valid. Currently the space
         // is kept for the whole lifetime of the expression, which may be an issue

@@ -92,7 +92,7 @@ namespace NativeJIT
 
         while (BitOp::GetLowestBitSet(xmmVolatiles, &r))
         {
-            // TODO: This preserves only the lower 64 bits of the XMM register.
+            // DESIGN NOTE: This preserves only the lower 64 bits of the XMM register.
             // That is currently fine as NativeJIT only uses floats and doubles
             // which don't overlap with the upper 64-bits. Also, the full 128
             // bits of XMM nonvolatiles are preserved in the function prolog

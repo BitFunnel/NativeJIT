@@ -180,13 +180,6 @@ namespace NativeJIT
 
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
-        //
-        // TODO:
-        //   Test register save/restore across call.
-        //      Caller save volatiles
-        //   Test call register indirect.
-        //   Test that tries all permutations of parameter from Function to Call.
-
 
         //
         // JIT Functions with 0, 1, 2, 3, and 4 parameters.
