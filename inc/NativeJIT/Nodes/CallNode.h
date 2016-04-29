@@ -621,7 +621,7 @@ namespace NativeJIT
             this->m_storage = regStorage;
         }
 
-        // TODO: There's room for optimization if the data was already in the
+        // DESIGN NOTE: There's room for optimization if the data was already in the
         // correct register and shared. If there are some free non-volatile
         // registers, it would be better to enforce sole ownership of m_storage
         // by spilling to such register (the callee may not be using it and may

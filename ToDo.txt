@@ -1,20 +1,20 @@
 ====================================================
 NOTES for CMake, Google Test, and Linux/OSX ports.
 
-Figure out which public header files to list.
+XX Figure out which public header files to list.
   Does a project list all that it uses, all that it owns?
-Windows.h
-Stack unwinding.
-Add documentation build.
-Decide on submodules vs direct incorporation vs package convention for gtest.
-stdafx.h
-    http://stackoverflow.com/questions/1191248/handling-stdafx-h-in-cross-platform-code
+XX Windows.h
+XX Stack unwinding.
+XX Add documentation build.
+XX Decide on submodules vs direct incorporation vs package convention for gtest.
+XX stdafx.h
+XX    http://stackoverflow.com/questions/1191248/handling-stdafx-h-in-cross-platform-code
     http://stackoverflow.com/questions/10539391/what-is-sdkddkver-h-for
 
 
 ====================================================
 
-Signed support.
+XX Signed support.
 
 It would be nice if ReturnNode::CompileAsRoot could generate into RAX instead of moving.
   Consider example of a tree that is just Return(Immediate(5)). Right now this generates

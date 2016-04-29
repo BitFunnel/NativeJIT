@@ -142,7 +142,6 @@ namespace NativeJIT
                 {
                     auto someRxxRegister = Register<8, false>(regId % (RegisterBase::c_maxIntegerRegisterID + 1));
 
-                    // TODO: Set upper 64 bits as well rather than zeroing them.
                     code.Emit<OpCode::Mov>(Register<8, true>(regId), someRxxRegister);
                     BitOp::ClearBit(&regMask, regId);
                 }

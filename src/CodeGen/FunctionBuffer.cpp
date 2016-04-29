@@ -84,7 +84,7 @@ namespace NativeJIT
         // asks for it during exception handling.
         if (!RtlInstallFunctionTableCallback(UnwindUtils::MakeFunctionTableIdentifier(this),
                                              reinterpret_cast<DWORD64>(BufferStart()),
-                                             BufferSize(),
+                                             GetCapacity(),
                                              &FunctionBuffer::WindowsGetRuntimeFunctionCallback,
                                              this,
                                              nullptr))

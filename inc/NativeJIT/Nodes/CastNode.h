@@ -457,9 +457,9 @@ namespace NativeJIT
             {
                 result = tree.Direct<TO>();
 
-                // TODO: Implement xorps/xorpd and add a "xor target, target" call to
+                // DESIGN NOTE: Implement xorps/xorpd and add a "xor target, target" call to
                 // clear the target FP register before changing its lower 32/64 bits.
-                // Doing that will prevent a partial register stall.
+                // Doing that might prevent a partial register stall.
                 using namespace CodeGenHelpers;
                 Emitter<RegTypes::Different, ImmediateType::NotAllowed>
                     ::Emit<OpCode::CvtSI2FP>(tree.GetCodeGenerator(),

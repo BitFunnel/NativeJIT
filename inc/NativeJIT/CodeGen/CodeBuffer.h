@@ -88,8 +88,7 @@ namespace NativeJIT
         void ReplaceBytes(unsigned startPosition, uint8_t const *data, unsigned length);
 
         // Return the size of the buffer, in bytes.
-        // TODO: Rename GetCapacity()?
-        unsigned BufferSize() const;
+        unsigned GetCapacity() const;
 
         // Returns the address of the start of the buffer.
         // WARNING: Depending on how this class is used, this may not be the

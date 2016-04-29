@@ -30,7 +30,7 @@ namespace NativeJIT
     namespace CallingConvention
     {
         // Register masks of volatile integer and floating point registers.
-        // TODO: Once constexpr is available, add operator| to Register and use it to define the masks.
+        // TODO: This could be replaced with constexpr: add operator| to Register and use it to define the masks.
         // Note: RIP is included in volatiles.
         static const unsigned c_rxxVolatileRegistersMask = 0xf07;     // 1 0000 1111 0000 0111 (RAX | RCX | RDX | R8 | R9 | R10 | R11 | RIP)
         static const unsigned c_xmmVolatileRegistersMask = 0x3f;      //   0000 0000 0011 1111 (XMM0-XMM5)
@@ -48,7 +48,7 @@ namespace NativeJIT
     namespace CallingConvention
     {
         // Register masks of volatile integer and floating point registers.
-        // TODO: Once constexpr is available, add operator| to Register and use it to define the masks.
+        // TODO: This could be replaced with constexpr: add operator| to Register and use it to define the masks.
         // Note: RIP is included in volatiles.
         static const unsigned c_rxxVolatileRegistersMask = 0xfc7;     // 1 0000 1111 1100 0111 (RAX | RCX | RDX | RSI | RDI | R8 | R9 | R10 | R11 | RIP)
         static const unsigned c_xmmVolatileRegistersMask = 0xffff;    //   1111 1111 1111 1111 (XMM0-XMM15)

@@ -128,7 +128,7 @@ namespace NativeJIT
         if (!freeList.IsAvailable(src))
         {
             typedef typename CanonicalRegisterType<FullRegister>::Type FullType;
-            // TODO: If the storage is indirect, FullType may not be the correct
+            // DESIGN NOTE: If the storage is indirect, FullType may not be the correct
             // size. It will still get the right data due to the little endian
             // architecture, but if the process doesn't have access to the
             // additional bytes (f. ex. at the end of the allocated memory
@@ -592,7 +592,7 @@ namespace NativeJIT
     typename ExpressionTree::Storage<T>::DirectRegister
     ExpressionTree::Storage<T>::ConvertToDirect(bool forModification)
     {
-        // TODO: Target the whole target register with MovZX to prevent the partial register stall.
+        // DESIGN NOTE: Target the whole target register with MovZX to prevent the partial register stall.
 
         // IMPORTANT: This method must not affect any CPU flags. See the comment
         // in Direct(reg) method for more information.
@@ -981,9 +981,6 @@ namespace NativeJIT
     }
 
 
-    // TODO: Perhaps this should return a Data*.
-    // If nothing is displaced, returns nullptr.
-    // Otherwise returns Data* for displaced.
     template <unsigned SIZE>
     void ExpressionTree::FreeList<SIZE>::Allocate(unsigned id)
     {

@@ -85,12 +85,12 @@ namespace NativeJIT
         CvtFP2FP,
         CvtFP2SI,
         CvtSI2FP,
-        IMul,       // TODO: Consider calling this Mul. These opcodes are not X64 opcodes.
+        IMul,
         Lea,
         Mov,
         MovSX,
         MovZX,
-        MovAP,      // Aligned 128-bit FPU move.
+        MovAP,      // Aligned 128-bit SSE move.
         Nop,
         Or,
         Pop,
@@ -549,8 +549,7 @@ namespace NativeJIT
     };
 
 
-    // TODO: Move this class to a separate header once build files stabilize
-    // after the initial Mac porting efforts.
+    // TODO: Move this class to a separate header
     //
     // Stores the current value of stream's flags, width and fill character in
     // the constructor and restores them back in the destructor. The saving/restoring
@@ -1161,8 +1160,6 @@ namespace NativeJIT
     }
 
 
-    // TODO: Consider coalescing with Group2. Pattern is very similar.
-    // TODO: Support for SHRD.
     template <unsigned SIZE>
     void X64CodeGenerator::Shld(Register<SIZE, false> dest, Register<SIZE, false> src)
     {
@@ -1597,7 +1594,10 @@ namespace NativeJIT
                       "Only direct addressing or indirect addresing with 64-bit "
                       "general purpose base register can be used.");
 
-        // TODO: add cases for X bit.
+        // This code currently doesn't support the REX.X bit.
+        // REX.X is an extra bit for the SIB index field. SIB is scale index
+        // base (think `lea`). We don't currently support this addressing
+        // mode. The old assembler might support SIB?
         //
         // Note that the REX.W bit is never set when two floating point operands
         // are used.

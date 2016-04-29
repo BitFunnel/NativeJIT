@@ -77,7 +77,7 @@ namespace NativeJIT
                             PAGE_NOACCESS, &oldProtection))
         {
             // TODO: Fix memory leaks by f. ex. using unique_ptr with custom deleter
-            // for m_buffer.
+            // for m_buffer. See bug#13
             throw std::runtime_error("CodeBuffer: failed to set protection on guard page.");
         }
 
@@ -97,7 +97,7 @@ namespace NativeJIT
                                         0);
         if (m_buffer == MAP_FAILED) {
             // TODO: Fix memory leaks by f. ex. using unique_ptr with custom deleter
-            // for m_buffer.
+            // for m_buffer. See bug#13
             throw std::runtime_error("CodeBuffer: failed to set protection on guard page.");
         }
 

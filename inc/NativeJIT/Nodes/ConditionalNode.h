@@ -250,6 +250,7 @@ namespace NativeJIT
         // Depending on the value of v, either a or c may not need to be
         // evaluated. One possibility is to lazily evaluate CSEs *at runtime*
         // as they are needed.
+        // See bug#27
 
         Storage<T> trueValue;
         Storage<T> falseValue;

@@ -110,7 +110,7 @@ namespace NativeJIT
     }
 
 
-    unsigned CodeBuffer::BufferSize() const
+    unsigned CodeBuffer::GetCapacity() const
     {
         return m_capacity;
     }

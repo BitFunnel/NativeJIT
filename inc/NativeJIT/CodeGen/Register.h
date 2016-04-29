@@ -82,9 +82,6 @@ namespace NativeJIT
         }
 
 
-        // TODO: REVIEW: MAC:
-        // This used to be templated by SIZE, but CLang reported "Declaration of 'SIZE' shadows template parameter."
-        // Also, why doesn't this handle ISFLOAT==true?
         template <unsigned SIZE2>
         explicit Register(Register<SIZE2, false> r)
             : m_id(r.GetId())
@@ -281,7 +278,8 @@ namespace NativeJIT
     extern Register<8, true> xmm15;
 
 
-    // TODO: REVIEW: MAC: IsRIP() and IsStackPointer() must be moved after definitions of rip and rsp in CLang.
+    // IsRIP() and IsStackPointer() were moved after definitions of rip and rsp
+    // to prevent a compile error in clang.
     template <unsigned SIZE, bool ISFLOAT>
     bool Register<SIZE, ISFLOAT>::IsRIP() const
     {
