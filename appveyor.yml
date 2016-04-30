@@ -1,0 +1,2 @@
+before_build:
+    Configure_Windows_MSVC.bat
