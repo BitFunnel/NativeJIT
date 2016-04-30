@@ -86,7 +86,6 @@ add_custom_target(TOPLEVEL SOURCES
   Configure_Windows_MSVC.bat
   LICENSE.txt
   README.md
-  ToDo.txt
 )
 
 enable_testing()
