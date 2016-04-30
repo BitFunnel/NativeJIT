@@ -6,9 +6,8 @@ don't yet have proper documentation and reasonable starter examples.
 
 NativeJIT is an open source, cross-platform library for high performance
 just-in-time compilation of C++ expressions into X64 machine code.
-NativeJIT was developed by the [Bing](http://www.bing.com) team at Microsoft and currently runs in production in the Bing search engine.
-
-NativeJIT is published on [GitHub](https://github.com/bitfunnel/nativejit)
+NativeJIT was developed by the [Bing](http://www.bing.com) team at Microsoft
+and currently runs in production in the Bing search engine.
 
 Coming soon: online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
 
@@ -45,7 +44,7 @@ cd build-linux-clang
 make
 ~~~
 
-### OSX (WORK IN PROGRESS - NOT TESTED)
+### OSX
 
 Install XCode and then run the following command to install required packages 
 using Homebrew ([http://brew.sh/](http://brew.sh/)):
@@ -94,13 +93,7 @@ commands from the root `NativeJIT` directory:
 .\Configure_Windows_MSVC.bat
 ~~~
 
-Instead of `cmake` you can also use `cmake-gui` and specify configuration 
-settings in the UI. This configuration step has to be performed only once. From 
+From 
 now on you can use the generated solution `build-win-msvc\BitFunnel.sln` from Visual Studio
 or build from command line using `cmake`:
 
-In order to build and execute the unit tests and examples run:
-
-~~~
-cmake --build . --target test
-~~~
