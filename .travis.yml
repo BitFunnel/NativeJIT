@@ -12,7 +12,10 @@ addons:
     apt:
       packages:
         - cmake
+        - clang-3.7
       sources:
         - kalakris-cmake
+        - llvm-toolchain-precise
+        - ubuntu-toolchain-r-test
 
 
