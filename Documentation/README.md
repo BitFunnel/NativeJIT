@@ -182,26 +182,27 @@ template <typename T> Node<T&>& AsReference(Node<T*>& pointer);
 
 #### Binary Operators
 
+Binary artihmetic ops take either two nodes, or a node and an immediate. Note that although the types are templated as `L` and `R`, `L` and `R` should generally be the same for binary ops that take two nodes -- conversions must be made explicit. For `Rol`, `Shl`, and `Shr`, the immediate should be a `uint8_t`.
+
 ~~~
 template <typename L, typename R> Node<L>& Add(Node<L>& left, Node<R>& right);
 template <typename L, typename R> Node<L>& And(Node<L>& left, Node<R>& right);
 template <typename L, typename R> Node<L>& Mul(Node<L>& left, Node<R>& right);
-template <typename L, typename R> Node<L>& MulImmediate(Node<L>& left, R right);
 template <typename L, typename R> Node<L>& Or(Node<L>& left, Node<R>& right);
+template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
+
 template <typename L, typename R> Node<L>& Rol(Node<L>& left, R right);
 template <typename L, typename R> Node<L>& Shl(Node<L>& left, R right);
 template <typename L, typename R> Node<L>& Shr(Node<L>& left, R right);
-template <typename L, typename R> Node<L>& Sub(Node<L>& left, Node<R>& right);
 ~~~
 
-TODO: will types auto-covert? e.g., can L and R be different types?
+Like `[]`, i.e., takes a pointer and adds an offset:
 
 ~~~
 Node<T*>& Add(Node<T(*)[SIZE]>& array, Node<INDEX>& index);
 template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 ~~~
 
-Like `[]`, i.e., takes a pointer and adds an offset.
 
 #### Compare
 
