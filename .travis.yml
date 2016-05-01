@@ -1,6 +1,8 @@
 language: c++
 
-script: ./Configure_Linux_Make_clang.sh
+script:
+    - ./Configure_Linux_Make_clang.sh
+    - (cd build-linux-clang && make)
 
 compiler: clang
 
@@ -13,8 +15,4 @@ addons:
       sources:
         - kalakris-cmake
 
-script:
-    - |
-      cd build-linux-clang
-      make
 
