@@ -1,13 +1,81 @@
 NativeJIT
 ====
 
-Note: we're still in the early stages of open sourcing this code, which means that we
-don't yet have proper documentation and reasonable starter examples.
+NativeJIT is a just-in-time compiler that translates expressions
+involving C data structures into Intel x64 machine code.
+The compiler is light weight and fast
+and it takes no dependencies beyond the standard C++ runtime.
+It runs on Linux, OSX, and Windows.
+The generated code is optimized with particular attention paid
+to register allocation.
 
-NativeJIT is an open source, cross-platform library for high performance
-just-in-time compilation of C++ expressions into X64 machine code.
-NativeJIT was developed by the [Bing](http://www.bing.com) team at Microsoft
-and currently runs in production in the Bing search engine.
+The compiler was developed by the [Bing](http://www.bing.com/) team for use in the Bing search engine.
+One important use is scoring documents containing keywords that match a user's query.
+The scoring process attempts to gauge how well each document matches the user's intent,
+and as such, depends on the specifics of how the query was phrased.
+Bing formulates a custom expression for each query
+and then uses NativeJIT to compile the expression into x64 code that will
+be run on a large set of candidate documents spread across a cluster of
+machines.
+
+We knew from the get go that throughput and latency
+would be essential when processing queries at scale,
+so we put a lot of effort in to making NativeJIT run fast.
+
+Our design point was scenarios where
+
+* The expression isn't known until runtime.
+* The expression will be evaluated enough times to amortize the cost of compilation.
+* Latency and throughput demands require low cost for compilation.
+
+
+We're still in the early stages of open sourcing this code, which means that we
+don't yet have proper documentation and reasonable starter examples. Here's a
+trivial "Hello, world" level example:
+
+~~~
+#include "NativeJIT/CodeGen/ExecutionBuffer.h"
+#include "NativeJIT/CodeGen/FunctionBuffer.h"
+#include "NativeJIT/Function.h"
+#include "Temporary/Allocator.h"
+
+#include <iostream>
+
+using NativeJIT::Allocator;
+using NativeJIT::ExecutionBuffer;
+using NativeJIT::Function;
+using NativeJIT::FunctionBuffer;
+
+int main()
+{
+
+    // Create allocator and buffers for pre-compiled and post-compiled code.
+    ExecutionBuffer codeAllocator(8192);
+    Allocator allocator(8192);
+    FunctionBuffer code(codeAllocator, 8192);
+
+    const float  PI = 3.14159265358979f;
+
+    // Create expression to JIT.
+    Function<float, float> expression(allocator, code);
+
+    auto & a = expression.Mul(expression.GetP1(), expression.GetP1());
+    auto & b = expression.Mul(a, expression.Immediate(PI));
+
+    // Compile expression into a function.
+    auto function = expression.Compile(b);
+
+    float p1 = 2.0;
+
+    // Run our JIT'ed function.
+    auto observed = function(p1);
+    auto expected = PI * p1 * p1;
+
+    std::cout << expected << ":" << observed << std::endl;
+
+    return 0;
+}
+~~~
 
 Coming soon: online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
 For now, [there's some preliminary documentation in `Documentation/`](https://github.com/BitFunnel/NativeJIT/tree/master/Documentation).
