@@ -10,6 +10,7 @@ NativeJIT was developed by the [Bing](http://www.bing.com) team at Microsoft
 and currently runs in production in the Bing search engine.
 
 Coming soon: online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
+For now, [there's some preliminary documentation in `Documentation/`](https://github.com/BitFunnel/NativeJIT/tree/master/Documentation).
 
 Dependencies
 ------------

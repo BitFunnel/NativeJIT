@@ -142,12 +142,40 @@ These notes should eventually be moved elsewhere and perhaps each be expanded in
 
 ## Commonly used methods
 
-### Immediates
+#### Immediates
 
 These are simple types (e.g., `char` or `int`) or pointers to anything. This means that we can have, for example, pointers to structs but we can't have struct literals.
 
 ~~~
 template <typename T> ImmediateNode<T>& Immediate(T value);
+~~~
+
+##### Examples
+
+~~~
+Function<int64_t> exp1(allocator1, code1);
+
+auto &imm1 = exp1.Immediate(1234ll);
+auto fn1 = exp1.Compile(imm1);
+
+assert(1234ll == fn1());
+
+
+
+int SampleFunction(int p1, int p2)
+{
+    return p1 + p2;
+}
+
+Function<int, int, int> exp2(allocator2, code2);
+
+typedef int (*F)(int, int);
+
+auto &imm2 = exp2.Immediate<F>(SampleFunction);
+auto &call2 = exp2.Call(imm2, exp2.GetP1(), exp2.GetP2());
+auto fn2 = exp2.Compile(call2);
+
+assert(10+35 == fn2(10, 35));
 ~~~
 
 #### Unary Operators
@@ -178,6 +206,38 @@ Because we have some operations that can only be done on pointers (or only done 
 ~~~
 template <typename T> Node<T*>& AsPointer(Node<T&>& reference);
 template <typename T> Node<T&>& AsReference(Node<T*>& pointer);
+~~~
+
+##### Examples
+
+~~~
+Function<int64_t> exp1(allocator1, code1);
+
+auto &cast1 = exp1.Cast<float>(exp1.Immediate(10));
+auto fn1 = exp1.Compile(cast1);
+
+assert(float(10) == fn1());
+
+
+class Foo
+{
+public:
+    uint32_t m_a;
+    uint64_t m_b;
+};
+
+Function<uint64_t, Foo*> expression(allocator2, code2);
+
+auto & a = expression.GetP1();
+auto & b = expression.FieldPointer(a, &Foo::m_b);
+auto & c = expression.Deref(b);
+auto fn2 = expression.Compile(c);
+
+Foo foo;
+foo.m_b = 1234ull;
+Foo* p1 = &foo;
+
+assert(p1->m_b == fn2(p1));
 ~~~
 
 #### Binary Operators
