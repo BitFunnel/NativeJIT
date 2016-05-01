@@ -153,30 +153,15 @@ template <typename T> ImmediateNode<T>& Immediate(T value);
 ##### Examples
 
 ~~~
+// Immediate.
 Function<int64_t> exp1(allocator1, code1);
 
 auto &imm1 = exp1.Immediate(1234ll);
 auto fn1 = exp1.Compile(imm1);
 
 assert(1234ll == fn1());
-
-
-
-int SampleFunction(int p1, int p2)
-{
-    return p1 + p2;
-}
-
-Function<int, int, int> exp2(allocator2, code2);
-
-typedef int (*F)(int, int);
-
-auto &imm2 = exp2.Immediate<F>(SampleFunction);
-auto &call2 = exp2.Call(imm2, exp2.GetP1(), exp2.GetP2());
-auto fn2 = exp2.Compile(call2);
-
-assert(10+35 == fn2(10, 35));
 ~~~
+
 
 #### Unary Operators
 
@@ -211,6 +196,7 @@ template <typename T> Node<T&>& AsReference(Node<T*>& pointer);
 ##### Examples
 
 ~~~
+// Cast.
 Function<int64_t> exp1(allocator1, code1);
 
 auto &cast1 = exp1.Cast<float>(exp1.Immediate(10));
@@ -219,6 +205,7 @@ auto fn1 = exp1.Compile(cast1);
 assert(float(10) == fn1());
 
 
+// Access member via ->.
 class Foo
 {
 public:
@@ -263,18 +250,36 @@ Node<T*>& Add(Node<T(*)[SIZE]>& array, Node<INDEX>& index);
 template <typename T, typename INDEX> Node<T*>& Add(Node<T*>& array, Node<INDEX>& index);
 ~~~
 
+##### Examples
 
-#### Compare
+~~~
+// Array dereference with binary operation.
+
+Function<uint64_t, uint64_t*> exp1(allocator1, code1);
+
+auto & idx1 = exp1.Add(expression.GetP1(), expression.Immediate<uint64_t>(1ull));
+auto & idx2 = exp1.Add(expression.GetP1(), expression.Immediate<uint64_t>(2ull));
+auto & sum = exp1.Add(expression.Deref(a), expression.Deref(b));
+auto fn1 = exp1.Compile(sum);
+
+uint64_t array[10];
+array[1] = 1;
+array[2] = 128;
+
+uint64_t * p1 = array;
+
+assert(array[1] + array[2] == fn1(p1));
+~~~
+
+
+
+#### Compare & Conditional
 
 Unlike other nodes, which return a generic T, compare nodes return a flag. The flag can be passed to a conditional, which takes a flag.
 
 ~~~
 FlagExpressionNode<JCC>& Compare(Node<T>& left, Node<T>& right);
-~~~
 
-#### Conditional
-
-~~~
 template <JccType JCC, typename T>
 Node<T>& Conditional(FlagExpressionNode<JCC>& condition, Node<T>& trueValue, Node<T>& falseValue);
 
@@ -285,7 +290,37 @@ template <typename T>
 Node<T>& If(Node<bool>& conditionValue, Node<T>& thenValue, Node<T>& elseValue);
 ~~~
 
-There's a workaround for this that works for how this is used in Bing, but it only works at the top level of the function. This was done because we have code that checks the version number, and then does something based on that, and that's the only conditional Bing uses. This obviously isn't general and we will eventually fix this.
+x86 conditional tests are available; a full list is available [here](http://unixwiz.net/techtips/x86-jumps.html).
+
+##### Example
+
+~~~
+// JA (jump if above), i.e. unsigned ">"
+Function<uint64_t, uint64_t, uint64_t> exp1(setup->GetAllocator(), setup->GetCode());
+
+uint64_t trueValue = 5;
+uint64_t falseValue = 6;
+
+auto & a = expression.Compare<JccType::JA>(expression.GetP1(), expression.GetP2());
+auto & b = expression.Conditional(a, expression.Immediate(trueValue), expression.Immediate(falseValue));
+auto function = expression.Compile(b);
+
+uint64_t p1 = 3;
+uint64_t p2 = 4;
+
+auto expected = (p1 > p2) ? trueValue : falseValue;
+auto observed = function(p1, p2);
+
+assert(expected == observed);
+
+p1 = 5;
+p2 = 4;
+
+expected = (p1 > p2) ? trueValue : falseValue;
+observed = function(p1, p2);
+
+assert(expected == observed);
+~~~
 
 #### Call
 
@@ -313,6 +348,27 @@ Node<R>& Call(Node<R (*)(P1, P2, P3, P4)>& function,
               Node<P2>& param2,
               Node<P3>& param3,
               Node<P4>& param4);
+~~~
+
+
+##### Examples
+
+~~~
+// Call SampleFunction.
+int SampleFunction(int p1, int p2)
+{
+    return p1 + p2;
+}
+
+Function<int, int, int> exp1(allocator1, code1);
+
+typedef int (*F)(int, int);
+
+auto &imm1 = exp1.Immediate<F>(SampleFunction);
+auto &call1 = exp1.Call(imm1, exp1.GetP1(), exp1.GetP2());
+auto fn1 = exp1.Compile(call2);
+
+assert(10+35 == fn1(10, 35));
 ~~~
 
 
