@@ -4,9 +4,17 @@ script: ./Configure_Linux_Make_clang.sh
 
 compiler: clang
 
+# Currently Travis Docker image has cmake version 2.8.7.
+# NativeJIT requires at least 2.8.11 (for gtest).
 addons:
     apt:
       packages:
         - cmake
       sources:
         - kalakris-cmake
+
+script:
+    - |
+      cd build-linux-clang
+      make
+
