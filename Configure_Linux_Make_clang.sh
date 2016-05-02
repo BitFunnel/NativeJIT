@@ -25,5 +25,5 @@
 echo "Configuring CMake for make."
 mkdir build-linux-clang
 cd build-linux-clang
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 ..
+cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
 

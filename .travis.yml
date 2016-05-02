@@ -18,13 +18,6 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-precise
             - llvm-toolchain-precise-3.8
-    - env: CXX=g++-4.9 CC=gcc-4.9
-      addons:
-        apt:
-          packages:
-            - cmake
-            - g++-4.9
-          sources: *sources
     - env: CXX=clang++-3.8 CC=clang-3.8
       addons:
         apt:
@@ -34,11 +27,6 @@ matrix:
           sources: *sources
 
 script:
-    - printenv
-    - which clang
-    - clang --version
-    - which clang-3.8
-    - clang-3.8 --version
     - ./Configure_Linux_Make_clang.sh
     - (cd build-linux-clang && make)
 
