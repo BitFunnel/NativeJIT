@@ -1,8 +1,8 @@
 NativeJIT
 ====
 
-NativeJIT is a just-in-time compiler that translates expressions
-involving C data structures into Intel x64 machine code.
+NativeJIT is an open-source cross-platform library for high-performance
+just-in-time compilation of expressions involving C data structures.
 The compiler is light weight and fast
 and it takes no dependencies beyond the standard C++ runtime.
 It runs on Linux, OSX, and Windows.
@@ -12,7 +12,7 @@ to register allocation.
 The compiler was developed by the [Bing](http://www.bing.com/) team for use in the Bing search engine.
 One important use is scoring documents containing keywords that match a user's query.
 The scoring process attempts to gauge how well each document matches the user's intent,
-and as such, depends on the specifics of how the query was phrased.
+and as such, depends on the specifics of how each query was phrased.
 Bing formulates a custom expression for each query
 and then uses NativeJIT to compile the expression into x64 code that will
 be run on a large set of candidate documents spread across a cluster of
@@ -29,9 +29,7 @@ Our design point was scenarios where
 * Latency and throughput demands require low cost for compilation.
 
 
-We're still in the early stages of open sourcing this code, which means that we
-don't yet have proper documentation and reasonable starter examples. Here's a
-trivial "Hello, world" level example:
+Here's trivial "Hello, world" level example that computes the area of a circle:
 
 ~~~
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
@@ -48,43 +46,46 @@ using NativeJIT::FunctionBuffer;
 
 int main()
 {
-
     // Create allocator and buffers for pre-compiled and post-compiled code.
     ExecutionBuffer codeAllocator(8192);
     Allocator allocator(8192);
     FunctionBuffer code(codeAllocator, 8192);
 
-    const float  PI = 3.14159265358979f;
-
-    // Create expression to JIT.
+    // Create the factory for expression nodes.
+    // Our area expression will take a single float parameter and return a float.
     Function<float, float> expression(allocator, code);
 
-    auto & a = expression.Mul(expression.GetP1(), expression.GetP1());
-    auto & b = expression.Mul(a, expression.Immediate(PI));
+    // Multiply input parameter by itself to get radius squared.
+    auto & rsquared = expression.Mul(expression.GetP1(), expression.GetP1());
+
+    // Multiply by PI.
+    const float  PI = 3.14159265358979f;
+    auto & area = expression.Mul(rsquared, expression.Immediate(PI));
 
     // Compile expression into a function.
-    auto function = expression.Compile(b);
+    auto function = expression.Compile(area);
 
-    float p1 = 2.0;
-
-    // Run our JIT'ed function.
-    auto observed = function(p1);
-    auto expected = PI * p1 * p1;
-
-    std::cout << expected << ":" << observed << std::endl;
-
+    // Now run our expression!
+    float radius = 2.0;
+    std::cout << "The area of a circle with radius " << radius
+    	      << " is " << function(radius);
+    	      
     return 0;
 }
 ~~~
 
-Coming soon: online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
-For now, [there's some preliminary documentation in `Documentation/`](https://github.com/BitFunnel/NativeJIT/tree/master/Documentation).
+TODO: show assembly output from this.
+
+This example shows an expression that multiplies a number by itself.
+We also support a wide variety of arithmetic and logical operations, pointer and array operations, conditionals, accessing structure fields, and calling out to C functions.
+[See our preliminary API docs in `/Documentation` for more information](https://github.com/BitFunnel/NativeJIT/tree/master/Documentation).
+Coming soon: better online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
 
 Dependencies
 ------------
 
-In order to build NativeJIT you will need CMake (3.3.2+), and a modern C++
-compiler (gcc 5+, clang 3.4+, or VC 2012+).
+In order to build NativeJIT you will need CMake (2.8.11+), and a modern C++
+compiler (gcc 5+, clang 3.4+, or VC 2015+).
 
 Following are specific instructions for building on various platforms.
 
@@ -95,13 +96,13 @@ latest version of Clang as it's much faster with template-heavy code like
 NativeJIT.
 
 Run the following commands to install the minimal set of packages needed to 
-build the core NativeJIT library on Ubuntu 15:
+build the core NativeJIT library on Ubuntu 15 or 16:
 
 ~~~
 sudo apt-get install clang cmake
 ~~~
 
-The current Ubuntu LTS version (14) points to an older version of cmake. To
+If you're on an older version of Ubuntu, like 14, you'll need to install a newer version of CMake. To
 install a new-enough CMake, see [this link](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04).
 If you're using gcc, you'll also need to make sure you have gcc-5 (`sudo apt-get install g++-5`).
 
