@@ -151,7 +151,7 @@ namespace NativeJIT
     template <typename T>
     void CodeBuffer::EmitBytes(T x)
     {
-        static_assert(std::is_trivially_copyable<T>::value, "Invalid variable type.");
+        static_assert(std::is_trivial<T>::value, "Invalid variable type.");
         const size_t varSize = sizeof(T);
 
         VerifyNoBufferOverflow(varSize);

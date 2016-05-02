@@ -68,8 +68,8 @@ int main()
     // Now run our expression!
     float radius = 2.0;
     std::cout << "The area of a circle with radius " << radius
-    	      << " is " << function(radius);
-    	      
+              << " is " << function(radius);
+
     return 0;
 }
 ~~~

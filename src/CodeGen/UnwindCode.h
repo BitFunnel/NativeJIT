@@ -92,7 +92,7 @@ namespace NativeJIT
         };
     };
 
-    static_assert(std::is_trivially_copyable<UnwindCode>::value, "UnwindCode must be trivially copyable");
+    static_assert(std::is_standard_layout<UnwindCode>::value, "UnwindCode must be standard layout.");
     static_assert(sizeof(UnwindCode) == 2, "UnwindCode must be exactly two bytes");
 
 
@@ -116,8 +116,8 @@ namespace NativeJIT
         UnwindCode m_firstUnwindCode;
     };
 
-    static_assert(std::is_trivially_copyable<UnwindInfo>::value,
-                  "UnwindInfo must be trivially copyable");
+    static_assert(std::is_standard_layout<UnwindInfo>::value,
+                  "UnwindInfo must be standard layout.");
     static_assert(sizeof(UnwindInfo) == 4 + sizeof(UnwindCode),
                   "Invalid UnwindInfo size, unexpected padding or extra members present");
 
