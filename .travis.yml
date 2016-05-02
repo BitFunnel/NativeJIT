@@ -2,6 +2,10 @@ language: c++
 
 script:
     - printenv
+    - which clang
+    - clang --version
+    - which clang-3.7
+    - clang-3.7 --version
     - ./Configure_Linux_Make_clang.sh
     - (cd build-linux-clang && make)
 
