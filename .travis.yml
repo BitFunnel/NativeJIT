@@ -1,4 +1,6 @@
-sudo: false
+# sudo required and trusty used as a hack to get a newer cmake.
+sudo: required
+dist: trusty
 language: generic
 
 cache:
