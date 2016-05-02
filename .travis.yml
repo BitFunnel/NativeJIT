@@ -1,31 +1,39 @@
-language: c++
+sudo: false
+language: generic
+
+cache:
+  apt: true
+
+matrix:
+  include:
+    - env: CXX=g++-5 CC=gcc-5
+      addons:
+        apt:
+          packages:
+            - g++-5
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise
+            - llvm-toolchain-precise-3.8
+    - env: CXX=g++-4.9 CC=gcc-4.9
+      addons:
+        apt:
+          packages:
+            - g++-4.9
+          sources: *sources
+    - env: CXX=clang++-3.8 CC=clang-3.8
+      addons:
+        apt:
+          packages:
+            - clang-3.8
+          sources: *sources
 
 script:
     - printenv
     - which clang
     - clang --version
-    - which clang-3.7
-    - clang-3.7 --version
+    - which clang-3.8
+    - clang-3.8 --version
     - ./Configure_Linux_Make_clang.sh
     - (cd build-linux-clang && make)
-
-compiler: clang
-
-# Currently Travis Docker image has cmake version 2.8.7.
-# NativeJIT requires at least 2.8.11 (for gtest).
-addons:
-    apt:
-      packages:
-#        - cmake
-        - clang-3.7
-      sources:
-#        - kalakris-cmake
-        - llvm-toolchain-precise
-        - ubuntu-toolchain-r-test
-
-install:
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
-    - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
-
-
 
