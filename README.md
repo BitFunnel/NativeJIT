@@ -74,12 +74,37 @@ int main()
 }
 ~~~
 
-TODO: show assembly output from this.
+Here is the generated assembly code on Windows (NOTE: there seems to be a bug in the
+register allocator. While the code computes the correct result, it is less efficient
+than it would have been if the entire result had been computed directly
+into xmm0, without ever using xmm15).
+
+~~~
+PI_CONSTANT:
+    db 0f 49 40                              ; PI constant is stored in memory.
+ENTRY_POINT:
+    sub    rsp, 28h                          ; Standard function prolog
+    mov    qword ptr[rsp], rbp
+    movaps xmmword ptr[rsp + 10h], xmm15
+    lea    rbp, [rsp + 28h]
+
+    movss  xmm15, xmm0                       ; Load radius from first parameter register.
+    mulss  xmm15, xmm0                       ; Multiply by radius.
+    mulss  xmm15, dword ptr[PI_CONSTANT]     ; Multiply by PI.
+    movss  xmm0, xmm15                       ; Return value goes in xmm0.
+
+    movaps xmm15, xmmword ptr[rsp + 10h]     ; Standard function epilog.
+    mov    rbp, qword ptr[rsp]
+    add    rsp, 28h
+    ret
+~~~
+
 
 This example shows an expression that multiplies a number by itself.
 We also support a wide variety of arithmetic and logical operations, pointer and array operations, conditionals, accessing structure fields, and calling out to C functions.
 [See our preliminary API docs in `/Documentation` for more information](https://github.com/BitFunnel/NativeJIT/tree/master/Documentation).
 Coming soon: better online documentation at [bitfunnel.org](https://github.com/bitfunnel/nativejit).
+
 
 Dependencies
 ------------
