@@ -10,6 +10,7 @@ matrix:
       addons:
         apt:
           packages:
+            - cmake
             - g++-5
           sources: &sources
             - ubuntu-toolchain-r-test
@@ -19,12 +20,14 @@ matrix:
       addons:
         apt:
           packages:
+            - cmake
             - g++-4.9
           sources: *sources
     - env: CXX=clang++-3.8 CC=clang-3.8
       addons:
         apt:
           packages:
+            - cmake
             - clang-3.8
           sources: *sources
 
