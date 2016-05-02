@@ -16,10 +16,10 @@ compiler: clang
 addons:
     apt:
       packages:
-        - cmake
+#        - cmake
         - clang-3.7
       sources:
-        - kalakris-cmake
+#        - kalakris-cmake
         - llvm-toolchain-precise
         - ubuntu-toolchain-r-test
 
