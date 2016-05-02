@@ -1,6 +1,7 @@
 language: c++
 
 script:
+    - printenv
     - ./Configure_Linux_Make_clang.sh
     - (cd build-linux-clang && make)
 
