@@ -16,7 +16,7 @@ that can be compiled.
 
 After running the tests, it falls into a Read-Eval-Print loop
 which prints out a >> prompt and then waits for input. At this
-point you can type and expression and hit enter to evaluate it.
+point you can type an expression and hit enter to evaluate it.
 
 Entering a blank line will exit the program. Here's a sample run:
 
