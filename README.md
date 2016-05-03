@@ -110,36 +110,40 @@ Dependencies
 ------------
 
 In order to build NativeJIT you will need CMake (2.8.11+), and a modern C++
-compiler (gcc 5+, clang 3.4+, or VC 2015+).
+compiler (gcc 5+, clang 3.4+, or VC 2015+). You can run CMake directly to generate the appropriate build setup for your platform. Alternately, we have some scripts that have the defaults that we use available.
 
-Following are specific instructions for building on various platforms.
+### *nix
 
-### Linux
+For *nix platforms (including OS X),
 
-NativeJIT can be built with Clang (3.4+) or GNU C++ (5.0+). We recommend the
-latest version of Clang as it's much faster with template-heavy code like
-NativeJIT.
+~~~
+./Configure_Make.sh
+cd build-make
+make
+make test
+~~~
 
-Run the following commands to install the minimal set of packages needed to 
-build the core NativeJIT library on Ubuntu 15 or 16:
+#### Ubuntu
+
+If you're on Ubuntu 15+, you can install dependencies with:
 
 ~~~
 sudo apt-get install clang cmake
 ~~~
 
-If you're on an older version of Ubuntu, like 14, you'll need to install a newer version of CMake. To
+On Ubuntu 14 and below, you'll need to install a newer version of CMake. To
 install a new-enough CMake, see [this link](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04).
 If you're using gcc, you'll also need to make sure you have gcc-5 (`sudo apt-get install g++-5`).
 
-In the root `NativeJIT` directory run:
+pTo override the default compiler, set the `CXX` and `CC` environment variables.
+For example, if you have clang-3.8 installed as `clang-3.8` and are using bash:
 
 ~~~
-./Configure_Linux_Make_clang.sh
-cd build-linux-clang
-make
+export CXX="clang++-3.8"
+export CC="clang-3.8"
 ~~~
 
-### OSX
+#### OS X
 
 Install XCode and then run the following command to install required packages 
 using Homebrew ([http://brew.sh/](http://brew.sh/)):
@@ -151,21 +155,10 @@ brew install cmake
 NativeJIT can be built on OS X using either standard \*nix makefiles or XCode.
 In order to generate and build makefiles, in the root `NativeJIT` directory run:
 
-~~~
-./Configure_OSX_Make.sh
-~~~
-    
-Alternatively you can generate XCode project by running
+If you want to create an Xcode project instead of using Makefiles, run:
 
 ~~~
-./Configure_OSX_XCode.sh
-~~~
-
-You can build and run unit tests by building the `test` target in XCode or by
-running make in the build directory:
-
-~~~
-make test
+./Configure_XCode.sh
 ~~~
 
 ### Windows
@@ -185,10 +178,9 @@ In order to configure solution for Visual Studio 2015 run the following
 commands from the root `NativeJIT` directory:
 
 ~~~
-.\Configure_Windows_MSVC.bat
+.\Configure_MSVC.bat
 ~~~
 
-From 
-now on you can use the generated solution `build-win-msvc\BitFunnel.sln` from Visual Studio
-or build from command line using `cmake`:
+From now on you can use the generated solution `build-msvc\BitFunnel.sln` from Visual Studio
+or build from command line using `cmake`.
 
