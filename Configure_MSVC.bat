@@ -22,7 +22,7 @@ rem THE SOFTWARE.
 
 setlocal
 
-mkdir build-mingw64-gcc
-pushd build-mingw64-gcc
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+mkdir build-msvc
+pushd build-msvc
+cmake -G "Visual Studio 14 2015 Win64" ..
 popd

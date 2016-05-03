@@ -27,6 +27,6 @@ matrix:
           sources: *sources
 
 script:
-    - ./Configure_Linux_Make_clang.sh
-    - (cd build-linux-clang && make)
+    - ./Configure_Make.sh
+    - (cd build-make && make)
 

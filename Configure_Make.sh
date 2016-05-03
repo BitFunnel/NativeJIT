@@ -23,6 +23,7 @@
 #!/bin/sh
 
 echo "Configuring CMake for make."
-mkdir build-linux-gcc
-cd build-linux-gcc
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
+mkdir build-make
+cd build-make
+cmake -G "Unix Makefiles" ..
+
