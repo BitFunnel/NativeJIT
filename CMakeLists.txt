@@ -80,11 +80,9 @@ add_subdirectory(Examples)
 
 add_custom_target(TOPLEVEL SOURCES
   CMakeLists-googletest.txt.in
-  Configure_MinGW64_clang.bat
-  Configure_MinGW64_gcc.bat
-  Configure_OSX_Make.sh
-  Configure_OSX_XCode.sh
-  Configure_Windows_MSVC.bat
+  Configure_Make.bat
+  Configure_Make.sh
+  Configure_MSVC.bat
   LICENSE.txt
   README.md
 )
