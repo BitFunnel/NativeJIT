@@ -1,2 +1,6 @@
 before_build:
     Configure_MSVC.bat
+
+build:
+    build-msvc/NativeJIT_CMake.sln
+
