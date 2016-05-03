@@ -28,5 +28,5 @@ matrix:
 
 script:
     - ./Configure_Make.sh
-    - (cd build-make && make)
+    - (cd build-make && make && make test)
 
