@@ -62,7 +62,7 @@ namespace Examples
 
     float Parser::Evaluate()
     {
-        NativeJIT::Node<float>& root = ParseSum();
+        auto& root = ParseSum();
         m_expression.Compile(root);
         auto function = m_expression.GetEntryPoint();
         return function();
@@ -71,20 +71,20 @@ namespace Examples
 
     NativeJIT::Node<float>& Parser::ParseSum()
     {
-        NativeJIT::Node<float>& left = ParseProduct();
+        auto& left = ParseProduct();
 
         SkipWhite();
         if (PeekChar() == '+')
         {
             GetChar();
-            NativeJIT::Node<float>& right = ParseProduct();
+            auto& right = ParseProduct();
 
             return m_expression.Add(left, right);
         }
         else if (PeekChar() == '-')
         {
             GetChar();
-            NativeJIT::Node<float>& right = ParseProduct();
+            auto& right = ParseProduct();
 
             return m_expression.Sub(left, right);
         }
@@ -97,13 +97,13 @@ namespace Examples
 
     NativeJIT::Node<float>& Parser::ParseProduct()
     {
-        NativeJIT::Node<float>& left = ParseTerm();
+        auto& left = ParseTerm();
 
         SkipWhite();
         if (PeekChar() == '*')
         {
             GetChar();
-            NativeJIT::Node<float>& right = ParseSum();
+            auto& right = ParseSum();
 
             return m_expression.Mul(left, right);
         }
@@ -123,7 +123,7 @@ namespace Examples
         {
             GetChar();
 
-            NativeJIT::Node<float>& result = ParseSum();
+            auto& result = ParseSum();
 
             SkipWhite();
             Consume(')');
@@ -149,6 +149,14 @@ namespace Examples
                 // 'pi' denotes the mathematical constant pi.
                 const float pi = static_cast<float>(atan(1) * 4);
                 return m_expression.Immediate(pi);
+            }
+            else if (symbol.compare("sqrt") == 0)
+            {
+                Consume('(');
+                auto& parameter = ParseSum();
+                Consume(')');
+                auto & sqrtFunction = m_expression.Immediate(sqrtf);
+                return m_expression.Call(sqrtFunction, parameter);
             }
             else
             {
@@ -371,6 +379,10 @@ bool Test()
 
         // White space
         TestCase("\t 1  + ( 2 * 10 )    ", 21.0),
+
+        // sqrt
+        TestCase("sqrt(4)", 2.0),
+        TestCase("sqrt((3+4)*(2+3))", sqrtf(35)),
     };
 
 
