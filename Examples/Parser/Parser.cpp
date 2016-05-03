@@ -163,12 +163,12 @@ namespace Examples
                 // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
                 std::stringstream message;
                 message << "Unknown identifier \"" << symbol << "\".";
-                throw std::exception(message.str().c_str());
+                throw std::runtime_error(message.str().c_str());
             }
         }
         else
         {
-            throw std::exception("Expected a number, symbol or parenthesized expression.");
+            throw std::runtime_error("Expected a number, symbol or parenthesized expression.");
         }
     }
 
@@ -214,7 +214,7 @@ namespace Examples
 
             if (!isdigit(PeekChar()))
             {
-                throw std::exception("Expected exponent in floating point constant.");
+                throw std::runtime_error("Expected exponent in floating point constant.");
             }
 
             while (isdigit(PeekChar()))
@@ -234,7 +234,7 @@ namespace Examples
         SkipWhite();
         if (!isalpha(PeekChar()))
         {
-            throw std::exception("Expected alpha character at beginning of symbol.");
+            throw std::runtime_error("Expected alpha character at beginning of symbol.");
         }
         while (isalnum(PeekChar()))
         {
@@ -266,7 +266,7 @@ namespace Examples
             // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
             std::stringstream message;
             message << "Expected '" << c << "'.";
-            throw std::exception(message.str().c_str());
+            throw std::runtime_error(message.str().c_str());
         }
         else
         {
