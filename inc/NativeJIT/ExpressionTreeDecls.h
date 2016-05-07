@@ -556,6 +556,8 @@ namespace NativeJIT
         // and offset to the output stream.
         void Print(std::ostream& out) const;
 
+        // Returns whether or not two storages point to the same Data object.
+        // (as opposed to having the same contents).
         template <typename U>
         bool operator==(Storage<U> const & other) const;
 
