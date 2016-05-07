@@ -903,6 +903,13 @@ namespace NativeJIT
         LogThrowAbort("Unexpected occurrence of an invalid immediate storage");
     }
 
+    template <typename T>
+    template <typename U>
+    bool ExpressionTree::Storage<T>::operator==(Storage<U> const & other) const
+    {
+        return this->m_data == other.m_data;
+    }
+
 
     //*************************************************************************
     //

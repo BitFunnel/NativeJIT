@@ -556,6 +556,10 @@ namespace NativeJIT
         // and offset to the output stream.
         void Print(std::ostream& out) const;
 
+        template <typename U>
+        bool operator==(Storage<U> const & other) const;
+
+
     private:
         // Types used to select the correct flavor of immediate methods. This is
         // necessary because GetStorageClass() is a runtime rather than a compile

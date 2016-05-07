@@ -77,11 +77,23 @@ namespace NativeJIT
         Storage<R> sRight;
 
         this->CodeGenInPreferredOrder(tree,
-                                      m_left, sLeft,
-                                      m_right, sRight);
+            m_left, sLeft,
+            m_right, sRight);
 
-        CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(true), sRight);
-
+        // DESIGN NOTE: sLeft can == sRight when their types don't match. This can happen,
+        // although we (mhop & danluu) couldn't think of any useful cases where that
+        // currently happens.
+        if (sLeft == sRight)
+        {
+            sRight.Reset();
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(),
+                                     sLeft.ConvertToDirect(true), sLeft);
+        }
+        else
+        {
+            CodeGenHelpers::Emit<OP>(tree.GetCodeGenerator(),
+                                     sLeft.ConvertToDirect(true), sRight);
+        }
         return sLeft;
     }
 
