@@ -22,40 +22,94 @@ namespace Examples
     class Parser
     {
     public:
+        //
+        // Constructs a parser for the expression text in src.
+        // Allocator and FunctionBuffer are constructor parameters
+        // for NativeJIT::Function.
+        //
         Parser(std::string const & src,
                Allocator& allocator,
                FunctionBuffer& code);
 
+        //
+        // Compiles the expression, then invokes the resulting
+        // function.
+        //
         float Evaluate();
 
         
-        class ParseException : public std::runtime_error
+        //
+        // ParseError records the character position and cause of an error
+        // during parsing.
+        //
+        class ParseError : public std::runtime_error
         {
         public:
-            ParseException(char const * message);
+            ParseError(char const * message, size_t position);
             
-            friend std::ostream& operator<< (std::ostream &out, const ParseException &e);
+            friend std::ostream& operator<< (std::ostream &out, const ParseError &e);
+            
+        private:
+            // Character position where error occurred.
+            size_t m_position;
         };
         
     private:
+        // Parses expressions of form
+        // SUM:
+        //   PRODUCT ('+' PRODUCT)*
+        //   PRODUCT ('-' PRODUCT)*
         NativeJIT::Node<float>& ParseSum();
+        
+        // Parses expressions of the form
+        // PRODUCT:
+        //   TERM ('*' TERM)*
         NativeJIT::Node<float>& ParseProduct();
+        
+        // Parses expressions of the form
+        // TERM:
+        //   (SUM)
+        //   FLOAT
+        //   SYMBOL
         NativeJIT::Node<float>& ParseTerm();
 
+        // Parses expressions of the form
+        // FLOAT:
+        //   [ '+' | '-' ] (DIGIT)* [ '.' DIGIT*] [ ('e' | 'E') [ '+' | '-' ] DIGIT* ]
         float ParseFloat();
+        
+        // Parses expressions of the form
+        // SYMBOL: ALPHA (ALPHA | DIGIT)*
         std::string ParseSymbol();
 
-        bool IsFirstCharOfNumber(char c);
+        // Returns true if current position is the first character of a floating
+        // point number.
+        bool IsFirstCharOfFloat(char c);
 
+        // Advances the current position past whitespace (space, tab, carriage
+        // return, newline).
         void SkipWhite();
-        void Consume(char c);
+        
+        // Attempts to advance past next character.
+        // Throws a ParseError if the next character is not equal to
+        // the expected character.
+        void Consume(char expected);
 
+        // Advances past the next character.
+        // Returns the character or '\0' if at the end of the stream.
         char GetChar();
+        
+        // Returns the next character without advancing.
+        // Returns '\0' if at the end of the stream.
         char PeekChar();
 
+        // Source string to be parsed.
         std::string const m_src;
+        
+        // Current position of parser in the m_src.
         size_t m_currentPosition;
 
+        // NativeJIT Function used to build and compile parsed expression.
         Function<float> m_expression;
     };
 
@@ -140,7 +194,7 @@ namespace Examples
 
             return result;
         }
-        else if (IsFirstCharOfNumber(next))
+        else if (IsFirstCharOfFloat(next))
         {
             float f = ParseFloat();
             return m_expression.Immediate(f);
@@ -173,22 +227,30 @@ namespace Examples
                 // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
                 std::stringstream message;
                 message << "Unknown identifier \"" << symbol << "\".";
-                throw ParseException(message.str().c_str());
+                throw ParseError(message.str().c_str(), m_currentPosition);
             }
         }
         else
         {
-            throw ParseException("Expected a number, symbol or parenthesized expression.");
+            throw ParseError("Expected a number, symbol or parenthesized expression.",
+                             m_currentPosition);
         }
     }
 
 
     float Parser::ParseFloat()
     {
+        // s will hold a string of floating point number characters that will
+        // eventually be passed to stof().
         std::string s;
 
         SkipWhite();
 
+        //
+        // Gather in s the longest possible sequence of characters that will
+        // parse as a floating point number.
+        //
+        
         // Optional leading '+' or '-'.
         if (PeekChar() == '+' || PeekChar() == '-')
         {
@@ -224,7 +286,8 @@ namespace Examples
 
             if (!isdigit(PeekChar()))
             {
-                throw ParseException("Expected exponent in floating point constant.");
+                throw ParseError("Expected exponent in floating point constant.",
+                                 m_currentPosition);
             }
 
             while (isdigit(PeekChar()))
@@ -233,6 +296,7 @@ namespace Examples
             }
         }
 
+        // Parse s into a floating point value.
         return stof(s);
     }
 
@@ -244,7 +308,8 @@ namespace Examples
         SkipWhite();
         if (!isalpha(PeekChar()))
         {
-            throw ParseException("Expected alpha character at beginning of symbol.");
+            throw ParseError("Expected alpha character at beginning of symbol.",
+                             m_currentPosition);
         }
         while (isalnum(PeekChar()))
         {
@@ -254,7 +319,7 @@ namespace Examples
     }
 
 
-    bool Parser::IsFirstCharOfNumber(char c)
+    bool Parser::IsFirstCharOfFloat(char c)
     {
         return isdigit(c) || (c == '-') || (c == '+') || (c == '.');
     }
@@ -276,7 +341,7 @@ namespace Examples
             // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
             std::stringstream message;
             message << "Expected '" << c << "'.";
-            throw ParseException(message.str().c_str());
+            throw ParseError(message.str().c_str(), m_currentPosition);
         }
         else
         {
@@ -309,15 +374,17 @@ namespace Examples
     }
     
     
-    Parser::ParseException::ParseException(char const * message)
-        : std::runtime_error(message)
+    Parser::ParseError::ParseError(char const * message, size_t position)
+        : std::runtime_error(message),
+          m_position(position)
     {
     }
     
     
-    std::ostream& operator<< (std::ostream &out, const Parser::ParseException &e)
+    std::ostream& operator<< (std::ostream &out, const Parser::ParseError &e)
     {
-        out << "Parser error: ";
+        out << std::string(e.m_position, ' ') << '^' << std::endl;
+        out << "Parser error (position = " << e.m_position << "): ";
         out << e.what();
         out << std::endl;
         return out;
@@ -326,7 +393,15 @@ namespace Examples
 
 
 
-
+/******************************************************************************
+ *
+ * Test() runs a number of test cases for the parser.
+ * It prints a summary of each case's input and output and either "OK"
+ * or "FAILED" depending on whether the test succeeded or failed.
+ *
+ * Returns true if all tests pass. Otherwise returns false.
+ *
+ ******************************************************************************/
 bool Test()
 {
     class TestCase
@@ -344,25 +419,32 @@ bool Test()
 
         bool Run(std::ostream& output, Allocator& allocator, FunctionBuffer& code)
         {
+            bool succeeded = false;
+            
             output << "\"" << m_input << "\" ==> ";
 
-            Examples::Parser parser(m_input, allocator, code);
-            float result = parser.Evaluate();
-
-            output << result;
-
-            if (result == m_output)
-            {
-                output << " OK";
-            }
-            else
-            {
-                output << " FAILED: expected " << m_output;
+            try {
+                Examples::Parser parser(m_input, allocator, code);
+                float result = parser.Evaluate();
+                
+                output << result;
+                
+                if (result == m_output)
+                {
+                    succeeded = true;
+                    output << " OK";
+                }
+                else
+                {
+                    output << " FAILED: expected " << m_output;
+                }
+            } catch (...) {
+                output << "FAILED: exception.";
             }
 
             output << std::endl;
 
-            return result == m_output;
+            return succeeded;
         }
 
     private:
@@ -370,6 +452,7 @@ bool Test()
         float m_output;
     };
 
+    
     TestCase cases[] =
     {
         // Constants
@@ -449,6 +532,7 @@ int main()
     ExecutionBuffer codeAllocator(8192);
     Allocator allocator(8192);
     FunctionBuffer code(codeAllocator, 8192);
+    std::string prompt(">> ");
 
     for (;;)
     {
@@ -456,7 +540,7 @@ int main()
         codeAllocator.Reset();
 
         std::string line;
-        std::cout << ">> " << std::flush;
+        std::cout << prompt << std::flush;
         std::getline(std::cin, line);
 
         // TODO: Should really see if line is completely blank.
@@ -472,8 +556,9 @@ int main()
             float result = parser.Evaluate();
             std::cout << result << std::endl;
         }
-        catch (Examples::Parser::ParseException& e)
+        catch (Examples::Parser::ParseError& e)
         {
+            std::cout << std::string(prompt.length(), ' ');
             std::cout << e;
         }
     }
