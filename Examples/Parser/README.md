@@ -1,6 +1,9 @@
+## Parser Example
+
 This example demonstrates a compiler for infix expressions.
 For simplicity, the sample only supports floats
-(as of the first README.md commit, the compiler itself is 300 lines of C++ code!)
+(as of the first README.md commit, 
+the compiler itself is just 300 lines of C++ code!)
 
 Expressions can be composed of 
 
@@ -51,4 +54,5 @@ Enter an empty line to exit.
 8.07758e+08
 >> sqrt(100)
 10
->>~~~
+>>
+~~~
