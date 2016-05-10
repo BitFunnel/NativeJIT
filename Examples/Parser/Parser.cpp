@@ -55,6 +55,11 @@ namespace Examples
         };
         
     private:
+        // Parses an expression of the form
+        // EXPRESSION:
+        //   SUM
+        NativeJIT::Node<float>& Parse();
+        
         // Parses expressions of form
         // SUM:
         //   PRODUCT ('+' PRODUCT)*
@@ -126,12 +131,26 @@ namespace Examples
 
     float Parser::Evaluate()
     {
-        auto& root = ParseSum();
+        auto& root = Parse();
         m_expression.Compile(root);
         auto function = m_expression.GetEntryPoint();
         return function();
     }
 
+    
+    NativeJIT::Node<float>& Parser::Parse()
+    {
+        auto& expression = ParseSum();
+        
+        SkipWhite();
+        if (PeekChar() != '\0')
+        {
+            throw ParseError("Syntax error.", m_currentPosition);
+        }
+
+        return expression;
+    }
+    
 
     NativeJIT::Node<float>& Parser::ParseSum()
     {
