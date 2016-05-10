@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>       // For value of e.
+#include <stdexcept>
 #include <string>
 #include <sstream>
 
@@ -27,6 +28,15 @@ namespace Examples
 
         float Evaluate();
 
+        
+        class ParseException : public std::runtime_error
+        {
+        public:
+            ParseException(char const * message);
+            
+            friend std::ostream& operator<< (std::ostream &out, const ParseException &e);
+        };
+        
     private:
         NativeJIT::Node<float>& ParseSum();
         NativeJIT::Node<float>& ParseProduct();
@@ -163,12 +173,12 @@ namespace Examples
                 // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
                 std::stringstream message;
                 message << "Unknown identifier \"" << symbol << "\".";
-                throw std::runtime_error(message.str().c_str());
+                throw ParseException(message.str().c_str());
             }
         }
         else
         {
-            throw std::runtime_error("Expected a number, symbol or parenthesized expression.");
+            throw ParseException("Expected a number, symbol or parenthesized expression.");
         }
     }
 
@@ -214,7 +224,7 @@ namespace Examples
 
             if (!isdigit(PeekChar()))
             {
-                throw std::runtime_error("Expected exponent in floating point constant.");
+                throw ParseException("Expected exponent in floating point constant.");
             }
 
             while (isdigit(PeekChar()))
@@ -234,7 +244,7 @@ namespace Examples
         SkipWhite();
         if (!isalpha(PeekChar()))
         {
-            throw std::runtime_error("Expected alpha character at beginning of symbol.");
+            throw ParseException("Expected alpha character at beginning of symbol.");
         }
         while (isalnum(PeekChar()))
         {
@@ -266,7 +276,7 @@ namespace Examples
             // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
             std::stringstream message;
             message << "Expected '" << c << "'.";
-            throw std::runtime_error(message.str().c_str());
+            throw ParseException(message.str().c_str());
         }
         else
         {
@@ -297,7 +307,24 @@ namespace Examples
             return m_src[m_currentPosition];
         }
     }
+    
+    
+    Parser::ParseException::ParseException(char const * message)
+        : std::runtime_error(message)
+    {
+    }
+    
+    
+    std::ostream& operator<< (std::ostream &out, const Parser::ParseException &e)
+    {
+        out << "Parser error: ";
+        out << e.what();
+        out << std::endl;
+        return out;
+    }
 }
+
+
 
 
 bool Test()
@@ -439,9 +466,16 @@ int main()
             break;
         }
 
-        Examples::Parser parser(line, allocator, code);
-        float result = parser.Evaluate();
-        std::cout << result << std::endl;
+        try
+        {
+            Examples::Parser parser(line, allocator, code);
+            float result = parser.Evaluate();
+            std::cout << result << std::endl;
+        }
+        catch (Examples::Parser::ParseException& e)
+        {
+            std::cout << e;
+        }
     }
 
     return 0;
