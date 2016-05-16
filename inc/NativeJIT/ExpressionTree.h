@@ -35,6 +35,7 @@
 #include <iostream>     // Debugging output.
 
 #include "NativeJIT/BitOperations.h"
+#include "NativeJIT/CodeGen/CallingConvention.h"
 #include "NativeJIT/CodeGenHelpers.h"
 #include "NativeJIT/TypePredicates.h"
 #include "Temporary/AllocatorOperations.h"
@@ -916,8 +917,8 @@ namespace NativeJIT
     // template definitions for FreeList
     //
     //*************************************************************************
-    template <unsigned SIZE>
-    ExpressionTree::FreeList<SIZE>::FreeList(Allocators::IAllocator& allocator)
+    template <unsigned SIZE, bool ISFLOAT>
+    ExpressionTree::FreeList<SIZE, ISFLOAT>::FreeList(Allocators::IAllocator& allocator)
         : m_usedMask(0),
           m_lifetimeUsedMask(0),
           m_data(),
@@ -928,23 +929,23 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::AssertValidID(unsigned id) const
+    template <unsigned SIZE, bool ISFLOAT>
+        void ExpressionTree::FreeList<SIZE, ISFLOAT>::AssertValidID(unsigned id) const
     {
         LogThrowAssert(id < SIZE, "Register %u is out of range.", id);
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::AssertValidData(unsigned id) const
+    template <unsigned SIZE, bool ISFLOAT>
+    void ExpressionTree::FreeList<SIZE, ISFLOAT>::AssertValidData(unsigned id) const
     {
         AssertValidID(id);
         AssertValidData(id, m_data[id]);
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::AssertValidData(unsigned id, Data* data) const
+    template <unsigned SIZE, bool ISFLOAT>
+    void ExpressionTree::FreeList<SIZE, ISFLOAT>::AssertValidData(unsigned id, Data* data) const
     {
         LogThrowAssert(data != nullptr, "Unexpected null data at/intended for register %u", id);
         LogThrowAssert(data->GetStorageClass() != StorageClass::Immediate,
@@ -958,15 +959,15 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetFreeCount() const
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::GetFreeCount() const
     {
         return BitOp::GetNonZeroBitCount(GetFreeMask());
     }
 
 
-    template <unsigned SIZE>
-    bool ExpressionTree::FreeList<SIZE>::IsAvailable(unsigned id) const
+    template <unsigned SIZE, bool ISFLOAT>
+    bool ExpressionTree::FreeList<SIZE, ISFLOAT>::IsAvailable(unsigned id) const
     {
         AssertValidID(id);
 
@@ -974,22 +975,28 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::Allocate()
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::Allocate()
     {
         unsigned id;
 
-        const bool registerFound = BitOp::GetHighestBitSet(GetFreeMask(), &id);
-        LogThrowAssert(registerFound, "No free registers available");
+        const bool volatileRegisterFound = BitOp::GetHighestBitSet(GetFreeMask(true), &id);
+        if (volatileRegisterFound)
+        {
+            Allocate(id);
+            return id;
+        }
+
+        const bool nonvolatileRegisterFound = BitOp::GetHighestBitSet(GetFreeMask(false), &id);
+        LogThrowAssert(nonvolatileRegisterFound, "No free registers available");
 
         Allocate(id);
-
         return id;
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::Allocate(unsigned id)
+    template <unsigned SIZE, bool ISFLOAT>
+    void ExpressionTree::FreeList<SIZE, ISFLOAT>::Allocate(unsigned id)
     {
         AssertValidID(id);
         LogThrowAssert(BitOp::TestBit(GetFreeMask(), id), "Register %u must be free", id);
@@ -1003,8 +1010,8 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::Release(unsigned id)
+    template <unsigned SIZE, bool ISFLOAT>
+    void ExpressionTree::FreeList<SIZE, ISFLOAT>::Release(unsigned id)
     {
         AssertValidData(id);
         LogThrowAssert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated", id);
@@ -1022,8 +1029,8 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::InitializeData(unsigned id, Data* data)
+    template <unsigned SIZE, bool ISFLOAT>
+    void ExpressionTree::FreeList<SIZE, ISFLOAT>::InitializeData(unsigned id, Data* data)
     {
         AssertValidID(id);
         LogThrowAssert(m_data[id] == nullptr, "Data for register %u must be clear", id);
@@ -1033,8 +1040,8 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    void ExpressionTree::FreeList<SIZE>::UpdateData(unsigned id, Data* data)
+    template <unsigned SIZE, bool ISFLOAT>
+    void ExpressionTree::FreeList<SIZE, ISFLOAT>::UpdateData(unsigned id, Data* data)
     {
         AssertValidID(id);
         LogThrowAssert(m_data[id] != nullptr, "Data for register %u must not be clear", id);
@@ -1044,8 +1051,8 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    ExpressionTree::Data* ExpressionTree::FreeList<SIZE>::GetData(unsigned id) const
+    template <unsigned SIZE, bool ISFLOAT>
+    ExpressionTree::Data* ExpressionTree::FreeList<SIZE, ISFLOAT>::GetData(unsigned id) const
     {
         AssertValidData(id);
 
@@ -1053,29 +1060,62 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetUsedMask() const
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::GetUsedMask() const
     {
         return m_usedMask;
     }
 
-
-    template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetLifetimeUsedMask() const
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::GetLifetimeUsedMask() const
     {
         return m_lifetimeUsedMask;
     }
 
 
-    template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetFreeMask() const
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::GetFreeMask() const
     {
         return ~m_usedMask & c_fullUsedMask;
     }
 
 
-    template <unsigned SIZE>
-    unsigned ExpressionTree::FreeList<SIZE>::GetAllocatedSpillable() const
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::GetFreeMask(bool isVolatile) const
+    {
+
+#pragma warning(suppress:4127)
+        if (ISFLOAT == true)
+        {
+            if (isVolatile)
+            {
+                return ~m_usedMask & c_fullUsedMask
+                        & CallingConvention::c_xmmVolatileRegistersMask;
+            }
+            else
+            {
+                return ~m_usedMask & c_fullUsedMask
+                        & CallingConvention::c_xmmNonvolatileRegistersMask;
+            }
+        }
+        else
+        {
+            if (isVolatile)
+            {
+                return ~m_usedMask & c_fullUsedMask
+                        & CallingConvention::c_rxxVolatileRegistersMask;
+            }
+            else
+            {
+                return ~m_usedMask & c_fullUsedMask
+                        & CallingConvention::c_rxxNonvolatileRegistersMask;
+            }
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::GetAllocatedSpillable() const
     {
         unsigned pinnedCount = 0;
         bool found = false;
@@ -1108,9 +1148,9 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
+    template <unsigned SIZE, bool ISFLOAT>
     ReferenceCounter
-    ExpressionTree::FreeList<SIZE>::GetPin(unsigned id)
+    ExpressionTree::FreeList<SIZE, ISFLOAT>::GetPin(unsigned id)
     {
         AssertValidID(id);
         LogThrowAssert(BitOp::TestBit(GetUsedMask(), id), "Register %u must be allocated to be pinned", id);
@@ -1120,8 +1160,8 @@ namespace NativeJIT
     }
 
 
-    template <unsigned SIZE>
-    bool ExpressionTree::FreeList<SIZE>::IsPinned(unsigned id) const
+    template <unsigned SIZE, bool ISFLOAT>
+    bool ExpressionTree::FreeList<SIZE, ISFLOAT>::IsPinned(unsigned id) const
     {
         AssertValidID(id);
 

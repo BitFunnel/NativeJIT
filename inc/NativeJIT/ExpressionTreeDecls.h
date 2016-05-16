@@ -201,7 +201,7 @@ namespace NativeJIT
         // registers such as RSP and RIP since multiple Data* refer to them by
         // definition and since they don't need to be spilled. The Data* for
         // Direct reference to shared base registers is kept, though.
-        template <unsigned SIZE>
+        template <unsigned SIZE, bool ISFLOAT>
         class FreeList
         {
         public:
@@ -244,6 +244,7 @@ namespace NativeJIT
             // Returns the bit-mask for used and allocated registers.
             unsigned GetUsedMask() const;
             unsigned GetFreeMask() const;
+            unsigned GetFreeMask(bool isVolatile) const;
 
             // Returns a register mask specifying which registers were touched
             // at any point of time, regardless of whether they were later
@@ -335,8 +336,8 @@ namespace NativeJIT
         // to return early if any of them is not met.
         AllocatorVector<ExecutionPreconditionTest*> m_preconditionTests;
 
-        FreeList<RegisterBase::c_maxIntegerRegisterID + 1> m_rxxFreeList;
-        FreeList<RegisterBase::c_maxFloatRegisterID + 1> m_xmmFreeList;
+        FreeList<RegisterBase::c_maxIntegerRegisterID + 1, false> m_rxxFreeList;
+        FreeList<RegisterBase::c_maxFloatRegisterID + 1, true> m_xmmFreeList;
 
         AllocatorVector<Storage<void*>> m_reservedRxxRegisterStorages;
         AllocatorVector<Storage<double>> m_reservedXmmRegisterStorages;
