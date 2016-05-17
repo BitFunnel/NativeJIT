@@ -74,29 +74,19 @@ int main()
 }
 ~~~
 
-Here is the generated assembly code on Windows (NOTE: there seems to be a bug in the
-register allocator. While the code computes the correct result, it is less efficient
-than it would have been if the entire result had been computed directly
-into xmm0, without ever using xmm15).
+Here is the generated assembly code on Windows:
 
 ~~~
 PI_CONSTANT:
-    db 0f 49 40                              ; PI constant is stored in memory.
+   db 0f 49 40                              ; PI constant is stored in memory.
 ENTRY_POINT:
-    sub    rsp, 28h                          ; Standard function prolog
-    mov    qword ptr[rsp], rbp
-    movaps xmmword ptr[rsp + 10h], xmm15
-    lea    rbp, [rsp + 28h]
-
-    movss  xmm15, xmm0                       ; Load radius from first parameter register.
-    mulss  xmm15, xmm0                       ; Multiply by radius.
-    mulss  xmm15, dword ptr[PI_CONSTANT]     ; Multiply by PI.
-    movss  xmm0, xmm15                       ; Return value goes in xmm0.
-
-    movaps xmm15, xmmword ptr[rsp + 10h]     ; Standard function epilog.
-    mov    rbp, qword ptr[rsp]
-    add    rsp, 28h
-    ret
+  sub         rsp,8                         ; Standard function prologue.
+  mov         qword ptr [rsp],rbp           ; Standard function prologue.
+  lea         rbp,[rsp+8]                   ; Standard function prologue.
+  mulss       xmm0,xmm0                     ; Multiply by radius.
+  mulss       xmm0,dword ptr [29E2A580000h] ; Multiply by PI.
+  mov         rbp,qword ptr [rsp]           ; Standard function epilogue.
+  add         rsp,8                         ; Standard function epilogue.
 ~~~
 
 
