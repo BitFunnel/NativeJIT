@@ -83,7 +83,7 @@ ENTRY_POINT:
   sub         rsp,8                         ; Standard function prologue.
   mov         qword ptr [rsp],rbp           ; Standard function prologue.
   lea         rbp,[rsp+8]                   ; Standard function prologue.
-  mulss       xmm0,xmm0                     ; Multiply by radius.
+  mulss       xmm0,xmm0                     ; Multiply by radius parameter by itself.
   mulss       xmm0,dword ptr [29E2A580000h] ; Multiply by PI.
   mov         rbp,qword ptr [rsp]           ; Standard function epilogue.
   add         rsp,8                         ; Standard function epilogue.
