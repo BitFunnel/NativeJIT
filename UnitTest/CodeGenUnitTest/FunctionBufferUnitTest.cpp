@@ -282,7 +282,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_TRUE(!HasFatalFailure());
+            ASSERT_NO_FATAL_FAILURE();
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -323,7 +323,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_TRUE(!HasFatalFailure());
+            ASSERT_NO_FATAL_FAILURE();
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -364,7 +364,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_TRUE(!HasFatalFailure());
+            ASSERT_NO_FATAL_FAILURE();
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -418,7 +418,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_TRUE(!HasFatalFailure());
+            ASSERT_NO_FATAL_FAILURE();
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -496,7 +496,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_TRUE(!HasFatalFailure());
+            ASSERT_NO_FATAL_FAILURE();
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
