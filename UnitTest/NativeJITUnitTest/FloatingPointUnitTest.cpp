@@ -37,7 +37,7 @@ namespace NativeJIT
         TEST_FIXTURE_START(FloatingPoint)
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
-        TEST_CASE_F(FloatingPoint, ImmediateDouble)
+        TEST_F(FloatingPoint, ImmediateDouble)
         {
             auto setup = GetSetup();
 
@@ -57,7 +57,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FloatingPoint, ImmediateFloat)
+        TEST_F(FloatingPoint, ImmediateFloat)
         {
             auto setup = GetSetup();
 
@@ -81,7 +81,7 @@ namespace NativeJIT
         // Binary operations
         //
 
-        TEST_CASE_F(FloatingPoint, AddDouble)
+        TEST_F(FloatingPoint, AddDouble)
         {
             auto setup = GetSetup();
 
@@ -102,7 +102,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FloatingPoint, AddImmediateDouble)
+        TEST_F(FloatingPoint, AddImmediateDouble)
         {
             auto setup = GetSetup();
 
@@ -124,7 +124,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FloatingPoint, AddTwoImmediateFloat)
+        TEST_F(FloatingPoint, AddTwoImmediateFloat)
         {
             auto setup = GetSetup();
 
@@ -147,7 +147,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FloatingPoint, AddTwoImmediateDouble)
+        TEST_F(FloatingPoint, AddTwoImmediateDouble)
         {
             auto setup = GetSetup();
 

@@ -151,7 +151,7 @@ namespace NativeJIT
 
         // A no-op test which ensures that the type returned by
         // Add/RemoveTargetConstCast is correct by getting compiled.
-        TEST_CASE_F(CastTest, TargetCast)
+        TEST_F(CastTest, TargetCast)
         {
             auto setup = GetSetup();
 
@@ -163,7 +163,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CastTest, ConstCastNonReference)
+        TEST_F(CastTest, ConstCastNonReference)
         {
             auto setup = GetSetup();
 
@@ -175,7 +175,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CastTest, ConstCastReference)
+        TEST_F(CastTest, ConstCastReference)
         {
             auto setup = GetSetup();
 
@@ -187,35 +187,35 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CastTest, FromInt8)
+        TEST_F(CastTest, FromInt8)
         {
             TestCasts<int8_t>(-1);
             TestCasts<uint8_t>(0xFF);
         }
 
 
-        TEST_CASE_F(CastTest, FromInt16)
+        TEST_F(CastTest, FromInt16)
         {
             TestCasts<int16_t>(-1);
             TestCasts<uint16_t>(0xFFFF);
         }
 
 
-        TEST_CASE_F(CastTest, FromInt32)
+        TEST_F(CastTest, FromInt32)
         {
             TestCasts<int32_t>(-1);
             TestCasts<uint32_t>(0xFFFFFFFF);
         }
 
 
-        TEST_CASE_F(CastTest, FromInt64)
+        TEST_F(CastTest, FromInt64)
         {
             TestCasts<int64_t>(-1);
             TestCasts<uint64_t>(0xFFFFFFFFFFFFFFFFul);
         }
 
 
-        TEST_CASE_F(CastTest, FromFloat)
+        TEST_F(CastTest, FromFloat)
         {
             TestCasts<float>(-123.7f);
             TestCasts<float>(123.7f);
@@ -225,7 +225,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CastTest, FromDouble)
+        TEST_F(CastTest, FromDouble)
         {
             TestCasts<double>(-123.7);
             TestCasts<double>(123.7);
@@ -235,7 +235,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CastTest, Packed)
+        TEST_F(CastTest, Packed)
         {
             auto packed = Packed<3, 4, 5>::FromComponents(7, 15, 31);
 
@@ -244,13 +244,13 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CastTest, VoidPointer)
+        TEST_F(CastTest, VoidPointer)
         {
             TestCast<uint64_t, void*>(this);
         }
 
 
-        TEST_CASE_F(CastTest, FuncPointer)
+        TEST_F(CastTest, FuncPointer)
         {
             auto funcPtr = &DummyFunc;
             TestCast<decltype(funcPtr), void*>(reinterpret_cast<void*>(funcPtr));

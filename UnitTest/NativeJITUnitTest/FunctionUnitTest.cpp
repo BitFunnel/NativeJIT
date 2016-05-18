@@ -185,7 +185,7 @@ namespace NativeJIT
         // JIT Functions with 0, 1, 2, 3, and 4 parameters.
         //
 
-        TEST_CASE_F(FunctionTest, FunctionZeroParameters)
+        TEST_F(FunctionTest, FunctionZeroParameters)
         {
             auto setup = GetSetup();
 
@@ -203,7 +203,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, FunctionOneParameter)
+        TEST_F(FunctionTest, FunctionOneParameter)
         {
             auto setup = GetSetup();
 
@@ -223,7 +223,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, FunctionTwoParameters)
+        TEST_F(FunctionTest, FunctionTwoParameters)
         {
             auto setup = GetSetup();
 
@@ -244,7 +244,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, FunctionThreeParameters)
+        TEST_F(FunctionTest, FunctionThreeParameters)
         {
             auto setup = GetSetup();
 
@@ -267,7 +267,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, FunctionFourParameters)
+        TEST_F(FunctionTest, FunctionFourParameters)
         {
             auto setup = GetSetup();
 
@@ -295,7 +295,7 @@ namespace NativeJIT
         // The Windows x64 ABI and the System V ABI handle parameter passing
         // differently. This test case verifies that a function with int and
         // float parameters works correctly.
-        TEST_CASE_F(FunctionTest, FunctionTwoMixedParameters)
+        TEST_F(FunctionTest, FunctionTwoMixedParameters)
         {
             auto setup = GetSetup();
 
@@ -323,7 +323,7 @@ namespace NativeJIT
         // The Windows x64 ABI and the System V ABI handle parameter passing
         // differently. This test case verifies that a function with int and
         // float parameters works correctly.
-        TEST_CASE_F(FunctionTest, FunctionThreeMixedParameters)
+        TEST_F(FunctionTest, FunctionThreeMixedParameters)
         {
             auto setup = GetSetup();
 
@@ -355,7 +355,7 @@ namespace NativeJIT
         // The Windows x64 ABI and the System V ABI handle parameter passing
         // differently. This test case verifies that a function with int and
         // float parameters works correctly.
-        TEST_CASE_F(FunctionTest, FunctionFourMixedParameters)
+        TEST_F(FunctionTest, FunctionFourMixedParameters)
         {
             auto setup = GetSetup();
 
@@ -393,7 +393,7 @@ namespace NativeJIT
         // Calling C functions with 0, 1, 2, 3, and 4 parameters.
         //
 
-        TEST_CASE_F(FunctionTest, CallZeroParameters)
+        TEST_F(FunctionTest, CallZeroParameters)
         {
             auto setup = GetSetup();
 
@@ -416,7 +416,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, CallOneParameter)
+        TEST_F(FunctionTest, CallOneParameter)
         {
             auto setup = GetSetup();
 
@@ -443,7 +443,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, CallTwoParameters)
+        TEST_F(FunctionTest, CallTwoParameters)
         {
             auto setup = GetSetup();
 
@@ -474,7 +474,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, CallThreeParameters)
+        TEST_F(FunctionTest, CallThreeParameters)
         {
             auto setup = GetSetup();
 
@@ -511,7 +511,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, CallFourParameters)
+        TEST_F(FunctionTest, CallFourParameters)
         {
             auto setup = GetSetup();
 
@@ -603,7 +603,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, StackVariableAddressRange)
+        TEST_F(FunctionTest, StackVariableAddressRange)
         {
             auto setup = GetSetup();
             Function<int> e(setup->GetAllocator(), setup->GetCode());
@@ -644,7 +644,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, PointerToReferenceConversion)
+        TEST_F(FunctionTest, PointerToReferenceConversion)
         {
             auto setup = GetSetup();
             Function<int> e(setup->GetAllocator(), setup->GetCode());
@@ -674,7 +674,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, ReturnReference)
+        TEST_F(FunctionTest, ReturnReference)
         {
             auto setup = GetSetup();
             Function<int&> e(setup->GetAllocator(), setup->GetCode());
@@ -692,7 +692,7 @@ namespace NativeJIT
         // Verify that the return register is preserved accross two
         // consecutive calls.
 
-        TEST_CASE_F(FunctionTest, PreserveReturnRegisterInt)
+        TEST_F(FunctionTest, PreserveReturnRegisterInt)
         {
             auto setup = GetSetup();
             Function<int> e(setup->GetAllocator(), setup->GetCode());
@@ -710,7 +710,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, PreserveReturnRegisterFloat)
+        TEST_F(FunctionTest, PreserveReturnRegisterFloat)
         {
             auto setup = GetSetup();
             Function<float> e(setup->GetAllocator(), setup->GetCode());
@@ -731,7 +731,7 @@ namespace NativeJIT
         // Verify that the return register is treated volatile only when it's
         // actually used (i.e. don't treat EAX as volatile and presereve it
         // if a function returning in XMM0 is called).
-        TEST_CASE_F(FunctionTest, SaveOtherReturnRegisterIntFloat)
+        TEST_F(FunctionTest, SaveOtherReturnRegisterIntFloat)
         {
             s_regPreserveTestFuncCallCount = 0;
 
@@ -767,7 +767,7 @@ namespace NativeJIT
         // Verify that return register is treated volatile only when it's
         // actually used (i.e. don't treat EAX as volatile and preserve it
         // if a function returning in XMM0 is called).
-        TEST_CASE_F(FunctionTest, SaveOtherReturnRegisterFloatInt)
+        TEST_F(FunctionTest, SaveOtherReturnRegisterFloatInt)
         {
             s_regPreserveTestFuncCallCount = 0;
 
@@ -852,7 +852,7 @@ namespace NativeJIT
         // if there are other references to it (f. ex. later in the expression),
         // it should be preserved.
 
-        TEST_CASE_F(FunctionTest, VerifyFunctionParameterReuseInt)
+        TEST_F(FunctionTest, VerifyFunctionParameterReuseInt)
         {
             auto setup = GetSetup();
             Function<int, int> e(setup->GetAllocator(), setup->GetCode());
@@ -877,7 +877,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, VerifyFunctionParameterReuseFloat)
+        TEST_F(FunctionTest, VerifyFunctionParameterReuseFloat)
         {
             auto setup = GetSetup();
             Function<float, float, float> e(setup->GetAllocator(), setup->GetCode());
@@ -904,7 +904,7 @@ namespace NativeJIT
 
         // Verify that no asserts are hit when using a function which doesn't
         // reference some of its parameters.
-        TEST_CASE_F(FunctionTest, FunctionWithUnusedParameter)
+        TEST_F(FunctionTest, FunctionWithUnusedParameter)
         {
             auto setup = GetSetup();
             Function<int64_t, int64_t, int64_t> expression(setup->GetAllocator(), setup->GetCode());
@@ -920,7 +920,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionTest, ExecuteOnlyIf)
+        TEST_F(FunctionTest, ExecuteOnlyIf)
         {
             auto setup = GetSetup();
 

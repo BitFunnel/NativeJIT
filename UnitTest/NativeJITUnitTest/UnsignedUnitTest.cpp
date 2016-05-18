@@ -41,7 +41,7 @@ namespace NativeJIT
         // Immediate values
         //
 
-        TEST_CASE_F(Unsigned, ImmediateU64)
+        TEST_F(Unsigned, ImmediateU64)
         {
             auto setup = GetSetup();
 
@@ -83,7 +83,7 @@ namespace NativeJIT
         };
 #pragma pack(pop)
 
-        TEST_CASE_F(Unsigned, FieldPointerPrimitive)
+        TEST_F(Unsigned, FieldPointerPrimitive)
         {
             auto setup = GetSetup();
 
@@ -107,7 +107,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Unsigned, FieldPointerEmbedded)
+        TEST_F(Unsigned, FieldPointerEmbedded)
         {
             auto setup = GetSetup();
 
@@ -139,7 +139,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Unsigned, FieldPointerEmbeddedWithCommonSubexpression)
+        TEST_F(Unsigned, FieldPointerEmbeddedWithCommonSubexpression)
         {
             auto setup = GetSetup();
 
@@ -179,7 +179,7 @@ namespace NativeJIT
         // Binary operations
         //
 
-        TEST_CASE_F(Unsigned, AddUnsignedInt32)
+        TEST_F(Unsigned, AddUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -199,7 +199,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(Unsigned, MulUnsignedInt32)
+        TEST_F(Unsigned, MulUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -219,7 +219,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(Unsigned, RolUnsignedInt32)
+        TEST_F(Unsigned, RolUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -240,7 +240,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(Unsigned, SubUnsignedInt32)
+        TEST_F(Unsigned, SubUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -260,7 +260,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(Unsigned, ShlUnsignedInt32)
+        TEST_F(Unsigned, ShlUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -281,7 +281,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(Unsigned, ShrUnsignedInt32)
+        TEST_F(Unsigned, ShrUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -307,7 +307,7 @@ namespace NativeJIT
         // Ternary operations
         //
 
-        TEST_CASE_F(Unsigned, ShldUnsignedInt32)
+        TEST_F(Unsigned, ShldUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -329,7 +329,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(Unsigned, ShldPairUnsignedInt32)
+        TEST_F(Unsigned, ShldPairUnsignedInt32)
         {
             auto setup = GetSetup();
 
@@ -356,7 +356,7 @@ namespace NativeJIT
         // Array indexing
         //
 
-        TEST_CASE_F(Unsigned, ArrayOfIntAsPointer)
+        TEST_F(Unsigned, ArrayOfIntAsPointer)
         {
             auto setup = GetSetup();
 
@@ -382,7 +382,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Unsigned, ArrayOfInt)
+        TEST_F(Unsigned, ArrayOfInt)
         {
             auto setup = GetSetup();
 
@@ -412,7 +412,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Unsigned, ArrayOfClass)
+        TEST_F(Unsigned, ArrayOfClass)
         {
             auto setup = GetSetup();
 
@@ -442,7 +442,7 @@ namespace NativeJIT
         // Common sub expressions
         //
 
-        TEST_CASE_F(Unsigned, CommonSubExpressions)
+        TEST_F(Unsigned, CommonSubExpressions)
         {
             auto setup = GetSetup();
 

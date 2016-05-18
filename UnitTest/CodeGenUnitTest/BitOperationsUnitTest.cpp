@@ -33,7 +33,7 @@ namespace NativeJIT
 {
     namespace BitOperationsUnitTest
     {
-        TEST_CASE(BitOperations, NonZeroBitCount)
+        TEST(BitOperations, NonZeroBitCount)
         {
             ASSERT_EQ(0, BitOp::GetNonZeroBitCount(0u));
             ASSERT_EQ(0, BitOp::GetNonZeroBitCountFallback(0u));
@@ -69,7 +69,7 @@ namespace NativeJIT
                 "Mismatched expected and actual bit for " << testValue;
         }
 
-        TEST_CASE(BitOperations, LowestBitSet)
+        TEST(BitOperations, LowestBitSet)
         {
             unsigned unused;
             ASSERT_TRUE(!BitOp::GetLowestBitSet(0, &unused));
@@ -93,7 +93,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE(BitOperations, HighestBitSet)
+        TEST(BitOperations, HighestBitSet)
         {
             unsigned unused;
             ASSERT_TRUE(!BitOp::GetHighestBitSet(0, &unused));
@@ -104,7 +104,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE(BitOperations, TestBit)
+        TEST(BitOperations, TestBit)
         {
             const uint64_t bits62and63 = 0xC000000000000000;
 
@@ -124,7 +124,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE(BitOperations, SetBit)
+        TEST(BitOperations, SetBit)
         {
             uint64_t currentValue = 0;
             uint64_t allOnes = 0xFFFFFFFFFFFFFFFF;
@@ -142,7 +142,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE(BitOperations, ClearBit)
+        TEST(BitOperations, ClearBit)
         {
             uint64_t currentValue = 0xFFFFFFFFFFFFFFFF;
             uint64_t allZeros = 0;

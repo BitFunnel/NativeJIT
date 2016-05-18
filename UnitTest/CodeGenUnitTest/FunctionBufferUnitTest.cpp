@@ -257,7 +257,7 @@ namespace NativeJIT
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
 
-        TEST_CASE_F(FunctionBufferTest, Trivial)
+        TEST_F(FunctionBufferTest, Trivial)
         {
             auto setup = GetSetup();
             auto & code = setup->GetCode();
@@ -282,7 +282,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURES();
+            ASSERT_TRUE(!HasFatalFailure());
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -302,7 +302,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionBufferTest, FunctionWithCalls)
+        TEST_F(FunctionBufferTest, FunctionWithCalls)
         {
             auto setup = GetSetup();
             auto & code = setup->GetCode();
@@ -323,7 +323,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURES();
+            ASSERT_TRUE(!HasFatalFailure());
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -343,7 +343,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionBufferTest, LargeStackAlloc)
+        TEST_F(FunctionBufferTest, LargeStackAlloc)
         {
             auto setup = GetSetup();
             auto & code = setup->GetCode();
@@ -364,7 +364,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURES();
+            ASSERT_TRUE(!HasFatalFailure());
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -386,7 +386,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionBufferTest, RbpSetToOldRsp)
+        TEST_F(FunctionBufferTest, RbpSetToOldRsp)
         {
             auto setup = GetSetup();
             auto & code = setup->GetCode();
@@ -418,7 +418,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURES();
+            ASSERT_TRUE(!HasFatalFailure());
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -446,7 +446,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionBufferTest, Complex)
+        TEST_F(FunctionBufferTest, Complex)
         {
             auto setup = GetSetup();
             auto & code = setup->GetCode();
@@ -496,7 +496,7 @@ namespace NativeJIT
                                 offsets);
 
             VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURES();
+            ASSERT_TRUE(!HasFatalFailure());
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -545,7 +545,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(FunctionBufferTest, Exception)
+        TEST_F(FunctionBufferTest, Exception)
         {
             auto setup = GetSetup();
 
@@ -603,7 +603,7 @@ namespace NativeJIT
         // This tests that, FunctionSpecification correctly drives non-volatile
         // save and restore. This does not test that the register allocator
         // correctly indicates which volatiles were clobbered.
-        TEST_CASE_F(FunctionBufferTest, RegisterPreservation)
+        TEST_F(FunctionBufferTest, RegisterPreservation)
         {
             ALIGNAS(16) RegInfo before;
             ALIGNAS(16) RegInfo after;

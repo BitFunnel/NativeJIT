@@ -45,7 +45,7 @@ namespace NativeJIT
         //
 
 
-        TEST_CASE_F(Conditional, Conditional)
+        TEST_F(Conditional, Conditional)
         {
             auto setup = GetSetup();
 
@@ -78,7 +78,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Conditional, IfNotZero)
+        TEST_F(Conditional, IfNotZero)
         {
             auto setup = GetSetup();
 
@@ -108,7 +108,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Conditional, If)
+        TEST_F(Conditional, If)
         {
             auto setup = GetSetup();
 

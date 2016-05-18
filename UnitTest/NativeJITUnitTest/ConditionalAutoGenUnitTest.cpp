@@ -39,7 +39,7 @@ namespace NativeJIT
         TEST_FIXTURE_START(ConditionalAutoGen)
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJGSigned)
+        TEST_F(ConditionalAutoGen, AutoGenJGSigned)
         {
             auto setup = GetSetup();
 
@@ -64,7 +64,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJZUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJZUnsigned)
         {
             auto setup = GetSetup();
 
@@ -89,7 +89,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJZSigned)
+        TEST_F(ConditionalAutoGen, AutoGenJZSigned)
         {
             auto setup = GetSetup();
 
@@ -114,7 +114,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJBUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJBUnsigned)
         {
             auto setup = GetSetup();
 
@@ -139,7 +139,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNBEUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNBEUnsigned)
         {
             auto setup = GetSetup();
 
@@ -164,7 +164,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJGESigned)
+        TEST_F(ConditionalAutoGen, AutoGenJGESigned)
         {
             auto setup = GetSetup();
 
@@ -189,7 +189,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJLESigned)
+        TEST_F(ConditionalAutoGen, AutoGenJLESigned)
         {
             auto setup = GetSetup();
 
@@ -214,7 +214,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNGSigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNGSigned)
         {
             auto setup = GetSetup();
 
@@ -239,7 +239,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNLESigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNLESigned)
         {
             auto setup = GetSetup();
 
@@ -264,7 +264,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNZUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNZUnsigned)
         {
             auto setup = GetSetup();
 
@@ -289,7 +289,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNZSigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNZSigned)
         {
             auto setup = GetSetup();
 
@@ -314,7 +314,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNAUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNAUnsigned)
         {
             auto setup = GetSetup();
 
@@ -339,7 +339,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNGESigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNGESigned)
         {
             auto setup = GetSetup();
 
@@ -364,7 +364,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJBEUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJBEUnsigned)
         {
             auto setup = GetSetup();
 
@@ -389,7 +389,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJAUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJAUnsigned)
         {
             auto setup = GetSetup();
 
@@ -414,7 +414,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJLSigned)
+        TEST_F(ConditionalAutoGen, AutoGenJLSigned)
         {
             auto setup = GetSetup();
 
@@ -439,7 +439,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNLSigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNLSigned)
         {
             auto setup = GetSetup();
 
@@ -464,7 +464,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNEUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNEUnsigned)
         {
             auto setup = GetSetup();
 
@@ -489,7 +489,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJNESigned)
+        TEST_F(ConditionalAutoGen, AutoGenJNESigned)
         {
             auto setup = GetSetup();
 
@@ -514,7 +514,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJEUnsigned)
+        TEST_F(ConditionalAutoGen, AutoGenJEUnsigned)
         {
             auto setup = GetSetup();
 
@@ -539,7 +539,7 @@ namespace NativeJIT
             }
         }
 
-        TEST_CASE_F(ConditionalAutoGen, AutoGenJESigned)
+        TEST_F(ConditionalAutoGen, AutoGenJESigned)
         {
             auto setup = GetSetup();
 

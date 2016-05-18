@@ -41,14 +41,7 @@ typedef ::testing::Test TestFixtureBase;
   private:
 
 #define TEST_FIXTURE_END_TEST_CASES_BEGIN };
-
-#define TEST_CASE(className, name) TEST(className, name)
-#define TEST_CASE_F(className, name) TEST_F(className, name)
-
 #define TEST_CASES_END
-
-// To be called only from TEST or TEST_F methods.
-#define ASSERT_NO_FATAL_FAILURES() ASSERT_TRUE(!HasFatalFailure())
 
 namespace NativeJIT
 {

@@ -49,7 +49,7 @@ namespace NativeJIT
 
         // Test REX and ModRM bytes by verifying all permutations of src/dest
         // registers.
-        TEST_CASE_F(InstructionEnconding, RexAndModRM)
+        TEST_F(InstructionEnconding, RexAndModRM)
         {
             auto setup = GetSetup();
             auto& buffer = setup->GetCode();

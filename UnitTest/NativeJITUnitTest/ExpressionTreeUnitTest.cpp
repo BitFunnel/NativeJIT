@@ -46,7 +46,7 @@ namespace NativeJIT
             static_assert(REG_TYPE::c_isFloat == EXPECTED_IS_FLOAT, "IsFloat property for " #REG_TYPE " should be " #EXPECTED_IS_FLOAT)
 
         // These tests can only fail during compilation, never during runtime.
-        TEST_CASE(ExpressionTreeBasic, StorageDefinition)
+        TEST(ExpressionTreeBasic, StorageDefinition)
         {
             struct SmallerThanQuadword
             {
@@ -106,7 +106,7 @@ namespace NativeJIT
             static_assert(ImmediateCategoryOf<TYPE>::value == EXPECTED_CATEGORY, \
                           #TYPE " should be in " #EXPECTED_CATEGORY)
 
-        TEST_CASE(ExpressionTreeBasic, ImmediateTypes)
+        TEST(ExpressionTreeBasic, ImmediateTypes)
         {
             AssertImmediateCategory(void, ImmediateCategory::NonImmediate);
 
@@ -137,7 +137,7 @@ namespace NativeJIT
 
         // Verify that the sole owner of an indirect storage will reuse the
         // base register for the direct register after dereferencing.
-        TEST_CASE_F(ExpressionTree, BaseRegisterReuse)
+        TEST_F(ExpressionTree, BaseRegisterReuse)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -164,7 +164,7 @@ namespace NativeJIT
         // cases when it's not possible (floating point value, reserved
         // base pointer, RIP relative addressing).
 
-        TEST_CASE_F(ExpressionTree, NoBaseRegisterReuseRIPRelative)
+        TEST_F(ExpressionTree, NoBaseRegisterReuseRIPRelative)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -176,7 +176,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, NoBaseRegisterReuseBasePointer)
+        TEST_F(ExpressionTree, NoBaseRegisterReuseBasePointer)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -188,7 +188,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, NoBaseRegisterReuseFloat)
+        TEST_F(ExpressionTree, NoBaseRegisterReuseFloat)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -214,7 +214,7 @@ namespace NativeJIT
         // Make sure that expression tree allows multiple references to
         // the reserved base pointers.
 
-        TEST_CASE_F(ExpressionTree, MultipleReferencesToBasePointer)
+        TEST_F(ExpressionTree, MultipleReferencesToBasePointer)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -227,7 +227,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, MultipleReferencesToRIP)
+        TEST_F(ExpressionTree, MultipleReferencesToRIP)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -240,7 +240,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, ReferenceCounter)
+        TEST_F(ExpressionTree, ReferenceCounter)
         {
             unsigned count = 0;
 
@@ -267,7 +267,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, RegisterSpillingInteger)
+        TEST_F(ExpressionTree, RegisterSpillingInteger)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -327,7 +327,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, RegisterSpillingFloat)
+        TEST_F(ExpressionTree, RegisterSpillingFloat)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -412,7 +412,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, RegisterPinning)
+        TEST_F(ExpressionTree, RegisterPinning)
         {
             auto setup = GetSetup();
 
@@ -421,7 +421,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, SoleDataOwner)
+        TEST_F(ExpressionTree, SoleDataOwner)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());
@@ -449,7 +449,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(ExpressionTree, TakeSoleOwnershipOfDirect)
+        TEST_F(ExpressionTree, TakeSoleOwnershipOfDirect)
         {
             auto setup = GetSetup();
             ExpressionNodeFactory e(setup->GetAllocator(), setup->GetCode());

@@ -50,7 +50,7 @@ namespace NativeJIT
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
 
-        TEST_CASE_F(PackedTest, Basic)
+        TEST_F(PackedTest, Basic)
         {
             auto setup = GetSetup();
 
@@ -97,7 +97,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(PackedTest, ModelApply)
+        TEST_F(PackedTest, ModelApply)
         {
             auto setup = GetSetup();
 
@@ -121,7 +121,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(PackedTest, PackedMax)
+        TEST_F(PackedTest, PackedMax)
         {
             auto setup = GetSetup();
 
@@ -140,7 +140,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(PackedTest, PackedMin)
+        TEST_F(PackedTest, PackedMin)
         {
             auto setup = GetSetup();
 

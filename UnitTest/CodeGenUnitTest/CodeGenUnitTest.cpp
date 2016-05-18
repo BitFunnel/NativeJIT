@@ -44,7 +44,7 @@ namespace NativeJIT
         // TODO: JMP
         // TODO: JCC - all cases.
 
-        TEST_CASE_F(CodeGen, JCC)
+        TEST_F(CodeGen, JCC)
         {
             auto setup = GetSetup();
             auto& buffer = setup->GetCode();
@@ -55,7 +55,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(CodeGen, OpCodes)
+        TEST_F(CodeGen, OpCodes)
         {
             auto setup = GetSetup();
             auto& buffer = setup->GetCode();

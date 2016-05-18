@@ -1239,7 +1239,7 @@ namespace NativeJIT
 
         TEST_FIXTURE_END_TEST_CASES_BEGIN
 
-        TEST_CASE_F(Acceptance, SingleWord)
+        TEST_F(Acceptance, SingleWord)
         {
             // house
             QueryWords queryWords
@@ -1261,7 +1261,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, MultipleWords)
+        TEST_F(Acceptance, MultipleWords)
         {
             // red dog house
             QueryWords queryWords
@@ -1293,7 +1293,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, Phrase)
+        TEST_F(Acceptance, Phrase)
         {
             // red "dog house"
             QueryWords queryWords
@@ -1324,7 +1324,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, WordCandidates)
+        TEST_F(Acceptance, WordCandidates)
         {
             // red word:("dog house" houses)
             QueryWords queryWords
@@ -1356,7 +1356,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, ClickPhrase)
+        TEST_F(Acceptance, ClickPhrase)
         {
             QueryWords queryWords
             {
@@ -1394,7 +1394,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, ConstraintDiscard)
+        TEST_F(Acceptance, ConstraintDiscard)
         {
             QueryWords queryWords
             {
@@ -1429,7 +1429,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, CompletelyDifferentMarket)
+        TEST_F(Acceptance, CompletelyDifferentMarket)
         {
             QueryWords queryWords
             {
@@ -1448,7 +1448,7 @@ namespace NativeJIT
         }
 
 
-        TEST_CASE_F(Acceptance, DifferentMarketWithSameLanguage)
+        TEST_F(Acceptance, DifferentMarketWithSameLanguage)
         {
             QueryWords queryWords
             {
