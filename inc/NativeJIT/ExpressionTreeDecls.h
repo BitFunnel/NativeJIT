@@ -267,6 +267,9 @@ namespace NativeJIT
             // time, regardless of whether they were later released or not.
             unsigned m_lifetimeUsedMask;
 
+            const unsigned m_volatileRegisterMask;
+            const unsigned m_nonVolatileRegisterMask;
+
             // See the class description for more details.
             std::array<Data*, SIZE> m_data;
 

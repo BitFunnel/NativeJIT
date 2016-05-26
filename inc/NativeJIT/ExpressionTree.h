@@ -922,6 +922,12 @@ namespace NativeJIT
     ExpressionTree::FreeList<SIZE, ISFLOAT>::FreeList(Allocators::IAllocator& allocator)
         : m_usedMask(0),
           m_lifetimeUsedMask(0),
+          m_volatileRegisterMask(ISFLOAT ?
+            CallingConvention::c_xmmVolatileRegistersMask :
+            CallingConvention::c_rxxVolatileRegistersMask),
+          m_nonVolatileRegisterMask(ISFLOAT ?
+            CallingConvention::c_xmmNonvolatileRegistersMask :
+            CallingConvention::c_rxxNonvolatileRegistersMask),
           m_data(),
           m_allocatedRegisters(Allocators::StlAllocator<uint8_t>(allocator)),
           m_pinCount()
@@ -976,44 +982,13 @@ namespace NativeJIT
     }
 
 
-    template <bool ISFLOAT, bool ISVOLATILE, typename std::enable_if<ISFLOAT && ISVOLATILE>::type* = nullptr>
-    unsigned GetFreeMaskHelper(const unsigned m_usedMask, const unsigned c_fullUsedMask)
-    {
-        return ~m_usedMask & c_fullUsedMask
-            & CallingConvention::c_xmmVolatileRegistersMask;
-    }
-
-
-    template <bool ISFLOAT, bool ISVOLATILE, typename std::enable_if<ISFLOAT && !ISVOLATILE>::type* = nullptr>
-    unsigned GetFreeMaskHelper(const unsigned m_usedMask, const unsigned c_fullUsedMask)
-    {
-        return ~m_usedMask & c_fullUsedMask
-            & CallingConvention::c_xmmNonvolatileRegistersMask;
-    }
-
-
-    template <bool ISFLOAT, bool ISVOLATILE, typename std::enable_if<!ISFLOAT && ISVOLATILE>::type* = nullptr>
-    unsigned GetFreeMaskHelper(const unsigned m_usedMask, const unsigned c_fullUsedMask)
-    {
-        return ~m_usedMask & c_fullUsedMask
-            & CallingConvention::c_rxxVolatileRegistersMask;
-    }
-
-
-    template <bool ISFLOAT, bool ISVOLATILE, typename std::enable_if<!ISFLOAT && !ISVOLATILE>::type* = nullptr>
-    unsigned GetFreeMaskHelper(const unsigned m_usedMask, const unsigned c_fullUsedMask)
-    {
-        return ~m_usedMask & c_fullUsedMask
-            & CallingConvention::c_rxxNonvolatileRegistersMask;
-    }
-
-
     template <unsigned SIZE, bool ISFLOAT>
     unsigned ExpressionTree::FreeList<SIZE, ISFLOAT>::Allocate()
     {
         unsigned id;
 
-        const bool volatileRegisterFound = BitOp::GetHighestBitSet(GetFreeMaskHelper<ISFLOAT, true>(m_usedMask, c_fullUsedMask), &id);
+        const bool volatileRegisterFound = BitOp::GetHighestBitSet(
+            ~m_usedMask & c_fullUsedMask & m_volatileRegisterMask, &id);
         if (volatileRegisterFound)
         {
             Allocate(id);
@@ -1021,8 +996,9 @@ namespace NativeJIT
         }
         else
         {
-            const bool nonvolatileRegisterFound = BitOp::GetHighestBitSet(GetFreeMaskHelper<ISFLOAT, false>(m_usedMask, c_fullUsedMask), &id);
-            LogThrowAssert(nonvolatileRegisterFound, "No free registers available");
+            const bool nonVolatileRegisterFound = BitOp::GetHighestBitSet(
+                ~m_usedMask & c_fullUsedMask & m_nonVolatileRegisterMask, &id);
+            LogThrowAssert(nonVolatileRegisterFound, "No free registers available");
 
             Allocate(id);
             return id;
