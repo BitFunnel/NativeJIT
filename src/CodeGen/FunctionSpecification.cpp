@@ -50,8 +50,8 @@ namespace NativeJIT
     FunctionSpecification::FunctionSpecification(Allocators::IAllocator& allocator,
                                                  int maxFunctionCallParameters,
                                                  unsigned localStackSlotCount,
-                                                 unsigned savedRxxNonvolatilesMask,
-                                                 unsigned savedXmmNonvolatilesMask,
+                                                 unsigned savedRxxNonVolatilesMask,
+                                                 unsigned savedXmmNonVolatilesMask,
                                                  BaseRegisterType baseRegisterType,
                                                  std::ostream* diagnosticsStream)
         : m_stlAllocator(allocator),
@@ -70,8 +70,8 @@ namespace NativeJIT
 
         BuildUnwindInfoAndProlog(maxFunctionCallParameters,
                                  localStackSlotCount,
-                                 savedRxxNonvolatilesMask,
-                                 savedXmmNonvolatilesMask,
+                                 savedRxxNonVolatilesMask,
+                                 savedXmmNonVolatilesMask,
                                  baseRegisterType,
                                  code,
                                  m_unwindInfoBuffer,
@@ -132,29 +132,29 @@ namespace NativeJIT
 
     void FunctionSpecification::BuildUnwindInfoAndProlog(int maxFunctionCallParameters,
                                                          unsigned localStackSlotCount,
-                                                         unsigned savedRxxNonvolatilesMask,
-                                                         unsigned savedXmmNonvolatilesMask,
+                                                         unsigned savedRxxNonVolatilesMask,
+                                                         unsigned savedXmmNonVolatilesMask,
                                                          BaseRegisterType baseRegisterType,
                                                          X64CodeGenerator& prologCode,
                                                          AllocatorVector<uint8_t>& unwindInfoBuffer,
                                                          int32_t& offsetToOriginalRsp)
     {
-        LogThrowAssert((savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
+        LogThrowAssert((savedRxxNonVolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask) == 0,
                        "Saving/restoring of non-writable RXX registers is not allowed: 0x%Ix",
-                       savedRxxNonvolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask);
+                       savedRxxNonVolatilesMask & ~CallingConvention::c_rxxWritableRegistersMask);
 
-        LogThrowAssert((savedXmmNonvolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask) == 0,
+        LogThrowAssert((savedXmmNonVolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask) == 0,
                        "Saving/restoring of non-writable XMM registers is not allowed: 0x%Ix",
-                       savedXmmNonvolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask);
+                       savedXmmNonVolatilesMask & ~CallingConvention::c_xmmWritableRegistersMask);
 
         // Stack pointer is always saved/restored. However, unlike for the other
         // registers, it's done by subtracting/adding a value in the prolog/epilog.
-        savedRxxNonvolatilesMask &= ~rsp.GetMask();
+        savedRxxNonVolatilesMask &= ~rsp.GetMask();
 
         // Ensure that the frame register is saved if used.
         if (baseRegisterType == BaseRegisterType::SetRbpToOriginalRsp)
         {
-            savedRxxNonvolatilesMask |= rbp.GetMask();
+            savedRxxNonVolatilesMask |= rbp.GetMask();
         }
 
         const unsigned codeStartPos = prologCode.CurrentPosition();
@@ -166,8 +166,8 @@ namespace NativeJIT
               ? (std::max)(maxFunctionCallParameters, 4)
               : 0;
 
-        const unsigned rxxSavesCount = BitOp::GetNonZeroBitCount(savedRxxNonvolatilesMask);
-        const unsigned xmmSavesCount = BitOp::GetNonZeroBitCount(savedXmmNonvolatilesMask);
+        const unsigned rxxSavesCount = BitOp::GetNonZeroBitCount(savedRxxNonVolatilesMask);
+        const unsigned xmmSavesCount = BitOp::GetNonZeroBitCount(savedXmmNonVolatilesMask);
 
         // All 128 bits of XMM registers need to saved in the prolog, so each
         // XMM register needs two slots. Also, XMM slots need to be 16-byte aligned,
@@ -293,7 +293,7 @@ namespace NativeJIT
         unsigned currStackSlotOffset = functionParamsSlotCount;
 
         unsigned regId = 0;
-        unsigned registersMask = savedRxxNonvolatilesMask;
+        unsigned registersMask = savedRxxNonVolatilesMask;
 
         // Save the RXX registers.
         while (BitOp::GetLowestBitSet(registersMask, &regId))
@@ -323,7 +323,7 @@ namespace NativeJIT
                 currStackSlotOffset++;
             }
 
-            registersMask = savedXmmNonvolatilesMask;
+            registersMask = savedXmmNonVolatilesMask;
 
             while (BitOp::GetLowestBitSet(registersMask, &regId))
             {

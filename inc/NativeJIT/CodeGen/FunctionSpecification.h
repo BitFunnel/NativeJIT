@@ -84,8 +84,8 @@ namespace NativeJIT
         FunctionSpecification(Allocators::IAllocator& allocator,
                               int maxFunctionCallParameters,
                               unsigned localStackSlotCount,
-                              unsigned savedRxxNonvolatilesMask,
-                              unsigned savedXmmNonvolatilesMask,
+                              unsigned savedRxxNonVolatilesMask,
+                              unsigned savedXmmNonVolatilesMask,
                               BaseRegisterType baseRegisterType,
                               std::ostream* diagnosticStream);
 
@@ -120,8 +120,8 @@ namespace NativeJIT
         // up of RBP).
         static void BuildUnwindInfoAndProlog(int maxFunctionCallParameters,
                                              unsigned localStackSlotCount,
-                                             unsigned savedRxxNonvolatilesMask,
-                                             unsigned savedXmmNonvolatilesMask,
+                                             unsigned savedRxxNonVolatilesMask,
+                                             unsigned savedXmmNonVolatilesMask,
                                              BaseRegisterType baseRegisterType,
                                              // Out parameters:
                                              X64CodeGenerator& prologCode,

@@ -235,10 +235,10 @@ namespace NativeJIT
                                          m_maxFunctionCallParameters,
                                          m_temporaryCount,
                                          m_rxxFreeList.GetLifetimeUsedMask()
-                                            & CallingConvention::c_rxxNonvolatileRegistersMask
+                                            & CallingConvention::c_rxxNonVolatileRegistersMask
                                             & CallingConvention::c_rxxWritableRegistersMask,
                                          m_xmmFreeList.GetLifetimeUsedMask()
-                                            & CallingConvention::c_xmmNonvolatileRegistersMask
+                                            & CallingConvention::c_xmmNonVolatileRegistersMask
                                             & CallingConvention::c_xmmWritableRegistersMask,
                                          FunctionSpecification::BaseRegisterType::SetRbpToOriginalRsp,
                                          m_code.IsDiagnosticsStreamAvailable()
