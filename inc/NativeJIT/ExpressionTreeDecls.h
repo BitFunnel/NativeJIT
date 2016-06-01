@@ -201,12 +201,12 @@ namespace NativeJIT
         // registers such as RSP and RIP since multiple Data* refer to them by
         // definition and since they don't need to be spilled. The Data* for
         // Direct reference to shared base registers is kept, though.
-        template <unsigned SIZE, bool ISFLOAT>
+        template <unsigned REGISTER_COUNT, bool ISFLOAT>
         class FreeList
         {
         public:
             // The bit-mask signifying that all valid registers have been allocated.
-            static const unsigned c_fullUsedMask = (1ul << SIZE) - 1;
+            static const unsigned c_fullUsedMask = (1ul << REGISTER_COUNT) - 1;
 
             FreeList(Allocators::IAllocator& allocator);
 
@@ -271,7 +271,7 @@ namespace NativeJIT
             const unsigned m_nonVolatileRegisterMask;
 
             // See the class description for more details.
-            std::array<Data*, SIZE> m_data;
+            std::array<Data*, REGISTER_COUNT> m_data;
 
             // An array of currently allocated IDs, oldest at the beginning.
             // DESIGN NOTE: Deque and list better satisfy this variable's usage
@@ -282,7 +282,7 @@ namespace NativeJIT
 
             // Number of active references to a pinned register. The register
             // cannot be spilled while it's pinned.
-            std::array<unsigned, SIZE> m_pinCount;
+            std::array<unsigned, REGISTER_COUNT> m_pinCount;
         };
 
 
