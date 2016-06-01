@@ -33,7 +33,6 @@
 //
 #include <algorithm>    // For std::find.
 #include <iostream>     // Debugging output.
-#include <type_traits>
 
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CallingConvention.h"
