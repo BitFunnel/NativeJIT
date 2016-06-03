@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "stdafx.h"
 
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CallingConvention.h"

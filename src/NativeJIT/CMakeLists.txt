@@ -6,13 +6,10 @@ set(CPPFILES
   ExpressionNodeFactory.cpp
   ExpressionTree.cpp
   Node.cpp
-  stdafx.cpp
 )
 
 set(PRIVATE_HFILES
   Examples.h
-  stdafx.h
-  targetver.h
 )
 
 set(PUBLIC_HFILES

@@ -10,7 +10,6 @@ set(CPPFILES
   FunctionSpecification.cpp
   JumpTable.cpp
   Register.cpp
-  stdafx.cpp
   UnwindCode.cpp
   ValuePredicates.cpp
   X64CodeGenerator.cpp
@@ -23,8 +22,6 @@ set(POSIX_CPPFILES
 )
 
 set(PRIVATE_HFILES
-  stdafx.h
-  targetver.h
   UnwindCode.h
 )
 
