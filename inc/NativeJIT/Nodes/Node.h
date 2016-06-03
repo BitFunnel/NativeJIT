@@ -23,7 +23,7 @@
 
 #pragma once
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 // Disable warning: 'function' : unreferenced local function has been removed
 #pragma warning(disable:4505)
 #endif

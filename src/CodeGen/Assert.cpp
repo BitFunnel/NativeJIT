@@ -44,7 +44,7 @@ namespace NativeJIT
         va_list arguments;
         va_start(arguments, format);
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
         vsnprintf_s(message, _TRUNCATE, format, arguments);
 #else
         vsnprintf(&message[0], messageBufferSize, format, arguments);

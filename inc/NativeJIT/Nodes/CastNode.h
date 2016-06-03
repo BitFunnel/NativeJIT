@@ -564,7 +564,7 @@ namespace NativeJIT
         // Template definitions for CompositeCastNodeBuilder.
         //
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 // Supress warning about constant expression involving template parameters.
 #pragma warning(push)
 #pragma warning(disable:4127)
@@ -674,7 +674,7 @@ namespace NativeJIT
             return *result;
         }
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
     }

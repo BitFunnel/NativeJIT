@@ -155,7 +155,7 @@ namespace Allocators
     }
 
 
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4100)
 #endif
@@ -168,7 +168,7 @@ namespace Allocators
     {
         ptr->~T();
     }
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 

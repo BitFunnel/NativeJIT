@@ -57,7 +57,7 @@ namespace NativeJIT
     // Template definitions for Model<PACKED>
     //
     //*************************************************************************
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4351)
 #endif
@@ -66,7 +66,7 @@ namespace NativeJIT
         : m_data()
     {
     }
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
+#ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 

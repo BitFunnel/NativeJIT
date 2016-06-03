@@ -23,9 +23,6 @@
 
 #include <algorithm>    // For std::min.
 #include <stdexcept>
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
-#include <Windows.h>
-#endif
 
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CallingConvention.h"
