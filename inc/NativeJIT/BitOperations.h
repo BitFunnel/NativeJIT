@@ -42,9 +42,9 @@
 namespace NativeJIT
 {
     #ifdef _MSC_VER
-        typedef int BitTestType32;
+        typedef long BitTestType32;
         typedef long long BitTestType64;
-        typedef unsigned int BitScanType32;
+        typedef unsigned long BitScanType32;
         static_assert(sizeof(BitTestType32) == 4, "Invalid BitTestType32 size");
         static_assert(sizeof(BitTestType64) == 8, "Invalid BitTestType64 size");
         static_assert(sizeof(BitScanType32) == 4, "Invalid BitTestType size");

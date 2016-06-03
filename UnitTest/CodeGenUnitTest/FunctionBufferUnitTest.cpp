@@ -281,8 +281,7 @@ namespace NativeJIT
                                 [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 8); },
                                 offsets);
 
-            VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURE();
+            ASSERT_NO_FATAL_FAILURE(VerifyProlog(spec, code));
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -322,8 +321,7 @@ namespace NativeJIT
                                 [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 40); },
                                 offsets);
 
-            VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURE();
+            ASSERT_NO_FATAL_FAILURE(VerifyProlog(spec, code));
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -363,8 +361,7 @@ namespace NativeJIT
                                 [](FunctionBuffer& f) { f.EmitImmediate<OpCode::Sub>(rsp, 136); },
                                 offsets);
 
-            VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURE();
+            ASSERT_NO_FATAL_FAILURE(VerifyProlog(spec, code));
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -417,8 +414,7 @@ namespace NativeJIT
                                 },
                                 offsets);
 
-            VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURE();
+            ASSERT_NO_FATAL_FAILURE(VerifyProlog(spec, code));
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
@@ -495,8 +491,7 @@ namespace NativeJIT
                                 },
                                 offsets);
 
-            VerifyProlog(spec, code);
-            ASSERT_NO_FATAL_FAILURE();
+            ASSERT_NO_FATAL_FAILURE(VerifyProlog(spec, code));
 
             // Verify unwind info.
             auto & unwindInfo = *reinterpret_cast<UnwindInfo const *>(spec.GetUnwindInfoBuffer());
