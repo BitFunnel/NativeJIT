@@ -22,7 +22,6 @@
 
 // Auto generated from CondTest.go. Do not modify directly.
 
-#include "stdafx.h"
 
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"

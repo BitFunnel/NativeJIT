@@ -6,8 +6,6 @@ set(CPPFILES
 )
 
 set(PRIVATE_HFILES
-  stdafx.h
-  targetver.h
 )
 
 set(PUBLIC_HFILES

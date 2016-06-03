@@ -9,13 +9,10 @@ set(CPPFILES
   FloatingPointUnitTest.cpp
   FunctionUnitTest.cpp
   PackedUnitTest.cpp
-  stdafx.cpp
   UnsignedUnitTest.cpp
 )
 
 set(PRIVATE_HFILES
-  stdafx.h
-  targetver.h
 )
 
 # CastUnitTest uses a lot of templates which creates a lot of sections in debug mode which requires the /bigobj or equivalent flag.

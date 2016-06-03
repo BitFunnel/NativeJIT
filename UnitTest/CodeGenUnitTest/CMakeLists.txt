@@ -6,13 +6,10 @@ set(CPPFILES
   FunctionBufferUnitTest.cpp
   InstructionEncodingUnitTest.cpp
   ML64Verifier.cpp
-  stdafx.cpp
   )
 
 set(PRIVATE_HFILES
   ML64Verifier.h
-  stdafx.h
-  targetver.h
   )
 
 include_directories(${PROJECT_SOURCE_DIR}/src/CodeGen ${PROJECT_SOURCE_DIR}/UnitTest/Shared)
