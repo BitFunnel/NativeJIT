@@ -104,9 +104,9 @@ namespace NativeJIT
         ExpressionTree::Storage<PACKED> sLeft;
         ExpressionTree::Storage<PACKED> sRight;
 
-        this->CodeGenInPreferredOrder(tree,
-                                      m_left, sLeft,
-                                      m_right, sRight);
+        this->CodeGenInOrder(tree,
+                             m_left, sLeft,
+                             m_right, sRight);
 
         // Convert the left and right parameters into direct registers making
         // sure that they don't get spilled.

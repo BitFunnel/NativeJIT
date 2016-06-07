@@ -237,9 +237,9 @@ namespace NativeJIT
         Storage<T> trueValue;
         Storage<T> falseValue;
 
-        this->CodeGenInPreferredOrder(tree,
-                                      m_trueExpression, trueValue,
-                                      m_falseExpression, falseValue);
+        this->CodeGenInOrder(tree,
+                             m_trueExpression, trueValue,
+                             m_falseExpression, falseValue);
 
         // Enum that specifies whether the result storage currently holds the
         // true value, false value or neither of them.
@@ -377,9 +377,9 @@ namespace NativeJIT
         Storage<T> sLeft;
         Storage<T> sRight;
 
-        this->CodeGenInPreferredOrder(tree,
-                                      m_left, sLeft,
-                                      m_right, sRight);
+        this->CodeGenInOrder(tree,
+                             m_left, sLeft,
+                             m_right, sRight);
 
         CodeGenHelpers::Emit<OpCode::Cmp>(tree.GetCodeGenerator(), sLeft.ConvertToDirect(false), sRight);
     }

@@ -80,9 +80,9 @@ namespace NativeJIT
         Storage<T> shiftee;
         Storage<T> filler;
 
-        this->CodeGenInPreferredOrder(tree,
-                                      m_shiftee, shiftee,
-                                      m_filler, filler);
+        this->CodeGenInOrder(tree,
+                             m_shiftee, shiftee,
+                             m_filler, filler);
 
         // Convert both arguments to direct registers. The filler value will
         // not be touched.

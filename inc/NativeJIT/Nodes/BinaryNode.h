@@ -75,9 +75,9 @@ namespace NativeJIT
         Storage<L> sLeft;
         Storage<R> sRight;
 
-        this->CodeGenInPreferredOrder(tree,
-            m_left, sLeft,
-            m_right, sRight);
+        this->CodeGenInOrder(tree,
+                             m_left, sLeft,
+                             m_right, sRight);
 
         // DESIGN NOTE: sLeft can == sRight when their types don't match. This can happen,
         // although we (mhop & danluu) couldn't think of any useful cases where that

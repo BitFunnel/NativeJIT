@@ -139,9 +139,9 @@ namespace NativeJIT
         // will be evaluated first to minimize spilling when the second node
         // is evaluated.
         template <typename T1, typename T2>
-        static void CodeGenInPreferredOrder(ExpressionTree& tree,
-                                            Node<T1>& n1, Storage<T1>& s1,
-                                            Node<T2>& n2, Storage<T2>& s2);
+        static void CodeGenInOrder(ExpressionTree& tree,
+                                   Node<T1>& n1, Storage<T1>& s1,
+                                   Node<T2>& n2, Storage<T2>& s2);
 
     private:
         unsigned m_id;
@@ -200,12 +200,10 @@ namespace NativeJIT
     //
     //*************************************************************************
 
-    // TODO: change name. There is no Preferred Order now that we're not
-    // doing Sethi-Ullman.
     template <typename T1, typename T2>
-    void NodeBase::CodeGenInPreferredOrder(ExpressionTree& tree,
-                                           Node<T1>& n1, Storage<T1>& s1,
-                                           Node<T2>& n2, Storage<T2>& s2)
+    void NodeBase::CodeGenInOrder(ExpressionTree& tree,
+                                  Node<T1>& n1, Storage<T1>& s1,
+                                  Node<T2>& n2, Storage<T2>& s2)
     {
         s1 = n1.CodeGen(tree);
         s2 = n2.CodeGen(tree);
