@@ -38,7 +38,6 @@ namespace NativeJIT
 
         virtual ExpressionTree::Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -95,22 +94,6 @@ namespace NativeJIT
                                      sLeft.ConvertToDirect(true), sRight);
         }
         return sLeft;
-    }
-
-
-    template <OpCode OP, typename L, typename R>
-    unsigned BinaryNode<OP, L, R>::LabelSubtree(bool /*isLeftChild*/)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            unsigned left = m_left.LabelSubtree(true);
-            unsigned right = m_right.LabelSubtree(false);
-
-            this->SetRegisterCount(this->ComputeRegisterCount(left, right));
-        }
-
-        // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return this->GetRegisterCount();
     }
 
 

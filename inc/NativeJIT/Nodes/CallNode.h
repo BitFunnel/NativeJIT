@@ -87,7 +87,6 @@ namespace NativeJIT
         // Overrides of Node methods.
         //
         virtual ExpressionTree::Storage<R> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     protected:
@@ -103,10 +102,6 @@ namespace NativeJIT
         class Child : private NonCopyable
         {
         public:
-            // Returns the number of registers needed to evaluate this child for
-            // the Sethi-Ullman algorithm.
-            virtual unsigned LabelSubtree(bool isLeftChild) = 0;
-
             // Generates the code to evaluate the expression inside the child.
             virtual void Evaluate(ExpressionTree& tree) = 0;
 
@@ -136,7 +131,6 @@ namespace NativeJIT
             //
             // Overrides of Child methods.
             //
-            virtual unsigned LabelSubtree(bool isLeftChild);
             virtual void Release();
 
         protected:
@@ -416,36 +410,6 @@ namespace NativeJIT
 
 
     template <typename R, unsigned PARAMETERCOUNT>
-    unsigned CallNodeBase<R, PARAMETERCOUNT>::LabelSubtree(bool /* isLeftChild */)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            static unsigned counts[c_childCount];
-
-            for (unsigned i = 0 ; i < c_childCount; ++i)
-            {
-                // TODO: Need to account for the fact the extra registers may be used
-                // when the specific parameter home is different than the one returned
-                // duing code generation.
-                counts[i] = m_children[i]->LabelSubtree(true);
-            }
-
-            // TODO: sort m_children by decreasing register count.
-
-            unsigned count = 0;
-            for (unsigned i = 0 ; i < c_childCount; ++i)
-            {
-                count = (std::max)(count, 1 + counts[i]);
-            }
-
-            this->SetRegisterCount(count);
-        }
-
-        return this->GetRegisterCount();
-    }
-
-
-    template <typename R, unsigned PARAMETERCOUNT>
     void CallNodeBase<R, PARAMETERCOUNT>::Print(std::ostream& out) const
     {
         this->PrintCoreProperties(out, "CallNode");
@@ -470,19 +434,6 @@ namespace NativeJIT
         : m_expression(expression)
     {
         m_expression.IncrementParentCount();
-    }
-
-
-    template <typename R, unsigned PARAMETERCOUNT>
-    template <typename T>
-    unsigned CallNodeBase<R, PARAMETERCOUNT>::TypedChild<T>::LabelSubtree(bool isLeftChild)
-    {
-        // Note: TypedChild is not a Node, it doesn't have Get/SetRegisterCount()
-        // methods. Thus the check if GetRegisterCount() is smaller than zero
-        // to see whether to evaluate child's LabelSubtree() method cannot be
-        // used. Even so, this method will only be called once since CallNodeBase's
-        // LabelSubtree() will only be called once.
-        return m_expression.LabelSubtree(isLeftChild);
     }
 
 

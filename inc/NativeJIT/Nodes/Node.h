@@ -120,7 +120,6 @@ namespace NativeJIT
         // This method is equivalent to Node<T>::CodeGen() with type erasure.
         virtual Storage<void*> CodeGenAsBase(ExpressionTree& tree) = 0;
 
-        virtual unsigned LabelSubtree(bool isLeftChild) = 0;
         virtual void Print(std::ostream& out) const = 0;
 
     protected:
@@ -134,11 +133,6 @@ namespace NativeJIT
         /* virtual */ ~NodeBase() {}
 
     protected:
-        // Calculates the number of registers needed by a node whose left
-        // and right subtree require a certain number of registers according
-        // to Sethi-Ullman algorithm.
-        static unsigned ComputeRegisterCount(unsigned leftTreeCount, unsigned rightTreeCount);
-
         // Invokes CodeGen() method on both methods and assigns the result to the
         // matching storage. The order of CodeGen() calls is determined by the
         // estimated number of registers used: the node with higher requirements
@@ -167,15 +161,6 @@ namespace NativeJIT
 
         Node(ExpressionTree& tree);
 
-        // Returns the estimated number of registers needed to evaluate this
-        // node. Used to determine preferrable order of node evaluation according
-        // to the Sethi-Ullman algorithm.
-        //
-        // A negative value specifies that the number has not been calculated
-        // yet. The LabelSubtree() method calculates the number of registers and
-        // saves it using the SetRegisterCount() call.
-        int GetRegisterCount() const;
-
         ExpressionTree::Storage<T> CodeGen(ExpressionTree& tree);
 
         //
@@ -184,7 +169,6 @@ namespace NativeJIT
 
         virtual void CodeGenCache(ExpressionTree& tree) override;
         virtual bool IsCached() const override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
 
     protected:
         // WARNING: This class is designed to be allocated by an arena allocator,
@@ -202,9 +186,6 @@ namespace NativeJIT
         unsigned m_cacheReferenceCount;
         ExpressionTree::Storage<T> m_cache;
 
-        // See GetRegisterCount() method.
-        int m_registerCount;
-
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) = 0;
         virtual Storage<void*> CodeGenAsBase(ExpressionTree& tree) override;
 
@@ -219,22 +200,15 @@ namespace NativeJIT
     //
     //*************************************************************************
 
+    // TODO: change name. There is no Preferred Order now that we're not
+    // doing Sethi-Ullman.
     template <typename T1, typename T2>
     void NodeBase::CodeGenInPreferredOrder(ExpressionTree& tree,
                                            Node<T1>& n1, Storage<T1>& s1,
                                            Node<T2>& n2, Storage<T2>& s2)
     {
-        // Evaluate the expression which uses more registers first.
-        if (n1.GetRegisterCount() >= n2.GetRegisterCount())
-        {
-            s1 = n1.CodeGen(tree);
-            s2 = n2.CodeGen(tree);
-        }
-        else
-        {
-            s2 = n2.CodeGen(tree);
-            s1 = n1.CodeGen(tree);
-        }
+        s1 = n1.CodeGen(tree);
+        s2 = n2.CodeGen(tree);
     }
 
     //*************************************************************************
@@ -246,8 +220,7 @@ namespace NativeJIT
     template <typename T>
     Node<T>::Node(ExpressionTree& tree)
         : NodeBase(tree),
-          m_cacheReferenceCount(0),
-          m_registerCount(-1)
+          m_cacheReferenceCount(0)
     {
     }
 
@@ -301,7 +274,6 @@ namespace NativeJIT
         out << nodeName
             << " [id = " << GetId()
             << ", parents = " << GetParentCount()
-            << ", register count = " << m_registerCount
             << ", ";
 
         if (IsCached())
@@ -329,49 +301,7 @@ namespace NativeJIT
                        GetId());
         MarkEvaluated();
 
-        LabelSubtree(true);
         SetCache(CodeGenValue(tree));
-    }
-
-
-    template <typename T>
-    unsigned Node<T>::LabelSubtree(bool isLeftChild)
-    {
-        if (GetRegisterCount() < 0)
-        {
-            if (isLeftChild)
-            {
-                SetRegisterCount(1);
-            }
-            else
-            {
-                SetRegisterCount(0);
-            }
-        }
-
-        // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return GetRegisterCount();
-    }
-
-
-    template <typename T>
-    int Node<T>::GetRegisterCount() const
-    {
-        return m_registerCount;
-    }
-
-
-    template <typename T>
-    void Node<T>::SetRegisterCount(unsigned count)
-    {
-        if (IsCached())
-        {
-            m_registerCount = 0;
-        }
-        else
-        {
-            m_registerCount = count;
-        }
     }
 
 

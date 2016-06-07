@@ -46,7 +46,6 @@ namespace NativeJIT
         //
 
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -90,22 +89,6 @@ namespace NativeJIT
         }
 
         return m_dependentNode.CodeGen(tree);
-    }
-
-
-    template <typename T>
-    unsigned DependentNode<T>::LabelSubtree(bool /* isLeftChild */)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            const unsigned registerCount
-                = (std::max)(m_dependentNode.LabelSubtree(true),
-                             m_prerequisiteNode.LabelSubtree(true));
-
-            this->SetRegisterCount(registerCount);
-        }
-
-        return this->GetRegisterCount();
     }
 
 

@@ -41,7 +41,6 @@ namespace NativeJIT
 
         virtual ExpressionTree::Storage<PACKED> CodeGenValue(ExpressionTree& tree) override;
 
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -188,25 +187,6 @@ namespace NativeJIT
         REGTYPE /* right */)
     {
         // End of recursion, do nothing.
-    }
-
-
-    template <typename PACKED, bool ISMAX>
-    unsigned PackedMinMaxNode<PACKED, ISMAX>::LabelSubtree(bool /* isLeftChild */)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            const unsigned leftCount = m_left.LabelSubtree(true);
-            const unsigned rightCount = m_right.LabelSubtree(false);
-
-            // The standard Sethi-Ullman register calculation for left and right
-            // mostly works here too, with the exception that we need at least
-            // two registers since we'll modify both values that were returned.
-            this->SetRegisterCount((std::max)(this->ComputeRegisterCount(leftCount, rightCount),
-                                              2u));
-        }
-
-        return this->GetRegisterCount();
     }
 
 

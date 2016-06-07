@@ -41,7 +41,6 @@ namespace NativeJIT
         //
 
         virtual ExpressionTree::Storage<T> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
         // Note: IndirectNode doesn't implement GetBaseAndOffset() method which
@@ -107,18 +106,6 @@ namespace NativeJIT
         // a T*. Dereference the calculated T* to get to T.
         return ExpressionTree::Storage<T>(m_collapsedBase->CodeGenAsBase(tree),
                                           m_collapsedOffset);
-    }
-
-
-    template <typename T>
-    unsigned IndirectNode<T>::LabelSubtree(bool /*isLeftChild*/)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
-        }
-
-        return this->GetRegisterCount();
     }
 
 

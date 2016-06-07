@@ -39,7 +39,6 @@ namespace NativeJIT
         //
 
         virtual ExpressionTree::Storage<FIELD*> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
         virtual void ReleaseReferencesToChildren() override;
@@ -139,18 +138,6 @@ namespace NativeJIT
     void FieldPointerNode<OBJECT, FIELD>::ReleaseReferencesToChildren()
     {
         m_collapsedBase->DecrementParentCount();
-    }
-
-
-    template <typename OBJECT, typename FIELD>
-    unsigned FieldPointerNode<OBJECT, FIELD>::LabelSubtree(bool /*isLeftChild*/)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            this->SetRegisterCount(m_collapsedBase->LabelSubtree(true));
-        }
-
-        return this->GetRegisterCount();
     }
 
 

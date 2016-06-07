@@ -82,7 +82,6 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
         //
@@ -114,7 +113,6 @@ namespace NativeJIT
         //
         // Overrides of Node methods.
         //
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
 
@@ -190,22 +188,6 @@ namespace NativeJIT
 
         // Use the CodeGenFlags()-related call.
         m_condition.IncrementFlagsParentCount();
-    }
-
-
-    template <typename T, JccType JCC>
-    unsigned ConditionalNode<T, JCC>::LabelSubtree(bool /*isLeftChild*/)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            unsigned condition = m_condition.LabelSubtree(true);
-            unsigned trueExpression = m_trueExpression.LabelSubtree(true);
-            unsigned falseExpression = m_falseExpression.LabelSubtree(true);
-
-            this->SetRegisterCount((std::max)(condition, (std::max)(trueExpression, falseExpression)));
-        }
-
-        return this->GetRegisterCount();
     }
 
 
@@ -344,22 +326,6 @@ namespace NativeJIT
     {
         m_left.IncrementParentCount();
         m_right.IncrementParentCount();
-    }
-
-
-    template <typename T, JccType JCC>
-    unsigned RelationalOperatorNode<T, JCC>::LabelSubtree(bool /*isLeftChild*/)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            unsigned left = m_left.LabelSubtree(true);
-            unsigned right = m_right.LabelSubtree(false);
-
-            this->SetRegisterCount(this->ComputeRegisterCount(left, right));
-        }
-
-        // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return this->GetRegisterCount();
     }
 
 

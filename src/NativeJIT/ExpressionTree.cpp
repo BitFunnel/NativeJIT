@@ -409,7 +409,6 @@ namespace NativeJIT
 
         // LogThrowAssert(Root node is return, "Root must be a return node.");
 
-        root.LabelSubtree(true);
         root.CompileAsRoot(*this);
     }
 

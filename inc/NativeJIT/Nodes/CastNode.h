@@ -193,7 +193,6 @@ namespace NativeJIT
         //
 
         virtual Storage<TO> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -220,7 +219,6 @@ namespace NativeJIT
         //
 
         virtual Storage<TO> CodeGenValue(ExpressionTree& tree) override;
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -264,19 +262,6 @@ namespace NativeJIT
 
 
     template <typename TO, typename FROM>
-    unsigned CastNode<TO, FROM, true>::LabelSubtree(bool /* isLeftChild */)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            // Need at least one register for storing the result.
-            this->SetRegisterCount((std::max)(m_from.LabelSubtree(true), 1u));
-        }
-
-        return this->GetRegisterCount();
-    }
-
-
-    template <typename TO, typename FROM>
     void CastNode<TO, FROM, true>::Print(std::ostream& out) const
     {
         this->PrintCoreProperties(out, "CastNode (one-step)");
@@ -306,18 +291,6 @@ namespace NativeJIT
     CastNode<TO, FROM, false>::CodeGenValue(ExpressionTree& tree)
     {
         return m_conversionNode.CodeGen(tree);
-    }
-
-
-    template <typename TO, typename FROM>
-    unsigned CastNode<TO, FROM, false>::LabelSubtree(bool isLeftChild)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            this->SetRegisterCount(m_conversionNode.LabelSubtree(isLeftChild));
-        }
-
-        return this->GetRegisterCount();
     }
 
 

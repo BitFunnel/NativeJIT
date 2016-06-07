@@ -45,7 +45,6 @@ namespace NativeJIT
 
         virtual Storage<L> CodeGenValue(ExpressionTree& tree) override;
 
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -85,18 +84,6 @@ namespace NativeJIT
         code.EmitImmediate<OP>(left.ConvertToDirect(true), m_right);
 
         return left;
-    }
-
-
-    template <OpCode OP, typename L, typename R>
-    unsigned BinaryImmediateNode<OP, L, R>::LabelSubtree(bool /* isLeftChild */)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            this->SetRegisterCount(m_left.LabelSubtree(true));
-        }
-
-        return this->GetRegisterCount();
     }
 
 

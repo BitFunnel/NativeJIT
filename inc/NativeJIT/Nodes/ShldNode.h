@@ -38,7 +38,6 @@ namespace NativeJIT
 
         virtual Storage<T> CodeGenValue(ExpressionTree& tree) override;
 
-        virtual unsigned LabelSubtree(bool isLeftChild) override;
         virtual void Print(std::ostream& out) const override;
 
     private:
@@ -96,22 +95,6 @@ namespace NativeJIT
         }
 
         return shiftee;
-    }
-
-
-    template <typename T>
-    unsigned ShldNode<T>::LabelSubtree(bool /* isLeftChild */)
-    {
-        if (this->GetRegisterCount() < 0)
-        {
-            const unsigned left = m_shiftee.LabelSubtree(true);
-            const unsigned right = m_filler.LabelSubtree(false);
-
-            this->SetRegisterCount(this->ComputeRegisterCount(left, right));
-        }
-
-        // WARNING: GetRegisterCount() may return a different value than passed to SetRegisterCount().
-        return this->GetRegisterCount();
     }
 
 
