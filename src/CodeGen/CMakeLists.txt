@@ -3,7 +3,6 @@
 set(CPPFILES
   Allocator.cpp
   Assert.cpp
-  BitOperations.cpp
   CodeBuffer.cpp
   ExecutionBuffer.cpp
   FunctionBuffer.cpp

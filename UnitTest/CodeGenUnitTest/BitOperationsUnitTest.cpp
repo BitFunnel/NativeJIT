@@ -35,25 +35,14 @@ namespace NativeJIT
         TEST(BitOperations, NonZeroBitCount)
         {
             ASSERT_EQ(0, BitOp::GetNonZeroBitCount(0u));
-            ASSERT_EQ(0, BitOp::GetNonZeroBitCountFallback(0u));
-
             ASSERT_EQ(0, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0)));
-            ASSERT_EQ(0, BitOp::GetNonZeroBitCountFallback(static_cast<uint64_t>(0)));
 
             ASSERT_EQ(1, BitOp::GetNonZeroBitCount(1u));
-            ASSERT_EQ(1, BitOp::GetNonZeroBitCountFallback(1u));
-
             ASSERT_EQ(1, BitOp::GetNonZeroBitCount(0x80000000u));
-            ASSERT_EQ(1, BitOp::GetNonZeroBitCountFallback(0x80000000u));
-
             ASSERT_EQ(1, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0x8000000000000000)));
-            ASSERT_EQ(1, BitOp::GetNonZeroBitCountFallback(0x8000000000000000));
-
             ASSERT_EQ(32, BitOp::GetNonZeroBitCount(0xFFFFFFFFu));
-            ASSERT_EQ(32, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFu));
 
             ASSERT_EQ(64, BitOp::GetNonZeroBitCount(static_cast<uint64_t>(0xFFFFFFFFFFFFFFFF)));
-            ASSERT_EQ(64, BitOp::GetNonZeroBitCountFallback(0xFFFFFFFFFFFFFFFF));
         }
 
         void VerifyLowestBitSet(uint64_t testValue, unsigned expected)

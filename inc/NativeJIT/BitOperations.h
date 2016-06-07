@@ -79,38 +79,14 @@ namespace NativeJIT
         }
 
 
-        // Fallback routine for counting the number of 1 bits in a value if
-        // the popcnt intrinsic is not supported.
-        template <typename T>
-        inline
-        uint8_t GetNonZeroBitCountFallback(T value)
-        {
-            static_assert(std::is_integral<T>::value, "The type must be integral");
-
-            uint8_t numBitsSet = 0;
-            auto const valueBytes = reinterpret_cast<uint8_t const *>(&value);
-
-            for (unsigned i = 0; i < sizeof(T); ++i)
-            {
-                numBitsSet += c_bitsSetInByte[valueBytes[i]];
-            }
-
-            return numBitsSet;
-        }
-
-
         // Returns the count of 1 bits in the value.
         // Requires SSE4 support.
         // See https://en.wikipedia.org/wiki/SSE4#POPCNT_and_LZCNT
-        // Note that processors from around 2008 and onwards support POPCNT, the
-        // fallback method is implemented only for unit test runs in potentially
-        // old lab machines/virtual machines.
+        // Note that processors from around 2008 and onwards support POPCNT,
         inline
         uint8_t GetNonZeroBitCount(uint32_t value)
         {
-            return c_isPopCntSupported
-                ? static_cast<uint8_t>(_mm_popcnt_u32(value))
-                : GetNonZeroBitCountFallback(value);
+            return static_cast<uint8_t>(_mm_popcnt_u32(value));
         }
 
 
@@ -120,9 +96,7 @@ namespace NativeJIT
         inline
         uint8_t GetNonZeroBitCount(uint64_t value)
         {
-            return c_isPopCntSupported
-                ? static_cast<uint8_t>(_mm_popcnt_u64(value))
-                : GetNonZeroBitCountFallback(value);
+            return static_cast<uint8_t>(_mm_popcnt_u64(value));
         }
 
 
