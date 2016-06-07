@@ -31,8 +31,8 @@
 #else
 #include <nmmintrin.h>
 #include <smmintrin.h>
-#include <string.h>         // For ffsll()
-//#include <x86intrin.h> // Intrinsic instructions.
+#include <string.h>    // For ffsll()
+#include <x86intrin.h> // For __lzcnt64.
 #endif
 
 // http://stackoverflow.com/questions/2039861/how-to-get-gcc-to-generate-bts-instruction-for-x86-64-from-standard-c
@@ -133,20 +133,8 @@ namespace NativeJIT
                                      value)
                    ? true
                    : false;
-#elif (APPLE)
-        // OS X provides flsll().
-            *highestBitSetIndex = ffsll(value);
-            bool retval = *highestBitSetIndex != 0;
-            --*highestBitSetIndex;
-            return retval;
 #else
-        // Linux + gcc provide __builtin_clzl().
-        if (value == 0)
-        {
-          // Special case for value == 0 since __builtin_clzl(0) is undefined.
-              return false;
-        }
-            *highestBitSetIndex = __builtin_clzl(value);
+            *highestBitSetIndex = __lzcnt64(value);
             bool retval = *highestBitSetIndex != 64;
             *highestBitSetIndex = 63 - *highestBitSetIndex;
             return retval;
