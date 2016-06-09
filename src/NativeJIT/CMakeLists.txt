@@ -2,14 +2,12 @@
 
 set(CPPFILES
   CallNode.cpp
-  Examples.cpp
   ExpressionNodeFactory.cpp
   ExpressionTree.cpp
   Node.cpp
 )
 
 set(PRIVATE_HFILES
-  Examples.h
 )
 
 set(PUBLIC_HFILES
