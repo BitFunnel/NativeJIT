@@ -43,3 +43,5 @@ source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
 add_library(NativeJIT ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
 
 set_property(TARGET NativeJIT PROPERTY FOLDER "src")
+
+add_test(NAME NativeJITUnitTest COMMAND NativeJITUnitTest)

@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # Remove the warning that WIN32 is not defined in Cygwin any more.
-set(CMAKE_LEGACY_CYGWIN_WIN32 0) 
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 project(NativeJIT_CMake)
 
@@ -28,7 +28,7 @@ endif()
 # and gmock_main
 add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
                  ${CMAKE_BINARY_DIR}/googletest-build)
- 
+
 include_directories(
   ${gtest_SOURCE_DIR}/include
 )
@@ -66,6 +66,8 @@ endif()
 # This allows the solution to group projects into folders like src and UnitTest.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+enable_testing()
+
 include_directories(inc)
 add_subdirectory(src/CodeGen)
 add_subdirectory(src/NativeJIT)
@@ -82,7 +84,3 @@ add_custom_target(TOPLEVEL SOURCES
   LICENSE.txt
   README.md
 )
-
-enable_testing()
-add_test(NAME CodeGenUnitTest COMMAND CodeGenUnitTest)
-add_test(NAME NativeJITUnitTest COMMAND NativeJITUnitTest)

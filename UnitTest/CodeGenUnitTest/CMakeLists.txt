@@ -18,3 +18,5 @@ add_executable(CodeGenUnitTest ${CPPFILES} ${PRIVATE_HFILES})
 target_link_libraries (CodeGenUnitTest UnitTestShared CodeGen gtest gtest_main)
 
 set_property(TARGET CodeGenUnitTest PROPERTY FOLDER "UnitTest")
+
+add_test(NAME CodeGenUnitTest COMMAND CodeGenUnitTest)
