@@ -1,32 +1,56 @@
-# sudo required and trusty used as a hack to get a newer cmake.
-sudo: required
-dist: trusty
-language: generic
-
-cache:
-  apt: true
+language: cpp
 
 matrix:
   include:
-    - env: CXX=g++-5 CC=gcc-5
-      addons:
-        apt:
-          packages:
-            - cmake
-            - g++-5
-          sources: &sources
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise
-            - llvm-toolchain-precise-3.8
-    - env: CXX=clang++-3.8 CC=clang-3.8
-      addons:
-        apt:
-          packages:
-            - cmake
-            - clang-3.8
-          sources: *sources
+    # Ubuntu Trusty beta build environment. Trusty has CMake 2.8.12, which we
+    # need to build gtest.
+    #
+    # NOTE: Per [1], the official way to opt in to Trusty is to set
+    # `sudo: required` and `dist: trusty`.
+    #
+    # [1] https://docs.travis-ci.com/user/trusty-ci-environment/
+    - os: linux
+      sudo: required
+      dist: trusty
+      compiler: clang
+    - os: linux
+      sudo: required
+      dist: trusty
+      compiler: gcc
 
+    # OS X 10.10, with LLVM version 6.1.0. This is necessary because NativeJIT
+    # requires the C++14 standard, and this is not supported on versions
+    # earlier than 6.1.0.
+    #
+    # NOTE: Per [1], the `xcode6.4` image is the earliest toolchain Travis
+    # supports that uses LLVM 6.1.0.
+    #
+    # [1] https://docs.travis-ci.com/user/osx-ci-environment/
+    - os: osx
+      osx_image: xcode6.4
+      compiler: clang
+    - os: osx
+      osx_image: xcode6.4
+      compiler: gcc
+
+# Installs libstdc++ 4.9, by installing the GCC 4.9 toolchain. This is required,
+# because on Ubuntu Trusty, we need a version  libstdc++ that is compliant to
+# C++14. The default toolchain distributed by Trusty is not, hence we must use
+# our own.
+install:
+- if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.9
+    - g++-4.9
+    - clang
+
+# The build scripts.
 script:
-    - ./Configure_Make.sh
-    - (cd build-make && make && make test)
-
+  - ./Configure_Make.sh
+  - cd build-make
+  - make -j4
+  - make test -j4

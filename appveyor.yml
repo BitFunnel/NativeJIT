@@ -1,6 +1,23 @@
-before_build:
-    Configure_MSVC.bat
+version: 1.0.{build}
+
+branches:
+  only:
+    # TODO: Put master here too.
+    - staging_master
+
+image: Visual Studio 2015
+
+clone_depth: 15
+
+install:
+  - .\Configure_MSVC.bat
+#   - cd build-msvc
 
 build:
-    build-msvc/NativeJIT_CMake.sln
+  parallel: true
+  project: build-msvc\NativeJIT_CMake.sln
 
+test_script:
+  - cd build-msvc
+  - ctest -C Debug
+  # TODO: Add Release tests here too.
