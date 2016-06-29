@@ -57,18 +57,11 @@ namespace NativeJIT
     // Template definitions for Model<PACKED>
     //
     //*************************************************************************
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4351)
-#endif
     template <typename PACKED>
     Model<PACKED>::Model()
         : m_data()
     {
     }
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 
     template <typename PACKED>
