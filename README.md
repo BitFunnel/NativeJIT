@@ -125,7 +125,7 @@ On Ubuntu 14 and below, you'll need to install a newer version of CMake. To
 install a new-enough CMake, see [this link](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04).
 If you're using gcc, you'll also need to make sure you have gcc-5 (`sudo apt-get install g++-5`).
 
-pTo override the default compiler, set the `CXX` and `CC` environment variables.
+To override the default compiler, set the `CXX` and `CC` environment variables.
 For example, if you have clang-3.8 installed as `clang-3.8` and are using bash:
 
 ~~~
@@ -135,7 +135,7 @@ export CC="clang-3.8"
 
 #### OS X
 
-Install XCode and then run the following command to install required packages 
+Install XCode and then run the following command to install required packages
 using Homebrew ([http://brew.sh/](http://brew.sh/)):
 
 ~~~
@@ -164,7 +164,7 @@ default install options, you won't get a C++ compiler. To force the install of
 the C++ compiler, you need to either create a new C++ project or open an
 existing C++ project.
 
-In order to configure solution for Visual Studio 2015 run the following 
+In order to configure solution for Visual Studio 2015 run the following
 commands from the root `NativeJIT` directory:
 
 ~~~
@@ -173,4 +173,3 @@ commands from the root `NativeJIT` directory:
 
 From now on you can use the generated solution `build-msvc\BitFunnel.sln` from Visual Studio
 or build from command line using `cmake`.
-
