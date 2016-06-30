@@ -311,7 +311,7 @@ namespace NativeJIT
                 int p1 = 1;
                 float p2 = 2.0;
 
-                auto expected = (float)p1 + (p2 * 10.0f);
+                auto expected = static_cast<float>(p1) + (p2 * 10.0f);
                 auto observed = function(p1, p2);
 
                 ASSERT_EQ(expected, observed);
@@ -343,7 +343,7 @@ namespace NativeJIT
                 float p2 = 2.0;
                 int p3 = 3;
 
-                auto expected = (float)p1 + (p2 * 10.0f) + (p3 * 100);
+                auto expected = static_cast<float>(p1) + (p2 * 10.0f) + (p3 * 100);
                 auto observed = function(p1, p2, p3);
 
                 ASSERT_EQ(expected, observed);
@@ -380,7 +380,7 @@ namespace NativeJIT
                 int p3 = 3;
                 float p4 = 4.0;
 
-                auto expected = (float)p1 + (p2 * 10.0f) + (p3 * 100) + (p4 * 1000.0f);
+                auto expected = static_cast<float>(p1) + (p2 * 10.0f) + (p3 * 100) + (p4 * 1000.0f);
                 auto observed = function(p1, p2, p3, p4);
 
                 ASSERT_EQ(expected, observed);
@@ -795,7 +795,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             float result = function();
 
-            ASSERT_TRUE(std::abs(12.6 - result) < 0.01) << 
+            ASSERT_TRUE(std::abs(12.6 - result) < 0.01) <<
                 "Result should be around 12.6, but found " <<
                 result;
         }

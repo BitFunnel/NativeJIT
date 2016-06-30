@@ -103,19 +103,19 @@ namespace NativeJIT
             size_t size = site.Size();
             if (size == 2)
             {
-                *((int16_t*)siteAddress) = (int16_t)delta;
+                *(reinterpret_cast<int16_t*>(siteAddress)) = static_cast<int16_t>(delta);
                 siteAddress += size;
             }
             else if (size == 4)
             {
-                *((int32_t*)siteAddress) = (int32_t)delta;
+                *(reinterpret_cast<int32_t*>(siteAddress)) = static_cast<int32_t>(delta);
                 siteAddress += size;
             }
             else
             {
                 while (size > 0)
                 {
-                    *siteAddress++ = (uint8_t)delta;
+                    *siteAddress++ = static_cast<uint8_t>(delta);
                     delta = delta >> 8;
                     size--;
                 }

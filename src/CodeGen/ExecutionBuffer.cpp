@@ -88,12 +88,13 @@ namespace NativeJIT
           m_buffer(nullptr)
     {
         m_bufferSize = RoundUp(bufferSize, getpagesize());
-        m_buffer = (unsigned char*)mmap(nullptr,
-                                        m_bufferSize,
-                                        PROT_READ | PROT_WRITE | PROT_EXEC,
-                                        MAP_PRIVATE | MAP_ANON,
-                                        -1,
-                                        0);
+        m_buffer = static_cast<unsigned char*>(
+                       mmap(nullptr,
+                            m_bufferSize,
+                            PROT_READ | PROT_WRITE | PROT_EXEC,
+                            MAP_PRIVATE | MAP_ANON,
+                            -1,
+                            0));
         if (m_buffer == MAP_FAILED) {
             // TODO: Fix memory leaks by f. ex. using unique_ptr with custom deleter
             // for m_buffer. See bug#13
