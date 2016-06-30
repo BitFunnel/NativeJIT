@@ -240,6 +240,6 @@ namespace NativeJIT
             = m_prologLength
             = 0;
         m_isCodeGenerationCompleted = false;
-        m_runtimeFunction = {};
+        m_runtimeFunction = {0, 0, 0};
     }
 }
