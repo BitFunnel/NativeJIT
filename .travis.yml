@@ -18,20 +18,9 @@ matrix:
       dist: trusty
       compiler: gcc
 
-    # OS X 10.10, with LLVM version 6.1.0. This is necessary because NativeJIT
-    # requires the C++14 standard, and this is not supported on versions
-    # earlier than 6.1.0.
-    #
-    # NOTE: Per [1], the `xcode6.4` image is the earliest toolchain Travis
-    # supports that uses LLVM 6.1.0.
-    #
-    # [1] https://docs.travis-ci.com/user/osx-ci-environment/
-    - os: osx
-      osx_image: xcode6.4
-      compiler: clang
-    - os: osx
-      osx_image: xcode6.4
-      compiler: gcc
+    # We're not running OS X because we sometimes draw very old machines that
+    # that don't support some instructions that we use. See
+    # https://github.com/BitFunnel/NativeJIT/issues/53 for discussion.
 
 # Installs libstdc++ 4.9, by installing the GCC 4.9 toolchain. This is required,
 # because on Ubuntu Trusty, we need a version  libstdc++ that is compliant to
