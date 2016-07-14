@@ -80,7 +80,7 @@ namespace NativeJIT
                 auto expected = ForcedCast<TO>(testValue);
                 auto observed = function();
 
-                ASSERT_EQ(expected, observed) 
+                ASSERT_EQ(expected, observed)
                     << "Incorrect cast from "
                     << typeid(FROM).name()
                     << " to "

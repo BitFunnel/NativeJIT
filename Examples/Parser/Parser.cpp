@@ -37,7 +37,7 @@ namespace Examples
         //
         float Evaluate();
 
-        
+
         //
         // ParseError records the character position and cause of an error
         // during parsing.
@@ -46,31 +46,31 @@ namespace Examples
         {
         public:
             ParseError(char const * message, size_t position);
-            
+
             friend std::ostream& operator<< (std::ostream &out, const ParseError &e);
-            
+
         private:
             // Character position where error occurred.
             size_t m_position;
         };
-        
+
     private:
         // Parses an expression of the form
         // EXPRESSION:
         //   SUM
         NativeJIT::Node<float>& Parse();
-        
+
         // Parses expressions of form
         // SUM:
         //   PRODUCT ('+' PRODUCT)*
         //   PRODUCT ('-' PRODUCT)*
         NativeJIT::Node<float>& ParseSum();
-        
+
         // Parses expressions of the form
         // PRODUCT:
         //   TERM ('*' TERM)*
         NativeJIT::Node<float>& ParseProduct();
-        
+
         // Parses expressions of the form
         // TERM:
         //   (SUM)
@@ -82,7 +82,7 @@ namespace Examples
         // FLOAT:
         //   [ '+' | '-' ] (DIGIT)* [ '.' DIGIT*] [ ('e' | 'E') [ '+' | '-' ] DIGIT* ]
         float ParseFloat();
-        
+
         // Parses expressions of the form
         // SYMBOL: ALPHA (ALPHA | DIGIT)*
         std::string ParseSymbol();
@@ -94,7 +94,7 @@ namespace Examples
         // Advances the current position past whitespace (space, tab, carriage
         // return, newline).
         void SkipWhite();
-        
+
         // Attempts to advance past next character.
         // Throws a ParseError if the next character is not equal to
         // the expected character.
@@ -103,14 +103,14 @@ namespace Examples
         // Advances past the next character.
         // Returns the character or '\0' if at the end of the stream.
         char GetChar();
-        
+
         // Returns the next character without advancing.
         // Returns '\0' if at the end of the stream.
         char PeekChar();
 
         // Source string to be parsed.
         std::string const m_src;
-        
+
         // Current position of parser in the m_src.
         size_t m_currentPosition;
 
@@ -137,11 +137,11 @@ namespace Examples
         return function();
     }
 
-    
+
     NativeJIT::Node<float>& Parser::Parse()
     {
         auto& expression = ParseSum();
-        
+
         SkipWhite();
         if (PeekChar() != '\0')
         {
@@ -150,7 +150,7 @@ namespace Examples
 
         return expression;
     }
-    
+
 
     NativeJIT::Node<float>& Parser::ParseSum()
     {
@@ -269,7 +269,7 @@ namespace Examples
         // Gather in s the longest possible sequence of characters that will
         // parse as a floating point number.
         //
-        
+
         // Optional leading '+' or '-'.
         if (PeekChar() == '+' || PeekChar() == '-')
         {
@@ -391,15 +391,15 @@ namespace Examples
             return m_src[m_currentPosition];
         }
     }
-    
-    
+
+
     Parser::ParseError::ParseError(char const * message, size_t position)
         : std::runtime_error(message),
           m_position(position)
     {
     }
-    
-    
+
+
     std::ostream& operator<< (std::ostream &out, const Parser::ParseError &e)
     {
         out << std::string(e.m_position, ' ') << '^' << std::endl;
@@ -439,15 +439,15 @@ bool Test()
         bool Run(std::ostream& output, Allocator& allocator, FunctionBuffer& code)
         {
             bool succeeded = false;
-            
+
             output << "\"" << m_input << "\" ==> ";
 
             try {
                 Examples::Parser parser(m_input, allocator, code);
                 float result = parser.Evaluate();
-                
+
                 output << result;
-                
+
                 if (result == m_output)
                 {
                     succeeded = true;
@@ -471,7 +471,7 @@ bool Test()
         float m_output;
     };
 
-    
+
     TestCase cases[] =
     {
         // Constants

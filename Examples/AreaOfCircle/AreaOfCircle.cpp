@@ -14,7 +14,7 @@ using NativeJIT::FunctionBuffer;
 //
 // This example JITs a function that computes the area of a circle, given
 // its radius.
-// 
+//
 // Here is a disassembly of the generated code.
 //
 //
