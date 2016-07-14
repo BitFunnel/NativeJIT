@@ -20,9 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
+#include <limits>
 #include <stdexcept>
 
+#include "Temporary/Assert.h"
 #include "NativeJIT/CodeGen/JumpTable.h"
 
 
@@ -97,17 +98,23 @@ namespace NativeJIT
             const CallSite& site = m_callSites[i];
             const uint8_t* labelAddress = AddressOfLabel(site.GetLabel());
             uint8_t* siteAddress = site.Site();
-            size_t delta = labelAddress - siteAddress - site.Size();
+            ptrdiff_t delta = labelAddress - siteAddress - site.Size();
 
             // TODO: Evaluate whether special cases for size == 2 and size == 4 actually improve performance.
             size_t size = site.Size();
             if (size == 2)
             {
+                LogThrowAssert(delta <= std::numeric_limits<int16_t>::max() &&
+                               delta >= std::numeric_limits<int16_t>::min(),
+                               "Overflow/underflow in cast to int16_t.");
                 *(reinterpret_cast<int16_t*>(siteAddress)) = static_cast<int16_t>(delta);
                 siteAddress += size;
             }
             else if (size == 4)
             {
+                LogThrowAssert(delta <= std::numeric_limits<int32_t>::max() &&
+                               delta >= std::numeric_limits<int32_t>::min(),
+                               "Overflow/underflow in cast to int32_t.");
                 *(reinterpret_cast<int32_t*>(siteAddress)) = static_cast<int32_t>(delta);
                 siteAddress += size;
             }
