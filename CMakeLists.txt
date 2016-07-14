@@ -84,3 +84,6 @@ add_custom_target(TOPLEVEL SOURCES
   LICENSE.txt
   README.md
 )
+
+set(ENV{GTEST_COLOR} 1)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose)

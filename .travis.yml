@@ -41,5 +41,11 @@ addons:
 script:
   - ./Configure_Make.sh
   - cd build-make
-  - make -j4
-  - make test -j4
+  - make -j2
+  - make check
+
+notifications:
+  email:
+    - mhop@microsoft.com
+    - aclemmer@microsoft.com
+    - danluu@microsoft.com
