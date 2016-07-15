@@ -171,5 +171,5 @@ commands from the root `NativeJIT` directory:
 .\Configure_MSVC.bat
 ~~~
 
-From now on you can use the generated solution `build-msvc\BitFunnel.sln` from Visual Studio
+From now on you can use the generated solution `build-msvc\NativeJIT.sln` from Visual Studio
 or build from command line using `cmake`.
