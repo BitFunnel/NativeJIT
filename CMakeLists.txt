@@ -8,26 +8,10 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 project(NativeJIT_CMake)
 
 ###############################################################################
-# From http://crascit.com/2015/07/25/cmake-gtest/
 
-# Download and unpack googletest at configure time
-configure_file(CMakeLists-googletest.txt.in
-               googletest-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+# gtest
 
-# Googletest will not compile under MinGW without this.
-if(MINGW)
-  set(gtest_disable_pthreads ON CACHE BOOL "" FORCE)
-endif()
-
-# Add googletest directly to our build. This adds
-# the following targets: gtest, gtest_main, gmock
-# and gmock_main
-add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-                 ${CMAKE_BINARY_DIR}/googletest-build)
+add_subdirectory(googletest)
 
 include_directories(
   ${gtest_SOURCE_DIR}/include
@@ -77,7 +61,6 @@ add_subdirectory(test/Shared)
 add_subdirectory(Examples)
 
 add_custom_target(TOPLEVEL SOURCES
-  CMakeLists-googletest.txt.in
   Configure_Make.bat
   Configure_Make.sh
   Configure_MSVC.bat
