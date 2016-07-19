@@ -1,4 +1,4 @@
-# NativeJIT/UnitTest/NativeJITUnitTest
+# NativeJIT/test/NativeJITUnitTest
 
 set(CPPFILES
   BitFunnelAcceptanceTest.cpp
@@ -24,9 +24,9 @@ elseif(CMAKE_COMPILER_IS_GNUCXX AND MINGW)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wa,-mbig-obj")
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT ${PROJECT_SOURCE_DIR}/UnitTest/Shared)
+include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT ${PROJECT_SOURCE_DIR}/test/Shared)
 
 add_executable(NativeJITUnitTest ${CPPFILES} ${PRIVATE_HFILES})
 target_link_libraries (NativeJITUnitTest UnitTestShared NativeJIT CodeGen gtest gtest_main)
 
-set_property(TARGET NativeJITUnitTest PROPERTY FOLDER "UnitTest")
+set_property(TARGET NativeJITUnitTest PROPERTY FOLDER "test")

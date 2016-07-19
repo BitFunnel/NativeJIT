@@ -1,4 +1,4 @@
-# NativeJIT/UnitTest/CodeGenUnitTest
+# NativeJIT/test/CodeGenUnitTest
 
 set(CPPFILES
   BitOperationsUnitTest.cpp
@@ -12,11 +12,11 @@ set(PRIVATE_HFILES
   ML64Verifier.h
   )
 
-include_directories(${PROJECT_SOURCE_DIR}/src/CodeGen ${PROJECT_SOURCE_DIR}/UnitTest/Shared)
+include_directories(${PROJECT_SOURCE_DIR}/src/CodeGen ${PROJECT_SOURCE_DIR}/test/Shared)
 
 add_executable(CodeGenUnitTest ${CPPFILES} ${PRIVATE_HFILES})
 target_link_libraries (CodeGenUnitTest UnitTestShared CodeGen gtest gtest_main)
 
-set_property(TARGET CodeGenUnitTest PROPERTY FOLDER "UnitTest")
+set_property(TARGET CodeGenUnitTest PROPERTY FOLDER "test")
 
 add_test(NAME CodeGenUnitTest COMMAND CodeGenUnitTest)

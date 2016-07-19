@@ -63,7 +63,7 @@ else()
 endif()
 
 
-# This allows the solution to group projects into folders like src and UnitTest.
+# This allows the solution to group projects into folders like src and test.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 enable_testing()
@@ -71,9 +71,9 @@ enable_testing()
 include_directories(inc)
 add_subdirectory(src/CodeGen)
 add_subdirectory(src/NativeJIT)
-add_subdirectory(UnitTest/CodeGenUnitTest)
-add_subdirectory(UnitTest/NativeJITUnitTest)
-add_subdirectory(UnitTest/Shared)
+add_subdirectory(test/CodeGenUnitTest)
+add_subdirectory(test/NativeJITUnitTest)
+add_subdirectory(test/Shared)
 add_subdirectory(Examples)
 
 add_custom_target(TOPLEVEL SOURCES

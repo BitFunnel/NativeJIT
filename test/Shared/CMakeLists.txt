@@ -1,4 +1,4 @@
-# NativeJIT/UnitTest/Shared
+# NativeJIT/test/Shared
 
 set(CPPFILES
   TestSetup.cpp
@@ -16,4 +16,4 @@ include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT)
 
 add_library(UnitTestShared ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
 
-set_property(TARGET UnitTestShared PROPERTY FOLDER "UnitTest")
+set_property(TARGET UnitTestShared PROPERTY FOLDER "test")
