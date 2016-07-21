@@ -1,44 +1,38 @@
-language: cpp
+# sudo required and trusty used as a hack to get a newer cmake.
+
+sudo: required
+dist: trusty
+language: generic
+
+cache:
+  apt: true
+
 
 matrix:
   include:
-    # Ubuntu Trusty beta build environment. Trusty has CMake 2.8.12, which we
-    # need to build gtest.
-    #
-    # NOTE: Per [1], the official way to opt in to Trusty is to set
-    # `sudo: required` and `dist: trusty`.
-    #
-    # [1] https://docs.travis-ci.com/user/trusty-ci-environment/
     - os: linux
-      sudo: required
-      dist: trusty
-      compiler: clang
+      env: CXX=g++-5 CC=gcc-5
+      addons:
+        apt:
+          packages:
+            - cmake
+            - g++-5
+          sources: &sources
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
     - os: linux
-      sudo: required
-      dist: trusty
-      compiler: gcc
-
-    # We're not running OS X because we sometimes draw very old machines that
-    # that don't support some instructions that we use. See
-    # https://github.com/BitFunnel/NativeJIT/issues/53 for discussion.
-
-# Installs libstdc++ 4.9, by installing the GCC 4.9 toolchain. This is required,
-# because on Ubuntu Trusty, we need a version  libstdc++ that is compliant to
-# C++14. The default toolchain distributed by Trusty is not, hence we must use
-# our own.
-install:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - gcc-4.9
-    - g++-4.9
-    - clang
+      env: CXX=clang++-3.8 CC=clang-3.8
+      addons:
+        apt:
+          packages:
+            - cmake
+            - clang-3.8
+          sources: *sources
 
 # The build scripts.
 script:
+  - uname -a
+  - ulimit -a
   - ./Configure_Make.sh
   - cd build-make
   - make -j2
