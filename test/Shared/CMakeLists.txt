@@ -14,6 +14,6 @@ set(PUBLIC_HFILES
 
 include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT)
 
-add_library(UnitTestShared ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
+add_library(TestShared ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
 
-set_property(TARGET UnitTestShared PROPERTY FOLDER "test")
+set_property(TARGET TestShared PROPERTY FOLDER "test")
