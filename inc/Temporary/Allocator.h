@@ -57,6 +57,6 @@ namespace NativeJIT
 
         size_t m_bufferSize;
         size_t m_bytesAllocated;
-        std::unique_ptr<char> m_buffer;
+        std::unique_ptr<char[]> m_buffer;
     };
 }
