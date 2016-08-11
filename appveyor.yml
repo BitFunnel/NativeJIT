@@ -2,12 +2,12 @@ version: 1.0.{build}
 
 branches:
   only:
-    # TODO: Put master here too.
+    - master
     - staging_master
 
 image: Visual Studio 2015
 
-clone_depth: 15
+clone_depth: 1
 
 install:
   - .\Configure_MSVC.bat
@@ -19,5 +19,5 @@ build:
 
 test_script:
   - cd build-msvc
-  - ctest -C Debug
+  - ctest -C Debug --verbose
   # TODO: Add Release tests here too.
