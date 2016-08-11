@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/o957b44rhm8vt24g/branch/master?svg=true)](https://ci.appveyor.com/project/danluu/nativejit/branch/master)
+
 NativeJIT
 ====
 
