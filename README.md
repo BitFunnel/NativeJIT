@@ -33,7 +33,7 @@ Our design point was scenarios where
 
 Here's trivial "Hello, world" level example that computes the area of a circle:
 
-~~~
+```cpp
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/Function.h"
@@ -74,11 +74,11 @@ int main()
 
     return 0;
 }
-~~~
+```
 
 Here is the generated assembly code on Windows:
 
-~~~
+```asm
 PI_CONSTANT:
    db 0f 49 40                              ; PI constant is stored in memory.
 ENTRY_POINT:
@@ -89,7 +89,7 @@ ENTRY_POINT:
   mulss       xmm0,dword ptr [29E2A580000h] ; Multiply by PI.
   mov         rbp,qword ptr [rsp]           ; Standard function epilogue.
   add         rsp,8                         ; Standard function epilogue.
-~~~
+```
 
 
 This example shows an expression that multiplies a number by itself.
@@ -107,20 +107,20 @@ compiler (gcc 5+, clang 3.4+, or VC 2015+). You can run CMake directly to genera
 
 For *nix platforms (including OS X),
 
-~~~
+```sh
 ./Configure_Make.sh
 cd build-make
 make
 make test
-~~~
+```
 
 #### Ubuntu
 
 If you're on Ubuntu 15+, you can install dependencies with:
 
-~~~
+```sh
 sudo apt-get install clang cmake
-~~~
+```
 
 On Ubuntu 14 and below, you'll need to install a newer version of CMake. To
 install a new-enough CMake, see [this link](http://askubuntu.com/questions/610291/how-to-install-cmake-3-2-on-ubuntu-14-04).
@@ -129,28 +129,28 @@ If you're using gcc, you'll also need to make sure you have gcc-5 (`sudo apt-get
 To override the default compiler, set the `CXX` and `CC` environment variables.
 For example, if you have clang-3.8 installed as `clang-3.8` and are using bash:
 
-~~~
+```sh
 export CXX="clang++-3.8"
 export CC="clang-3.8"
-~~~
+```
 
 #### OS X
 
 Install XCode and then run the following command to install required packages
 using Homebrew ([http://brew.sh/](http://brew.sh/)):
 
-~~~
+```sh
 brew install cmake
-~~~
+```
 
 NativeJIT can be built on OS X using either standard \*nix makefiles or XCode.
 In order to generate and build makefiles, in the root `NativeJIT` directory run:
 
 If you want to create an Xcode project instead of using Makefiles, run:
 
-~~~
+```sh
 ./Configure_XCode.sh
-~~~
+```
 
 ### Windows
 
@@ -168,9 +168,9 @@ existing C++ project.
 In order to configure solution for Visual Studio 2015 run the following
 commands from the root `NativeJIT` directory:
 
-~~~
+```sh
 .\Configure_MSVC.bat
-~~~
+```
 
 From now on you can use the generated solution `build-msvc\NativeJIT.sln` from Visual Studio
 or build from command line using `cmake`.
