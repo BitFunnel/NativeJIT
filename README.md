@@ -94,7 +94,7 @@ ENTRY_POINT:
 
 This example shows an expression that multiplies a number by itself.
 We also support a wide variety of arithmetic and logical operations, pointer and array operations, conditionals, accessing structure fields, and calling out to C functions.
-[See our preliminary API docs for more information](http://bitfunnel.org/getting-started-with-nativejit/).
+[See our preliminary API docs for more information](http://bitfunnel.org/getting-started-with-nativejit/) and the `Examples/` directory for more examples.
 
 
 Dependencies
