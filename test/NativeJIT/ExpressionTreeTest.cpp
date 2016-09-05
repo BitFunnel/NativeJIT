@@ -171,7 +171,7 @@ namespace NativeJIT
             auto storage = e.RIPRelative<int>(16);
             ASSERT_TRUE(storage.GetBaseRegister().IsRIP());
 
-            ASSERT_TRUE(!storage.ConvertToDirect(false).IsRIP());
+            ASSERT_FALSE(storage.ConvertToDirect(false).IsRIP());
         }
 
 
@@ -183,7 +183,7 @@ namespace NativeJIT
             auto storage = e.Temporary<int>();
             auto baseRegister = storage.GetBaseRegister();
 
-            ASSERT_TRUE(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
+            ASSERT_FALSE(storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
         }
 
 
@@ -206,7 +206,7 @@ namespace NativeJIT
             auto storage = indirectNode.CodeGen(e);
             auto baseRegister = storage.GetBaseRegister();
 
-            ASSERT_TRUE(!storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
+            ASSERT_FALSE(storage.ConvertToDirect(false).IsSameHardwareRegister(baseRegister));
         }
 
 
@@ -406,7 +406,7 @@ namespace NativeJIT
             // The new storage should own the register, the old not should not.
             ASSERT_EQ(storage2.GetStorageClass(), StorageClass::Direct);
             ASSERT_EQ(storage2.GetDirectRegister(), reg);
-            ASSERT_TRUE(!(storage.GetStorageClass() == StorageClass::Direct
+            ASSERT_FALSE((storage.GetStorageClass() == StorageClass::Direct
                          && storage.GetDirectRegister() == reg));
         }
 
@@ -432,8 +432,8 @@ namespace NativeJIT
             ASSERT_TRUE(s.IsSoleDataOwner());
 
             auto s2 = s;
-            ASSERT_TRUE(!s.IsSoleDataOwner());
-            ASSERT_TRUE(!s2.IsSoleDataOwner());
+            ASSERT_FALSE(s.IsSoleDataOwner());
+            ASSERT_FALSE(s2.IsSoleDataOwner());
 
             s2.Reset();
             ASSERT_TRUE(s.IsSoleDataOwner());
@@ -459,8 +459,8 @@ namespace NativeJIT
             ASSERT_EQ(s.GetDirectRegister(), eax);
 
             auto s2 = s;
-            ASSERT_TRUE(!s.IsSoleDataOwner());
-            ASSERT_TRUE(!s2.IsSoleDataOwner());
+            ASSERT_FALSE(s.IsSoleDataOwner());
+            ASSERT_FALSE(s2.IsSoleDataOwner());
             ASSERT_EQ(s2.GetStorageClass(), StorageClass::Direct);
             ASSERT_EQ(s2.GetDirectRegister(), eax);
 
@@ -473,7 +473,7 @@ namespace NativeJIT
             ASSERT_TRUE(s2.IsSoleDataOwner());
             ASSERT_EQ(s2.GetStorageClass(), StorageClass::Direct);
             // ASSERT_NE(s2.GetDirectRegister(), eax); Doesn't compile!
-            ASSERT_TRUE(!(s2.GetDirectRegister() == eax));
+            ASSERT_FALSE((s2.GetDirectRegister() == eax));
         }
 
 

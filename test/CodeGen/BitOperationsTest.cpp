@@ -60,7 +60,7 @@ namespace NativeJIT
         TEST(BitOperations, LowestBitSet)
         {
             unsigned unused;
-            ASSERT_TRUE(!BitOp::GetLowestBitSet(0, &unused));
+            ASSERT_FALSE(BitOp::GetLowestBitSet(0, &unused));
 
             VerifyLowestBitSet(1, 0);
             VerifyLowestBitSet(0xFFFFFFFFFFFFFFFF, 0);
@@ -84,7 +84,7 @@ namespace NativeJIT
         TEST(BitOperations, HighestBitSet)
         {
             unsigned unused;
-            ASSERT_TRUE(!BitOp::GetHighestBitSet(0, &unused));
+            ASSERT_FALSE(BitOp::GetHighestBitSet(0, &unused));
 
             VerifyHighestBitSet(1, 0);
             VerifyHighestBitSet(0x8000000000000000, 63);
@@ -96,8 +96,8 @@ namespace NativeJIT
         {
             const uint64_t bits62and63 = 0xC000000000000000;
 
-            ASSERT_TRUE(!BitOp::TestBit(bits62and63, 0));
-            ASSERT_TRUE(!BitOp::TestBit(bits62and63, 1));
+            ASSERT_FALSE(BitOp::TestBit(bits62and63, 0));
+            ASSERT_FALSE(BitOp::TestBit(bits62and63, 1));
             ASSERT_TRUE(BitOp::TestBit(bits62and63, 62));
             ASSERT_TRUE(BitOp::TestBit(bits62and63, 63));
 
@@ -106,7 +106,7 @@ namespace NativeJIT
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
-                ASSERT_TRUE(!BitOp::TestBit(allZeros, bit));
+                ASSERT_FALSE(BitOp::TestBit(allZeros, bit));
                 ASSERT_TRUE(BitOp::TestBit(allOnes, bit));
             }
         }
@@ -119,7 +119,7 @@ namespace NativeJIT
 
             for (unsigned int bit = 0; bit < 64; ++bit)
             {
-                ASSERT_TRUE(!BitOp::TestBit(currentValue, bit));
+                ASSERT_FALSE(BitOp::TestBit(currentValue, bit));
                 BitOp::SetBit(&currentValue, bit);
                 ASSERT_TRUE(BitOp::TestBit(currentValue, bit));
 
@@ -139,11 +139,11 @@ namespace NativeJIT
             {
                 ASSERT_TRUE(BitOp::TestBit(currentValue, bit));
                 BitOp::ClearBit(&currentValue, bit);
-                ASSERT_TRUE(!BitOp::TestBit(currentValue, bit));
+                ASSERT_FALSE(BitOp::TestBit(currentValue, bit));
 
-                ASSERT_TRUE(!BitOp::TestBit(allZeros, bit));
+                ASSERT_FALSE(BitOp::TestBit(allZeros, bit));
                 BitOp::ClearBit(&allZeros, bit);
-                ASSERT_TRUE(!BitOp::TestBit(allZeros, bit));
+                ASSERT_FALSE(BitOp::TestBit(allZeros, bit));
             }
         }
     }

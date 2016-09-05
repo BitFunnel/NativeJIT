@@ -573,13 +573,13 @@ namespace NativeJIT
 
             try
             {
-                ASSERT_TRUE(!exceptionCaught);
+                ASSERT_FALSE(exceptionCaught);
                 func();
                 FAIL() << "Should not have reached here";
             }
             catch (std::exception const &e)
             {
-                ASSERT_TRUE(!exceptionCaught);
+                ASSERT_FALSE(exceptionCaught);
                 ASSERT_EQ(std::string("Test"), std::string(e.what()));
 
                 exceptionCaught = true;
