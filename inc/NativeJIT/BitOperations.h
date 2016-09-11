@@ -134,10 +134,15 @@ namespace NativeJIT
                    ? true
                    : false;
 #else
+    #ifdef __LZCNT__
             *highestBitSetIndex = __lzcnt64(value);
             bool retval = *highestBitSetIndex != 64;
             *highestBitSetIndex = 63 - *highestBitSetIndex;
             return retval;
+    #else
+            *highestBitSetIndex = 63 - __builtin_clzll(value);
+            return value != 0;
+    #endif
 #endif
         }
 
