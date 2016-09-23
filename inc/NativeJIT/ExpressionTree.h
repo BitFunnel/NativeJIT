@@ -37,6 +37,7 @@
 #include "NativeJIT/BitOperations.h"
 #include "NativeJIT/CodeGen/CallingConvention.h"
 #include "NativeJIT/CodeGenHelpers.h"
+#include "NativeJIT/TypeConverter.h"
 #include "NativeJIT/TypePredicates.h"
 #include "Temporary/AllocatorOperations.h"
 #include "Temporary/Assert.h"
@@ -291,7 +292,7 @@ namespace NativeJIT
     {
         static_assert(CanBeInImmediateStorage<T>::value, "Invalid immediate type");
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
-        *reinterpret_cast<T*>(&m_immediate) = value;
+        m_immediate = convertType<T, size_t>(value);
 
         // Note: no need to call NotifyDataRegisterChange() as this constructor
         // doesn't apply to registers.
@@ -305,7 +306,7 @@ namespace NativeJIT
         static_assert(sizeof(T) <= sizeof(m_immediate), "Unsupported type.");
         LogThrowAssert(m_storageClass == StorageClass::Immediate, "GetImmediate() called for non-immediate storage!");
 
-        return *(reinterpret_cast<T const *>(&m_immediate));
+        return convertType<size_t, T>(m_immediate);
     }
 
 

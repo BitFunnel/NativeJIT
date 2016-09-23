@@ -36,6 +36,7 @@ set(PUBLIC_HFILES
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/StackVariableNode.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Packed.h
   ${CMAKE_SOURCE_DIR}/inc/NativeJIT/TypePredicates.h
+  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/TypeConverter.h
 )
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})

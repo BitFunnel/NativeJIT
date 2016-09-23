@@ -206,7 +206,7 @@ namespace NativeJIT
             auto temp = tree.Direct<TemporaryType>();
             auto r = temp.GetDirectRegister();
 
-            code.EmitImmediate<OpCode::Mov>(r, *(reinterpret_cast<TemporaryType*>(&value)));
+            code.EmitImmediate<OpCode::Mov>(r, convertType<T, TemporaryType>(value));
             code.Emit<OpCode::Mov>(dest, r);
         }
 

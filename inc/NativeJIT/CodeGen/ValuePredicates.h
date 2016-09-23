@@ -26,6 +26,8 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "NativeJIT/TypeConverter.h"
+
 
 namespace NativeJIT
 {
@@ -59,6 +61,6 @@ namespace NativeJIT
         static_assert(sizeof(FROM) == sizeof(TO),
                       "Cannot do a forced cast between incompatible types of different sizes");
 
-        return *reinterpret_cast<TO*>(&from);
+        return convertType<FROM, TO>(from);
     }
 }
