@@ -316,7 +316,16 @@ namespace Examples
         }
 
         // Parse s into a floating point value.
-        return stof(s);
+        // TODO: could check for really obvious errors before the try.
+        try
+        {
+            return stof(s);
+        }
+        catch (...)
+        {
+            throw ParseError("Invalid float.",
+                             m_currentPosition);
+        }
     }
 
 
