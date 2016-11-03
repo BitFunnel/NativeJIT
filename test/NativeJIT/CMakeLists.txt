@@ -27,6 +27,6 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT ${PROJECT_SOURCE_DIR}/test/Shared)
 
 add_executable(NativeJITTest ${CPPFILES} ${PRIVATE_HFILES})
-target_link_libraries (NativeJITTest TestShared NativeJIT CodeGen gtest gtest_main)
+target_link_libraries (NativeJITTest NativeJITTestShared NativeJIT CodeGen gtest gtest_main)
 
 set_property(TARGET NativeJITTest PROPERTY FOLDER "test")

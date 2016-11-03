@@ -11,32 +11,32 @@ set(PRIVATE_HFILES
 )
 
 set(PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGenHelpers.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExecutionPreconditionTest.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactory.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactoryDecls.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionTree.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/ExpressionTreeDecls.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Function.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Model.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/BinaryImmediateNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/BinaryNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/CallNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/CastNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ConditionalNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/FieldPointerNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ImmediateNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ImmediateNodeDecls.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/IndirectNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/Node.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/PackedMinMaxNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ParameterNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ReturnNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/ShldNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Nodes/StackVariableNode.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/Packed.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/TypePredicates.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/TypeConverter.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGenHelpers.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/ExecutionPreconditionTest.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactory.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/ExpressionNodeFactoryDecls.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/ExpressionTree.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/ExpressionTreeDecls.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Function.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Model.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/BinaryImmediateNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/BinaryNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/CallNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/CastNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/ConditionalNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/FieldPointerNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/ImmediateNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/ImmediateNodeDecls.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/IndirectNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/Node.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/PackedMinMaxNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/ParameterNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/ReturnNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/ShldNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Nodes/StackVariableNode.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/Packed.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/TypePredicates.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/TypeConverter.h
 )
 
 source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})

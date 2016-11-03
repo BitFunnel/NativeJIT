@@ -15,7 +15,7 @@ set(PRIVATE_HFILES
 include_directories(${PROJECT_SOURCE_DIR}/src/CodeGen ${PROJECT_SOURCE_DIR}/test/Shared)
 
 add_executable(CodeGenTest ${CPPFILES} ${PRIVATE_HFILES})
-target_link_libraries (CodeGenTest TestShared CodeGen gtest gtest_main)
+target_link_libraries (CodeGenTest NativeJITTestShared CodeGen gtest gtest_main)
 
 set_property(TARGET CodeGenTest PROPERTY FOLDER "test")
 

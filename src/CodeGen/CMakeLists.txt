@@ -25,22 +25,22 @@ set(PRIVATE_HFILES
 )
 
 set(PUBLIC_HFILES
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/AllocatorVector.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/BitOperations.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CallingConvention.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/CodeBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/JumpTable.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/Register.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/ValuePredicates.h
-  ${CMAKE_SOURCE_DIR}/inc/NativeJIT/CodeGen/X64CodeGenerator.h
-  ${CMAKE_SOURCE_DIR}/inc/Temporary/Allocator.h
-  ${CMAKE_SOURCE_DIR}/inc/Temporary/AllocatorOperations.h
-  ${CMAKE_SOURCE_DIR}/inc/Temporary/Assert.h
-  ${CMAKE_SOURCE_DIR}/inc/Temporary/IAllocator.h
-  ${CMAKE_SOURCE_DIR}/inc/Temporary/StlAllocator.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/AllocatorVector.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/BitOperations.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/CallingConvention.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/CodeBuffer.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/ExecutionBuffer.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionBuffer.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/FunctionSpecification.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/JumpTable.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/Register.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/ValuePredicates.h
+  ${NativeJIT_SOURCE_DIR}/inc/NativeJIT/CodeGen/X64CodeGenerator.h
+  ${NativeJIT_SOURCE_DIR}/inc/Temporary/Allocator.h
+  ${NativeJIT_SOURCE_DIR}/inc/Temporary/AllocatorOperations.h
+  ${NativeJIT_SOURCE_DIR}/inc/Temporary/Assert.h
+  ${NativeJIT_SOURCE_DIR}/inc/Temporary/IAllocator.h
+  ${NativeJIT_SOURCE_DIR}/inc/Temporary/StlAllocator.h
 )
 
 set(WINDOWS_PRIVATE_HFILES

@@ -5,7 +5,8 @@ cmake_minimum_required(VERSION 2.6)
 # Remove the warning that WIN32 is not defined in Cygwin any more.
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-project(NativeJIT_CMake)
+# Project-wide settings for NativeJIT
+project(NativeJIT CXX C)
 
 ###############################################################################
 
@@ -65,7 +66,7 @@ add_subdirectory(test/NativeJIT)
 add_subdirectory(test/Shared)
 add_subdirectory(Examples)
 
-add_custom_target(TOPLEVEL SOURCES
+add_custom_target(TOPLEVEL_NATIVEJIT SOURCES
   Configure_Make.bat
   Configure_Make.sh
   Configure_MSVC.bat
@@ -74,4 +75,4 @@ add_custom_target(TOPLEVEL SOURCES
 )
 
 set(ENV{GTEST_COLOR} 1)
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
+# add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
