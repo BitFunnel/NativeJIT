@@ -15,7 +15,7 @@ install:
 
 build:
   parallel: true
-  project: build-msvc\NativeJIT_CMake.sln
+  project: build-msvc\NativeJIT.sln
 
 test_script:
   - cd build-msvc
