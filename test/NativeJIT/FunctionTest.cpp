@@ -80,6 +80,15 @@ namespace NativeJIT
             }
 
 
+            static int SampleFunction2DifferentTypes(char p1, int p2)
+            {
+                s_charParameter1 = p1;
+                s_intParameter2 = p2;
+                ++s_sampleFunctionCalls;
+                return p1 + p2;
+            }
+
+
             static int64_t SampleFunction3(char p1, int p2, int64_t p3)
             {
                 s_charParameter1 = p1;
@@ -468,6 +477,37 @@ namespace NativeJIT
                 ASSERT_EQ(expected, observed);
                 ASSERT_EQ(1, s_sampleFunctionCalls);
                 ASSERT_EQ(s_intParameter1, p1);
+                ASSERT_EQ(s_intParameter2, p2);
+            }
+        }
+
+
+        TEST_F(FunctionTest, CallTwoParametersDifferentTypes)
+        {
+            auto setup = GetSetup();
+
+            {
+                Function<int, int, char> expression(setup->GetAllocator(), setup->GetCode());
+
+                typedef int (*F)(char, int);
+                auto & sampleFunction = expression.Immediate<F>(SampleFunction2DifferentTypes);
+                auto & a = expression.Call(sampleFunction, expression.GetP2(), expression.GetP1());
+                auto function = expression.Compile(a);
+
+                const char p1 = 0x74;
+                const int p2 = 5678;
+
+                auto expected = SampleFunction2DifferentTypes(p1, p2);
+
+                // Anything other than p1/p2 will do.
+                s_charParameter1 = p1 + 1;
+                s_intParameter2 = p2 + 1;
+                s_sampleFunctionCalls = 0;
+                auto observed = function(p2, p1);
+
+                ASSERT_EQ(expected, observed);
+                ASSERT_EQ(1, s_sampleFunctionCalls);
+                ASSERT_EQ(s_charParameter1, p1);
                 ASSERT_EQ(s_intParameter2, p2);
             }
         }
