@@ -148,7 +148,7 @@ namespace NativeJIT
             {
                 static_cast<void>(s_methodName); // Unreferenced parameter for GTest.
 
-                ASSERT_EQ(expectedCallNumber, actualCallNumber)
+                EXPECT_EQ(expectedCallNumber, actualCallNumber)
                     << "unexpected call order "
                     << s_methodName;
             }
@@ -206,7 +206,7 @@ namespace NativeJIT
 
                 auto observed = function();
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -226,7 +226,7 @@ namespace NativeJIT
                 auto expected = p1;
                 auto observed = function(p1);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -247,7 +247,7 @@ namespace NativeJIT
                 auto expected = p1 + p2;
                 auto observed = function(p1, p2);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -270,7 +270,7 @@ namespace NativeJIT
                 auto expected = p2 - p1 + p3;
                 auto observed = function(p1, p2, p3);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -295,7 +295,7 @@ namespace NativeJIT
                 auto expected = (p1 - p2) - (p3 - p4);
                 auto observed = function(p1, p2, p3, p4);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -323,7 +323,7 @@ namespace NativeJIT
                 auto expected = static_cast<float>(p1) + (p2 * 10.0f);
                 auto observed = function(p1, p2);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -355,7 +355,7 @@ namespace NativeJIT
                 auto expected = static_cast<float>(p1) + (p2 * 10.0f) + (p3 * 100);
                 auto observed = function(p1, p2, p3);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -392,7 +392,7 @@ namespace NativeJIT
                 auto expected = static_cast<float>(p1) + (p2 * 10.0f) + (p3 * 100) + (p4 * 1000.0f);
                 auto observed = function(p1, p2, p3, p4);
 
-                ASSERT_EQ(expected, observed);
+                EXPECT_EQ(expected, observed);
             }
         }
 
@@ -418,8 +418,8 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function();
 
-                ASSERT_EQ(expected, observed);
-                ASSERT_EQ(1, s_sampleFunctionCalls);
+                EXPECT_EQ(expected, observed);
+                EXPECT_EQ(1, s_sampleFunctionCalls);
             }
         }
 
@@ -444,9 +444,9 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p1);
 
-                ASSERT_EQ(expected, observed);
-                ASSERT_EQ(1, s_sampleFunctionCalls);
-                ASSERT_EQ(s_charParameter1, p1);
+                EXPECT_EQ(expected, observed);
+                EXPECT_EQ(1, s_sampleFunctionCalls);
+                EXPECT_EQ(s_charParameter1, p1);
             }
         }
 
@@ -474,10 +474,10 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p2, p1);
 
-                ASSERT_EQ(expected, observed);
-                ASSERT_EQ(1, s_sampleFunctionCalls);
-                ASSERT_EQ(s_intParameter1, p1);
-                ASSERT_EQ(s_intParameter2, p2);
+                EXPECT_EQ(expected, observed);
+                EXPECT_EQ(1, s_sampleFunctionCalls);
+                EXPECT_EQ(s_intParameter1, p1);
+                EXPECT_EQ(s_intParameter2, p2);
             }
         }
 
@@ -505,10 +505,10 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p2, p1);
 
-                ASSERT_EQ(expected, observed);
-                ASSERT_EQ(1, s_sampleFunctionCalls);
-                ASSERT_EQ(s_charParameter1, p1);
-                ASSERT_EQ(s_intParameter2, p2);
+                EXPECT_EQ(expected, observed);
+                EXPECT_EQ(1, s_sampleFunctionCalls);
+                EXPECT_EQ(s_charParameter1, p1);
+                EXPECT_EQ(s_intParameter2, p2);
             }
         }
 
@@ -541,11 +541,11 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p3, p2, p1);
 
-                ASSERT_EQ(expected, observed);
-                ASSERT_EQ(1, s_sampleFunctionCalls);
-                ASSERT_EQ(s_charParameter1, p1);
-                ASSERT_EQ(s_intParameter2, p2);
-                ASSERT_EQ(s_int64Parameter3, p3);
+                EXPECT_EQ(expected, observed);
+                EXPECT_EQ(1, s_sampleFunctionCalls);
+                EXPECT_EQ(s_charParameter1, p1);
+                EXPECT_EQ(s_intParameter2, p2);
+                EXPECT_EQ(s_int64Parameter3, p3);
             }
         }
 
@@ -581,12 +581,12 @@ namespace NativeJIT
                 s_sampleFunctionCalls = 0;
                 auto observed = function(p4, p3, p2, p1);
 
-                ASSERT_EQ(expected, observed);
-                ASSERT_EQ(1, s_sampleFunctionCalls);
-                ASSERT_EQ(s_charParameter1, p1);
-                ASSERT_EQ(s_intParameter2, p2);
-                ASSERT_EQ(s_int64Parameter3, p3);
-                ASSERT_EQ(s_boolParameter4, p4);
+                EXPECT_EQ(expected, observed);
+                EXPECT_EQ(1, s_sampleFunctionCalls);
+                EXPECT_EQ(s_charParameter1, p1);
+                EXPECT_EQ(s_intParameter2, p2);
+                EXPECT_EQ(s_int64Parameter3, p3);
+                EXPECT_EQ(s_boolParameter4, p4);
             }
         }
 
@@ -668,9 +668,9 @@ namespace NativeJIT
                                                      uint32_t& intRef,
                                                      unsigned int expectedValue)
         {
-            ASSERT_EQ(intPtr, &intRef) <<
+            EXPECT_EQ(intPtr, &intRef) <<
                 "Pointer and reference should have referred to the same address";
-            ASSERT_EQ(expectedValue, intRef) << "Unexpected target value";
+            EXPECT_EQ(expectedValue, intRef) << "Unexpected target value";
         }
 
         static int VerifyPointerVsReference(uint32_t* intPtr,
@@ -724,7 +724,7 @@ namespace NativeJIT
 
             int& result = function();
 
-            ASSERT_EQ(10, result);
+            EXPECT_EQ(10, result);
         }
 
 
@@ -745,7 +745,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             int result = function();
 
-            ASSERT_EQ(7 + 8, result);
+            EXPECT_EQ(7 + 8, result);
         }
 
 
@@ -763,7 +763,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             float result = function();
 
-            ASSERT_EQ(7.7 + 3.3, result);
+            EXPECT_EQ(7.7 + 3.3, result);
         }
 
 
@@ -799,7 +799,7 @@ namespace NativeJIT
             auto function = e.Compile(sum);
             int result = function();
 
-            ASSERT_EQ(21, result);
+            EXPECT_EQ(21, result);
         }
 
 
@@ -852,7 +852,7 @@ namespace NativeJIT
         static void __attribute__ ((noinline)) TakeZeroIntArg(int arg)
 #endif
         {
-            ASSERT_EQ(0, arg);
+            EXPECT_EQ(0, arg);
         }
 
 
@@ -863,7 +863,7 @@ namespace NativeJIT
         static void __attribute__ ((noinline)) TakeZeroFloatArg(float /* arg1 */, float arg2)
 #endif
         {
-            ASSERT_EQ(0.0f, arg2);
+            EXPECT_EQ(0.0f, arg2);
         }
 
 
@@ -912,7 +912,7 @@ namespace NativeJIT
 
             // The first 7 comes from the return value from the call and the
             // other 7 comes from the preserved value of ECX.
-            ASSERT_EQ(7 + 7, result);
+            EXPECT_EQ(7 + 7, result);
         }
 
 
@@ -937,7 +937,7 @@ namespace NativeJIT
 
             // The 2.5 value comes from the return value from the call and
             // 7.5 comes from the preserved value of XMM1s.
-            ASSERT_EQ(2.5f + 7.5f, result);
+            EXPECT_EQ(2.5f + 7.5f, result);
         }
 
 
@@ -955,7 +955,7 @@ namespace NativeJIT
 
             auto observed = function(p1Unused, p2);
 
-            ASSERT_EQ(p2, observed);
+            EXPECT_EQ(p2, observed);
         }
 
 
@@ -978,12 +978,12 @@ namespace NativeJIT
 
             // Argument is less than 7, the regular value should be returned.
             auto observed = function(5);
-            ASSERT_EQ(5.0f + 2.5f, observed);
+            EXPECT_EQ(5.0f + 2.5f, observed);
 
             // Argument is not less than 7, 0 should be returned.
             observed = function(10);
 
-            ASSERT_EQ(0.0f, observed);
+            EXPECT_EQ(0.0f, observed);
         }
 
         TEST_CASES_END
