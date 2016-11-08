@@ -20,13 +20,22 @@ include_directories(
 
 ###############################################################################
 
+
 if (WIN32 OR CYGWIN)
-  set(NATIVEJIT_PLATFORM_POSIX 0)
-  set(NATIVEJIT_PLATFORM_WINDOWS 1)
+    set(NATIVEJIT_PLATFORM_POSIX 0)
+    set(NATIVEJIT_PLATFORM_WINDOWS 1)
 else()
-  set(NATIVEJIT_PLATFORM_POSIX 1)
-  set(NATIVEJIT_PLATFORM_WINDOWS 0)
+    set(NATIVEJIT_PLATFORM_POSIX 1)
+    set(NATIVEJIT_PLATFORM_WINDOWS 0)
 endif()
+
+
+if (${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    message(STATUS "######################################## NativeJIT is root")
+  else()
+    message(STATUS "######################################## BitFunnel is root")
+    set(NATIVEJIT_PREFIX "NativeJIT/")
+endif (${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 
 if(NATIVEJIT_PLATFORM_WINDOWS)
   # Note: -D works for both MSVC and GCC/Clang.

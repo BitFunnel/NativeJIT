@@ -19,4 +19,4 @@ target_link_libraries (AreaOfCircle CodeGen NativeJIT)
 # This line makes AreaOfCircle appear in the correct VS solution
 # folder in the NativeJIT project. Delete this line if building
 # outside of NativeJIT.
-set_property(TARGET AreaOfCircle PROPERTY FOLDER "Examples")
+set_property(TARGET AreaOfCircle PROPERTY FOLDER "${NATIVEJIT_PREFIX}Examples")

@@ -69,4 +69,4 @@ source_group("inc/NativeJIT" FILES ${PUBLIC_HFILES})
 
 add_library(CodeGen ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
 
-set_property(TARGET CodeGen PROPERTY FOLDER "src")
+set_property(TARGET CodeGen PROPERTY FOLDER "${NATIVEJIT_PREFIX}src")

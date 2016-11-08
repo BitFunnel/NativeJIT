@@ -16,4 +16,4 @@ include_directories(${PROJECT_SOURCE_DIR}/src/NativeJIT)
 
 add_library(NativeJITTestShared ${CPPFILES} ${PRIVATE_HFILES} ${PUBLIC_HFILES})
 
-set_property(TARGET NativeJITTestShared PROPERTY FOLDER "test")
+set_property(TARGET NativeJITTestShared PROPERTY FOLDER "${NATIVEJIT_PREFIX}test")

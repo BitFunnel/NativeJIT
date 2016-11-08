@@ -17,6 +17,6 @@ include_directories(${PROJECT_SOURCE_DIR}/src/CodeGen ${PROJECT_SOURCE_DIR}/test
 add_executable(CodeGenTest ${CPPFILES} ${PRIVATE_HFILES})
 target_link_libraries (CodeGenTest NativeJITTestShared CodeGen gtest gtest_main)
 
-set_property(TARGET CodeGenTest PROPERTY FOLDER "test")
+set_property(TARGET CodeGenTest PROPERTY FOLDER "${NATIVEJIT_PREFIX}test")
 
 add_test(NAME CodeGenTest COMMAND CodeGenTest)
