@@ -133,6 +133,7 @@ namespace NativeJIT
         // This override allows for printing of debugging information.
         virtual void PlaceLabel(Label l) override;
 
+        void Call(Label l);
         void Jmp(Label l);
         void Jmp(void* functionPtr);
 

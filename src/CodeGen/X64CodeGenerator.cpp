@@ -87,6 +87,17 @@ namespace NativeJIT
     }
 
 
+    void X64CodeGenerator::Call(Label label)
+    {
+        CodePrinter printer(*this);
+
+        Emit8(0xe8);
+        EmitCallSite(label, 4);
+
+        printer.PrintJump(label);
+    }
+
+
     void X64CodeGenerator::Jmp(Label label)
     {
         CodePrinter printer(*this);

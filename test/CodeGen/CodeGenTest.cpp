@@ -51,6 +51,10 @@ namespace NativeJIT
             Label l1 = buffer.AllocateLabel();
             buffer.PlaceLabel(l1);
             buffer.EmitConditionalJump<JccType::JG>(l1);
+            buffer.Call(l1);
+            buffer.Jmp(l1);
+
+            buffer.PatchCallSites();
         }
 
 
