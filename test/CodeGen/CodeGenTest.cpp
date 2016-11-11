@@ -88,6 +88,13 @@ namespace NativeJIT
             buffer.Emit<OpCode::Inc, 4>(rsi, 0x1234);
             buffer.Emit<OpCode::Inc, 8>(rdi, 0x1234);
 
+            // Neg
+            buffer.Emit<OpCode::Neg>(rbx);
+            buffer.Emit<OpCode::Neg, 8>(rbp, 0x56);
+
+            // Not
+            buffer.Emit<OpCode::Not>(bl);
+            buffer.Emit<OpCode::Not, 2>(rbp, 0x56);
 
             // SIB addressing mode.
             buffer.Emit<OpCode::Mov>(rax, rsi, rcx, SIB::Scale8, 0x1234);
@@ -736,6 +743,15 @@ namespace NativeJIT
                 " 00000091  FF 86 00001234       inc dword ptr [rsi + 1234h]                                        \n"
                 " 00000097  48/ FF 87            inc qword ptr [rdi + 1234h]                                        \n"
                 "           00001234                                                                                \n"
+
+                // Not
+                " 0000009E  48/ F7 DB            not rbx                                                            \n"
+                " 000000A1  48/ F7 5D 56         not qword ptr [rbp + 56h]                                          \n"
+
+                // Neg
+                " 000000A5  F6 D3                neg bl                                                             \n"
+                " 000000A7  66| F7 55 56         neg word ptr [rbp + 56h]                                           \n"
+
 
                 // SIB addressing mode.
 

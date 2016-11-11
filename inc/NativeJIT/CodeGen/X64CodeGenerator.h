@@ -93,7 +93,9 @@ namespace NativeJIT
         MovSX,
         MovZX,
         MovAP,      // Aligned 128-bit SSE move.
+        Neg,
         Nop,
+        Not,
         Or,
         Pop,
         Push,
@@ -377,13 +379,15 @@ namespace NativeJIT
                     Register<SIZE, false> dest);
 
         template <unsigned SIZE>
-        void Group5(uint8_t extensionOpCode,
-                    Register<SIZE, false> dest);
+        void Group3And5(uint8_t opcode,
+                        uint8_t extensionOpCode,
+                        Register<SIZE, false> dest);
 
         template <unsigned SIZE>
-        void Group5(uint8_t extensionOpCode,
-                    Register<8u, false> base,
-                    int32_t offset);
+        void Group3And5(uint8_t opcode,
+                        uint8_t extensionOpCode,
+                        Register<8u, false> base,
+                        int32_t offset);
 
 
         // Methods for emitting the 0x66 operand size override prefix if
@@ -1783,36 +1787,38 @@ namespace NativeJIT
     // X64 group 5 opcodes.
     //
     template <unsigned SIZE>
-    void X64CodeGenerator::Group5(uint8_t extensionOpCode,
-                                  Register<SIZE, false> dest)
+    void X64CodeGenerator::Group3And5(uint8_t opcode,
+                                      uint8_t extensionOpCode,
+                                      Register<SIZE, false> dest)
     {
         EmitOpSizeOverride(dest);
         EmitRex(dest);
         if (SIZE == 1)
         {
-            Emit8(0xfe);
+            Emit8(opcode);
         }
         else
         {
-            Emit8(0xff);
+            Emit8(opcode + 1u);
         }
         EmitModRM(extensionOpCode, dest);
     }
 
     template <unsigned SIZE>
-    void X64CodeGenerator::Group5(uint8_t extensionOpCode,
-                                  Register<8u, false> dest,
-                                  int32_t offset)
+    void X64CodeGenerator::Group3And5(uint8_t opcode,
+                                      uint8_t extensionOpCode,
+                                    Register<8u, false> dest,
+                                    int32_t offset)
     {
         EmitOpSizeOverride(Register<SIZE, false>(0));
         EmitRex<SIZE, false>(Register<SIZE, false>(0), dest);
         if (SIZE == 1)
         {
-            Emit8(0xfe);
+            Emit8(opcode);
         }
         else
         {
-            Emit8(0xff);
+            Emit8(opcode + 1u);
         }
         EmitModRMOffset(Register<8u, false>(extensionOpCode), dest, offset);
     }
@@ -2044,7 +2050,7 @@ namespace NativeJIT
         X64CodeGenerator& code,
         Register<SIZE, false> dest)
     {
-        code.Group5(1, dest);
+        code.Group3And5(0xfe, 1, dest);
     }
 
 
@@ -2055,7 +2061,7 @@ namespace NativeJIT
         Register<8u, false> base,
         int32_t offset)
     {
-        code.Group5<SIZE>(1, base, offset);
+        code.Group3And5<SIZE>(0xfe, 1, base, offset);
     }
 
 
@@ -2070,7 +2076,7 @@ namespace NativeJIT
         X64CodeGenerator& code,
         Register<SIZE, false> dest)
     {
-        code.Group5(0, dest);
+        code.Group3And5(0xfe, 0, dest);
     }
 
 
@@ -2081,7 +2087,59 @@ namespace NativeJIT
         Register<8u, false> base,
         int32_t offset)
     {
-        code.Group5<SIZE>(0, base, offset);
+        code.Group3And5<SIZE>(0xfe, 0, base, offset);
+    }
+
+
+    //
+    // Neg
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Neg>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest)
+    {
+        code.Group3And5(0xf6, 3, dest);
+    }
+
+
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Neg>::ArgTypes0::Emit(
+        X64CodeGenerator& code,
+        Register<8u, false> base,
+        int32_t offset)
+    {
+        code.Group3And5<SIZE>(0xf6, 3, base, offset);
+    }
+
+
+    //
+    // Not
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Not>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest)
+    {
+        code.Group3And5(0xf6, 2, dest);
+    }
+
+
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Not>::ArgTypes0::Emit(
+        X64CodeGenerator& code,
+        Register<8u, false> base,
+        int32_t offset)
+    {
+        code.Group3And5<SIZE>(0xf6, 2, base, offset);
     }
 
 

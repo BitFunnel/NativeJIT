@@ -92,6 +92,14 @@ inc word ptr [rbp + 1234h]
 inc dword ptr [rsi + 1234h]
 inc qword ptr [rdi + 1234h]
 
+; Neg
+neg rbx
+neg qword ptr [rbp + 56h]
+
+; Not
+not bl
+not word ptr [rbp + 56h]
+
 ; SIB
 mov rax, [rsi + rcx * 8 + 1234h]
 mov r15, [r14 + r13 * 8 + 1234h]
