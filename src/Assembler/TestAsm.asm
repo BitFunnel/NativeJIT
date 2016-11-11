@@ -69,6 +69,22 @@ movsd xmm0, xmm1
 ; vmovq xmm0, rax       // Illegal instruction
 ret
 
+; SIB
+mov rax, [rsi + rcx * 8 + 1234h]
+mov r15, [r14 + r13 * 8 + 1234h]
+mov al, [rcx + r13 * 8 + 12h]
+mov bx, [r15 + rax * 8 + 34h]
+
+and rax, [rsi + rcx * 8 + 1234h]
+and r15, [r14 + r13 * 8 + 1234h]
+and al, [rcx + r13 * 8 + 12h]
+and bx, [r15 + rax * 8 + 34h]
+
+and rax, [rdi + rdx * 1 + 5678h]
+and rax, [rdi + rdx * 2 + 5678h]
+and rax, [rdi + rdx * 4 + 5678h]
+and rax, [rdi + rdx * 8 + 5678h]
+
 ; Another special case
 add r13, [r13]
 mov r13, [r13]

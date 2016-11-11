@@ -107,6 +107,15 @@ namespace NativeJIT
     };
 
 
+    enum class SIB : uint8_t
+    {
+        Scale1 = 0,
+        Scale2 = 1,
+        Scale4 = 2,
+        Scale8 = 3
+    };
+
+
     class X64CodeGenerator : public CodeBuffer
     {
     public:
@@ -169,6 +178,14 @@ namespace NativeJIT
         // source.
         template <OpCode OP, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
         void Emit(Register<SIZE1, ISFLOAT1> dest, Register<8, false> src, int32_t srcOffset);
+
+        // Scale-index-base (SIB) + offset.
+        template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+        void Emit(Register<SIZE, ISFLOAT> dest,
+                  Register<8, false> base,
+                  Register<8, false> index,
+                  SIB scale, 
+                  int32_t offset);
 
         // Two operands - indirect destination and register source with the same type and size.
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
@@ -325,6 +342,14 @@ namespace NativeJIT
 
         template <unsigned SIZE>
         void Group1(uint8_t baseOpCode,
+                    Register<SIZE, false> dest,
+                    Register<8, false> base,
+                    Register<8, false> index,
+                    SIB scale,
+                    int32_t srcOffset);
+
+        template <unsigned SIZE>
+        void Group1(uint8_t baseOpCode,
                     Register<8, false> dest,
                     int32_t destOffset,
                     Register<SIZE, false> src);
@@ -439,6 +464,14 @@ namespace NativeJIT
                 static void Emit(X64CodeGenerator& code, Register<SIZE, ISFLOAT> dest, Register<8, false> src, int32_t srcOffset);
 
                 template <unsigned SIZE>
+                static void Emit(X64CodeGenerator& code,
+                                 Register<SIZE, ISFLOAT> dest,
+                                 Register<8, false> base,
+                                 Register<8, false> index,
+                                 SIB scale,
+                                 int32_t srcOffset);
+
+                template <unsigned SIZE>
                 static void Emit(X64CodeGenerator& code, Register<8, false> dest, int32_t destOffset, Register<SIZE, ISFLOAT> src);
 
                 template <unsigned SIZE, typename T>
@@ -504,6 +537,14 @@ namespace NativeJIT
 
             template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
             void Print(OpCode op, Register<SIZE1, ISFLOAT1> dest, Register<8, false> src, int32_t srcOffset);
+
+            template <unsigned SIZE1, bool ISFLOAT1>
+            void Print(OpCode op,
+                       Register<SIZE1, ISFLOAT1> dest,
+                       Register<8u, false> base,
+                       Register<8u, false> index,
+                       SIB scale,
+                       int32_t offset);
 
             template <unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
             void Print(OpCode op, Register<8, false> dest, int32_t destOffset, Register<SIZE2, ISFLOAT2> src);
@@ -644,6 +685,47 @@ namespace NativeJIT
             }
 
             *m_out << "]"  << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::CodePrinter::Print(OpCode op,
+                                              Register<SIZE, ISFLOAT> dest,
+                                              Register<8u, false> base,
+                                              Register<8u, false> index,
+                                              SIB scale,
+                                              int32_t offset)
+    {
+        if (m_out != nullptr)
+        {
+            IosMiniStateRestorer state(*m_out);
+
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out << OpCodeName(op)
+                << ' ' << dest.GetName()
+                << ", "
+                << GetPointerName(SIZE)
+                << " ptr ["
+                << base.GetName()
+                << " + "
+                << index.GetName()
+                << " * "
+                << static_cast<unsigned>(scale)
+                << std::uppercase
+                << std::hex;
+
+            if (offset > 0)
+            {
+                *m_out << " + " << offset << "h";
+            }
+            else if (offset < 0)
+            {
+                *m_out << " - " << -static_cast<int64_t>(offset) << "h";
+            }
+
+            *m_out << "]" << std::endl;
         }
     }
 
@@ -840,6 +922,22 @@ namespace NativeJIT
         Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, src, srcOffset);
 
         printer.Print<SIZE1, ISFLOAT1, SIZE2, ISFLOAT2>(OP, dest, src, srcOffset);
+    }
+
+
+    // Scale-index-base (SIB) + offset.
+    template <OpCode OP, unsigned SIZE, bool ISFLOAT>
+    void X64CodeGenerator::Emit(Register<SIZE, ISFLOAT> dest,
+                                Register<8, false> base,
+                                Register<8, false> index,
+                                SIB scale,
+                                int32_t offset)
+    {
+        CodePrinter printer(*this);
+
+        Helper<OP>::template ArgTypes1<ISFLOAT>::template Emit<SIZE>(*this, dest, base, index, scale, offset);
+
+        printer.Print<SIZE, ISFLOAT>(OP, dest, base, index, scale, offset);
     }
 
 
@@ -1374,6 +1472,71 @@ namespace NativeJIT
 
     template <unsigned SIZE>
     void X64CodeGenerator::Group1(uint8_t baseOpCode,
+                                  Register<SIZE, false> dest,
+                                  Register<8, false> base,
+                                  Register<8, false> index,
+                                  SIB scale,
+                                  int32_t offset)
+    {
+        EmitOpSizeOverrideIndirect<SIZE, false>(dest, base);
+
+        //
+        // Emit rex
+        //
+        const bool w = (SIZE == 8);
+        Emit8(0x40
+              | (w ? 8 : 0)
+              | (dest.IsExtended() ? 4 : 0)
+              | (index.IsExtended() ? 2 : 0)
+              | (base.IsExtended() ? 1 : 0));
+
+        //
+        // Emit opcode
+        //
+
+        if (SIZE == 1)
+        {
+            Emit8(baseOpCode + 0x2);
+        }
+        else
+        {
+            Emit8(baseOpCode + 0x3);
+        }
+
+        //
+        // Emit mod/rm
+        //
+
+        uint8_t mod = Mod(offset);
+        const uint8_t baseField = base.GetId8();
+        const uint8_t destField = dest.GetId8();
+        const uint8_t indexField = index.GetId8();
+
+        Emit8((mod << 6) | (destField << 3) | 4);
+
+        //
+        // Emit SIB
+        //
+        const uint8_t s = static_cast<uint8_t>(scale);
+        Emit8((s << 6) | (indexField << 3) | baseField);
+
+        //
+        // Emit offset
+        //
+
+        if (mod == 1)
+        {
+            Emit8(static_cast<uint8_t>(offset));
+        }
+        else if (mod == 2)
+        {
+            Emit32(offset);
+        }
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group1(uint8_t baseOpCode,
                                   Register<8, false> dest,
                                   int32_t destOffset,
                                   Register<SIZE, false> src)
@@ -1801,6 +1964,21 @@ namespace NativeJIT
     template <unsigned SIZE>
     void X64CodeGenerator::Helper<OpCode::Mov>::ArgTypes1<false>::Emit(
         X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<8, false> base,
+        Register<8, false> index,
+        SIB scale,
+        int32_t srcOffset)
+    {
+        code.Group1(0x88, dest, base, index, scale, srcOffset);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Mov>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
         Register<8, false> dest,
         int32_t destOffset,
         Register<SIZE, false> src)
@@ -2019,6 +2197,21 @@ namespace NativeJIT
         int32_t srcOffset)                                                                      \
     {                                                                                           \
         code.Group1(baseOpCode, dest, src, srcOffset);                                          \
+    }                                                                                           \
+                                                                                                \
+                                                                                                \
+    template <>                                                                                 \
+    template <>                                                                                 \
+    template <unsigned SIZE>                                                                    \
+    void X64CodeGenerator::Helper<OpCode::name>::ArgTypes1<false>::Emit(                        \
+        X64CodeGenerator& code,                                                                 \
+        Register<SIZE, false> dest,                                                             \
+        Register<8, false> base,                                                                \
+        Register<8, false> index,                                                               \
+        SIB scale,                                                                         \
+        int32_t srcOffset)                                                                      \
+    {                                                                                           \
+        code.Group1(baseOpCode, dest, base, index, scale, srcOffset);                           \
     }                                                                                           \
                                                                                                 \
                                                                                                 \
