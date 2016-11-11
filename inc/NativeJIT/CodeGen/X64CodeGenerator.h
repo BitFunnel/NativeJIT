@@ -185,7 +185,7 @@ namespace NativeJIT
         void Emit(Register<SIZE, ISFLOAT> dest,
                   Register<8, false> base,
                   Register<8, false> index,
-                  SIB scale, 
+                  SIB scale,
                   int32_t offset);
 
         // Two operands - indirect destination and register source with the same type and size.
@@ -1471,6 +1471,23 @@ namespace NativeJIT
     }
 
 
+    inline uint8_t Mod(int32_t offset)
+    {
+        if (offset == 0)
+        {
+            return 0;
+        }
+        else if (offset >= -0x80 && offset <= 0x7f)
+        {
+            return 1;
+        }
+        else
+        {
+            return 2;
+        }
+    }
+
+
     template <unsigned SIZE>
     void X64CodeGenerator::Group1(uint8_t baseOpCode,
                                   Register<SIZE, false> dest,
@@ -1840,23 +1857,6 @@ namespace NativeJIT
         // BUGBUG: check special cases for RSP, R12. Shouldn't be necessary here if
         // this function is only used for Register-Register encoding. Problem will
         // crop up if caller passes the base register from an X64Indirect.
-    }
-
-
-    inline uint8_t Mod(int32_t offset)
-    {
-        if (offset == 0)
-        {
-            return 0;
-        }
-        else if (offset >= -0x80 && offset <= 0x7f)
-        {
-            return 1;
-        }
-        else
-        {
-            return 2;
-        }
     }
 
 
