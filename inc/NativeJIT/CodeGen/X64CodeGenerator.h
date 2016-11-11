@@ -85,7 +85,9 @@ namespace NativeJIT
         CvtFP2FP,
         CvtFP2SI,
         CvtSI2FP,
+        Dec,
         IMul,
+        Inc,
         Lea,
         Mov,
         MovSX,
@@ -162,6 +164,10 @@ namespace NativeJIT
         // Two register operands with the same type and size (e.g. and, mov, or, sub).
         template <OpCode OP, unsigned SIZE, bool ISFLOAT>
         void Emit(Register<SIZE, ISFLOAT> dest, Register<SIZE, ISFLOAT> src);
+
+        // Base register and offset.
+        template <OpCode OP, unsigned SIZE>
+        void Emit(Register<8u, false> dest, int32_t offset);
 
         // Two register operands with different type and/or size (f. ex. movzx).
         template <OpCode OP, unsigned SIZE1, bool ISFLOAT1, unsigned SIZE2, bool ISFLOAT2>
@@ -370,6 +376,16 @@ namespace NativeJIT
                     uint8_t shift,
                     Register<SIZE, false> dest);
 
+        template <unsigned SIZE>
+        void Group5(uint8_t extensionOpCode,
+                    Register<SIZE, false> dest);
+
+        template <unsigned SIZE>
+        void Group5(uint8_t extensionOpCode,
+                    Register<8u, false> base,
+                    int32_t offset);
+
+
         // Methods for emitting the 0x66 operand size override prefix if
         // size of either operand is 16-bit. Note: for indirect addressing, the
         // size of the operand is the size of the memory being accessed, not the
@@ -448,6 +464,17 @@ namespace NativeJIT
         struct Helper
         {
             static void Emit(X64CodeGenerator& code);
+
+            struct ArgTypes0
+            {
+                template <unsigned SIZE>
+                static void Emit(X64CodeGenerator& code, Register<SIZE, false> dest);
+
+                template <unsigned SIZE>
+                static void Emit(X64CodeGenerator& code,
+                                 Register<8u, false> dest,
+                                 int32_t offset);
+            };
 
             // Emit methods where operands have the same type and size. This is
             // another layer used to provide partial specialization for the
@@ -529,6 +556,9 @@ namespace NativeJIT
             void Print(Label l);
 
             void Print(OpCode op);
+
+            template <unsigned SIZE>
+            void Print(OpCode op, Register<8u, false> base, int32_t offset);
 
             template <unsigned SIZE, bool ISFLOAT>
             void Print(OpCode op, Register<SIZE, ISFLOAT> dest);
@@ -637,6 +667,38 @@ namespace NativeJIT
             PrintBytes(m_startPosition, m_code.CurrentPosition());
 
             *m_out << OpCodeName(op) << ' ' << dest.GetName() << std::endl;
+        }
+    }
+
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::CodePrinter::Print(OpCode op,
+                                              Register<8u, false> base,
+                                              int32_t offset)
+    {
+        if (m_out != nullptr)
+        {
+            PrintBytes(m_startPosition, m_code.CurrentPosition());
+
+            *m_out
+                << OpCodeName(op)
+                << ' '
+                << GetPointerName(SIZE)
+                << " ptr ["
+                << base.GetName()
+                << std::uppercase
+                << std::hex;
+
+            if (offset > 0)
+            {
+                *m_out << " + " << offset << "h";
+            }
+            else if (offset < 0)
+            {
+                *m_out << " - " << -static_cast<int64_t>(offset) << "h";
+            }
+
+            *m_out << "]" << std::endl;
         }
     }
 
@@ -901,6 +963,18 @@ namespace NativeJIT
         Helper<OP>::template ArgTypes2<ISFLOAT1, ISFLOAT2>::template Emit<SIZE1, SIZE2>(*this, dest, src);
 
         printer.Print(OP, dest, src);
+    }
+
+
+    // Base register and offset.
+    template <OpCode OP, unsigned SIZE>
+    void X64CodeGenerator::Emit(Register<8u, false> dest, int32_t offset)
+    {
+        CodePrinter printer(*this);
+
+        Helper<OP>::ArgTypes0::template Emit<SIZE>(*this, dest, offset);
+
+        printer.Print<SIZE>(OP, dest, offset);
     }
 
 
@@ -1706,6 +1780,45 @@ namespace NativeJIT
 
 
     //
+    // X64 group 5 opcodes.
+    //
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group5(uint8_t extensionOpCode,
+                                  Register<SIZE, false> dest)
+    {
+        EmitOpSizeOverride(dest);
+        EmitRex(dest);
+        if (SIZE == 1)
+        {
+            Emit8(0xfe);
+        }
+        else
+        {
+            Emit8(0xff);
+        }
+        EmitModRM(extensionOpCode, dest);
+    }
+
+    template <unsigned SIZE>
+    void X64CodeGenerator::Group5(uint8_t extensionOpCode,
+                                  Register<8u, false> dest,
+                                  int32_t offset)
+    {
+        EmitOpSizeOverride(Register<SIZE, false>(0));
+        EmitRex<SIZE, false>(Register<SIZE, false>(0), dest);
+        if (SIZE == 1)
+        {
+            Emit8(0xfe);
+        }
+        else
+        {
+            Emit8(0xff);
+        }
+        EmitModRMOffset(Register<8u, false>(extensionOpCode), dest, offset);
+    }
+
+
+    //
     // X64 opcode encoding - operand size override.
     //
 
@@ -1861,7 +1974,9 @@ namespace NativeJIT
 
 
     template <unsigned SIZE, bool ISFLOAT>
-    void X64CodeGenerator::EmitModRMOffset(Register<SIZE, ISFLOAT> reg, Register<8, false> rm, int32_t offset)
+    void X64CodeGenerator::EmitModRMOffset(Register<SIZE, ISFLOAT> reg,
+                                           Register<8, false> rm,
+                                           int32_t offset)
     {
         if (rm.IsRIP())
         {
@@ -1917,6 +2032,62 @@ namespace NativeJIT
     // X64CodeGenerator::Helper definitions for each opcode and addressing mode.
     //
     //*************************************************************************
+
+    //
+    // Dec
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Dec>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest)
+    {
+        code.Group5(1, dest);
+    }
+
+
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Dec>::ArgTypes0::Emit(
+        X64CodeGenerator& code,
+        Register<8u, false> base,
+        int32_t offset)
+    {
+        code.Group5<SIZE>(1, base, offset);
+    }
+
+
+    //
+    // Inc
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Inc>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest)
+    {
+        code.Group5(0, dest);
+    }
+
+
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Inc>::ArgTypes0::Emit(
+        X64CodeGenerator& code,
+        Register<8u, false> base,
+        int32_t offset)
+    {
+        code.Group5<SIZE>(0, base, offset);
+    }
+
+
+    //
+    // Lea
+    //
 
     template <>
     template <>

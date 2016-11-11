@@ -65,7 +65,31 @@ namespace NativeJIT
 
             uint8_t const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
-            // SIB
+            // Dec
+            buffer.Emit<OpCode::Dec>(al);
+            buffer.Emit<OpCode::Dec>(ax);
+            buffer.Emit<OpCode::Dec>(eax);
+            buffer.Emit<OpCode::Dec>(rax);
+            buffer.Emit<OpCode::Dec>(r12);
+
+            buffer.Emit<OpCode::Dec, 1>(r12, 0x1234);
+            buffer.Emit<OpCode::Dec, 2>(r13, 0x1234);
+            buffer.Emit<OpCode::Dec, 4>(r14, 0x1234);
+            buffer.Emit<OpCode::Dec, 8>(r15, 0x1234);
+
+            // Inc
+            buffer.Emit<OpCode::Inc>(r9b);
+            buffer.Emit<OpCode::Inc>(r10w);
+            buffer.Emit<OpCode::Inc>(r11d);
+            buffer.Emit<OpCode::Inc>(r12);
+
+            buffer.Emit<OpCode::Inc, 1>(rax, 0x1234);
+            buffer.Emit<OpCode::Inc, 2>(rbp, 0x1234);
+            buffer.Emit<OpCode::Inc, 4>(rsi, 0x1234);
+            buffer.Emit<OpCode::Inc, 8>(rdi, 0x1234);
+
+
+            // SIB addressing mode.
             buffer.Emit<OpCode::Mov>(rax, rsi, rcx, SIB::Scale8, 0x1234);
             buffer.Emit<OpCode::Mov>(r15, r14, r13, SIB::Scale8, 0x1234);
             buffer.Emit<OpCode::Mov>(al, rcx, r13, SIB::Scale8, 0x12);
@@ -684,6 +708,37 @@ namespace NativeJIT
             std::string ml64Output;
 
             ml64Output +=
+                // Dec
+                " 0000004C  FE C8                dec al                                                             \n"
+                " 0000004E  66| FF C8            dec ax                                                             \n"
+                " 00000051  FF C8                dec eax                                                            \n"
+                " 00000053  48/ FF C8            dec rax                                                            \n"
+                " 00000056  49/ FF CC            dec r12                                                            \n"
+                "                                                                                                   \n"
+                " 00000059  41/ FE 8C 24         dec byte ptr [r12 + 1234h]                                         \n"
+                "           00001234                                                                                \n"
+                " 00000061  66| 41/ FF 8D        dec word ptr [r13 + 1234h]                                         \n"
+                "           00001234                                                                                \n"
+                " 00000069  41/ FF 8E            dec dword ptr [r14 + 1234h]                                        \n"
+                "           00001234                                                                                \n"
+                " 00000070  49/ FF 8F            dec qword ptr [r15 + 1234h]                                        \n"
+                "           00001234                                                                                \n"
+
+                // Inc
+                " 00000077  41/ FE C1            inc r9b                                                            \n"
+                " 0000007A  66| 41/ FF C2        inc r10w                                                           \n"
+                " 0000007E  41/ FF C3            inc r11d                                                           \n"
+                " 00000081  49/ FF C4            inc r12                                                            \n"
+                "                                                                                                   \n"
+                " 00000084  FE 80 00001234       inc byte ptr [rax + 1234h]                                         \n"
+                " 0000008A  66| FF 85            inc word ptr [rbp + 1234h]                                         \n"
+                "           00001234                                                                                \n"
+                " 00000091  FF 86 00001234       inc dword ptr [rsi + 1234h]                                        \n"
+                " 00000097  48/ FF 87            inc qword ptr [rdi + 1234h]                                        \n"
+                "           00001234                                                                                \n"
+
+                // SIB addressing mode.
+
                 " 0000004C  48/ 8B 84 CE         mov rax, [rsi + rcx * 8 + 1234h]                                   \n"
                 "           00001234                                                                                \n"
                 " 0000004C  4F/ 8B BC EE         mov r15, [r14 + r13 * 8 + 1234h]                                   \n"

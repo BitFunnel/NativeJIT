@@ -69,6 +69,29 @@ movsd xmm0, xmm1
 ; vmovq xmm0, rax       // Illegal instruction
 ret
 
+; Dec
+dec al
+dec ax
+dec eax
+dec rax
+dec r12
+
+dec byte ptr [r12 + 1234h]
+dec word ptr [r13 + 1234h]
+dec dword ptr [r14 + 1234h]
+dec qword ptr [r15 + 1234h]
+
+; Inc
+inc r9b
+inc r10w
+inc r11d
+inc r12
+
+inc byte ptr [rax + 1234h]
+inc word ptr [rbp + 1234h]
+inc dword ptr [rsi + 1234h]
+inc qword ptr [rdi + 1234h]
+
 ; SIB
 mov rax, [rsi + rcx * 8 + 1234h]
 mov r15, [r14 + r13 * 8 + 1234h]
