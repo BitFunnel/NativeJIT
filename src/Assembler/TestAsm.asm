@@ -69,6 +69,9 @@ movsd xmm0, xmm1
 ; vmovq xmm0, rax       // Illegal instruction
 ret
 
+; stosq
+rep stosq
+
 ; Dec
 dec al
 dec ax

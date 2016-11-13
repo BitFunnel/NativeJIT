@@ -99,11 +99,13 @@ namespace NativeJIT
         Or,
         Pop,
         Push,
+        Rep,
         Ret,
         Rol,
         Shl,        // Note: Shl and Sal are aliases, unlike Shr and Sar.
         Shld,
         Shr,
+        Stosq,
         Sub,
         Xor,
         // The following value must be the last one.

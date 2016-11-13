@@ -65,6 +65,10 @@ namespace NativeJIT
 
             uint8_t const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
+            // rep stosq
+            buffer.Emit<OpCode::Rep>();
+            buffer.Emit<OpCode::Stosq>();
+
             // Dec
             buffer.Emit<OpCode::Dec>(al);
             buffer.Emit<OpCode::Dec>(ax);
@@ -715,6 +719,9 @@ namespace NativeJIT
             std::string ml64Output;
 
             ml64Output +=
+                // Rep Stosq
+                " 0000004C  F3/ 48/ AB           rep stosq                                                          \n"
+
                 // Dec
                 " 0000004C  FE C8                dec al                                                             \n"
                 " 0000004E  66| FF C8            dec ax                                                             \n"
