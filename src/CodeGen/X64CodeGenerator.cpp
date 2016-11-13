@@ -125,6 +125,12 @@ namespace NativeJIT
         static char const * names[] = {
             "add",
             "and",
+            "bsf",
+            "bsr",
+            "bt",
+            "btc",
+            "btr",
+            "bts",
             "call",
             "cmp",
             "cvtfp2fp",

@@ -65,6 +65,14 @@ namespace NativeJIT
 
             uint8_t const * start =  buffer.BufferStart() + buffer.CurrentPosition();
 
+            // bit operations
+            buffer.Emit<OpCode::Bsf>(rax, r14);
+            buffer.Emit<OpCode::Bsr>(r15, r13);
+            buffer.Emit<OpCode::Bt>(eax, ecx);
+            buffer.Emit<OpCode::Btc>(bx, dx);
+            buffer.Emit<OpCode::Btr>(esi, edi);
+            buffer.Emit<OpCode::Bts>(r8d, r12d);
+
             // rep stosq
             buffer.Emit<OpCode::Rep>();
             buffer.Emit<OpCode::Stosq>();
@@ -719,6 +727,14 @@ namespace NativeJIT
             std::string ml64Output;
 
             ml64Output +=
+                // Bit operations
+                " 0000004C  49/ 0F BC C6         bsf rax, r14                                                       \n"
+                " 00000050  4D/ 0F BD FD         bsr r15, r13                                                       \n"
+                " 00000054  0F A3 C8             bt eax, ecx                                                        \n"
+                " 00000057  66| 0F BB D3         btc bx, dx                                                         \n"
+                " 0000005B  0F B3 FE             btr esi, edi                                                       \n"
+                " 0000005E  45/ 0F AB E0         bts r8d, r12d                                                      \n"
+
                 // Rep Stosq
                 " 0000004C  F3/ 48/ AB           rep stosq                                                          \n"
 

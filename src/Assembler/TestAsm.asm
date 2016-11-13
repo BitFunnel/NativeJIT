@@ -69,7 +69,15 @@ movsd xmm0, xmm1
 ; vmovq xmm0, rax       // Illegal instruction
 ret
 
-; stosq
+; Bit operations
+bsf rax, r14
+bsr r15, r13
+bt eax, ecx
+btc bx, dx
+btr esi, edi
+bts r8d, r12d
+
+; Stosq
 rep stosq
 
 ; Dec

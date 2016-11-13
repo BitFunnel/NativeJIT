@@ -80,6 +80,12 @@ namespace NativeJIT
     {
         Add,
         And,
+        Bsf,
+        Bsr,
+        Bt,
+        Btc,
+        Btr,
+        Bts,
         Call,
         Cmp,
         CvtFP2FP,
@@ -391,6 +397,11 @@ namespace NativeJIT
                         Register<8u, false> base,
                         int32_t offset);
 
+        template <unsigned SIZE>
+        void GroupBitOps(uint8_t opcode,
+                         Register<SIZE, false> dest,
+                         Register<SIZE, false> bit);
+
 
         // Methods for emitting the 0x66 operand size override prefix if
         // size of either operand is 16-bit. Note: for indirect addressing, the
@@ -474,12 +485,18 @@ namespace NativeJIT
             struct ArgTypes0
             {
                 template <unsigned SIZE>
-                static void Emit(X64CodeGenerator& code, Register<SIZE, false> dest);
+                static void Emit(X64CodeGenerator& code,
+                                 Register<SIZE, false> dest);
 
                 template <unsigned SIZE>
                 static void Emit(X64CodeGenerator& code,
                                  Register<8u, false> dest,
                                  int32_t offset);
+
+                template <unsigned SIZE>
+                static void Emit(X64CodeGenerator& code,
+                                 Register<SIZE, false> dest,
+                                 Register<SIZE, false> bit);
             };
 
             // Emit methods where operands have the same type and size. This is
@@ -1788,6 +1805,7 @@ namespace NativeJIT
     //
     // X64 group 5 opcodes.
     //
+
     template <unsigned SIZE>
     void X64CodeGenerator::Group3And5(uint8_t opcode,
                                       uint8_t extensionOpCode,
@@ -1823,6 +1841,32 @@ namespace NativeJIT
             Emit8(opcode + 1u);
         }
         EmitModRMOffset(Register<8u, false>(extensionOpCode), dest, offset);
+    }
+
+
+    //
+    // Bit operation opcodes.
+    //
+    template <unsigned SIZE>
+    void X64CodeGenerator::GroupBitOps(uint8_t opcode,
+                                       Register<SIZE, false> dest,
+                                       Register<SIZE, false> bit)
+    {
+        EmitOpSizeOverride(Register<SIZE, false>(0));
+        if (opcode == 0xbc || opcode == 0xbd)
+        {
+            EmitRex<SIZE, false>(dest, bit);
+            Emit8(0x0f);
+            Emit8(opcode);
+            EmitModRM(dest, bit);
+        }
+        else
+        {
+            EmitRex<SIZE, false>(bit, dest);
+            Emit8(0x0f);
+            Emit8(opcode);
+            EmitModRM(bit, dest);
+        }
     }
 
 
@@ -2040,6 +2084,82 @@ namespace NativeJIT
     // X64CodeGenerator::Helper definitions for each opcode and addressing mode.
     //
     //*************************************************************************
+
+    //
+    // Bit operations
+    //
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Bsf>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> bit)
+    {
+        code.GroupBitOps(0xbc, dest, bit);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Bsr>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> bit)
+    {
+        code.GroupBitOps(0xbd, dest, bit);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Bt>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> bit)
+    {
+        code.GroupBitOps(0xa3, dest, bit);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Btc>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> bit)
+    {
+        code.GroupBitOps(0xbb, dest, bit);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Btr>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> bit)
+    {
+        code.GroupBitOps(0xb3, dest, bit);
+    }
+
+
+    template <>
+    template <>
+    template <unsigned SIZE>
+    void X64CodeGenerator::Helper<OpCode::Bts>::ArgTypes1<false>::Emit(
+        X64CodeGenerator& code,
+        Register<SIZE, false> dest,
+        Register<SIZE, false> bit)
+    {
+        code.GroupBitOps(0xab, dest, bit);
+    }
+
 
     //
     // Dec
