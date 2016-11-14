@@ -108,7 +108,7 @@ namespace NativeJIT
             buffer.Emit<OpCode::Not>(bl);
             buffer.Emit<OpCode::Not, 2>(rbp, 0x56);
 
-            // SIB addressing mode.
+            // SIB addressing mode (reads)
             buffer.Emit<OpCode::Mov>(rax, rsi, rcx, SIB::Scale8, 0x1234);
             buffer.Emit<OpCode::Mov>(r15, r14, r13, SIB::Scale8, 0x1234);
             buffer.Emit<OpCode::Mov>(al, rcx, r13, SIB::Scale8, 0x12);
@@ -123,6 +123,22 @@ namespace NativeJIT
             buffer.Emit<OpCode::And>(rax, rdi, rdx, SIB::Scale2, 0x5678);
             buffer.Emit<OpCode::And>(rax, rdi, rdx, SIB::Scale4, 0x5678);
             buffer.Emit<OpCode::And>(rax, rdi, rdx, SIB::Scale8, 0x5678);
+
+            // SIB addressing mode (writes)
+            buffer.Emit<OpCode::Mov>(rsi, rcx, SIB::Scale8, 0x1234, rax);
+            buffer.Emit<OpCode::Mov>(r14, r13, SIB::Scale8, 0x1234, r15);
+            buffer.Emit<OpCode::Mov>(rcx, r13, SIB::Scale8, 0x12, al);
+            buffer.Emit<OpCode::Mov>(r15, rax, SIB::Scale8, 0x34, bx);
+
+            buffer.Emit<OpCode::And>(rsi, rcx, SIB::Scale8, 0x1234, rax);
+            buffer.Emit<OpCode::And>(r14, r13, SIB::Scale8, 0x1234, r15);
+            buffer.Emit<OpCode::And>(rcx, r13, SIB::Scale8, 0x12, al);
+            buffer.Emit<OpCode::And>(r15, rax, SIB::Scale8, 0x34, bx);
+
+            buffer.Emit<OpCode::And>(rdi, rdx, SIB::Scale1, 0x5678, rax);
+            buffer.Emit<OpCode::And>(rdi, rdx, SIB::Scale2, 0x5678, rax);
+            buffer.Emit<OpCode::And>(rdi, rdx, SIB::Scale4, 0x5678, rax);
+            buffer.Emit<OpCode::And>(rdi, rdx, SIB::Scale8, 0x5678, rax);
 
             // Another special case
             buffer.Emit<OpCode::Add>(r13, r13, 0);
@@ -776,7 +792,7 @@ namespace NativeJIT
                 " 000000A7  66| F7 55 56         neg word ptr [rbp + 56h]                                           \n"
 
 
-                // SIB addressing mode.
+                // SIB addressing mode (reads)
 
                 " 0000004C  48/ 8B 84 CE         mov rax, [rsi + rcx * 8 + 1234h]                                   \n"
                 "           00001234                                                                                \n"
@@ -804,6 +820,36 @@ namespace NativeJIT
                 "           00005678                                                                                \n"
                 " 0000009A  48/ 23 84 D7         and rax, [rdi + rdx * 8 + 5678h]                                   \n"
                 "           00005678                                                                                \n"
+
+
+                // SIB addressing mode (writes)
+                " 0000011A  48/ 89 84 CE         mov [rsi + rcx * 8 + 1234h], rax                                   \n"
+                "           00001234                                                                                \n"
+                " 00000122  4F/ 89 BC EE         mov [r14 + r13 * 8 + 1234h], r15                                   \n"
+                "           00001234                                                                                \n"
+                " 0000012A  42/ 88 44 E9         mov [rcx + r13 * 8 + 12h], al                                      \n"
+                "           12                                                                                      \n"
+                " 0000012F  66| 41/ 89 5C C7     mov [r15 + rax * 8 + 34h], bx                                      \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                " 00000135  48/ 21 84 CE         and [rsi + rcx * 8 + 1234h], rax                                   \n"
+                "           00001234                                                                                \n"
+                " 0000013D  4F/ 21 BC EE         and [r14 + r13 * 8 + 1234h], r15                                   \n"
+                "           00001234                                                                                \n"
+                " 00000145  42/ 20 44 E9         and [rcx + r13 * 8 + 12h], al                                      \n"
+                "           12                                                                                      \n"
+                " 0000014A  66| 41/ 21 5C C7     and [r15 + rax * 8 + 34h], bx                                      \n"
+                "           34                                                                                      \n"
+                "                                                                                                   \n"
+                " 00000150  48/ 21 84 17         and [rdi + rdx * 1 + 5678h], rax                                   \n"
+                "           00005678                                                                                \n"
+                " 00000158  48/ 21 84 57         and [rdi + rdx * 2 + 5678h], rax                                   \n"
+                "           00005678                                                                                \n"
+                " 00000160  48/ 21 84 97         and [rdi + rdx * 4 + 5678h], rax                                   \n"
+                "           00005678                                                                                \n"
+                " 00000168  48/ 21 84 D7         and [rdi + rdx * 8 + 5678h], rax                                   \n"
+                "           00005678                                                                                \n"
+
 
                 "                                ; Another special case                                             \n"
                 " 00000000  4D/ 03 6D 00         add r13, [r13]                                                     \n"

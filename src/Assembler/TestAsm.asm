@@ -111,7 +111,7 @@ neg qword ptr [rbp + 56h]
 not bl
 not word ptr [rbp + 56h]
 
-; SIB
+; SIB reads
 mov rax, [rsi + rcx * 8 + 1234h]
 mov r15, [r14 + r13 * 8 + 1234h]
 mov al, [rcx + r13 * 8 + 12h]
@@ -126,6 +126,24 @@ and rax, [rdi + rdx * 1 + 5678h]
 and rax, [rdi + rdx * 2 + 5678h]
 and rax, [rdi + rdx * 4 + 5678h]
 and rax, [rdi + rdx * 8 + 5678h]
+
+
+; SIB writes
+mov [rsi + rcx * 8 + 1234h], rax
+mov [r14 + r13 * 8 + 1234h], r15
+mov [rcx + r13 * 8 + 12h], al 
+mov [r15 + rax * 8 + 34h], bx
+
+and [rsi + rcx * 8 + 1234h], rax
+and [r14 + r13 * 8 + 1234h], r15
+and [rcx + r13 * 8 + 12h], al
+and [r15 + rax * 8 + 34h], bx
+
+and [rdi + rdx * 1 + 5678h], rax
+and [rdi + rdx * 2 + 5678h], rax
+and [rdi + rdx * 4 + 5678h], rax
+and [rdi + rdx * 8 + 5678h], rax
+
 
 ; Another special case
 add r13, [r13]
