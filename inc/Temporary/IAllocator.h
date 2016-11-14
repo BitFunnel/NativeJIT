@@ -35,7 +35,7 @@ namespace Allocators
     class IAllocator
     {
     public:
-        virtual ~IAllocator() {};
+        virtual ~IAllocator() {}
 
         // Allocates a block of a specified byte size.
         virtual void* Allocate(size_t size) = 0;
