@@ -26,9 +26,9 @@
 
 namespace NativeJIT
 {
-#ifdef NATIVEJIT_PLATFORM_WINDOWS
     namespace CallingConvention
     {
+#ifdef NATIVEJIT_PLATFORM_WINDOWS
         // Register masks of volatile integer and floating point registers.
         // TODO: This could be replaced with constexpr: add operator| to Register and use it to define the masks.
         // Note: RIP is included in volatiles.
@@ -43,10 +43,7 @@ namespace NativeJIT
         // Register masks of registers that can be written to.
         static const unsigned c_rxxWritableRegistersMask = 0xFFFF;    // Everything except RIP.
         static const unsigned c_xmmWritableRegistersMask = 0xFFFF;    // All XMM registers.
-    }
 #else
-    namespace CallingConvention
-    {
         // Register masks of volatile integer and floating point registers.
         // TODO: This could be replaced with constexpr: add operator| to Register and use it to define the masks.
         // Note: RIP is included in volatiles.
@@ -61,6 +58,11 @@ namespace NativeJIT
         // Register masks of registers that can be written to.
         static const unsigned c_rxxWritableRegistersMask = 0xFFFF;    // Everything except RIP.
         static const unsigned c_xmmWritableRegistersMask = 0xFFFF;    // All XMM registers.
-    }
 #endif
+
+    static_assert((c_rxxNonVolatileRegistersMask ^ c_rxxVolatileRegistersMask) == 0xffff,
+                  "Each register should appear exactly once in calling convention mask");
+    static_assert((c_xmmNonVolatileRegistersMask ^ c_xmmVolatileRegistersMask) == 0xffff,
+                  "Each register should appear exactly once in calling convention mask");
+    }
 }
