@@ -113,7 +113,8 @@ namespace NativeJIT
                    ? true
                    : false;
 #else
-            *lowestBitSetIndex = ffsll(value);
+            *lowestBitSetIndex =
+                static_cast<unsigned>(ffsll(static_cast<int64_t>(value)));
             bool retval = *lowestBitSetIndex != 0;
             --*lowestBitSetIndex;
             return retval;
@@ -140,7 +141,7 @@ namespace NativeJIT
             *highestBitSetIndex = 63 - *highestBitSetIndex;
             return retval;
     #else
-            *highestBitSetIndex = 63 - __builtin_clzll(value);
+            *highestBitSetIndex = 63 - static_cast<unsigned>(__builtin_clzll(value));
             return value != 0;
     #endif
 #endif

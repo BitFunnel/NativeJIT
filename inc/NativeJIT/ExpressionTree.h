@@ -196,11 +196,12 @@ namespace NativeJIT
         static_assert(sizeof(T) <= sizeof(void*),
                       "The size of the variable is too large.");
 
-        int32_t slot;
+        uint32_t slot;
 
         if (m_temporaries.size() > 0)
         {
-            slot = m_temporaries.back();
+            // TODO: assert that m_temporaries is > 0?
+            slot = static_cast<uint32_t>(m_temporaries.back());
             m_temporaries.pop_back();
         }
         else
@@ -345,9 +346,10 @@ namespace NativeJIT
 
             break;
 
-        default:
-            LogThrowAbort("Unknown register change type %u", type);
-            break;
+        // clang warns on a default when all enum cases are covered.
+        // default:
+        //     LogThrowAbort("Unknown register change type %u", type);
+        //     break;
         }
     }
 
