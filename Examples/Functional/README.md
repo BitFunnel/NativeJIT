@@ -1,9 +1,12 @@
 ## Parser Example
 
+This is a version of the Parser example, modified to support
+`let` expressions.
+
 This example demonstrates a compiler for infix expressions.
 For simplicity, the sample only supports floats
 (as of the first README.md commit, 
-the compiler itself is just 300 lines of C++ code!)
+the compiler itself is just under 500 lines of C++ code!)
 
 Expressions can be composed of 
 
@@ -12,6 +15,27 @@ Expressions can be composed of
 * Operators +, -, *
 * Parentheses ().
 * The sqrt() function.
+* let expressions.
+* symbols defined in let expressions.
+
+A let expression takes the form
+
+~~~
+let SYMBOL = INITIALIZER EXPRESSION
+~~~
+
+and it means, evaluate EXPRESSION in a context where SYMBOL is bound
+to the value of the INITIALIZER expression. So, for example, the 
+expression
+
+~~~
+let a = 5
+  let b = 6
+    a + b
+~~~
+
+would evaluate to 11.
+
 
 The sample executable first runs a set of unit tests,
 which also serve to give an example of the type of expressions
@@ -20,6 +44,7 @@ that can be compiled.
 After running the tests, it falls into a Read-Eval-Print loop
 which prints out a >> prompt and then waits for input. At this
 point you can type an expression and hit enter to evaluate it.
+You can enter a multi-line expression by ending each line with '\'.
 
 Entering a blank line will exit the program. Here's a sample run:
 
@@ -46,9 +71,16 @@ Running test cases ...
 "        1  + ( 2 * 10 )    " ==> 21 OK
 "sqrt(4)" ==> 2 OK
 "sqrt((3+4)*(2+3))" ==> 5.91608 OK
+"let a = 5\
+  let b = 6\
+    a * b" ==> 30 OK
+"let a = let b = 5 b * 3\
+  let c = 6\
+    a * c" ==> 90 OK
 All tests succeeded.
 
 Type an expression and press return to evaluate.
+Use '\' to continue the expression on the next line.
 Enter an empty line to exit.
 >> 12345 * 65432
 8.07758e+08

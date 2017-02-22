@@ -1,8 +1,10 @@
 #include <iostream>
+#include <map>
 #include <math.h>       // For value of e.
+#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <sstream>
+#include <vector>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
@@ -73,6 +75,7 @@ namespace Examples
 
         // Parses expressions of the form
         // TERM:
+        //   'let' SYMBOL '=' SUM SUM
         //   (SUM)
         //   FLOAT
         //   SYMBOL
@@ -84,12 +87,13 @@ namespace Examples
         float ParseFloat();
 
         // Parses expressions of the form
-        // SYMBOL: ALPHA (ALPHA | DIGIT)*
+        // SYMBOL:
+        //   ALPHA (ALPHA | DIGIT)*
         std::string ParseSymbol();
 
         // Returns true if current position is the first character of a floating
         // point number.
-        bool IsFirstCharOfFloat(char c);
+        static bool IsFirstCharOfFloat(char c);
 
         // Advances the current position past whitespace (space, tab, carriage
         // return, newline).
@@ -116,6 +120,9 @@ namespace Examples
 
         // NativeJIT Function used to build and compile parsed expression.
         Function<float> m_expression;
+
+        std::map<std::string, size_t> m_symbols;
+        std::vector<NativeJIT::Node<float>*> m_letExpressions;
     };
 
 
@@ -123,8 +130,8 @@ namespace Examples
                    Allocator& allocator,
                    FunctionBuffer& code)
         : m_src(src),
-          m_currentPosition(0),
-          m_expression(allocator, code)
+        m_currentPosition(0),
+        m_expression(allocator, code)
     {
     }
 
@@ -204,6 +211,7 @@ namespace Examples
         char next = PeekChar();
         if (next == '(')
         {
+            // This is a parenthesized expression.
             GetChar();
 
             auto& result = ParseSum();
@@ -215,13 +223,40 @@ namespace Examples
         }
         else if (IsFirstCharOfFloat(next))
         {
+            // This is a floating point literal.
             float f = ParseFloat();
             return m_expression.Immediate(f);
         }
         else if (isalpha(next))
         {
+            // This is either a 'let' or a symbol.
             std::string symbol = ParseSymbol();
-            if (symbol.compare("e") == 0)
+            if (symbol.compare("let") == 0)
+            {
+                // let SYMBOL SUM SUM
+                std::string variable = ParseSymbol();
+
+                if (m_symbols.find(variable) != m_symbols.end() ||
+                    symbol.compare("e") == 0 ||
+                    symbol.compare("pi") == 0 ||
+                    symbol.compare("sqrt") == 0)
+                {
+                    std::stringstream message;
+                    message << "Variable " << symbol << " already defined.";
+                    throw ParseError(message.str().c_str(),
+                                     m_currentPosition);
+                }
+
+                SkipWhite();
+                Consume('=');
+                auto& letExpression = ParseSum();
+                m_symbols.insert(std::make_pair(variable, m_letExpressions.size()));
+                m_letExpressions.push_back(&letExpression);
+
+                auto& result = ParseSum();
+                return result;
+            }
+            else if (symbol.compare("e") == 0)
             {
                 // 'e' denotes Euler's number.
                 const float e = static_cast<float>(exp(1));
@@ -235,6 +270,7 @@ namespace Examples
             }
             else if (symbol.compare("sqrt") == 0)
             {
+                // sqrt(SUM)
                 Consume('(');
                 auto& parameter = ParseSum();
                 Consume(')');
@@ -243,10 +279,20 @@ namespace Examples
             }
             else
             {
-                // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
-                std::stringstream message;
-                message << "Unknown identifier \"" << symbol << "\".";
-                throw ParseError(message.str().c_str(), m_currentPosition);
+                // SYMBOL
+                auto it = m_symbols.find(symbol);
+                if (it != m_symbols.end())
+                {
+                    auto & result = *m_letExpressions[it->second];
+                    return result;
+                }
+                else
+                {
+                    // TODO: REVIEW: Check lifetime of c_str() passed to exception constructor.
+                    std::stringstream message;
+                    message << "Unknown identifier \"" << symbol << "\".";
+                    throw ParseError(message.str().c_str(), m_currentPosition);
+                }
             }
         }
         else
@@ -355,8 +401,13 @@ namespace Examples
 
     void Parser::SkipWhite()
     {
-        while (isspace(PeekChar()))
+        for (;;)
         {
+            char c = PeekChar();
+            if (c != '\\' && !isspace(c))
+            {
+                break;
+            }
             GetChar();
         }
     }
@@ -404,7 +455,7 @@ namespace Examples
 
     Parser::ParseError::ParseError(char const * message, size_t position)
         : std::runtime_error(message),
-          m_position(position)
+        m_position(position)
     {
     }
 
@@ -422,14 +473,14 @@ namespace Examples
 
 
 /******************************************************************************
- *
- * Test() runs a number of test cases for the parser.
- * It prints a summary of each case's input and output and either "OK"
- * or "FAILED" depending on whether the test succeeded or failed.
- *
- * Returns true if all tests pass. Otherwise returns false.
- *
- ******************************************************************************/
+*
+* Test() runs a number of test cases for the parser.
+* It prints a summary of each case's input and output and either "OK"
+* or "FAILED" depending on whether the test succeeded or failed.
+*
+* Returns true if all tests pass. Otherwise returns false.
+*
+******************************************************************************/
 bool Test()
 {
     class TestCase
@@ -466,7 +517,8 @@ bool Test()
                 {
                     output << " FAILED: expected " << m_output;
                 }
-            } catch (...) {
+            }
+            catch (...) {
                 output << "FAILED: exception.";
             }
 
@@ -521,6 +573,16 @@ bool Test()
         // sqrt
         TestCase("sqrt(4)", 2.0),
         TestCase("sqrt((3+4)*(2+3))", sqrtf(35)),
+
+        // let expressions
+        TestCase("let a = 5\\\n"
+                 "  let b = 6\\\n"
+                 "    a * b",
+                 5.0f * 6.0f),
+        TestCase("let a = let b = 5 b * 3\\\n"
+                 "  let c = 6\\\n"
+                 "    a * c",
+                 5.0f * 3.0f * 6.0f)
     };
 
 
@@ -540,6 +602,49 @@ bool Test()
 }
 
 
+bool IsAllWhiteSpace(const std::string& s)
+{
+    for (char c : s)
+    {
+        if (!isspace(c))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+// Reads a string that may span multiple lines separated by a '\' character.
+std::string ReadMultiLineString(char const * prompt1, char const * prompt2)
+{
+    std::string text;
+    std::string line;
+
+    for (size_t i = 0; ; ++i)
+    {
+        if (i == 0)
+        {
+            std::cout << prompt1;
+        }
+        else
+        {
+            std::cout << prompt2;
+        }
+        std::cout << std::flush;
+
+        std::getline(std::cin, line);
+
+        text.append(line);
+        if (line.length() == 0 || line.back() != '\\')
+        {
+            break;
+        }
+    }
+    return text;
+}
+
+
 int main()
 {
     std::cout << "Running test cases ..." << std::endl;
@@ -555,25 +660,23 @@ int main()
 
     std::cout << std::endl;
     std::cout << "Type an expression and press return to evaluate." << std::endl;
+    std::cout << "Use '\\' to continue the expression on the next line." << std::endl;
     std::cout << "Enter an empty line to exit." << std::endl;
 
     ExecutionBuffer codeAllocator(8192);
     Allocator allocator(8192);
     FunctionBuffer code(codeAllocator, 8192);
-    std::string prompt(">> ");
+    std::string prompt1(">> ");
+    std::string prompt2("   ");
 
     for (;;)
     {
         allocator.Reset();
         codeAllocator.Reset();
 
-        std::string line;
-        std::cout << prompt << std::flush;
-        std::getline(std::cin, line);
+        std::string line = ReadMultiLineString(prompt1.c_str(), prompt2.c_str());
 
-        // TODO: Should really see if line is completely blank.
-        // Blank lines cause the parser to crash.
-        if (line.length() == 0)
+        if (IsAllWhiteSpace(line))
         {
             break;
         }
@@ -586,7 +689,7 @@ int main()
         }
         catch (Examples::Parser::ParseError& e)
         {
-            std::cout << std::string(prompt.length(), ' ');
+            std::cout << std::string(prompt1.length(), ' ');
             std::cout << e;
         }
     }
