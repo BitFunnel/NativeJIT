@@ -160,14 +160,14 @@ namespace Examples
         if (PeekChar() == '+')
         {
             GetChar();
-            auto& right = ParseProduct();
+            auto& right = ParseSum();
 
             return m_expression.Add(left, right);
         }
         else if (PeekChar() == '-')
         {
             GetChar();
-            auto& right = ParseProduct();
+            auto& right = ParseSum();
 
             return m_expression.Sub(left, right);
         }
@@ -186,7 +186,7 @@ namespace Examples
         if (PeekChar() == '*')
         {
             GetChar();
-            auto& right = ParseSum();
+            auto& right = ParseProduct();
 
             return m_expression.Mul(left, right);
         }
@@ -521,6 +521,11 @@ bool Test()
         // sqrt
         TestCase("sqrt(4)", 2.0),
         TestCase("sqrt((3+4)*(2+3))", sqrtf(35)),
+
+        // More complex expressions
+        TestCase("2*2+1", 5.0f),
+        TestCase("1+1+1", 3.0f),
+        TestCase("1 * 2 * 3", 6.0f),
     };
 
 
