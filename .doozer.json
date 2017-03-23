@@ -27,7 +27,7 @@
         "cmake -DCMAKE_BUILD_TYPE=RELEASE -G Ninja ..",
         "ninja"
       ]
-    },
+    }
   },
 
   "artifacts": [
