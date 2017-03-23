@@ -1,9 +1,6 @@
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/Function.h"
-#include "Temporary/Allocator.h"
-
-#include <iostream>
 
 using NativeJIT::Allocator;
 using NativeJIT::ExecutionBuffer;

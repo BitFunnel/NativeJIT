@@ -25,8 +25,6 @@
 #include "Temporary/Allocator.h"
 #include "TestSetup.h"
 
-#include <iostream>
-
 
 namespace NativeJIT
 {

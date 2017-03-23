@@ -31,7 +31,6 @@
 #endif
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
-#include "Temporary/Assert.h"
 
 
 namespace NativeJIT

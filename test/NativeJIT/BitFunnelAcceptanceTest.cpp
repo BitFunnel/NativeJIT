@@ -28,8 +28,6 @@
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/Function.h"
-#include "NativeJIT/Model.h"
-#include "NativeJIT/Packed.h"
 #include "TestSetup.h"
 
 

@@ -25,10 +25,7 @@
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
-#include "NativeJIT/CodeGen/ValuePredicates.h"
 #include "NativeJIT/Function.h"
-#include "NativeJIT/Nodes/CastNode.h"
-#include "Temporary/Allocator.h"
 #include "TestSetup.h"
 
 

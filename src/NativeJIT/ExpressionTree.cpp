@@ -25,10 +25,7 @@
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionSpecification.h"
 #include "NativeJIT/ExecutionPreconditionTest.h"
-#include "NativeJIT/ExpressionTree.h"
-#include "NativeJIT/Nodes/ImmediateNode.h"
 #include "NativeJIT/Nodes/ParameterNode.h"
-#include "Temporary/Assert.h"
 
 
 namespace NativeJIT
