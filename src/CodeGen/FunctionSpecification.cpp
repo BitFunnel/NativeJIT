@@ -28,7 +28,6 @@
 #include "NativeJIT/CodeGen/CallingConvention.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionSpecification.h"
-#include "Temporary/IAllocator.h"
 #include "UnwindCode.h"
 
 

@@ -1,13 +1,10 @@
 #include <iostream>
 #include <math.h>       // For value of e.
-#include <stdexcept>
-#include <string>
 #include <sstream>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/Function.h"
-#include "Temporary/Allocator.h"
 
 
 using NativeJIT::Allocator;

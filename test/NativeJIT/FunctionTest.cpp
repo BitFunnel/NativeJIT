@@ -23,12 +23,10 @@
 
 #include <cmath>        // For float std::abs(float).
 #include <iostream>
-#include <memory>
 
 #include "NativeJIT/CodeGen/ExecutionBuffer.h"
 #include "NativeJIT/CodeGen/FunctionBuffer.h"
 #include "NativeJIT/Function.h"
-#include "Temporary/Allocator.h"
 #include "TestSetup.h"
 
 

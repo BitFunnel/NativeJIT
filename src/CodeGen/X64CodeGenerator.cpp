@@ -25,7 +25,6 @@
 #include <iostream>
 
 #include "NativeJIT/CodeGen/X64CodeGenerator.h"
-#include "Temporary/Assert.h"
 
 
 namespace NativeJIT

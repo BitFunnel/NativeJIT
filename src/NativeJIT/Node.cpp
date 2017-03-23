@@ -25,7 +25,6 @@
 
 #include "NativeJIT/ExpressionTree.h"
 #include "NativeJIT/Nodes/Node.h"
-#include "Temporary/Assert.h"
 
 
 namespace NativeJIT

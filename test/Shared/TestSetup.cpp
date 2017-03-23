@@ -22,7 +22,6 @@
 
 
 #include <iostream>     // For diagnostics.
-#include <memory>       // For std::make_unique.
 
 #include "TestSetup.h"
 

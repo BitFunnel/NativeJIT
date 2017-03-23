@@ -23,9 +23,6 @@
 
 
 #include "NativeJIT/Function.h"
-#include "NativeJIT/CodeGen/ExecutionBuffer.h"
-#include "NativeJIT/CodeGen/FunctionBuffer.h"
-#include "Temporary/Allocator.h"
 #include "TestSetup.h"
 
 
