@@ -1,4 +1,5 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/o957b44rhm8vt24g/branch/master?svg=true)](https://ci.appveyor.com/project/MichaelHopcroft/nativejit) [![Build status](https://doozer.io/badge/danluu/NativeJIT/buildstatus/master)](https://doozer.io/user/danluu/NativeJIT)
+[![Build status](https://ci.appveyor.com/api/projects/status/o957b44rhm8vt24g/branch/master?svg=true)](https://ci.appveyor.com/project/MichaelHopcroft/nativejit)
+[![Build status](https://doozer.io/badge/mikehopcroft/NativeJIT/buildstatus/master)](https://doozer.io/user/mikehopcroft/NativeJIT)
 
 NativeJIT
 ====
