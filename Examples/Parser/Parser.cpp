@@ -151,27 +151,32 @@ namespace Examples
 
     NativeJIT::Node<float>& Parser::ParseSum()
     {
-        auto& left = ParseProduct();
+        auto* left = &ParseProduct();
 
         SkipWhite();
-        if (PeekChar() == '+')
-        {
-            GetChar();
-            auto& right = ParseSum();
 
-            return m_expression.Add(left, right);
-        }
-        else if (PeekChar() == '-')
+        while (true)
         {
-            GetChar();
-            auto& right = ParseSum();
-
-            return m_expression.Sub(left, right);
+            char c = PeekChar();
+            if (c == '+')
+            {
+                GetChar();
+                auto& right = ParseProduct();
+                left = &m_expression.Add(*left, right);
+            }
+            else if (c == '-')
+            {
+                GetChar();
+                auto& right = ParseProduct();
+                left = &m_expression.Sub(*left, right);
+            }
+            else
+            {
+                break;
+            }
+            SkipWhite();
         }
-        else
-        {
-            return left;
-        }
+        return *left;
     }
 
 
@@ -523,6 +528,10 @@ bool Test()
         TestCase("2*2+1", 5.0f),
         TestCase("1+1+1", 3.0f),
         TestCase("1 * 2 * 3", 6.0f),
+
+        // Left associativity
+        TestCase("1-1-1", -1.0f),
+        TestCase("1-2-3-4", -8.0f),
     };
 
 
