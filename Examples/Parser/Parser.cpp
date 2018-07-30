@@ -153,10 +153,10 @@ namespace Examples
     {
         auto* left = &ParseProduct();
 
-        SkipWhite();
-
         while (true)
         {
+            SkipWhite();
+
             char c = PeekChar();
             if (c == '+')
             {
@@ -174,7 +174,6 @@ namespace Examples
             {
                 break;
             }
-            SkipWhite();
         }
         return *left;
     }
@@ -182,19 +181,22 @@ namespace Examples
 
     NativeJIT::Node<float>& Parser::ParseProduct()
     {
-        auto& left = ParseTerm();
+        auto* left = &ParseTerm();
 
-        SkipWhite();
-        if (PeekChar() == '*')
+        while (true)
         {
-            GetChar();
-            auto& right = ParseProduct();
+            SkipWhite();
 
-            return m_expression.Mul(left, right);
-        }
-        else
-        {
-            return left;
+            if (PeekChar() == '*')
+            {
+                GetChar();
+                auto& right = ParseProduct();
+                return m_expression.Mul(*left, right);
+            }
+            else
+            {
+                return *left;
+            }
         }
     }
 
@@ -237,8 +239,10 @@ namespace Examples
             }
             else if (symbol.compare("sqrt") == 0)
             {
+                SkipWhite();
                 Consume('(');
                 auto& parameter = ParseSum();
+                SkipWhite();
                 Consume(')');
                 auto & sqrtFunction = m_expression.Immediate(sqrtf);
                 return m_expression.Call(sqrtFunction, parameter);
