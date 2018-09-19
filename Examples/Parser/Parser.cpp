@@ -151,45 +151,52 @@ namespace Examples
 
     NativeJIT::Node<float>& Parser::ParseSum()
     {
-        auto& left = ParseProduct();
+        auto* left = &ParseProduct();
 
-        SkipWhite();
-        if (PeekChar() == '+')
+        while (true)
         {
-            GetChar();
-            auto& right = ParseSum();
+            SkipWhite();
 
-            return m_expression.Add(left, right);
+            char c = PeekChar();
+            if (c == '+')
+            {
+                GetChar();
+                auto& right = ParseProduct();
+                left = &m_expression.Add(*left, right);
+            }
+            else if (c == '-')
+            {
+                GetChar();
+                auto& right = ParseProduct();
+                left = &m_expression.Sub(*left, right);
+            }
+            else
+            {
+                break;
+            }
         }
-        else if (PeekChar() == '-')
-        {
-            GetChar();
-            auto& right = ParseSum();
-
-            return m_expression.Sub(left, right);
-        }
-        else
-        {
-            return left;
-        }
+        return *left;
     }
 
 
     NativeJIT::Node<float>& Parser::ParseProduct()
     {
-        auto& left = ParseTerm();
+        auto* left = &ParseTerm();
 
-        SkipWhite();
-        if (PeekChar() == '*')
+        while (true)
         {
-            GetChar();
-            auto& right = ParseProduct();
+            SkipWhite();
 
-            return m_expression.Mul(left, right);
-        }
-        else
-        {
-            return left;
+            if (PeekChar() == '*')
+            {
+                GetChar();
+                auto& right = ParseProduct();
+                return m_expression.Mul(*left, right);
+            }
+            else
+            {
+                return *left;
+            }
         }
     }
 
@@ -232,8 +239,10 @@ namespace Examples
             }
             else if (symbol.compare("sqrt") == 0)
             {
+                SkipWhite();
                 Consume('(');
                 auto& parameter = ParseSum();
+                SkipWhite();
                 Consume(')');
                 auto & sqrtFunction = m_expression.Immediate(sqrtf);
                 return m_expression.Call(sqrtFunction, parameter);
@@ -523,6 +532,10 @@ bool Test()
         TestCase("2*2+1", 5.0f),
         TestCase("1+1+1", 3.0f),
         TestCase("1 * 2 * 3", 6.0f),
+
+        // Left associativity
+        TestCase("1-1-1", -1.0f),
+        TestCase("1-2-3-4", -8.0f),
     };
 
 
